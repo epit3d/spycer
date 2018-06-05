@@ -76,14 +76,15 @@ class Plane:
         self.planeActor.SetMapper(mapper)
         self.planeActor.GetProperty().SetColor(colors.GetColor3d("Cyan"))
 
-    def rotatePlane(self, rotations):
+    def rotatePlane(self, rotation):
         transform = vtk.vtkTransform()
-        #transform.Translate(-self.planeCenter[0], -self.planeCenter[1], -self.planeCenter[2])
-        for r in rotations:
-            if r.isX:
-                transform.PostMultiply()
-                transform.RotateX(r.x_rot)
-            else:
-                transform.PostMultiply()
-                transform.RotateZ(r.z_rot)
+
+        transform.Translate(-self.planeCenter[0], -self.planeCenter[1], -self.planeCenter[2])
+        #transform.PostMultiply()
+
+        transform.PostMultiply()
+        transform.RotateX(-rotation.x_rot)
+        transform.PostMultiply()
+        transform.RotateZ(-rotation.z_rot)
+
         self.planeActor.SetUserTransform(transform)

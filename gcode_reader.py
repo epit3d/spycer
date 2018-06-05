@@ -12,6 +12,9 @@ class Rotations:
         self.z_rot = 0  # z angle rotation
         self.isX = True
 
+    def __str__(self):
+        return str(self.n_layers) + " x:" + str(self.x_rot) + " z:" + str(self.z_rot)
+
 
 class GCode:
     def __init__(self):
@@ -48,7 +51,7 @@ class GCode:
         for line in inFile:
             data_array = line.split()
             coords = []
-            if line.startswith('G') and self.n_layers > 0:
+            if line.startswith('G'):
                 if "G0" in data_array[0] and len(single_line) > 0:
                     lines.append(single_line)
                     single_line = []
@@ -68,12 +71,15 @@ class GCode:
                             continue
                     single_line.append(coords)
                 curr_rot = Rotations()
-                curr_rot.n_layers = len(self.full_data) + 1  # TODO: fix me
+                curr_rot.n_layers = len(self.full_data)+1
                 if "G42" in data_array[0]:
                     curr_rot.x_rot = -float(data_array[1])
                 if "G52" in data_array[0]:
                     curr_rot.z_rot = -float(data_array[1])
                     curr_rot.isX = False
+                if "G62" in data_array[0]:
+                    curr_rot.x_rot = float(data_array[1])
+                    curr_rot.z_rot = float(data_array[2])
                 if curr_rot.x_rot != 0 or curr_rot.z_rot != 0:
                     self.rotation_info.append(curr_rot)
 
@@ -120,20 +126,16 @@ class GCode:
             block.SetLines(lines)
             structure.SetBlock(i, block)
         # collect rotations for all blocks
-        r = Rotations()
-        r.n_layers = structure.GetNumberOfBlocks()
-        self.rotation_info.append(r)  # stub for last segment
+
         self.all_rotations = [0] * structure.GetNumberOfBlocks()
-        cur = 0
-        for i in range(len(self.rotation_info)):
-            for block in range(cur, self.rotation_info[i].n_layers):
+        cur = structure.GetNumberOfBlocks() - 1
+        for i in range(len(self.rotation_info) - 1, -1, -1):
+            for block in range(cur, self.rotation_info[i].n_layers - 1, -1):
                 self.all_rotations[block] = i
-            cur = self.rotation_info[i].n_layers
+            cur = self.rotation_info[i].n_layers - 1
         return structure
 
     def loadGCodeImage(self):
-        # Create source
-        source = vtk.vtkMultiBlockDataSet()
         if len(self.actorList) > 0:
             self.actorList.clear()
 
@@ -149,6 +151,7 @@ class GCode:
         # color for layer
         colors = vtk.vtkNamedColors()
 
+        last = self.rotation_info[self.all_rotations[len(self.all_rotations) - 1]]
         for i in range(self.fullLayerNumber):
             # Create a mapper
             mapper = vtk.vtkPolyDataMapper()
@@ -157,16 +160,26 @@ class GCode:
             actor = vtk.vtkActor()
             actor.SetMapper(mapper)
             transform = vtk.vtkTransform()
-            transform.Translate(-self.substrate_center[0], -self.substrate_center[1], -self.substrate_center[2])
-            for j in range(self.all_rotations[i], len(self.rotation_info) - 1):
-                if self.rotation_info[j].isX:
-                    transform.PostMultiply()
-                    transform.RotateX(self.rotation_info[j].x_rot)
-                else:
-                    transform.PostMultiply()
-                    transform.RotateZ(self.rotation_info[j].z_rot)
+            # transform.Translate(-self.substrate_center[0], -self.substrate_center[1], -self.substrate_center[2])
 
+            transform.PostMultiply()
+            transform.RotateZ(self.rotation_info[self.all_rotations[i]].z_rot)
+            transform.PostMultiply()
+            transform.RotateX(self.rotation_info[self.all_rotations[i]].x_rot)
+
+            transform.PostMultiply()
+            transform.RotateX(-last.x_rot)
+            transform.PostMultiply()
+            transform.RotateZ(-last.z_rot)
             actor.SetUserTransform(transform)
+            if i == 100:
+                print("100:    ", self.all_rotations[i])
+                print("100:   ", last)
+                for r in self.rotation_info:
+                    print(r)
+            if i == 300:
+                print("300:    ", self.all_rotations[i])
+                print("300:   ", last)
             # get default layer color
             if i == 0:
                 self.layerColor = actor.GetProperty().GetColor()

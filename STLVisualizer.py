@@ -158,8 +158,8 @@ class vtkView():
             self.ren.AddActor(self.actorList[i])
 
         # Create substrate plane
-        self.gcode_io.plane_info.createPlane()
-        self.gcode_io.plane_info.rotatePlane(self.gcode_io.rotation_info)
+        self.gcode_io.plane_info.createPlane()  # TODO: fix len
+        self.gcode_io.plane_info.rotatePlane(self.gcode_io.rotation_info[len(self.gcode_io.rotation_info) - 1])
         self.planeActor = self.gcode_io.plane_info.planeActor
         self.ren.AddActor(self.planeActor)
         # Reset camera
@@ -185,7 +185,7 @@ class vtkView():
         self.ui.pictureSlider.valueChanged.connect(self.changeLayerView)
         self.ui.lineWidth_value.textChanged.connect(self.changeLineWidth)
         for r in self.gcode_io.rotation_info:
-            print("x="+str(r.x_rot), str(r.z_rot))
+            print("x=" + str(r.x_rot), str(r.z_rot))
 
     def loadSTL(self):
         # Create source
@@ -195,7 +195,7 @@ class vtkView():
         self.ren.AddActor(self.stlActor)
         # Create substrate plane
         self.stl_io.plane_info.createPlane()
-        self.stl_io.plane_info.rotatePlane(self.gcode_io.rotation_info)
+        self.stl_io.plane_info.rotatePlane(Rotations())
         # Save actor
         self.planeActor = self.stl_io.plane_info.planeActor
         self.ren.AddActor(self.planeActor)
@@ -323,19 +323,28 @@ class vtkView():
                     self.gcode_io.currLayerNumber - 1]:
             for block in range(newSliderValue):
                 transform = vtk.vtkTransform()
-                #transform.Translate(-self.gcode_io.substrate_center[0], -self.gcode_io.substrate_center[1],
-                #                    -self.gcode_io.substrate_center[2])
-                for j in range(self.gcode_io.all_rotations[block], self.gcode_io.all_rotations[newSliderValue - 1]):
-                    if self.gcode_io.rotation_info[j].isX:
-                        transform.PostMultiply()
-                        transform.RotateX(self.gcode_io.rotation_info[j].x_rot)
-                    else:
-                        transform.PostMultiply()
-                        transform.RotateZ(self.gcode_io.rotation_info[j].z_rot)
+                # transform.Translate(-self.gcode_io.substrate_center[0], -self.gcode_io.substrate_center[1],
+                #                  -self.gcode_io.substrate_center[2])
+                transform.PostMultiply()
+                transform.RotateZ(self.gcode_io.rotation_info[self.gcode_io.all_rotations[block]].z_rot)
+                transform.PostMultiply()
+                transform.RotateX(self.gcode_io.rotation_info[self.gcode_io.all_rotations[block]].x_rot)
+
+                transform.PostMultiply()
+                transform.RotateX(-self.gcode_io.rotation_info[self.gcode_io.all_rotations[newSliderValue - 1]].x_rot)
+                transform.PostMultiply()
+                transform.RotateZ(-self.gcode_io.rotation_info[self.gcode_io.all_rotations[newSliderValue - 1]].z_rot)
                 self.actorList[block].SetUserTransform(transform)
                 if block == 0:
-                    self.planeActor.SetUserTransform(transform)
-                    self.stlActor.SetUserTransform(transform)
+                    tr = vtk.vtkTransform()
+                    tr.PostMultiply()
+                    tr.RotateX(
+                        -self.gcode_io.rotation_info[self.gcode_io.all_rotations[newSliderValue - 1]].x_rot)
+                    tr.PostMultiply()
+                    tr.RotateZ(
+                        -self.gcode_io.rotation_info[self.gcode_io.all_rotations[newSliderValue - 1]].z_rot)
+                    self.planeActor.SetUserTransform(tr)
+                    self.stlActor.SetUserTransform(tr)
         self.gcode_io.currLayerNumber = newSliderValue
         self.ren.Modified()
         self.iren.Render()
@@ -364,4 +373,8 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = vtkView()
     window.ui.show()
+    window.filename = "/home/l1va/out_home.gcode"
+    window.loadGCode()
+    window.iren.Render()
+    window.stlFileName = ""
     sys.exit(app.exec_())
