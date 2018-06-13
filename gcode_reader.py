@@ -78,8 +78,8 @@ class GCode:
                     curr_rot.z_rot = -float(data_array[1])
                     curr_rot.isX = False
                 if "G62" in data_array[0]:
-                    curr_rot.x_rot = float(data_array[1])
-                    curr_rot.z_rot = float(data_array[2])
+                    curr_rot.x_rot = float(data_array[1][1:])
+                    curr_rot.z_rot = float(data_array[2][1:])
                 if curr_rot.x_rot != 0 or curr_rot.z_rot != 0:
                     self.rotation_info.append(curr_rot)
 
