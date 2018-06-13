@@ -1,18 +1,3 @@
-import vtk
-
-import params
-
-
-class GCode:
-    def __init__(self, layers, rotations, lays2rots):
-        self.layers = layers
-        self.rotations = rotations
-        self.lays2rots = lays2rots
-
-    def __str__(self):
-        return "gcode, layers: " + str(len(self.layers)) + " rotations: " + str(len(self.rotations)) + "-1"
-
-
 class Rotation:
     def __init__(self, x, z):
         self.x_rot = x
@@ -40,7 +25,7 @@ def parseArgs(args, x, y, z):
 
 def parseRotation(args):
     x, _, z = parseArgs(args, 0, 0, 0)
-    return Rotation(x, z)
+    return Rotation(-x, -z)
 
 
 def readGCode(filename):
@@ -91,55 +76,4 @@ def parseGCode(lines):
 
     finishLayer()  # not forget about last layer
 
-    return GCode(layers, rotations, lays2rots)
-
-
-def vtkBlocks(layers):
-    blocks = []
-    for layer in layers:
-        points = vtk.vtkPoints()
-        lines = vtk.vtkCellArray()
-        block = vtk.vtkPolyData()
-        points_count = 0
-        for path in layer:
-            line = vtk.vtkLine()
-            for k in range(len(path) - 1):
-                points.InsertNextPoint(path[k])
-                line.GetPointIds().SetId(0, points_count + k)
-                line.GetPointIds().SetId(1, points_count + k + 1)
-                lines.InsertNextCell(line)
-            points.InsertNextPoint(path[-1])  # not forget to add last point
-            points_count += len(path)
-        block.SetPoints(points)
-        block.SetLines(lines)
-        blocks.append(block)
-    return blocks
-
-def wrapWithActors(g):
-    blocks = vtkBlocks(g.layers)
-    actors = []
-    for i in range(len(blocks)):
-        block = blocks[i]
-
-        mapper = vtk.vtkPolyDataMapper()
-        mapper.SetInputData(block)
-        actor = vtk.vtkActor()
-        actor.SetMapper(mapper)
-        transform = vtk.vtkTransform()
-        # rotate to abs coords firstly and then apply last rotation
-        transform.PostMultiply()
-        transform.RotateZ(g.rotations[g.lays2rots[i]].z_rot)
-        transform.PostMultiply()
-        transform.RotateX(g.rotations[g.lays2rots[i]].x_rot)
-
-        transform.PostMultiply()
-        transform.RotateX(-g.rotations[-1].x_rot)
-        transform.PostMultiply()
-        transform.RotateZ(-g.rotations[-1].z_rot)
-        actor.SetUserTransform(transform)
-
-        actor.GetProperty().SetColor(params.LayerColor)
-        actors.append(actor)
-
-    actors[-1].GetProperty().SetColor(params.LastLayerColor)
-    return actors
+    return layers, rotations, lays2rots

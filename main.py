@@ -1,8 +1,6 @@
 import sys
 
-from PyQt5.QtWidgets import (QWidget, QLabel, QLineEdit,
-                             QTextEdit, QGridLayout, QSlider, QCheckBox, QPushButton,
-                             QApplication, QFileDialog)
+from PyQt5.QtWidgets import QApplication
 
 from gui import Gui
 
@@ -11,8 +9,5 @@ if __name__ == "__main__":
     window = Gui()
     window.prepareWidgets()
     window.show()
-    window.loadGCode( "/home/l1va/out_home.gcode")
-    # window.loadGCode()
-    # window.iren.Render()
-    # window.stlFileName = ""
+    # window.loadGCode("/home/l1va/out_home.gcode", True)
     sys.exit(app.exec_())

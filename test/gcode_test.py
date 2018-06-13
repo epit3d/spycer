@@ -15,9 +15,9 @@ class TestParseGCode(unittest.TestCase):
     def testParseRotation(self):
         compare = {
             Rotation(0, 0): parseRotation([]),
-            Rotation(3.3, 0): parseRotation(["X3.3"]),
-            Rotation(3.3, 4.4): parseRotation(["X3.3", "Z4.4"]),
-            Rotation(3.3, 4.4): parseRotation(["X3.3", "Z4.4", ";other", "stuff"]),
+            Rotation(-3.3, 0): parseRotation(["X3.3"]),
+            Rotation(-3.3, -4.4): parseRotation(["X3.3", "Z4.4"]),
+            Rotation(-3.3, -4.4): parseRotation(["X3.3", "Z4.4", ";other", "stuff"]),
         }
         for expected, got in compare.items():
             self.assertEqual(expected.x_rot, got.x_rot)
@@ -41,24 +41,24 @@ class TestParseGCode(unittest.TestCase):
             "G1 X23.3 Z4.45",
             "G0 F1800 X85.188 Y66.146"
         ]
-        parsed = parseGCode(gcode)
+        layers, rotations, lays2rots = parseGCode(gcode)
 
-        self.assertEqual(3, len(parsed.layers))
-        self.assertSequenceEqual(parsed.layers[0],
+        self.assertEqual(3, len(layers))
+        self.assertSequenceEqual(layers[0],
                                  [[[81.848, 55.873, 0.2], [83.547, 53.478, 1.5], [83.756, 53.208, 1.5]],
                                   [[56.78, 12.34, 0.5], [5, 7, 6]]])
-        self.assertSequenceEqual(parsed.layers[1],
+        self.assertSequenceEqual(layers[1],
                                  [[[84.696, 66.058, 2.3], [85.223, 65.95, 2.3]]])
-        self.assertSequenceEqual(parsed.layers[2],
+        self.assertSequenceEqual(layers[2],
                                  [[[85.223, 65.95, 2.3], [89.223, 67.95, 2.3], [23.3, 67.95, 4.45]]])
 
-        self.assertEqual(2, len(parsed.rotations))
-        self.assertEqual(parsed.rotations[0].x_rot, 0)
-        self.assertEqual(parsed.rotations[0].z_rot, 0)
-        self.assertEqual(parsed.rotations[1].x_rot, 35)
-        self.assertEqual(parsed.rotations[1].z_rot, 6.7)
+        self.assertEqual(2, len(rotations))
+        self.assertEqual(rotations[0].x_rot, 0)
+        self.assertEqual(rotations[0].z_rot, 0)
+        self.assertEqual(rotations[1].x_rot, -35)
+        self.assertEqual(rotations[1].z_rot, -6.7)
 
-        self.assertSequenceEqual([0, 0, 1], parsed.lays2rots)
+        self.assertSequenceEqual([0, 0, 1], lays2rots)
 
 
 if __name__ == '__main__':
