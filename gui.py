@@ -36,42 +36,42 @@ class Gui(QWidget):
         self.axesWidget = utils.createAxes(self.interactor)
         grid.addWidget(widget3d, 1, 0, 20, 1)
 
-        loc = locales.getLocale()
-        thickness_label = QLabel(loc.Thickness)
+        self.locale = locales.getLocale()
+        thickness_label = QLabel(self.locale.Thickness)
         self.thickness_value = QLineEdit("0.2")
         grid.addWidget(thickness_label, 3, 1)
         grid.addWidget(self.thickness_value, 3, 2)
 
-        travelSpeed_label = QLabel(loc.TravelSpeed)
+        travelSpeed_label = QLabel(self.locale.TravelSpeed)
         self.travelSpeed_value = QLineEdit("1")  # TODO: set default
         grid.addWidget(travelSpeed_label, 4, 1)
         grid.addWidget(self.travelSpeed_value, 4, 2)
 
-        extruderTemp_label = QLabel(loc.ExtruderTemp)
+        extruderTemp_label = QLabel(self.locale.ExtruderTemp)
         self.extruderTemp_value = QLineEdit("200")
         grid.addWidget(extruderTemp_label, 5, 1)
         grid.addWidget(self.extruderTemp_value, 5, 2)
 
-        bedTemp_label = QLabel( loc.BedTemp)
+        bedTemp_label = QLabel(self.locale.BedTemp)
         self.bedTemp_value = QLineEdit("60")
         grid.addWidget(bedTemp_label, 6, 1)
         grid.addWidget(self.bedTemp_value, 6, 2)
 
-        fillDensity_label = QLabel(loc.FillDensity)
+        fillDensity_label = QLabel(self.locale.FillDensity)
         self.fillDensity_value = QLineEdit("20")
         grid.addWidget(fillDensity_label, 7, 1)
         grid.addWidget(self.fillDensity_value, 7, 2)
 
-        wallThickness_label = QLabel(loc.WallThickness)
+        wallThickness_label = QLabel(self.locale.WallThickness)
         self.wallThickness_value = QLineEdit("0.8")
         grid.addWidget(wallThickness_label, 8, 1)
         grid.addWidget(self.wallThickness_value, 8, 2)
 
-        self.modelSwitch_box = QCheckBox(loc.ShowStl)
+        self.modelSwitch_box = QCheckBox(self.locale.ShowStl)
         self.modelSwitch_box.stateChanged.connect(self.switchModels)
         grid.addWidget(self.modelSwitch_box, 9, 1)
 
-        self.slider_label = QLabel(loc.LayersCount)
+        self.slider_label = QLabel(self.locale.LayersCount)
         self.layersNumber_label = QLabel()
         grid.addWidget(self.slider_label, 10, 1)
         grid.addWidget(self.layersNumber_label, 10, 2)
@@ -83,17 +83,21 @@ class Gui(QWidget):
         self.pictureSlider.valueChanged.connect(self.changeLayerView)
         grid.addWidget(self.pictureSlider, 11, 1, 1, 2)
 
-        loadModel_button = QPushButton(loc.OpenModel)
+        loadModel_button = QPushButton(self.locale.OpenModel)
         loadModel_button.clicked.connect(self.openFile)
         grid.addWidget(loadModel_button, 15, 1, 1, 2)
 
-        self.slice_button = QPushButton(loc.Slice)
+        self.slice_button = QPushButton(self.locale.Slice)
         self.slice_button.clicked.connect(self.sliceSTL)
         grid.addWidget(self.slice_button, 16, 1, 1, 2)
 
-        self.saveGCode_button = QPushButton(loc.SaveGCode)
+        self.saveGCode_button = QPushButton(self.locale.SaveGCode)
         self.saveGCode_button.clicked.connect(self.saveGCodeFile)
         grid.addWidget(self.saveGCode_button, 17, 1, 1, 2)
+
+        self.simplifyStl_button = QPushButton(self.locale.SimplifyStl)
+        self.simplifyStl_button.clicked.connect(self.simplifyStl)
+        grid.addWidget(self.simplifyStl_button, 18, 1, 1, 2)
 
         self.planeActor = utils.createPlaneActor()
         self.render.AddActor(self.planeActor)
@@ -136,6 +140,7 @@ class Gui(QWidget):
         self.pictureSlider.setEnabled(False)
         self.slice_button.setEnabled(True)
         self.saveGCode_button.setEnabled(False)
+        self.simplifyStl_button.setEnabled(True)
         self.currLayerNumber = 0
         self.state = StlState
 
@@ -152,6 +157,7 @@ class Gui(QWidget):
         self.saveGCode_button.setEnabled(True)
         self.currLayerNumber = layers_count
         self.state = BothState
+
 
     def loadGCode(self, filename, clean):
         layers, self.rotations, self.lays2rots = gcode.readGCode(filename)
@@ -188,6 +194,16 @@ class Gui(QWidget):
         self.openedStl = filename
         self.render.ResetCamera()
         self.reloadScene()
+
+    def simplifyStl(self):
+        values = {
+            "stl": self.openedStl,
+            "out": params.OutputSimplifiedStl,
+            "triangles": params.SimplifyTriangles,
+        }
+        cmd = params.SimplifyStlCommand.format(**values)
+        subprocess.check_output(cmd.split(" "))
+        self.loadSTL(params.OutputSimplifiedStl)
 
     def changeLayerView(self):
         newSliderValue = self.pictureSlider.value()
@@ -265,7 +281,7 @@ class Gui(QWidget):
 
     def openFile(self):
         try:
-            filename = str(QFileDialog.getOpenFileName(None, "Open STL file", "/home")[0])  # TODO: fix path
+            filename = str(QFileDialog.getOpenFileName(None, self.locale.OpenModel, "/home")[0])  # TODO: fix path
             if filename != "":
                 fileExt = os.path.splitext(filename)[1].upper()
                 if fileExt == ".STL":
@@ -279,7 +295,7 @@ class Gui(QWidget):
 
     def saveGCodeFile(self):
         try:
-            name = str(QFileDialog.getSaveFileName(None, 'Save GCode File')[0])
+            name = str(QFileDialog.getSaveFileName(None, self.locale.SaveGCode)[0])
             if name != "":
                 copy2(self.openedGCode, name)
         except IOError as e:

@@ -13,4 +13,8 @@ PlaneYSize = 200
 
 SliceCommand = "./goosli --stl={stl} --gcode={gcode} --thickness={thickness} " \
                "--originx={originx} --originy={originy} --originz={originz}"
-OutputGCode = "out.gcode"
+OutputGCode = "goosli_out.gcode"
+
+SimplifyStlCommand = "./goosli_simplifier --stl={stl} --out={out} --triangles={triangles}"
+OutputSimplifiedStl = "goosli_simplified.stl"
+SimplifyTriangles = "800"
