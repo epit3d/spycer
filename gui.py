@@ -99,6 +99,10 @@ class Gui(QWidget):
         self.simplifyStl_button.clicked.connect(self.simplifyStl)
         grid.addWidget(self.simplifyStl_button, 18, 1, 1, 2)
 
+        self.cutStl_button = QPushButton(self.locale.CutStl)
+        self.cutStl_button.clicked.connect(self.cutStl)
+        grid.addWidget(self.cutStl_button, 19, 1, 1, 2)
+
         self.planeActor = utils.createPlaneActor()
         self.render.AddActor(self.planeActor)
         self.setLayout(grid)
@@ -114,6 +118,8 @@ class Gui(QWidget):
         self.pictureSlider.setEnabled(False)
         self.slice_button.setEnabled(False)
         self.saveGCode_button.setEnabled(False)
+        self.simplifyStl_button.setEnabled(False)
+        self.cutStl_button.setEnabled(False)
         self.currLayerNumber = 0
         self.state = NothingState
 
@@ -128,6 +134,8 @@ class Gui(QWidget):
         self.pictureSlider.setSliderPosition(layers_count)
         self.slice_button.setEnabled(False)
         self.saveGCode_button.setEnabled(True)
+        self.simplifyStl_button.setEnabled(False)
+        self.cutStl_button.setEnabled(False)
         self.currLayerNumber = layers_count
         self.state = GCodeState
 
@@ -141,6 +149,7 @@ class Gui(QWidget):
         self.slice_button.setEnabled(True)
         self.saveGCode_button.setEnabled(False)
         self.simplifyStl_button.setEnabled(True)
+        self.cutStl_button.setEnabled(True)
         self.currLayerNumber = 0
         self.state = StlState
 
@@ -155,9 +164,10 @@ class Gui(QWidget):
         self.pictureSlider.setSliderPosition(layers_count)
         self.slice_button.setEnabled(False)
         self.saveGCode_button.setEnabled(True)
+        self.simplifyStl_button.setEnabled(False)
+        self.cutStl_button.setEnabled(False)
         self.currLayerNumber = layers_count
         self.state = BothState
-
 
     def loadGCode(self, filename, clean):
         layers, self.rotations, self.lays2rots = gcode.readGCode(filename)
@@ -182,12 +192,11 @@ class Gui(QWidget):
         self.reloadScene()
 
     def loadSTL(self, filename):
-        self.stlActor, self.stlTranslation = utils.createStlActor(filename)
+        self.stlActor, self.stlTranslation = utils.createStlActorInOrigin(filename)
 
-        if self.state != NothingState:
-            self.clearScene()
-            self.render.AddActor(self.planeActor)
-            self.planeActor.SetUserTransform(vtk.vtkTransform())
+        self.clearScene()
+        self.render.AddActor(self.planeActor)
+        self.planeActor.SetUserTransform(vtk.vtkTransform())
 
         self.render.AddActor(self.stlActor)
         self.stateStl()
@@ -204,6 +213,32 @@ class Gui(QWidget):
         cmd = params.SimplifyStlCommand.format(**values)
         subprocess.check_output(cmd.split(" "))
         self.loadSTL(params.OutputSimplifiedStl)
+
+    def cutStl(self):
+        values = {
+            "stl": self.openedStl,
+            "out1": params.OutputCutStl1,
+            "out2": params.OutputCutStl2,
+            "pointx": params.CutPointX,
+            "pointy": params.CutPointY,
+            "pointz": params.CutPointZ,
+            "normali": params.CutNormalI,
+            "normalj": params.CutNormalJ,
+            "normalk": params.CutNormalK,
+        }
+        cmd = params.CutStlCommand.format(**values)
+        subprocess.check_output(cmd.split(" "))
+        self.stlActor.VisibilityOff()
+        actor1 = utils.createStlActor(params.OutputCutStl1)
+        self.render.AddActor(actor1)
+        actor2 = utils.createStlActor(params.OutputCutStl2)
+        transform = vtk.vtkTransform()
+        transform.Translate(params.Cut2Move)
+        actor2.SetUserTransform(transform)
+        self.render.AddActor(actor2)
+
+        self.stateNothing()
+        self.reloadScene()
 
     def changeLayerView(self):
         newSliderValue = self.pictureSlider.value()

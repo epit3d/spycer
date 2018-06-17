@@ -39,8 +39,18 @@ def createAxes(interactor):
     axesWidget.InteractiveOff()
     return axesWidget
 
-
 def createStlActor(filename):
+    reader = vtk.vtkSTLReader()
+    reader.SetFileName(filename)
+    reader.Update()
+    mapper = vtk.vtkPolyDataMapper()
+    mapper.SetInputConnection(reader.GetOutputPort())
+    actor = vtk.vtkActor()
+    actor.SetMapper(mapper)
+    return actor
+
+
+def createStlActorInOrigin(filename):
     reader = vtk.vtkSTLReader()
     reader.SetFileName(filename)
     reader.Update()

@@ -14,6 +14,7 @@ class Locale:
     Slice = "Slice!"
     SaveGCode = "Save GCode"
     SimplifyStl = "Simplify Stl"
+    CutStl = "Cut Stl"
 
     def __init__(self, **entries):
         self.__dict__.update(entries)
@@ -33,7 +34,8 @@ dicts = {
         OpenModel='Открыть модель',
         Slice='Нарезать',
         SaveGCode='Сохранить GCode',
-        SimplifyStl='Упростить модель'
+        SimplifyStl='Упростить модель',
+        CutStl='Разрезать модель',
     ),
 }
 
