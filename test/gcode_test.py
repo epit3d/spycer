@@ -12,6 +12,9 @@ class TestParseGCode(unittest.TestCase):
         self.assertEqual((4.44, 2.22, 3.33), parseArgs(["Y2.22", "Z3.33", "X4.44"], 1.11, 8, 9))
         self.assertEqual((1.11, 2.22, 9), parseArgs(["Y2.22", ";comment", "about", "smtg"], 1.11, 8, 9))
 
+        self.assertEqual((1.11, 10.22, 9), parseArgs(["Y2.22"], 1.11, 8, 9, False))
+        self.assertEqual((4.11, 8, 11.22), parseArgs(["Z+2.22", "X-1"], 5.11, 8, 9, False))
+
     def testParseRotation(self):
         compare = {
             Rotation(0, 0): parseRotation([]),
@@ -39,7 +42,9 @@ class TestParseGCode(unittest.TestCase):
             ";LAYER:2",
             "G1 X89.223 Y67.95 E30.50471",
             "G1 X23.3 Z4.45",
-            "G0 F1800 X85.188 Y66.146"
+            "G0 F1800 X85.188 Y66.146",
+            ";End gcode ",
+            "G1 X23.3 Z4.45"
         ]
         layers, rotations, lays2rots = parseGCode(gcode)
 

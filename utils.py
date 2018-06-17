@@ -1,6 +1,15 @@
 import vtk
 import params
 
+
+def findStlOrigin(vtkBlock):
+    bound = [0, 0, 0, 0, 0, 0]
+    vtkBlock.GetBounds(bound)
+    x_mid = (bound[0] + bound[1]) / 2
+    y_mid = (bound[2] + bound[3]) / 2
+    return x_mid, y_mid, bound[4]
+
+
 def createPlaneActor():
     planeSource = vtk.vtkPlaneSource()
     # small indent from object plane, render problems, 200x200 plane
@@ -39,7 +48,12 @@ def createStlActor(filename):
     mapper.SetInputConnection(reader.GetOutputPort())
     actor = vtk.vtkActor()
     actor.SetMapper(mapper)
-    return actor
+    origin = findStlOrigin(reader.GetOutput())
+    transform = vtk.vtkTransform()
+    transform.Translate(-origin[0], -origin[1], -origin[2])
+    actor.SetUserTransform(transform)
+    return actor, origin
+
 
 def makeBlocks(layers):
     blocks = []
@@ -62,7 +76,8 @@ def makeBlocks(layers):
         blocks.append(block)
     return blocks
 
-def wrapWithActors(blocks, rotations, lays2rots ):
+
+def wrapWithActors(blocks, rotations, lays2rots):
     actors = []
     for i in range(len(blocks)):
         block = blocks[i]

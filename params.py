@@ -10,7 +10,6 @@ PlaneColor = colors.GetColor3d("Cyan")
 PlaneXSize = 200
 PlaneYSize = 200
 
-SliceCommand = "./goosli --stl={stl} --gcode={gcode} --thickness={thickness}"
+SliceCommand = "./goosli --stl={stl} --gcode={gcode} --thickness={thickness} " \
+               "--originx={originx} --originy={originy} --originz={originz}"
 OutputGCode = "out.gcode"
-
-#TODO: make from txt file?

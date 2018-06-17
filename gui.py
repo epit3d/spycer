@@ -4,7 +4,7 @@ import vtk
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import (QWidget, QLabel, QLineEdit, QGridLayout, QSlider, QCheckBox, QPushButton, QFileDialog)
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
-
+from shutil import copy2
 import gcode
 import params
 import utils
@@ -36,7 +36,7 @@ class Gui(QWidget):
         grid.addWidget(widget3d, 1, 0, 20, 1)
 
         # thickness = kingpin.Flag("thickness", "Set the slice thickness.").Short('t').Default("0.2").Float64()
-        layerWidth_label = QLabel('Толщина слоя, мм:')
+        layerWidth_label = QLabel('Толщина слоя, мм:')  # TODO: localization
         self.layerWidth_value = QLineEdit("0.2")
         grid.addWidget(layerWidth_label, 3, 1)
         grid.addWidget(self.layerWidth_value, 3, 2)
@@ -108,7 +108,7 @@ class Gui(QWidget):
         self.stateNothing()
         self.render.ResetCamera()
 
-    def stateNothing(self):  # no open files
+    def stateNothing(self):
         self.modelSwitch_box.setEnabled(False)
         self.modelSwitch_box.setChecked(False)
         self.slider_label.setEnabled(False)
@@ -183,7 +183,7 @@ class Gui(QWidget):
         self.reloadScene()
 
     def loadSTL(self, filename):
-        self.stlActor = utils.createStlActor(filename)  # TODO: stl translation
+        self.stlActor, self.stlTranslation = utils.createStlActor(filename)
 
         if self.state != NothingState:
             self.clearScene()
@@ -242,10 +242,13 @@ class Gui(QWidget):
         values = {
             "stl": self.openedStl,
             "gcode": params.OutputGCode,
-            "thickness": self.layerWidth_value.text()
+            "thickness": self.layerWidth_value.text(),
+            "originx": self.stlTranslation[0],
+            "originy": self.stlTranslation[1],
+            "originz": self.stlTranslation[2],
         }
         cmd = params.SliceCommand.format(**values)
-        subprocess.check_output(cmd)
+        subprocess.check_output(cmd.split(" "))
         self.stlActor.VisibilityOff()
         self.loadGCode(params.OutputGCode, False)
 
@@ -285,6 +288,6 @@ class Gui(QWidget):
         try:
             name = str(QFileDialog.getSaveFileName(None, 'Save GCode File')[0])
             if name != "":
-                os.rename(self.openedGCode, name)
+                copy2(self.openedGCode, name)
         except IOError as e:
             print("Error during file saving:", e)

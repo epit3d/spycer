@@ -66,3 +66,30 @@ class Debug:
             actor.GetProperty().SetLineWidth(size)
             self.actorList.append(actor)
 
+    def debugModel(self): #TODO: refactor me
+        self.readDebugFile("/home/l1va/debug.txt", "Green", 4)
+        self.readDebugFile("/home/l1va/debug_simplified.txt", "Red", 3)
+
+        self.ren.ResetCamera()
+        self.ren.Modified()
+        self.iren.Render()
+        print("done")
+
+    def readDebugFile(self, file, color, size):
+        with open(file) as f:
+            content = f.readlines()
+        objs = []
+
+        def toPoint(vs):
+            return [float(x) for x in vs]
+
+        for line in content:
+            vals = line.strip().split(" ")
+            if vals[0] == "line":
+                objs.append(Line(toPoint(vals[1:4]), toPoint(vals[4:7])))
+            elif vals[0] == "triangle":
+                objs.append(Triangle(toPoint(vals[1:4]), toPoint(vals[4:7]), toPoint(vals[7:10])))
+        d = Debug(objs)
+        d.drawObjs(color, size)
+        for a in d.actorList:
+            self.ren.AddActor(a)
