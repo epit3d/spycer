@@ -286,10 +286,16 @@ class Gui(QWidget):
         values = {
             "stl": self.openedStl,
             "gcode": params.OutputGCode,
-            "thickness": self.thickness_value.text(),
             "originx": self.stlTranslation[0],
             "originy": self.stlTranslation[1],
             "originz": self.stlTranslation[2],
+
+            "thickness": self.thickness_value.text(),
+            "wall_thickness": self.wallThickness_value.text(),
+            "fill_density": self.fillDensity_value.text(),
+            "bed_temperature": self.bedTemp_value.text(),
+            "extruder_temperature": self.extruderTemp_value.text(),
+            "travel_speed": self.travelSpeed_value.text(),
         }
         cmd = params.SliceCommand.format(**values)
         subprocess.check_output(cmd.split(" "))

@@ -12,7 +12,9 @@ PlaneXSize = 200
 PlaneYSize = 200
 
 SliceCommand = "./goosli --stl={stl} --gcode={gcode} --thickness={thickness} " \
-               "--originx={originx} --originy={originy} --originz={originz}"
+               "--originx={originx} --originy={originy} --originz={originz} " \
+               "--wall_thickness={wall_thickness} --fill_density={fill_density} --bed_temperature={bed_temperature} " \
+               "--extruder_temperature={extruder_temperature} --travel_speed={travel_speed}"
 OutputGCode = "goosli_out.gcode"
 
 SimplifyStlCommand = "./goosli_simplifier --stl={stl} --out={out} --triangles={triangles}"
