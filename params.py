@@ -1,6 +1,8 @@
 import vtk
 
 Lang = "ru"
+Debug = True
+
 
 colors = vtk.vtkNamedColors()
 LastLayerColor = colors.GetColor3d("Red")

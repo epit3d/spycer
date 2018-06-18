@@ -5,6 +5,8 @@ from PyQt5 import QtCore
 from PyQt5.QtWidgets import (QWidget, QLabel, QLineEdit, QGridLayout, QSlider, QCheckBox, QPushButton, QFileDialog)
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 from shutil import copy2
+
+import debug
 import gcode
 import locales
 import params
@@ -102,6 +104,11 @@ class Gui(QWidget):
         self.cutStl_button = QPushButton(self.locale.CutStl)
         self.cutStl_button.clicked.connect(self.cutStl)
         grid.addWidget(self.cutStl_button, 19, 1, 1, 2)
+
+        if params.Debug:
+            debug_button = QPushButton("Debug")
+            debug_button.clicked.connect(self.debugMe)
+            grid.addWidget(debug_button, 20, 1, 1, 2)
 
         self.planeActor = utils.createPlaneActor()
         self.render.AddActor(self.planeActor)
@@ -341,3 +348,8 @@ class Gui(QWidget):
                 copy2(self.openedGCode, name)
         except IOError as e:
             print("Error during file saving:", e)
+
+    def debugMe(self):
+        debug.readFile(self.render, "/home/l1va/debug.txt", "Green", 4)
+        debug.readFile(self.render, "/home/l1va/debug_simplified.txt", "Red", 3)
+        self.reloadScene()
