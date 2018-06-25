@@ -3,11 +3,12 @@ import params
 
 class Locale:
     Thickness = "Layer thickness, mm:"
-    TravelSpeed = "Travel speed, mm/s:"
+    PrintSpeed = "Print speed, mm/s:"
     ExtruderTemp = "Print temperature, °C:"
     BedTemp = "Bed temperature, °C:"
     FillDensity = "Fill density, %:"
     WallThickness = "Wall thickness, mm:"
+    Nozzle = 'Nozzle diameter, mm:',
     ShowStl = "Show stl"
     LayersCount = "Layers count:"
     OpenModel = "Open model"
@@ -24,11 +25,12 @@ dicts = {
     "en": Locale(),
     "ru": Locale(
         Thickness='Толщина слоя, мм:',
-        TravelSpeed='Скорость движения, мм/с:',
+        PrintSpeed='Скорость печати, мм/с:',
         ExtruderTemp='Температура печати, °C:',
         BedTemp='Температура стола, °C:',
         FillDensity='Плотность заполнения, %:',
         WallThickness='Толщина стенок, мм:',
+        Nozzle='Диаметр сопла, мм:',
         ShowStl='Отображение STL модели',
         LayersCount='Отображаемые слои:',
         OpenModel='Открыть модель',

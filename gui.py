@@ -44,10 +44,10 @@ class Gui(QWidget):
         grid.addWidget(thickness_label, 3, 1)
         grid.addWidget(self.thickness_value, 3, 2)
 
-        travelSpeed_label = QLabel(self.locale.TravelSpeed)
-        self.travelSpeed_value = QLineEdit("1")  # TODO: set default
-        grid.addWidget(travelSpeed_label, 4, 1)
-        grid.addWidget(self.travelSpeed_value, 4, 2)
+        printSpeed_label = QLabel(self.locale.PrintSpeed)
+        self.printSpeed_value = QLineEdit("50")
+        grid.addWidget(printSpeed_label, 4, 1)
+        grid.addWidget(self.printSpeed_value, 4, 2)
 
         extruderTemp_label = QLabel(self.locale.ExtruderTemp)
         self.extruderTemp_value = QLineEdit("200")
@@ -68,6 +68,12 @@ class Gui(QWidget):
         self.wallThickness_value = QLineEdit("0.8")
         grid.addWidget(wallThickness_label, 8, 1)
         grid.addWidget(self.wallThickness_value, 8, 2)
+        wallThickness_label.setVisible(False)  # TODO: not hide wallThickness
+
+        nozzle_label = QLabel(self.locale.Nozzle)
+        self.nozzle_value = QLineEdit("0.4")
+        grid.addWidget(nozzle_label, 8, 1)
+        grid.addWidget(self.nozzle_value, 8, 2)
 
         self.modelSwitch_box = QCheckBox(self.locale.ShowStl)
         self.modelSwitch_box.stateChanged.connect(self.switchModels)
@@ -110,7 +116,7 @@ class Gui(QWidget):
             debug_button.clicked.connect(self.debugMe)
             grid.addWidget(debug_button, 20, 1, 1, 2)
 
-        self.planeActor = utils.createPlaneActor()
+        self.planeActor = utils.createPlaneActor2()
         self.render.AddActor(self.planeActor)
         self.setLayout(grid)
         self.stateNothing()
@@ -122,12 +128,13 @@ class Gui(QWidget):
         self.slider_label.setEnabled(False)
         self.layersNumber_label.setEnabled(False)
         self.layersNumber_label.setText(" ")
+        self.currLayerNumber = 0
         self.pictureSlider.setEnabled(False)
+        self.pictureSlider.setSliderPosition(0)
         self.slice_button.setEnabled(False)
         self.saveGCode_button.setEnabled(False)
         self.simplifyStl_button.setEnabled(False)
         self.cutStl_button.setEnabled(False)
-        self.currLayerNumber = 0
         self.state = NothingState
 
     def stateGcode(self, layers_count):
@@ -136,6 +143,7 @@ class Gui(QWidget):
         self.slider_label.setEnabled(True)
         self.layersNumber_label.setEnabled(True)
         self.layersNumber_label.setText(str(layers_count))
+        self.currLayerNumber = layers_count
         self.pictureSlider.setEnabled(True)
         self.pictureSlider.setMaximum(layers_count)
         self.pictureSlider.setSliderPosition(layers_count)
@@ -143,7 +151,6 @@ class Gui(QWidget):
         self.saveGCode_button.setEnabled(True)
         self.simplifyStl_button.setEnabled(False)
         self.cutStl_button.setEnabled(False)
-        self.currLayerNumber = layers_count
         self.state = GCodeState
 
     def stateStl(self):
@@ -152,12 +159,13 @@ class Gui(QWidget):
         self.slider_label.setEnabled(False)
         self.layersNumber_label.setEnabled(False)
         self.layersNumber_label.setText(" ")
+        self.currLayerNumber = 0
         self.pictureSlider.setEnabled(False)
+        self.pictureSlider.setSliderPosition(0)
         self.slice_button.setEnabled(True)
         self.saveGCode_button.setEnabled(False)
         self.simplifyStl_button.setEnabled(True)
         self.cutStl_button.setEnabled(True)
-        self.currLayerNumber = 0
         self.state = StlState
 
     def stateBoth(self, layers_count):
@@ -166,6 +174,7 @@ class Gui(QWidget):
         self.slider_label.setEnabled(True)
         self.layersNumber_label.setEnabled(True)
         self.layersNumber_label.setText(str(layers_count))
+        self.currLayerNumber = layers_count
         self.pictureSlider.setEnabled(True)
         self.pictureSlider.setMaximum(layers_count)
         self.pictureSlider.setSliderPosition(layers_count)
@@ -173,7 +182,6 @@ class Gui(QWidget):
         self.saveGCode_button.setEnabled(True)
         self.simplifyStl_button.setEnabled(False)
         self.cutStl_button.setEnabled(False)
-        self.currLayerNumber = layers_count
         self.state = BothState
 
     def loadGCode(self, filename, clean):
@@ -200,6 +208,7 @@ class Gui(QWidget):
 
     def loadSTL(self, filename):
         self.stlActor, self.stlTranslation = utils.createStlActorInOrigin(filename)
+        print(self.stlTranslation)
 
         self.clearScene()
         self.render.AddActor(self.planeActor)
@@ -266,15 +275,16 @@ class Gui(QWidget):
             currRotation = self.rotations[self.lays2rots[newSliderValue - 1]]
             for block in range(newSliderValue):
                 transform = vtk.vtkTransform()
-                transform.PostMultiply()
-                transform.RotateZ(-self.rotations[self.lays2rots[block]].z_rot)
-                transform.PostMultiply()
-                transform.RotateX(-self.rotations[self.lays2rots[block]].x_rot)
 
                 transform.PostMultiply()
-                transform.RotateX(currRotation.x_rot)
+                transform.RotateX(-self.rotations[self.lays2rots[block]].x_rot)
+                transform.PostMultiply()
+                transform.RotateZ(-self.rotations[self.lays2rots[block]].z_rot)
+
                 transform.PostMultiply()
                 transform.RotateZ(currRotation.z_rot)
+                transform.PostMultiply()
+                transform.RotateX(currRotation.x_rot)
                 self.actors[block].SetUserTransform(transform)
 
             self.rotatePlane(currRotation)
@@ -284,9 +294,9 @@ class Gui(QWidget):
     def rotatePlane(self, rotation):
         transform = vtk.vtkTransform()
         transform.PostMultiply()
-        transform.RotateX(rotation.x_rot)
-        transform.PostMultiply()
         transform.RotateZ(rotation.z_rot)
+        transform.PostMultiply()
+        transform.RotateX(rotation.x_rot)
         self.planeActor.SetUserTransform(transform)
 
     def sliceSTL(self):
@@ -302,7 +312,8 @@ class Gui(QWidget):
             "fill_density": self.fillDensity_value.text(),
             "bed_temperature": self.bedTemp_value.text(),
             "extruder_temperature": self.extruderTemp_value.text(),
-            "travel_speed": self.travelSpeed_value.text(),
+            "print_speed": self.printSpeed_value.text(),
+            "nozzle": self.nozzle_value.text(),
         }
         cmd = params.SliceCommand.format(**values)
         subprocess.check_output(cmd.split(" "))
