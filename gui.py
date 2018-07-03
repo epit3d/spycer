@@ -91,13 +91,25 @@ class Gui(QWidget):
         self.pictureSlider.valueChanged.connect(self.changeLayerView)
         grid.addWidget(self.pictureSlider, 11, 1, 1, 2)
 
+        loadModel1_button = QPushButton("Open out_home.gcode")  # TODO: remove me
+        loadModel1_button.clicked.connect(lambda: self.loadGCode("/home/l1va/out_home.gcode", True))
+        #grid.addWidget(loadModel1_button, 12, 1, 1, 2)
+
         loadModel_button = QPushButton(self.locale.OpenModel)
         loadModel_button.clicked.connect(self.openFile)
-        grid.addWidget(loadModel_button, 15, 1, 1, 2)
+        grid.addWidget(loadModel_button, 13, 1, 1, 2)
 
-        self.slice_button = QPushButton(self.locale.Slice)
-        self.slice_button.clicked.connect(self.sliceSTL)
-        grid.addWidget(self.slice_button, 16, 1, 1, 2)
+        self.slice3a_button = QPushButton(self.locale.Slice3Axes)
+        self.slice3a_button.clicked.connect(lambda: self.sliceSTL("3axes"))
+        grid.addWidget(self.slice3a_button, 14, 1, 1, 2)
+
+        self.slice5aProfile_button = QPushButton(self.locale.Slice5AxesByProfile)
+        self.slice5aProfile_button.clicked.connect(lambda: self.sliceSTL("5axes_by_profile"))
+        grid.addWidget(self.slice5aProfile_button, 15, 1, 1, 2)
+
+        self.slice5a_button = QPushButton(self.locale.Slice5Axes)
+        self.slice5a_button.clicked.connect(lambda: self.sliceSTL("5axes"))
+        grid.addWidget(self.slice5a_button, 16, 1, 1, 2)
 
         self.saveGCode_button = QPushButton(self.locale.SaveGCode)
         self.saveGCode_button.clicked.connect(self.saveGCodeFile)
@@ -131,7 +143,9 @@ class Gui(QWidget):
         self.currLayerNumber = 0
         self.pictureSlider.setEnabled(False)
         self.pictureSlider.setSliderPosition(0)
-        self.slice_button.setEnabled(False)
+        self.slice3a_button.setEnabled(False)
+        self.slice5aProfile_button.setEnabled(False)
+        self.slice5a_button.setEnabled(False)
         self.saveGCode_button.setEnabled(False)
         self.simplifyStl_button.setEnabled(False)
         self.cutStl_button.setEnabled(False)
@@ -147,7 +161,9 @@ class Gui(QWidget):
         self.pictureSlider.setEnabled(True)
         self.pictureSlider.setMaximum(layers_count)
         self.pictureSlider.setSliderPosition(layers_count)
-        self.slice_button.setEnabled(False)
+        self.slice3a_button.setEnabled(False)
+        self.slice5aProfile_button.setEnabled(False)
+        self.slice5a_button.setEnabled(False)
         self.saveGCode_button.setEnabled(True)
         self.simplifyStl_button.setEnabled(False)
         self.cutStl_button.setEnabled(False)
@@ -162,7 +178,9 @@ class Gui(QWidget):
         self.currLayerNumber = 0
         self.pictureSlider.setEnabled(False)
         self.pictureSlider.setSliderPosition(0)
-        self.slice_button.setEnabled(True)
+        self.slice3a_button.setEnabled(True)
+        self.slice5aProfile_button.setEnabled(True)
+        self.slice5a_button.setEnabled(True)
         self.saveGCode_button.setEnabled(False)
         self.simplifyStl_button.setEnabled(True)
         self.cutStl_button.setEnabled(True)
@@ -178,7 +196,9 @@ class Gui(QWidget):
         self.pictureSlider.setEnabled(True)
         self.pictureSlider.setMaximum(layers_count)
         self.pictureSlider.setSliderPosition(layers_count)
-        self.slice_button.setEnabled(False)
+        self.slice3a_button.setEnabled(False)
+        self.slice5aProfile_button.setEnabled(False)
+        self.slice5a_button.setEnabled(False)
         self.saveGCode_button.setEnabled(True)
         self.simplifyStl_button.setEnabled(False)
         self.cutStl_button.setEnabled(False)
@@ -299,7 +319,7 @@ class Gui(QWidget):
         transform.RotateX(rotation.x_rot)
         self.planeActor.SetUserTransform(transform)
 
-    def sliceSTL(self):
+    def sliceSTL(self, slicing_type):
         values = {
             "stl": self.openedStl,
             "gcode": params.OutputGCode,
@@ -314,6 +334,7 @@ class Gui(QWidget):
             "extruder_temperature": self.extruderTemp_value.text(),
             "print_speed": self.printSpeed_value.text(),
             "nozzle": self.nozzle_value.text(),
+            "slicing_type": slicing_type,
         }
         cmd = params.SliceCommand.format(**values)
         subprocess.check_output(cmd.split(" "))
@@ -362,5 +383,5 @@ class Gui(QWidget):
 
     def debugMe(self):
         debug.readFile(self.render, "/home/l1va/debug.txt", "Green", 4)
-        debug.readFile(self.render, "/home/l1va/debug_simplified.txt", "Red", 3)
+        # debug.readFile(self.render, "/home/l1va/debug_simplified.txt", "Red", 3)
         self.reloadScene()
