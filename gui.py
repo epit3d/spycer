@@ -1,8 +1,10 @@
 import os
+import shlex
 import subprocess
 import vtk
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import (QWidget, QLabel, QLineEdit, QGridLayout, QSlider, QCheckBox, QPushButton, QFileDialog)
+from pathlib import Path
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 from shutil import copy2
 
@@ -92,8 +94,8 @@ class Gui(QWidget):
         grid.addWidget(self.pictureSlider, 11, 1, 1, 2)
 
         loadModel1_button = QPushButton("Open out_home.gcode")  # TODO: remove me
-        loadModel1_button.clicked.connect(lambda: self.loadGCode("/home/l1va/out_home.gcode", True))
-        #grid.addWidget(loadModel1_button, 12, 1, 1, 2)
+        loadModel1_button.clicked.connect(lambda: self.loadGCode("/home/l1va/out_home.gcode", False))
+        grid.addWidget(loadModel1_button, 12, 1, 1, 2)
 
         loadModel_button = QPushButton(self.locale.OpenModel)
         loadModel_button.clicked.connect(self.openFile)
@@ -123,16 +125,32 @@ class Gui(QWidget):
         self.cutStl_button.clicked.connect(self.cutStl)
         grid.addWidget(self.cutStl_button, 19, 1, 1, 2)
 
+        self.changePlane_button = QPushButton(self.locale.ChangePlane)
+        self.changePlane_button.clicked.connect(self.changePlane)
+        grid.addWidget(self.changePlane_button, 20, 1, 1, 1)
+
         if params.Debug:
             debug_button = QPushButton("Debug")
             debug_button.clicked.connect(self.debugMe)
-            grid.addWidget(debug_button, 20, 1, 1, 2)
+            grid.addWidget(debug_button, 20, 2, 1, 1)
 
-        self.planeActor = utils.createPlaneActor2()
+        self.planes = [utils.createPlaneActor(), utils.createPlaneActor2(), utils.createPlaneActorCircle()]
+        self.curPlane = 2
+        self.planeActor = self.planes[self.curPlane]
+        self.planeTransform = vtk.vtkTransform()
         self.render.AddActor(self.planeActor)
         self.setLayout(grid)
         self.stateNothing()
         self.render.ResetCamera()
+
+    def changePlane(self):
+        self.curPlane = (self.curPlane+1) % len(self.planes)
+        self.render.RemoveActor(self.planeActor)
+        self.planeActor = self.planes[self.curPlane]
+        self.planeActor.SetUserTransform(self.planeTransform)
+        self.render.AddActor(self.planeActor)
+        self.reloadScene()
+
 
     def stateNothing(self):
         self.modelSwitch_box.setEnabled(False)
@@ -196,28 +214,29 @@ class Gui(QWidget):
         self.pictureSlider.setEnabled(True)
         self.pictureSlider.setMaximum(layers_count)
         self.pictureSlider.setSliderPosition(layers_count)
-        self.slice3a_button.setEnabled(False)
-        self.slice5aProfile_button.setEnabled(False)
-        self.slice5a_button.setEnabled(False)
+        self.slice3a_button.setEnabled(True)
+        self.slice5aProfile_button.setEnabled(True)
+        self.slice5a_button.setEnabled(True)
         self.saveGCode_button.setEnabled(True)
         self.simplifyStl_button.setEnabled(False)
         self.cutStl_button.setEnabled(False)
         self.state = BothState
 
-    def loadGCode(self, filename, clean):
+    def loadGCode(self, filename, addStl):
         layers, self.rotations, self.lays2rots = gcode.readGCode(filename)
         blocks = utils.makeBlocks(layers)
         self.actors = utils.wrapWithActors(blocks, self.rotations, self.lays2rots)
 
-        if clean:
-            self.clearScene()
-            self.render.AddActor(self.planeActor)
+        self.clearScene()
+        self.render.AddActor(self.planeActor)
+        if addStl:
+            self.render.AddActor(self.stlActor)
 
         self.rotatePlane(self.rotations[-1])
         for actor in self.actors:
             self.render.AddActor(actor)
 
-        if self.state == StlState:
+        if addStl:
             self.stateBoth(len(self.actors))
         else:
             self.stateGcode(len(self.actors))
@@ -232,7 +251,6 @@ class Gui(QWidget):
 
         self.clearScene()
         self.render.AddActor(self.planeActor)
-        self.planeActor.SetUserTransform(vtk.vtkTransform())
 
         self.render.AddActor(self.stlActor)
         self.stateStl()
@@ -242,17 +260,17 @@ class Gui(QWidget):
 
     def simplifyStl(self):
         values = {
-            "stl": self.openedStl,
+            "stl": format_path(self.openedStl),
             "out": params.OutputSimplifiedStl,
             "triangles": params.SimplifyTriangles,
         }
         cmd = params.SimplifyStlCommand.format(**values)
-        subprocess.check_output(cmd.split(" "))
+        subprocess.check_output(shlex.split(cmd))
         self.loadSTL(params.OutputSimplifiedStl)
 
     def cutStl(self):
         values = {
-            "stl": self.openedStl,
+            "stl": format_path(self.openedStl),
             "out1": params.OutputCutStl1,
             "out2": params.OutputCutStl2,
             "pointx": params.CutPointX,
@@ -263,11 +281,12 @@ class Gui(QWidget):
             "normalk": params.CutNormalK,
         }
         cmd = params.CutStlCommand.format(**values)
-        subprocess.check_output(cmd.split(" "))
-        self.stlActor.VisibilityOff()
-        actor1 = utils.createStlActor(params.OutputCutStl1)
+        subprocess.check_output(shlex.split(cmd))
+        self.clearScene()
+        self.render.AddActor(self.planeActor)
+        actor1, _ = utils.createStlActor(params.OutputCutStl1)
         self.render.AddActor(actor1)
-        actor2 = utils.createStlActor(params.OutputCutStl2)
+        actor2, _ = utils.createStlActor(params.OutputCutStl2)
         transform = vtk.vtkTransform()
         transform.Translate(params.Cut2Move)
         actor2.SetUserTransform(transform)
@@ -318,10 +337,11 @@ class Gui(QWidget):
         transform.PostMultiply()
         transform.RotateX(rotation.x_rot)
         self.planeActor.SetUserTransform(transform)
+        self.planeTransform = transform
 
     def sliceSTL(self, slicing_type):
         values = {
-            "stl": self.openedStl,
+            "stl": format_path(self.openedStl),
             "gcode": params.OutputGCode,
             "originx": self.stlTranslation[0],
             "originy": self.stlTranslation[1],
@@ -337,9 +357,10 @@ class Gui(QWidget):
             "slicing_type": slicing_type,
         }
         cmd = params.SliceCommand.format(**values)
-        subprocess.check_output(cmd.split(" "))
+        print(cmd)
+        subprocess.check_output(shlex.split(cmd))
         self.stlActor.VisibilityOff()
-        self.loadGCode(params.OutputGCode, False)
+        self.loadGCode(params.OutputGCode, True)
 
     def clearScene(self):
         self.render.RemoveAllViewProps()
@@ -364,10 +385,11 @@ class Gui(QWidget):
             filename = str(QFileDialog.getOpenFileName(None, self.locale.OpenModel, "/home")[0])  # TODO: fix path
             if filename != "":
                 fileExt = os.path.splitext(filename)[1].upper()
+                filename = str(Path(filename))
                 if fileExt == ".STL":
                     self.loadSTL(filename)
                 elif fileExt == ".GCODE":
-                    self.loadGCode(filename, True)
+                    self.loadGCode(filename, False)
                 else:
                     print("This file format isn't supported:", fileExt)
         except IOError as e:
@@ -385,3 +407,9 @@ class Gui(QWidget):
         debug.readFile(self.render, "/home/l1va/debug.txt", "Green", 4)
         # debug.readFile(self.render, "/home/l1va/debug_simplified.txt", "Red", 3)
         self.reloadScene()
+
+
+def format_path(path):
+    if " " in path:
+        return '"{}"'.format(path)
+    return path

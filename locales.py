@@ -18,6 +18,7 @@ class Locale:
     SaveGCode = "Save GCode"
     SimplifyStl = "Simplify Stl"
     CutStl = "Cut Stl"
+    ChangePlane = "Change plane"
 
     def __init__(self, **entries):
         self.__dict__.update(entries)
@@ -43,6 +44,7 @@ dicts = {
         SaveGCode='Сохранить GCode',
         SimplifyStl='Упростить модель',
         CutStl='Разрезать модель',
+        ChangePlane='Сменить плоскость',
     ),
 }
 

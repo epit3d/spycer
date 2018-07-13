@@ -12,6 +12,7 @@ PlaneColor = colors.GetColor3d("Cyan")
 
 PlaneXSize = 200
 PlaneYSize = 200
+PlaneDiameter = 250
 
 SliceCommand = "./goosli --stl={stl} --gcode={gcode} --thickness={thickness} " \
                "--originx={originx} --originy={originy} --originz={originz} " \
@@ -22,7 +23,7 @@ OutputGCode = "goosli_out.gcode"
 
 SimplifyStlCommand = "./goosli_simplifier --stl={stl} --out={out} --triangles={triangles}"
 OutputSimplifiedStl = "goosli_simplified.stl"
-SimplifyTriangles = "800"
+SimplifyTriangles = "500"
 
 CutStlCommand = "./goosli_cutter --stl={stl} --out1={out1} --out2={out2} " \
                 "--pointx={pointx} --pointy={pointy} --pointz={pointz} " \
