@@ -95,7 +95,7 @@ class Gui(QWidget):
 
         loadModel1_button = QPushButton("Open out_home.gcode")  # TODO: remove me
         loadModel1_button.clicked.connect(lambda: self.loadGCode("/home/l1va/out_home.gcode", False))
-        grid.addWidget(loadModel1_button, 12, 1, 1, 2)
+        #grid.addWidget(loadModel1_button, 12, 1, 1, 2)
 
         loadModel_button = QPushButton(self.locale.OpenModel)
         loadModel_button.clicked.connect(self.openFile)
