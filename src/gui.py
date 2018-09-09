@@ -1,18 +1,16 @@
 import os
 import shlex
 import subprocess
+from pathlib import Path
+from shutil import copy2
+
 import vtk
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import (QWidget, QLabel, QLineEdit, QGridLayout, QSlider, QCheckBox, QPushButton, QFileDialog)
-from pathlib import Path
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
-from shutil import copy2
 
-import debug
-import gcode
-import locales
 import params
-import utils
+from src import debug, gcode, locales, utils
 
 NothingState = "nothing"
 GCodeState = "gcode"

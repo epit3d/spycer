@@ -1,6 +1,6 @@
 import unittest
 
-from gcode import parseArgs, parseRotation, Rotation, parseGCode
+from src.gcode import parseArgs, parseRotation, Rotation, parseGCode
 
 
 class TestParseGCode(unittest.TestCase):

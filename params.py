@@ -1,6 +1,6 @@
 import vtk
 
-Lang = "ru"
+Lang = "en"
 Debug = True
 
 
