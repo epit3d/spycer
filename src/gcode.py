@@ -63,30 +63,30 @@ def parseGCode(lines):
     for line in lines:
         if len(line) == 0:
             continue
-        if line[0] == ';':
+        if line[0] == ';':  # comment
             if line.startswith(";LAYER:"):
                 finishLayer()
             elif line.startswith(";End"):
                 break
         else:
             args = line.split(" ")
-            if args[0] == "G0":
+            if args[0] == "G0": # move to
                 if len(path) > 1:  # finish path and start new
                     layer.append(path)
                 x, y, z = parseArgs(args[1:], x, y, z, abs_pos)
                 path = [[x, y, z]]
-            elif args[0] == "G1":
+            elif args[0] == "G1": # draw to
                 x, y, z = parseArgs(args[1:], x, y, z, abs_pos)
                 path.append([x, y, z])
-            elif args[0] == "G62":
+            elif args[0] == "G62": # rotate plate
                 finishLayer()  # rotation could not be inside the layer
                 rotations.append(parseRotation(args[1:]))
-            elif args[0] == "G90":
+            elif args[0] == "G90": # absolute positioining
                 abs_pos = True
-            elif args[0] == "G91":
+            elif args[0] == "G91": # relative positioining
                 abs_pos = False
             else:
-                pass # skip
+                pass  # skip
 
     finishLayer()  # not forget about last layer
 

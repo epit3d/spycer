@@ -41,34 +41,33 @@ class Gui(QWidget):
         self.locale = locales.getLocale()
         thickness_label = QLabel(self.locale.Thickness)
         self.thickness_value = QLineEdit("0.2")
-        grid.addWidget(thickness_label, 3, 1)
-        grid.addWidget(self.thickness_value, 3, 2)
+        grid.addWidget(thickness_label, 2, 1)
+        grid.addWidget(self.thickness_value, 2, 2)
 
         printSpeed_label = QLabel(self.locale.PrintSpeed)
         self.printSpeed_value = QLineEdit("50")
-        grid.addWidget(printSpeed_label, 4, 1)
-        grid.addWidget(self.printSpeed_value, 4, 2)
+        grid.addWidget(printSpeed_label, 3, 1)
+        grid.addWidget(self.printSpeed_value, 3, 2)
 
         extruderTemp_label = QLabel(self.locale.ExtruderTemp)
         self.extruderTemp_value = QLineEdit("200")
-        grid.addWidget(extruderTemp_label, 5, 1)
-        grid.addWidget(self.extruderTemp_value, 5, 2)
+        grid.addWidget(extruderTemp_label, 4, 1)
+        grid.addWidget(self.extruderTemp_value, 4, 2)
 
         bedTemp_label = QLabel(self.locale.BedTemp)
         self.bedTemp_value = QLineEdit("60")
-        grid.addWidget(bedTemp_label, 6, 1)
-        grid.addWidget(self.bedTemp_value, 6, 2)
+        grid.addWidget(bedTemp_label, 5, 1)
+        grid.addWidget(self.bedTemp_value, 5, 2)
 
         fillDensity_label = QLabel(self.locale.FillDensity)
         self.fillDensity_value = QLineEdit("20")
-        grid.addWidget(fillDensity_label, 7, 1)
-        grid.addWidget(self.fillDensity_value, 7, 2)
+        grid.addWidget(fillDensity_label, 6, 1)
+        grid.addWidget(self.fillDensity_value, 6, 2)
 
         wallThickness_label = QLabel(self.locale.WallThickness)
         self.wallThickness_value = QLineEdit("0.8")
-        grid.addWidget(wallThickness_label, 8, 1)
-        grid.addWidget(self.wallThickness_value, 8, 2)
-        wallThickness_label.setVisible(False)  # TODO: not hide wallThickness
+        grid.addWidget(wallThickness_label, 7, 1)
+        grid.addWidget(self.wallThickness_value, 7, 2)
 
         nozzle_label = QLabel(self.locale.Nozzle)
         self.nozzle_value = QLineEdit("0.4")
@@ -95,21 +94,31 @@ class Gui(QWidget):
         loadModel1_button.clicked.connect(lambda: self.loadGCode("/home/l1va/out_home.gcode", False))
         #grid.addWidget(loadModel1_button, 12, 1, 1, 2)
 
+        self.xPosition_value = QLineEdit("0")
+        grid.addWidget(self.xPosition_value, 13, 1)
+        self.yPosition_value = QLineEdit("0")
+        grid.addWidget(self.yPosition_value, 13, 2)
+        self.zPosition_value = QLineEdit("0")
+        grid.addWidget(self.zPosition_value, 14, 1)
+        self.move_button = QPushButton(self.locale.MoveModel)
+        self.move_button.clicked.connect(self.moveModel)
+        grid.addWidget(self.move_button, 14, 2, 1, 1)
+
         loadModel_button = QPushButton(self.locale.OpenModel)
         loadModel_button.clicked.connect(self.openFile)
-        grid.addWidget(loadModel_button, 13, 1, 1, 2)
+        grid.addWidget(loadModel_button, 15, 1, 1, 2)
 
         self.slice3a_button = QPushButton(self.locale.Slice3Axes)
         self.slice3a_button.clicked.connect(lambda: self.sliceSTL("3axes"))
-        grid.addWidget(self.slice3a_button, 14, 1, 1, 2)
+        grid.addWidget(self.slice3a_button, 16, 1, 1, 1)
 
-        self.slice5aProfile_button = QPushButton(self.locale.Slice5AxesByProfile)
-        self.slice5aProfile_button.clicked.connect(lambda: self.sliceSTL("5axes_by_profile"))
-        grid.addWidget(self.slice5aProfile_button, 15, 1, 1, 2)
+        # self.slice5aProfile_button = QPushButton(self.locale.Slice5AxesByProfile)
+        # self.slice5aProfile_button.clicked.connect(lambda: self.sliceSTL("5axes_by_profile"))
+        # grid.addWidget(self.slice5aProfile_button, 15, 1, 1, 2)
 
-        self.slice5a_button = QPushButton(self.locale.Slice5Axes)
-        self.slice5a_button.clicked.connect(lambda: self.sliceSTL("5axes"))
-        grid.addWidget(self.slice5a_button, 16, 1, 1, 1)
+        # self.slice5a_button = QPushButton(self.locale.Slice5Axes)
+        # self.slice5a_button.clicked.connect(lambda: self.sliceSTL("5axes"))
+        # grid.addWidget(self.slice5a_button, 16, 1, 1, 1)
 
         self.sliceVip_button = QPushButton(self.locale.SliceVip)
         self.sliceVip_button.clicked.connect(lambda: self.sliceSTL("vip"))
@@ -146,13 +155,12 @@ class Gui(QWidget):
         self.render.ResetCamera()
 
     def changePlane(self):
-        self.curPlane = (self.curPlane+1) % len(self.planes)
+        self.curPlane = (self.curPlane + 1) % len(self.planes)
         self.render.RemoveActor(self.planeActor)
         self.planeActor = self.planes[self.curPlane]
         self.planeActor.SetUserTransform(self.planeTransform)
         self.render.AddActor(self.planeActor)
         self.reloadScene()
-
 
     def stateNothing(self):
         self.modelSwitch_box.setEnabled(False)
@@ -163,9 +171,10 @@ class Gui(QWidget):
         self.currLayerNumber = 0
         self.pictureSlider.setEnabled(False)
         self.pictureSlider.setSliderPosition(0)
+        self.move_button.setEnabled(False)
         self.slice3a_button.setEnabled(False)
-        self.slice5aProfile_button.setEnabled(False)
-        self.slice5a_button.setEnabled(False)
+        # self.slice5aProfile_button.setEnabled(False)
+        # self.slice5a_button.setEnabled(False)
         self.sliceVip_button.setEnabled(False)
         self.saveGCode_button.setEnabled(False)
         self.simplifyStl_button.setEnabled(False)
@@ -182,9 +191,10 @@ class Gui(QWidget):
         self.pictureSlider.setEnabled(True)
         self.pictureSlider.setMaximum(layers_count)
         self.pictureSlider.setSliderPosition(layers_count)
+        self.move_button.setEnabled(False)
         self.slice3a_button.setEnabled(False)
-        self.slice5aProfile_button.setEnabled(False)
-        self.slice5a_button.setEnabled(False)
+        # self.slice5aProfile_button.setEnabled(False)
+        # self.slice5a_button.setEnabled(False)
         self.sliceVip_button.setEnabled(False)
         self.saveGCode_button.setEnabled(True)
         self.simplifyStl_button.setEnabled(False)
@@ -200,9 +210,10 @@ class Gui(QWidget):
         self.currLayerNumber = 0
         self.pictureSlider.setEnabled(False)
         self.pictureSlider.setSliderPosition(0)
+        self.move_button.setEnabled(True)
         self.slice3a_button.setEnabled(True)
-        self.slice5aProfile_button.setEnabled(True)
-        self.slice5a_button.setEnabled(True)
+        # self.slice5aProfile_button.setEnabled(True)
+        # self.slice5a_button.setEnabled(True)
         self.sliceVip_button.setEnabled(True)
         self.saveGCode_button.setEnabled(False)
         self.simplifyStl_button.setEnabled(True)
@@ -219,14 +230,24 @@ class Gui(QWidget):
         self.pictureSlider.setEnabled(True)
         self.pictureSlider.setMaximum(layers_count)
         self.pictureSlider.setSliderPosition(layers_count)
+        self.move_button.setEnabled(True)
         self.slice3a_button.setEnabled(True)
-        self.slice5aProfile_button.setEnabled(True)
-        self.slice5a_button.setEnabled(True)
+        # self.slice5aProfile_button.setEnabled(True)
+        # self.slice5a_button.setEnabled(True)
         self.sliceVip_button.setEnabled(True)
         self.saveGCode_button.setEnabled(True)
         self.simplifyStl_button.setEnabled(False)
         self.cutStl_button.setEnabled(False)
         self.state = BothState
+
+    def moveModel(self):
+        self.stlTranslation = [float(self.xPosition_value.text()), float(self.yPosition_value.text()),
+                               float(self.zPosition_value.text())]
+        print(self.stlTranslation)
+        transform = vtk.vtkTransform()
+        transform.Translate(self.stlTranslation[0], self.stlTranslation[1], self.stlTranslation[2])
+        self.stlActor.SetUserTransform(transform)
+        self.reloadScene()
 
     def loadGCode(self, filename, addStl):
         layers, self.rotations, self.lays2rots = gcode.readGCode(filename)
@@ -254,6 +275,9 @@ class Gui(QWidget):
     def loadSTL(self, filename):
         self.stlActor, self.stlTranslation = utils.createStlActorInOrigin(filename)
         print(self.stlTranslation)
+        self.xPosition_value.setText(str(self.stlTranslation[0])[:10])
+        self.yPosition_value.setText(str(self.stlTranslation[1])[:10])
+        self.zPosition_value.setText(str(self.stlTranslation[2])[:10])
 
         self.clearScene()
         self.render.AddActor(self.planeActor)
