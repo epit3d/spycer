@@ -434,7 +434,7 @@ class Gui(QWidget):
             print("Error during file saving:", e)
 
     def debugMe(self):
-        debug.readFile(self.render, "/home/l1va/debug.txt", "Green", 4)
+        debug.readFile(self.render, "/home/l1va/debug.txt",  4)
         # debug.readFile(self.render, "/home/l1va/debug_simplified.txt", "Red", 3)
         self.reloadScene()
 

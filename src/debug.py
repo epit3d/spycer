@@ -49,17 +49,17 @@ def makeActor(block, vtkColor, size):
     return actor
 
 
-def readFile(render, file, color, size):
+def readFile(render, file, size):
     with open(file) as f:
         content = f.readlines()
-    vtkColor = vtk.vtkNamedColors().GetColor3d(color)
 
     for line in content:
         vals = line.strip().split(" ")
         if vals[0] == "line":
-            block = drawLine(toPoint(vals[1:4]), toPoint(vals[4:7]))
+            block = drawLine(toPoint(vals[2:5]), toPoint(vals[5:8]))
         else:  # vals[0] == "triangle"
-            block = drawTriangle(toPoint(vals[1:4]), toPoint(vals[4:7]), toPoint(vals[7:10]))
+            block = drawTriangle(toPoint(vals[2:5]), toPoint(vals[5:8]), toPoint(vals[8:11]))
+        vtkColor = vtk.vtkNamedColors().GetColor3d(vals[1])
         render.AddActor(makeActor(block, vtkColor, size))
 
 
