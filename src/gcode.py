@@ -1,3 +1,5 @@
+from params import InclineXValue
+
 class Rotation:
     def __init__(self, x, z):
         self.x_rot = x
@@ -9,6 +11,7 @@ class Rotation:
 
 def parseArgs(args, x, y, z, absolute=True):
     xr, yr, zr = 0, 0, 0
+    z_rot = None
     if absolute:
         xr, yr, zr = x, y, z
 
@@ -21,15 +24,17 @@ def parseArgs(args, x, y, z, absolute=True):
             yr = float(arg[1:])
         elif arg[0] == "Z":
             zr = float(arg[1:])
+        elif arg[0] == "A":
+            z_rot = -float(arg[1:])
         elif arg[0] == ";":
             break
     if absolute:
-        return xr, yr, zr
-    return xr + x, yr + y, zr + z
+        return xr, yr, zr, z_rot
+    return xr + x, yr + y, zr + z, z_rot
 
 
 def parseRotation(args):
-    x, _, z = parseArgs(args, 0, 0, 0)
+    x, _, z, _ = parseArgs(args, 0, 0, 0)
     return Rotation(-x, -z)
 
 
@@ -70,24 +75,35 @@ def parseGCode(lines):
                 break
         else:
             args = line.split(" ")
-            if args[0] == "G0": # move to
+            if args[0] == "G0": # move to (or rotate)
                 if len(path) > 1:  # finish path and start new
                     layer.append(path)
-                x, y, z = parseArgs(args[1:], x, y, z, abs_pos)
+                x, y, z, z_rot = parseArgs(args[1:], x, y, z, abs_pos)
                 path = [[x, y, z]]
+                if z_rot is not None:
+                    finishLayer()
+                    rotations.append(Rotation(rotations[-1].x_rot, z_rot))
             elif args[0] == "G1": # draw to
-                x, y, z = parseArgs(args[1:], x, y, z, abs_pos)
+                x, y, z, _ = parseArgs(args[1:], x, y, z, abs_pos)
                 path.append([x, y, z])
             elif args[0] == "G62": # rotate plate
                 finishLayer()  # rotation could not be inside the layer
                 rotations.append(parseRotation(args[1:]))
-            elif args[0] == "G90": # absolute positioining
+            elif args[0] == "M43":  # incline X
+                finishLayer()  # rotation could not be inside the layer
+                rotations.append(Rotation(-InclineXValue , rotations[-1].z_rot))
+            elif args[0] == "M42":  # incline X BACK
+                finishLayer()  # rotation could not be inside the layer
+                rotations.append(Rotation(0, rotations[-1].z_rot))
+            elif args[0] == "G90": # absolute positioning
                 abs_pos = True
-            elif args[0] == "G91": # relative positioining
+            elif args[0] == "G91": # relative positioning
                 abs_pos = False
             else:
                 pass  # skip
 
     finishLayer()  # not forget about last layer
 
+    layers.append(layer) # add dummy layer for back rotations
+    lays2rots.append(len(rotations) - 1)
     return layers, rotations, lays2rots
