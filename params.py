@@ -3,19 +3,20 @@ import vtk
 Lang = "en"
 Debug = True
 
-
 colors = vtk.vtkNamedColors()
 LastLayerColor = colors.GetColor3d("Red")
 LayerColor = colors.GetColor3d("White")
 BackgroundColor = colors.GetColor3d("SlateGray")
 PlaneColor = colors.GetColor3d("Cyan")
 
+PlaneCenter = (0, 0, 0)
 PlaneXSize = 200
 PlaneYSize = 200
 PlaneDiameter = 250
 
 SliceCommand = "./goosli --stl={stl} --gcode={gcode} --thickness={thickness} " \
                "--originx={originx} --originy={originy} --originz={originz} " \
+               "--planecx={planecx} --planecy={planecy} --planecz={planecz} " \
                "--wall_thickness={wall_thickness} --fill_density={fill_density} --bed_temperature={bed_temperature} " \
                "--extruder_temperature={extruder_temperature} --print_speed={print_speed} --nozzle={nozzle} " \
                "--slicing_type={slicing_type}"

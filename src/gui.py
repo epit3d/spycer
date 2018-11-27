@@ -376,6 +376,9 @@ class Gui(QWidget):
             "originx": self.stlTranslation[0],
             "originy": self.stlTranslation[1],
             "originz": self.stlTranslation[2],
+            "planecx": params.PlaneCenter[0],
+            "planecy": params.PlaneCenter[1],
+            "planecz": params.PlaneCenter[2],
 
             "thickness": self.thickness_value.text(),
             "wall_thickness": self.wallThickness_value.text(),

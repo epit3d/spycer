@@ -15,9 +15,10 @@ def createPlaneActor():
     # small indent from object plane, render problems, 200x200 plane
     xsize = params.PlaneXSize
     ysize = params.PlaneYSize
-    planeSource.SetOrigin(- xsize / 2, - ysize / 2, - 0.1)
-    planeSource.SetPoint1(+ xsize / 2, - ysize / 2, - 0.1)
-    planeSource.SetPoint2(- xsize / 2, + ysize / 2, - 0.1)
+    center = params.PlaneCenter
+    planeSource.SetOrigin(center[0] - xsize / 2, center[1]- ysize / 2, center[2]- 0.1)
+    planeSource.SetPoint1(center[0]+ xsize / 2, center[1]- ysize / 2,center[2] - 0.1)
+    planeSource.SetPoint2(center[0]- xsize / 2, center[1]+ ysize / 2,center[2] - 0.1)
     planeSource.Update()
     planeActor = build_actor(planeSource)
     planeActor.GetProperty().SetColor(params.PlaneColor)
@@ -26,12 +27,13 @@ def createPlaneActor():
 def createPlaneActor2():
     xsize = params.PlaneXSize
     ysize = params.PlaneYSize
+    center = params.PlaneCenter
 
     points = vtk.vtkPoints()
-    points.InsertNextPoint((-xsize/2, -ysize/2, -0.1))
-    points.InsertNextPoint((+xsize/2, -ysize/2, -0.1))
-    points.InsertNextPoint((+xsize/2, +ysize/2, -0.1))
-    points.InsertNextPoint((-xsize / 2, +ysize / 2, -0.1))
+    points.InsertNextPoint((center[0]-xsize/2, center[1]-ysize/2, center[2]-0.1))
+    points.InsertNextPoint((center[0]+xsize/2, center[1]-ysize/2,center[2] -0.1))
+    points.InsertNextPoint((center[0]+xsize/2, center[1]+ysize/2,center[2] -0.1))
+    points.InsertNextPoint((center[0]-xsize / 2,center[1] +ysize / 2, center[2]-0.1))
 
     triangle = vtk.vtkTriangle()
     triangle.GetPointIds().SetId(0, 0)
@@ -67,7 +69,7 @@ def createPlaneActorCircle():
     cylinder.SetResolution(50)
     cylinder.SetRadius(params.PlaneDiameter/2)
     cylinder.SetHeight(0.1)
-    cylinder.SetCenter(0,0,-0.1)
+    cylinder.SetCenter(params.PlaneCenter[0],params.PlaneCenter[2]-0.1,params.PlaneCenter[1]) # WHAT? vtk :(
     mapper = vtk.vtkPolyDataMapper()
     mapper.SetInputConnection(cylinder.GetOutputPort())
     actor = vtk.vtkActor()
@@ -100,8 +102,9 @@ def createStlActor(filename):
 def createStlActorInOrigin(filename):
     actor, reader  = createStlActor(filename)
     origin = findStlOrigin(reader.GetOutput())
+    center = params.PlaneCenter
     transform = vtk.vtkTransform()
-    transform.Translate(-origin[0], -origin[1], -origin[2])
+    transform.Translate(-origin[0]+center[0], -origin[1]+center[1], -origin[2]+center[2])
     actor.SetUserTransform(transform)
     return actor, origin
 
