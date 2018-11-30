@@ -11,7 +11,7 @@ PlaneColor = colors.GetColor3d("Cyan")
 
 InclineXValue = 60
 
-PlaneCenter = (0, 0, 0)
+PlaneCenter = (0, 0, -50)
 PlaneXSize = 200
 PlaneYSize = 200
 PlaneDiameter = 250
