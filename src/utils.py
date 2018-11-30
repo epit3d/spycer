@@ -102,9 +102,9 @@ def createStlActor(filename):
 def createStlActorInOrigin(filename):
     actor, reader  = createStlActor(filename)
     origin = findStlOrigin(reader.GetOutput())
-    center = params.PlaneCenter
+    c = params.PlaneCenter
     transform = vtk.vtkTransform()
-    transform.Translate(-origin[0]+center[0], -origin[1]+center[1], -origin[2]+center[2])
+    transform.Translate(-origin[0]+c[0], -origin[1]+c[1], -origin[2]+c[2])
     actor.SetUserTransform(transform)
     return actor, origin
 

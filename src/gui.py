@@ -1,5 +1,4 @@
 import os
-import shlex
 import subprocess
 from pathlib import Path
 from shutil import copy2
@@ -92,7 +91,7 @@ class Gui(QWidget):
 
         loadModel1_button = QPushButton("Open out_home.gcode")  # TODO: remove me
         loadModel1_button.clicked.connect(lambda: self.loadGCode("/home/l1va/out_home.gcode", False))
-        #grid.addWidget(loadModel1_button, 12, 1, 1, 2)
+        # grid.addWidget(loadModel1_button, 12, 1, 1, 2)
 
         self.xPosition_value = QLineEdit("0")
         grid.addWidget(self.xPosition_value, 13, 1)
@@ -245,7 +244,8 @@ class Gui(QWidget):
                                float(self.zPosition_value.text())]
         print(self.stlTranslation)
         transform = vtk.vtkTransform()
-        transform.Translate(self.stlTranslation[0], self.stlTranslation[1], self.stlTranslation[2])
+        c = params.PlaneCenter
+        transform.Translate(-self.stlTranslation[0] + c[0], -self.stlTranslation[1] + c[1], -self.stlTranslation[2] + c[2])
         self.stlActor.SetUserTransform(transform)
         self.reloadScene()
 
@@ -295,7 +295,7 @@ class Gui(QWidget):
             "triangles": params.SimplifyTriangles,
         }
         cmd = params.SimplifyStlCommand.format(**values)
-        subprocess.check_output(shlex.split(cmd))
+        subprocess.check_output(str.split(cmd))
         self.loadSTL(params.OutputSimplifiedStl)
 
     def cutStl(self):
@@ -311,7 +311,7 @@ class Gui(QWidget):
             "normalk": params.CutNormalK,
         }
         cmd = params.CutStlCommand.format(**values)
-        subprocess.check_output(shlex.split(cmd))
+        subprocess.check_output(str.split(cmd))
         self.clearScene()
         self.render.AddActor(self.planeActor)
         actor1, _ = utils.createStlActor(params.OutputCutStl1)
@@ -391,7 +391,7 @@ class Gui(QWidget):
         }
         cmd = params.SliceCommand.format(**values)
         print(cmd)
-        subprocess.check_output(shlex.split(cmd))
+        subprocess.check_output(str.split(cmd))
         self.stlActor.VisibilityOff()
         self.loadGCode(params.OutputGCode, True)
 
@@ -437,7 +437,7 @@ class Gui(QWidget):
             print("Error during file saving:", e)
 
     def debugMe(self):
-        debug.readFile(self.render, "/home/l1va/debug.txt",  4)
+        debug.readFile(self.render, "/home/l1va/debug.txt", 4)
         # debug.readFile(self.render, "/home/l1va/debug_simplified.txt", "Red", 3)
         self.reloadScene()
 
