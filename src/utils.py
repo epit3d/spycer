@@ -108,7 +108,7 @@ def createStlActorInOriginWithColorize(filename):
     # origin = findStlOrigin(output)
     # print(origin)
     # return actor, (0,0,0)
-    return createStlActorInOrigin(filename , colorize=True)
+    return createStlActorInOrigin(filename, colorize=True)
 
 
 def createStlActorInOrigin(filename, colorize=False):
@@ -116,7 +116,6 @@ def createStlActorInOrigin(filename, colorize=False):
     output = reader.GetOutput()
 
     if colorize:
-        print("yes")
         actor = colorizeSTL(output)
 
     origin = findStlOrigin(output)
@@ -178,74 +177,44 @@ def colorizeSTL(output):
     polys = output.GetPolys()
     allpoints = output.GetPoints()
 
-    size = polys.GetSize()
-    triangles = vtk.vtkCellArray()
-    triangles2 = vtk.vtkCellArray()
-    points = vtk.vtkPoints()
-    points2 = vtk.vtkPoints()
-
     tocolor = []
-    with open(params.InColorFile, "rb") as f:
+    with open(params.InputToColorizeFile, "rb") as f:
         content = f.read()
         for b in content:
-            if b==1:
+            if b == 1:
                 tocolor.append(True)
             else:
                 tocolor.append(False)
 
-    a, b = 0, 0
-    for i in range(size):  # TODO: refactor me
+    triangles = vtk.vtkCellArray()
+    triangles2 = vtk.vtkCellArray()
+    for i in range(polys.GetSize()):
         idList = vtk.vtkIdList()
         polys.GetNextCell(idList)
         num = idList.GetNumberOfIds()
         if num != 3:
             break
 
-        id0 = idList.GetId(0)
-        id1 = idList.GetId(1)
-        id2 = idList.GetId(2)
-
-        p0 = allpoints.GetPoint(id0)
-        p1 = allpoints.GetPoint(id1)
-        p2 = allpoints.GetPoint(id2)
+        triangle = vtk.vtkTriangle()
+        triangle.GetPointIds().SetId(0, idList.GetId(0))
+        triangle.GetPointIds().SetId(1, idList.GetId(1))
+        triangle.GetPointIds().SetId(2, idList.GetId(2))
 
         if tocolor[i]:
-            triangle = vtk.vtkTriangle()
-            triangle.GetPointIds().SetId(0, a)
-            triangle.GetPointIds().SetId(1, a + 1)
-            triangle.GetPointIds().SetId(2, a + 2)
             triangles.InsertNextCell(triangle)
-
-            points.InsertNextPoint(p0)
-            points.InsertNextPoint(p1)
-            points.InsertNextPoint(p2)
-
-            a += 3
-
         else:
-            triangle = vtk.vtkTriangle()
-            triangle.GetPointIds().SetId(0, b)
-            triangle.GetPointIds().SetId(1, b + 1)
-            triangle.GetPointIds().SetId(2, b + 2)
             triangles2.InsertNextCell(triangle)
 
-            points2.InsertNextPoint(p0)
-            points2.InsertNextPoint(p1)
-            points2.InsertNextPoint(p2)
-
-            b += 3
-
     trianglePolyData = vtk.vtkPolyData()
-    trianglePolyData.SetPoints(points)
+    trianglePolyData.SetPoints(allpoints)
     trianglePolyData.SetPolys(triangles)
     trianglePolyData2 = vtk.vtkPolyData()
-    trianglePolyData2.SetPoints(points2)
+    trianglePolyData2.SetPoints(allpoints)
     trianglePolyData2.SetPolys(triangles2)
 
     actor = build_actor(trianglePolyData, True)
-    actor.GetProperty().SetColor(0.86, 0.08, 0.04)
+    actor.GetProperty().SetColor(params.ColorizeColor)
     actor2 = build_actor(trianglePolyData2, True)
-    #actor2.GetProperty().SetColor(0.86, 0.78, 0.24)
 
     assembly = vtk.vtkAssembly()
     assembly.AddPart(actor)

@@ -403,6 +403,9 @@ class Gui(QWidget):
         self.stlActor.VisibilityOff()
         self.loadGCode(params.OutputGCode, True)
 
+    def colorizeModel(self): #TODO: call backend to calculate
+        self.loadSTL(self.openedStl, method=utils.createStlActorInOriginWithColorize)
+
     def clearScene(self):
         self.render.RemoveAllViewProps()
 
@@ -437,9 +440,6 @@ class Gui(QWidget):
         except IOError as e:
             print("Error during file opening:", e)
 
-    def colorizeModel(self):
-        print(self.openedStl)
-        self.loadSTL(self.openedStl, method=utils.createStlActorInOriginWithColorize)
 
     def saveGCodeFile(self):
         try:

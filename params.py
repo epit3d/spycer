@@ -41,4 +41,5 @@ CutNormalJ = 0
 CutNormalK = 1
 Cut2Move = (20, 0, 0)
 
-InColorFile = "colorize_triangles.txt"
+InputToColorizeFile = "colorize_triangles.txt"
+ColorizeColor = colors.GetColor3d("Red")
