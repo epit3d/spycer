@@ -40,3 +40,5 @@ CutNormalI = -1
 CutNormalJ = 0
 CutNormalK = 1
 Cut2Move = (20, 0, 0)
+
+InColorFile = "colorize_triangles.txt"

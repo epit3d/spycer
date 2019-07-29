@@ -12,6 +12,7 @@ class Locale:
     ShowStl = "Show stl"
     LayersCount = "Layers count:"
     OpenModel = "Open model"
+    ColorModel = "Color triangles"
     MoveModel = "Move model"
     Slice3Axes = "Standard 3a slicing"
     Slice5AxesByProfile = "5Axes slicing by profile"
@@ -39,6 +40,7 @@ dicts = {
         ShowStl='Отображение STL модели',
         LayersCount='Отображаемые слои:',
         OpenModel='Открыть модель',
+        ColorModel='Подкрасить треугольники',
         MoveModel='Подвинуть модель',
         Slice='Нарезать на слои',
         Slice3Axes="Стандартная нарезка(3о)",

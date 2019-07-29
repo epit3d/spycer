@@ -20,7 +20,7 @@ sudo apt-get install python-pyvtk
 ```
 1) Build [goosli](https://github.com/l1va/goosli) binaries
 2) Put them with 'data' directory to spycer and update pathes in params.py
-3) Just run `python main.py`
+3) Just run `python3 main.py`
 
 ##### Windows (tested on Windows 10)
 [Installation details](https://l1va.ru/en/pyqt_and_pyvtk_on_windows/)

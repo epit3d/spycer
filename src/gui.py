@@ -105,7 +105,11 @@ class Gui(QWidget):
 
         loadModel_button = QPushButton(self.locale.OpenModel)
         loadModel_button.clicked.connect(self.openFile)
-        grid.addWidget(loadModel_button, 15, 1, 1, 2)
+        grid.addWidget(loadModel_button, 15, 1, 1, 1)
+
+        colorModel_button = QPushButton(self.locale.ColorModel)
+        colorModel_button.clicked.connect(self.colorizeModel)
+        grid.addWidget(colorModel_button, 15, 2, 1, 1)
 
         self.slice3a_button = QPushButton(self.locale.Slice3Axes)
         self.slice3a_button.clicked.connect(lambda: self.sliceSTL("3axes"))
@@ -152,6 +156,9 @@ class Gui(QWidget):
         self.setLayout(grid)
         self.stateNothing()
         self.render.ResetCamera()
+
+        #self.openedStl = "/home/l1va/Downloads/bunny.stl"
+        #self.colorizeModel()
 
     def changePlane(self):
         self.curPlane = (self.curPlane + 1) % len(self.planes)
@@ -245,7 +252,8 @@ class Gui(QWidget):
         print(self.stlTranslation)
         transform = vtk.vtkTransform()
         c = params.PlaneCenter
-        transform.Translate(-self.stlTranslation[0] + c[0], -self.stlTranslation[1] + c[1], -self.stlTranslation[2] + c[2])
+        transform.Translate(-self.stlTranslation[0] + c[0], -self.stlTranslation[1] + c[1],
+                            -self.stlTranslation[2] + c[2])
         self.stlActor.SetUserTransform(transform)
         self.reloadScene()
 
@@ -272,8 +280,8 @@ class Gui(QWidget):
         self.render.ResetCamera()
         self.reloadScene()
 
-    def loadSTL(self, filename):
-        self.stlActor, self.stlTranslation = utils.createStlActorInOrigin(filename)
+    def loadSTL(self, filename, method=utils.createStlActorInOrigin):
+        self.stlActor, self.stlTranslation = method(filename)
         print(self.stlTranslation)
         self.xPosition_value.setText(str(self.stlTranslation[0])[:10])
         self.yPosition_value.setText(str(self.stlTranslation[1])[:10])
@@ -415,7 +423,8 @@ class Gui(QWidget):
 
     def openFile(self):
         try:
-            filename = str(QFileDialog.getOpenFileName(None, self.locale.OpenModel, "/home")[0])  # TODO: fix path
+            filename = str(
+                QFileDialog.getOpenFileName(None, self.locale.OpenModel, "/home/l1va/Downloads")[0])  # TODO: fix path
             if filename != "":
                 fileExt = os.path.splitext(filename)[1].upper()
                 filename = str(Path(filename))
@@ -427,6 +436,10 @@ class Gui(QWidget):
                     print("This file format isn't supported:", fileExt)
         except IOError as e:
             print("Error during file opening:", e)
+
+    def colorizeModel(self):
+        print(self.openedStl)
+        self.loadSTL(self.openedStl, method=utils.createStlActorInOriginWithColorize)
 
     def saveGCodeFile(self):
         try:

@@ -16,13 +16,14 @@ def createPlaneActor():
     xsize = params.PlaneXSize
     ysize = params.PlaneYSize
     center = params.PlaneCenter
-    planeSource.SetOrigin(center[0] - xsize / 2, center[1]- ysize / 2, center[2]- 0.1)
-    planeSource.SetPoint1(center[0]+ xsize / 2, center[1]- ysize / 2,center[2] - 0.1)
-    planeSource.SetPoint2(center[0]- xsize / 2, center[1]+ ysize / 2,center[2] - 0.1)
+    planeSource.SetOrigin(center[0] - xsize / 2, center[1] - ysize / 2, center[2] - 0.1)
+    planeSource.SetPoint1(center[0] + xsize / 2, center[1] - ysize / 2, center[2] - 0.1)
+    planeSource.SetPoint2(center[0] - xsize / 2, center[1] + ysize / 2, center[2] - 0.1)
     planeSource.Update()
     planeActor = build_actor(planeSource)
     planeActor.GetProperty().SetColor(params.PlaneColor)
     return planeActor
+
 
 def createPlaneActor2():
     xsize = params.PlaneXSize
@@ -30,10 +31,10 @@ def createPlaneActor2():
     center = params.PlaneCenter
 
     points = vtk.vtkPoints()
-    points.InsertNextPoint((center[0]-xsize/2, center[1]-ysize/2, center[2]-0.1))
-    points.InsertNextPoint((center[0]+xsize/2, center[1]-ysize/2,center[2] -0.1))
-    points.InsertNextPoint((center[0]+xsize/2, center[1]+ysize/2,center[2] -0.1))
-    points.InsertNextPoint((center[0]-xsize / 2,center[1] +ysize / 2, center[2]-0.1))
+    points.InsertNextPoint((center[0] - xsize / 2, center[1] - ysize / 2, center[2] - 0.1))
+    points.InsertNextPoint((center[0] + xsize / 2, center[1] - ysize / 2, center[2] - 0.1))
+    points.InsertNextPoint((center[0] + xsize / 2, center[1] + ysize / 2, center[2] - 0.1))
+    points.InsertNextPoint((center[0] - xsize / 2, center[1] + ysize / 2, center[2] - 0.1))
 
     triangle = vtk.vtkTriangle()
     triangle.GetPointIds().SetId(0, 0)
@@ -42,7 +43,7 @@ def createPlaneActor2():
 
     triangle2 = vtk.vtkTriangle()
     triangle2.GetPointIds().SetId(0, 2)
-    triangle2.GetPointIds().SetId(1,3)
+    triangle2.GetPointIds().SetId(1, 3)
     triangle2.GetPointIds().SetId(2, 0)
 
     triangles = vtk.vtkCellArray()
@@ -64,12 +65,13 @@ def createPlaneActor2():
 
     return build_actor(trianglePolyData, True)
 
+
 def createPlaneActorCircle():
     cylinder = vtk.vtkCylinderSource()
     cylinder.SetResolution(50)
-    cylinder.SetRadius(params.PlaneDiameter/2)
+    cylinder.SetRadius(params.PlaneDiameter / 2)
     cylinder.SetHeight(0.1)
-    cylinder.SetCenter(params.PlaneCenter[0],params.PlaneCenter[2]-0.1,params.PlaneCenter[1]) # WHAT? vtk :(
+    cylinder.SetCenter(params.PlaneCenter[0], params.PlaneCenter[2] - 0.1, params.PlaneCenter[1])  # WHAT? vtk :(
     mapper = vtk.vtkPolyDataMapper()
     mapper.SetInputConnection(cylinder.GetOutputPort())
     actor = vtk.vtkActor()
@@ -77,7 +79,6 @@ def createPlaneActorCircle():
     actor.GetProperty().SetColor(params.PlaneColor)
     actor.RotateX(90)
     return actor
-
 
 
 def createAxes(interactor):
@@ -92,6 +93,7 @@ def createAxes(interactor):
     axesWidget.InteractiveOff()
     return axesWidget
 
+
 def createStlActor(filename):
     reader = vtk.vtkSTLReader()
     reader.SetFileName(filename)
@@ -99,12 +101,28 @@ def createStlActor(filename):
     return build_actor(reader), reader
 
 
-def createStlActorInOrigin(filename):
-    actor, reader  = createStlActor(filename)
-    origin = findStlOrigin(reader.GetOutput())
-    c = params.PlaneCenter
+def createStlActorInOriginWithColorize(filename):
+    # actor, reader = createStlActor(filename)
+    # output = reader.GetOutput()
+    # actor = colorizeSTL(output)
+    # origin = findStlOrigin(output)
+    # print(origin)
+    # return actor, (0,0,0)
+    return createStlActorInOrigin(filename , colorize=True)
+
+
+def createStlActorInOrigin(filename, colorize=False):
+    actor, reader = createStlActor(filename)
+    output = reader.GetOutput()
+
+    if colorize:
+        print("yes")
+        actor = colorizeSTL(output)
+
+    origin = findStlOrigin(output)
     transform = vtk.vtkTransform()
-    transform.Translate(-origin[0]+c[0], -origin[1]+c[1], -origin[2]+c[2])
+    c = params.PlaneCenter
+    transform.Translate(-origin[0] + c[0], -origin[1] + c[1], -origin[2] + c[2])
     actor.SetUserTransform(transform)
     return actor, origin
 
@@ -155,7 +173,88 @@ def wrapWithActors(blocks, rotations, lays2rots):
     actors[-1].GetProperty().SetColor(params.LastLayerColor)
     return actors
 
-def build_actor(source, as_is = False):
+
+def colorizeSTL(output):
+    polys = output.GetPolys()
+    allpoints = output.GetPoints()
+
+    size = polys.GetSize()
+    triangles = vtk.vtkCellArray()
+    triangles2 = vtk.vtkCellArray()
+    points = vtk.vtkPoints()
+    points2 = vtk.vtkPoints()
+
+    tocolor = []
+    with open(params.InColorFile, "rb") as f:
+        content = f.read()
+        for b in content:
+            if b==1:
+                tocolor.append(True)
+            else:
+                tocolor.append(False)
+
+    a, b = 0, 0
+    for i in range(size):  # TODO: refactor me
+        idList = vtk.vtkIdList()
+        polys.GetNextCell(idList)
+        num = idList.GetNumberOfIds()
+        if num != 3:
+            break
+
+        id0 = idList.GetId(0)
+        id1 = idList.GetId(1)
+        id2 = idList.GetId(2)
+
+        p0 = allpoints.GetPoint(id0)
+        p1 = allpoints.GetPoint(id1)
+        p2 = allpoints.GetPoint(id2)
+
+        if tocolor[i]:
+            triangle = vtk.vtkTriangle()
+            triangle.GetPointIds().SetId(0, a)
+            triangle.GetPointIds().SetId(1, a + 1)
+            triangle.GetPointIds().SetId(2, a + 2)
+            triangles.InsertNextCell(triangle)
+
+            points.InsertNextPoint(p0)
+            points.InsertNextPoint(p1)
+            points.InsertNextPoint(p2)
+
+            a += 3
+
+        else:
+            triangle = vtk.vtkTriangle()
+            triangle.GetPointIds().SetId(0, b)
+            triangle.GetPointIds().SetId(1, b + 1)
+            triangle.GetPointIds().SetId(2, b + 2)
+            triangles2.InsertNextCell(triangle)
+
+            points2.InsertNextPoint(p0)
+            points2.InsertNextPoint(p1)
+            points2.InsertNextPoint(p2)
+
+            b += 3
+
+    trianglePolyData = vtk.vtkPolyData()
+    trianglePolyData.SetPoints(points)
+    trianglePolyData.SetPolys(triangles)
+    trianglePolyData2 = vtk.vtkPolyData()
+    trianglePolyData2.SetPoints(points2)
+    trianglePolyData2.SetPolys(triangles2)
+
+    actor = build_actor(trianglePolyData, True)
+    actor.GetProperty().SetColor(0.86, 0.08, 0.04)
+    actor2 = build_actor(trianglePolyData2, True)
+    #actor2.GetProperty().SetColor(0.86, 0.78, 0.24)
+
+    assembly = vtk.vtkAssembly()
+    assembly.AddPart(actor)
+    assembly.AddPart(actor2)
+
+    return assembly
+
+
+def build_actor(source, as_is=False):
     mapper = vtk.vtkPolyDataMapper()
     if as_is:
         mapper.SetInputData(source)
