@@ -107,9 +107,9 @@ class Gui(QWidget):
         loadModel_button.clicked.connect(self.openFile)
         grid.addWidget(loadModel_button, 15, 1, 1, 1)
 
-        colorModel_button = QPushButton(self.locale.ColorModel)
-        colorModel_button.clicked.connect(self.colorizeModel)
-        grid.addWidget(colorModel_button, 15, 2, 1, 1)
+        self.colorModel_button = QPushButton(self.locale.ColorModel)
+        self.colorModel_button.clicked.connect(self.colorizeModel)
+        grid.addWidget(self.colorModel_button, 15, 2, 1, 1)
 
         self.slice3a_button = QPushButton(self.locale.Slice3Axes)
         self.slice3a_button.clicked.connect(lambda: self.sliceSTL("3axes"))
@@ -179,6 +179,7 @@ class Gui(QWidget):
         self.pictureSlider.setSliderPosition(0)
         self.move_button.setEnabled(False)
         self.slice3a_button.setEnabled(False)
+        self.colorModel_button.setEnabled(False)
         # self.slice5aProfile_button.setEnabled(False)
         # self.slice5a_button.setEnabled(False)
         self.sliceVip_button.setEnabled(False)
@@ -199,6 +200,7 @@ class Gui(QWidget):
         self.pictureSlider.setSliderPosition(layers_count)
         self.move_button.setEnabled(False)
         self.slice3a_button.setEnabled(False)
+        self.colorModel_button.setEnabled(False)
         # self.slice5aProfile_button.setEnabled(False)
         # self.slice5a_button.setEnabled(False)
         self.sliceVip_button.setEnabled(False)
@@ -218,6 +220,7 @@ class Gui(QWidget):
         self.pictureSlider.setSliderPosition(0)
         self.move_button.setEnabled(True)
         self.slice3a_button.setEnabled(True)
+        self.colorModel_button.setEnabled(True)
         # self.slice5aProfile_button.setEnabled(True)
         # self.slice5a_button.setEnabled(True)
         self.sliceVip_button.setEnabled(True)
@@ -238,6 +241,7 @@ class Gui(QWidget):
         self.pictureSlider.setSliderPosition(layers_count)
         self.move_button.setEnabled(True)
         self.slice3a_button.setEnabled(True)
+        self.colorModel_button.setEnabled(True)
         # self.slice5aProfile_button.setEnabled(True)
         # self.slice5a_button.setEnabled(True)
         self.sliceVip_button.setEnabled(True)
@@ -403,7 +407,14 @@ class Gui(QWidget):
         self.stlActor.VisibilityOff()
         self.loadGCode(params.OutputGCode, True)
 
-    def colorizeModel(self): #TODO: call backend to calculate
+    def colorizeModel(self):
+        values = {
+            "stl": format_path(self.openedStl),
+            "out": params.ColorizeResult,
+            "angle": params.ColorizeAngle,
+        }
+        cmd = params.ColorizeStlCommand.format(**values)
+        subprocess.check_output(str.split(cmd))
         self.loadSTL(self.openedStl, method=utils.createStlActorInOriginWithColorize)
 
     def clearScene(self):

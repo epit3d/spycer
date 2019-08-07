@@ -24,6 +24,11 @@ SliceCommand = "./goosli --stl={stl} --gcode={gcode} --thickness={thickness} " \
                "--slicing_type={slicing_type}"
 OutputGCode = "goosli_out.gcode"
 
+ColorizeStlCommand = "./goosli_colorizer --stl={stl} --out={out} --angle={angle}"
+ColorizeAngle = "60"
+ColorizeResult = "colorize_triangles.txt"
+ColorizeColor = colors.GetColor3d("Red")
+
 SimplifyStlCommand = "./goosli_simplifier --stl={stl} --out={out} --triangles={triangles}"
 OutputSimplifiedStl = "goosli_simplified.stl"
 SimplifyTriangles = "500"
@@ -41,5 +46,4 @@ CutNormalJ = 0
 CutNormalK = 1
 Cut2Move = (20, 0, 0)
 
-InputToColorizeFile = "colorize_triangles.txt"
-ColorizeColor = colors.GetColor3d("Red")
+

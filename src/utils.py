@@ -178,7 +178,7 @@ def colorizeSTL(output):
     allpoints = output.GetPoints()
 
     tocolor = []
-    with open(params.InputToColorizeFile, "rb") as f:
+    with open(params.ColorizeResult, "rb") as f:
         content = f.read()
         for b in content:
             if b == 1:
