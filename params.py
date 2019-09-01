@@ -43,7 +43,7 @@ CutPointY = 0
 CutPointZ = 30
 CutNormalI = -1
 CutNormalJ = 0
-CutNormalK = 1
+CutNormalK = 0
 Cut2Move = (20, 0, 0)
 
 

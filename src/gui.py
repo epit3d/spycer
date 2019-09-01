@@ -157,8 +157,8 @@ class Gui(QWidget):
         self.stateNothing()
         self.render.ResetCamera()
 
-        #self.openedStl = "/home/l1va/Downloads/bunny.stl"
-        #self.colorizeModel()
+        # self.openedStl = "/home/l1va/Downloads/bunny.stl"
+        # self.colorizeModel()
 
     def changePlane(self):
         self.curPlane = (self.curPlane + 1) % len(self.planes)
@@ -451,11 +451,12 @@ class Gui(QWidget):
         except IOError as e:
             print("Error during file opening:", e)
 
-
     def saveGCodeFile(self):
         try:
-            name = str(QFileDialog.getSaveFileName(None, self.locale.SaveGCode)[0])
+            name = str(QFileDialog.getSaveFileName(None, self.locale.SaveGCode, "", "Gcode (*.gcode)")[0])
             if name != "":
+                if not name.endswith(".gcode"):
+                    name += ".gcode"
                 copy2(self.openedGCode, name)
         except IOError as e:
             print("Error during file saving:", e)
