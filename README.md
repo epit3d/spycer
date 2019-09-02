@@ -23,7 +23,10 @@ sudo apt-get install python-pyvtk
 3) Just run `python3 main.py`
 
 ##### Windows (tested on Windows 10)
-[Installation details](https://l1va.ru/en/pyqt_and_pyvtk_on_windows/)
+~~Installation details (https://l1va.ru/en/pyqt_and_pyvtk_on_windows/)~~
+
+Alternate way found: `pip install pyqt5 vtk pyvtk`
+Tested on Windows 10, Visual studio 2019, python 3.7 x64
 
 
 ### Result
