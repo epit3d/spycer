@@ -160,9 +160,9 @@ class Gui(QWidget):
             debug_button.clicked.connect(self.debugMe)
             grid.addWidget(debug_button, 20, 2, 1, 1)
 
-        self.planes = [utils.createPlaneActor(), utils.createPlaneActor2(), utils.createPlaneActorCircle()]
+        self.bedPlanes = [utils.createPlaneActor(), utils.createPlaneActor2(), utils.createPlaneActorCircle()]
         self.curPlane = 2
-        self.planeActor = self.planes[self.curPlane]
+        self.planeActor = self.bedPlanes[self.curPlane]
         self.planeTransform = vtk.vtkTransform()
         self.render.AddActor(self.planeActor)
 
@@ -218,7 +218,7 @@ class Gui(QWidget):
         self.applyPlane_button.clicked.connect(self.applyPlaneChange)
         tab2grid.addWidget(self.applyPlane_button, 10, 1)
 
-        # self.tabs.setTabEnabled(1, False)
+        self.tabs.setTabEnabled(1, False)
 
         self.setLayout(tabs_layout)
         self.stateNothing()
@@ -227,8 +227,8 @@ class Gui(QWidget):
         self.planes = []
         self.planesActors = []
 
-        self.openedStl = "/home/l1va/Downloads/1_odn2.stl"  # TODO: removeme
-        self.loadSTL(self.openedStl)
+        #self.openedStl = "/home/l1va/Downloads/1_odn2.stl"  # TODO: removeme
+        #self.loadSTL(self.openedStl)
         # self.colorizeModel()
 
     def applyPlaneChange(self):
@@ -286,9 +286,9 @@ class Gui(QWidget):
         self.reloadScene()
 
     def changePlane(self):
-        self.curPlane = (self.curPlane + 1) % len(self.planes)
+        self.curPlane = (self.curPlane + 1) % len(self.bedPlanes)
         self.render.RemoveActor(self.planeActor)
-        self.planeActor = self.planes[self.curPlane]
+        self.planeActor = self.bedPlanes[self.curPlane]
         self.planeActor.SetUserTransform(self.planeTransform)
         self.render.AddActor(self.planeActor)
         self.reloadScene()
