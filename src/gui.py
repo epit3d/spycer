@@ -5,7 +5,8 @@ from shutil import copy2
 
 import vtk
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import (QWidget, QLabel, QLineEdit, QGridLayout, QSlider, QCheckBox, QPushButton, QFileDialog)
+from PyQt5.QtWidgets import (QWidget, QLabel, QTabWidget, QLineEdit, QComboBox, QGridLayout, QSlider, QCheckBox,
+                             QPushButton, QFileDialog)
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
 import params
@@ -26,6 +27,12 @@ class Gui(QWidget):
         grid.setSpacing(5)
         grid.setColumnStretch(0, 2)
 
+        self.tabs = QTabWidget()
+        tab1 = QWidget()  # TODO: make beautiful structure
+        tab1.layout = grid
+
+        tabs_layout = QGridLayout()
+
         widget3d = QVTKRenderWindowInteractor()
         widget3d.Initialize()
         widget3d.Start()
@@ -35,7 +42,9 @@ class Gui(QWidget):
         self.interactor = widget3d.GetRenderWindow().GetInteractor()
         self.interactor.GetInteractorStyle().SetCurrentStyleToTrackballCamera()
         self.axesWidget = utils.createAxes(self.interactor)
-        grid.addWidget(widget3d, 1, 0, 20, 1)
+        tabs_layout.addWidget(widget3d, 1, 0, 20, 1)
+
+        tabs_layout.addWidget(self.tabs, 1, 3, 20, 3)
 
         self.locale = locales.getLocale()
         thickness_label = QLabel(self.locale.Thickness)
@@ -107,10 +116,6 @@ class Gui(QWidget):
         loadModel_button.clicked.connect(self.openFile)
         grid.addWidget(loadModel_button, 15, 1, 1, 1)
 
-        self.colorModel_button = QPushButton(self.locale.ColorModel)
-        self.colorModel_button.clicked.connect(self.colorizeModel)
-        grid.addWidget(self.colorModel_button, 15, 2, 1, 1)
-
         self.slice3a_button = QPushButton(self.locale.Slice3Axes)
         self.slice3a_button.clicked.connect(lambda: self.sliceSTL("3axes"))
         grid.addWidget(self.slice3a_button, 16, 1, 1, 1)
@@ -131,13 +136,20 @@ class Gui(QWidget):
         self.saveGCode_button.clicked.connect(self.saveGCodeFile)
         grid.addWidget(self.saveGCode_button, 17, 1, 1, 2)
 
+        self.colorizeAngle_value = QLineEdit("30")
+        grid.addWidget(self.colorizeAngle_value, 18, 1)
+
+        self.colorModel_button = QPushButton(self.locale.ColorModel)
+        self.colorModel_button.clicked.connect(self.colorizeModel)
+        grid.addWidget(self.colorModel_button, 18, 2, 1, 1)
+
         self.simplifyStl_button = QPushButton(self.locale.SimplifyStl)
         self.simplifyStl_button.clicked.connect(self.simplifyStl)
-        grid.addWidget(self.simplifyStl_button, 18, 1, 1, 2)
+        grid.addWidget(self.simplifyStl_button, 19, 1, 1, 1)
 
         self.cutStl_button = QPushButton(self.locale.CutStl)
         self.cutStl_button.clicked.connect(self.cutStl)
-        grid.addWidget(self.cutStl_button, 19, 1, 1, 2)
+        grid.addWidget(self.cutStl_button, 19, 2, 1, 1)
 
         self.changePlane_button = QPushButton(self.locale.ChangePlane)
         self.changePlane_button.clicked.connect(self.changePlane)
@@ -153,12 +165,125 @@ class Gui(QWidget):
         self.planeActor = self.planes[self.curPlane]
         self.planeTransform = vtk.vtkTransform()
         self.render.AddActor(self.planeActor)
-        self.setLayout(grid)
+
+        tab1.setLayout(grid)
+
+        tab2 = QWidget()
+        tab2grid = QGridLayout()
+        tab2grid.setSpacing(5)
+        tab2grid.setColumnStretch(0, 1)
+        tab2.setLayout(tab2grid)
+
+        self.tabs.addTab(tab1, "Настройки")  # TODO:  rename carefuly
+        self.tabs.addTab(tab2, "Плоскости")
+
+        self.addPlane_button = QPushButton("Добавить")
+        self.addPlane_button.clicked.connect(self.addPlane)
+        tab2grid.addWidget(self.addPlane_button, 1, 0)
+
+        comboW = QWidget()
+        self.combo = QComboBox(comboW)
+        self.combo.currentIndexChanged.connect(self.changeComboSelect)
+        tab2grid.addWidget(comboW, 2, 0)
+
+        self.removePlane_button = QPushButton("Удалить")
+        self.removePlane_button.clicked.connect(self.removePlane)
+        tab2grid.addWidget(self.removePlane_button, 1, 1)
+
+        self.tilted_checkbox = QCheckBox(self.locale.Tilted)
+        tab2grid.addWidget(self.tilted_checkbox, 5, 0)
+
+        rotated_label = QLabel("Повёрнута:")  # TODO: to locales
+        tab2grid.addWidget(rotated_label, 6, 0)
+        self.rotated_value = QLineEdit("31.0245")
+        tab2grid.addWidget(self.rotated_value, 6, 1)
+
+        x_label = QLabel("X:")  # TODO: to locales
+        tab2grid.addWidget(x_label, 7, 0)
+        self.x_value = QLineEdit("3.0951")
+        tab2grid.addWidget(self.x_value, 7, 1)
+
+        y_label = QLabel("Y:")  # TODO: to locales
+        tab2grid.addWidget(y_label, 8, 0)
+        self.y_value = QLineEdit("5.5910")
+        tab2grid.addWidget(self.y_value, 8, 1)
+
+        z_label = QLabel("Z:")  # TODO: to locales
+        tab2grid.addWidget(z_label, 9, 0)
+        self.z_value = QLineEdit("89.5414")
+        tab2grid.addWidget(self.z_value, 9, 1)
+
+
+        self.applyPlane_button = QPushButton("Применить") #TODO:
+        self.applyPlane_button.clicked.connect(self.applyPlaneChange)
+        tab2grid.addWidget(self.applyPlane_button, 10, 1)
+
+        # self.tabs.setTabEnabled(1, False)
+
+        self.setLayout(tabs_layout)
         self.stateNothing()
         self.render.ResetCamera()
 
-        # self.openedStl = "/home/l1va/Downloads/bunny.stl"
+        self.planes = []
+        self.planesActors = []
+
+        self.openedStl = "/home/l1va/Downloads/1_odn2.stl"  # TODO: removeme
+        self.loadSTL(self.openedStl)
         # self.colorizeModel()
+
+    def applyPlaneChange(self):
+        ind = self.combo.currentIndex()
+        center = [float(self.x_value.text()), float(self.y_value.text()),float(self.z_value.text())]
+        self.planes[ind] = gcode.Plane(self.tilted_checkbox.isChecked(), float(self.rotated_value.text()), center)
+        #self.loadPlanes()
+        self.drawPlanes()
+
+    def addPlane(self):
+        path = [self.planes[-1].x, self.planes[-1].y, self.planes[-1].z + 10]
+        self.planes.append(gcode.Plane(False, 0, path))
+        self.loadPlanes()
+
+    def removePlane(self):
+        ind = self.combo.currentIndex()
+        del self.planes[ind]
+        self.loadPlanes()
+
+    def changeComboSelect(self):
+        plane = self.planes[self.combo.currentIndex()]
+        self.tilted_checkbox.setChecked(plane.tilted)
+        self.rotated_value.setText(str(plane.rot))
+        self.x_value.setText(str(plane.x))
+        self.y_value.setText(str(plane.y))
+        self.z_value.setText(str(plane.z))
+
+    def loadPlanes(self):
+        if len(self.planes) == 0:
+            self.tabs.setTabEnabled(1, False)
+            return
+
+        self.tabs.setTabEnabled(1, True)
+
+        self.combo.clear()
+        for i in range(len(self.planes)):
+            self.combo.addItem("Плоскость " + str(i + 1))
+
+        self.changeComboSelect()
+
+        self.drawPlanes()
+
+    def drawPlanes(self): #TODO: optimize
+        for p in self.planesActors:
+            self.render.RemoveActor(p)
+        self.planesActors = []
+        for p in self.planes:
+            #rot = self.rotations[self.lays2rots[-1]]
+
+            act = utils.createPlaneActorCircleByCenterAndRot([p.x, p.y, p.z], -60 if p.tilted else 0, p.rot)
+            #act = utils.createPlaneActorCircleByCenterAndRot([p.x, p.y, p.z], 0,0)
+            self.planesActors.append(act)
+            self.render.AddActor(act)
+
+        self.reloadScene()
 
     def changePlane(self):
         self.curPlane = (self.curPlane + 1) % len(self.planes)
@@ -255,14 +380,13 @@ class Gui(QWidget):
                                float(self.zPosition_value.text())]
         print(self.stlTranslation)
         transform = vtk.vtkTransform()
-        c = params.PlaneCenter
-        transform.Translate(-self.stlTranslation[0] + c[0], -self.stlTranslation[1] + c[1],
-                            -self.stlTranslation[2] + c[2])
+        transform.Translate(-self.stlTranslation[0], -self.stlTranslation[1],
+                            -self.stlTranslation[2])
         self.stlActor.SetUserTransform(transform)
         self.reloadScene()
 
     def loadGCode(self, filename, addStl):
-        layers, self.rotations, self.lays2rots = gcode.readGCode(filename)
+        layers, self.rotations, self.lays2rots, self.planes = gcode.readGCode(filename)
         blocks = utils.makeBlocks(layers)
         self.actors = utils.wrapWithActors(blocks, self.rotations, self.lays2rots)
 
@@ -274,6 +398,8 @@ class Gui(QWidget):
         self.rotatePlane(self.rotations[-1])
         for actor in self.actors:
             self.render.AddActor(actor)
+
+        self.loadPlanes()
 
         if addStl:
             self.stateBoth(len(self.actors))
@@ -369,6 +495,8 @@ class Gui(QWidget):
                 self.actors[block].SetUserTransform(transform)
 
             self.rotatePlane(currRotation)
+            for i in range(len(self.planesActors)):
+                self.rotateAnyPlane(self.planesActors[i], self.planes[i], currRotation)
         self.currLayerNumber = newSliderValue
         self.reloadScene()
 
@@ -381,6 +509,20 @@ class Gui(QWidget):
         self.planeActor.SetUserTransform(transform)
         self.planeTransform = transform
 
+    def rotateAnyPlane(self, planeActor, plane, rotation):
+        transform = vtk.vtkTransform()
+        transform.PostMultiply()
+        transform.RotateX(-60 if plane.tilted else 0)
+        transform.PostMultiply()
+        transform.RotateZ(plane.rot)
+        transform.Translate(plane.x, plane.y, plane.z - 0.1)
+
+        transform.PostMultiply()
+        transform.RotateZ(rotation.z_rot)
+        transform.PostMultiply()
+        transform.RotateX(rotation.x_rot)
+        planeActor.SetUserTransform(transform)
+
     def sliceSTL(self, slicing_type):
         values = {
             "stl": format_path(self.openedStl),
@@ -388,9 +530,9 @@ class Gui(QWidget):
             "originx": self.stlTranslation[0],
             "originy": self.stlTranslation[1],
             "originz": self.stlTranslation[2],
-            "planecx": params.PlaneCenter[0],
-            "planecy": params.PlaneCenter[1],
-            "planecz": params.PlaneCenter[2],
+            "rotcx": params.RotationCenter[0],
+            "rotcy": params.RotationCenter[1],
+            "rotcz": params.RotationCenter[2],
 
             "thickness": self.thickness_value.text(),
             "wall_thickness": self.wallThickness_value.text(),
@@ -411,7 +553,7 @@ class Gui(QWidget):
         values = {
             "stl": format_path(self.openedStl),
             "out": params.ColorizeResult,
-            "angle": params.ColorizeAngle,
+            "angle": self.colorizeAngle_value.text(),
         }
         cmd = params.ColorizeStlCommand.format(**values)
         subprocess.check_output(str.split(cmd))

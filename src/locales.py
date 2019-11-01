@@ -23,6 +23,8 @@ class Locale:
     CutStl = "Cut Stl"
     ChangePlane = "Change plane"
 
+    Tilted = "Tilted"
+
     def __init__(self, **entries):
         self.__dict__.update(entries)
 
@@ -51,6 +53,8 @@ dicts = {
         SimplifyStl='Упростить модель',
         CutStl='Разрезать модель',
         ChangePlane='Сменить плоскость',
+
+        Tilted='Наклонена',
     ),
 }
 

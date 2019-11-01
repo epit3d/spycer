@@ -1,6 +1,6 @@
 import vtk
 
-Lang = "en"
+Lang = "ru"
 Debug = True
 
 colors = vtk.vtkNamedColors()
@@ -11,21 +11,21 @@ PlaneColor = colors.GetColor3d("Cyan")
 
 InclineXValue = 60
 
-PlaneCenter = (0, 0, -50)
+PlaneCenter = (0, 0, 0)
+RotationCenter = (0, 0, 50)
 PlaneXSize = 200
 PlaneYSize = 200
 PlaneDiameter = 250
 
 SliceCommand = "./goosli --stl={stl} --gcode={gcode} --thickness={thickness} " \
                "--originx={originx} --originy={originy} --originz={originz} " \
-               "--planecx={planecx} --planecy={planecy} --planecz={planecz} " \
+               "--rotcx={rotcx} --rotcy={rotcy} --rotcz={rotcz} " \
                "--wall_thickness={wall_thickness} --fill_density={fill_density} --bed_temperature={bed_temperature} " \
                "--extruder_temperature={extruder_temperature} --print_speed={print_speed} --nozzle={nozzle} " \
                "--slicing_type={slicing_type}"
 OutputGCode = "goosli_out.gcode"
 
 ColorizeStlCommand = "./goosli_colorizer --stl={stl} --out={out} --angle={angle}"
-ColorizeAngle = "60"
 ColorizeResult = "colorize_triangles.txt"
 ColorizeColor = colors.GetColor3d("Red")
 

@@ -9,8 +9,15 @@ class Rotation:
     def __str__(self):
         return " x:" + str(self.x_rot) + " z:" + str(self.z_rot)
 
+class Plane:
+    def __init__(self,  tilt, rot, point):
+        self.tilted = tilt
+        self.x = point[0]
+        self.y = point[1]
+        self.z = point[2]
+        self.rot = rot
 
-def parseArgs(args, x, y, z, absolute=True, pcz=0):
+def parseArgs(args, x, y, z, absolute=True):
     xr, yr, zr = 0, 0, 0
     z_rot = None
     if absolute:
@@ -24,7 +31,7 @@ def parseArgs(args, x, y, z, absolute=True, pcz=0):
         elif arg[0] == "Y":
             yr = float(arg[1:])
         elif arg[0] == "Z":
-            zr = float(arg[1:]) + pcz  # to move to plane by Z
+            zr = float(arg[1:])
         elif arg[0] == "A":
             z_rot = -float(arg[1:])
         elif arg[0] == ";":
@@ -51,6 +58,7 @@ def parseGCode(lines):
     layers = []
     rotations = []
     lays2rots = []
+    planes = []
 
     rotations.append(Rotation(0, 0))
     x, y, z = 0, 0, 0
@@ -79,13 +87,13 @@ def parseGCode(lines):
             if args[0] == "G0":  # move to (or rotate)
                 if len(path) > 1:  # finish path and start new
                     layer.append(path)
-                x, y, z, z_rot = parseArgs(args[1:], x, y, z, abs_pos, PlaneCenter[2])
+                x, y, z, z_rot = parseArgs(args[1:], x, y, z, abs_pos)
                 path = [[x, y, z]]
                 if z_rot is not None:
                     finishLayer()
                     rotations.append(Rotation(rotations[-1].x_rot, z_rot))
             elif args[0] == "G1":  # draw to
-                x, y, z, _ = parseArgs(args[1:], x, y, z, abs_pos, PlaneCenter[2])
+                x, y, z, _ = parseArgs(args[1:], x, y, z, abs_pos)
                 path.append([x, y, z])
             elif args[0] == "G62":  # rotate plate
                 finishLayer()  # rotation could not be inside the layer
@@ -93,9 +101,11 @@ def parseGCode(lines):
             elif args[0] == "M43":  # incline X
                 finishLayer()  # rotation could not be inside the layer
                 rotations.append(Rotation(-InclineXValue, rotations[-1].z_rot))
+                planes.append(Plane(True, rotations[-1].z_rot, path[0]))
             elif args[0] == "M42":  # incline X BACK
                 finishLayer()  # rotation could not be inside the layer
                 rotations.append(Rotation(0, rotations[-1].z_rot))
+                planes.append(Plane(False, rotations[-1].z_rot, path[0]))
             elif args[0] == "G90":  # absolute positioning
                 abs_pos = True
             elif args[0] == "G91":  # relative positioning
@@ -107,4 +117,4 @@ def parseGCode(lines):
 
     layers.append(layer)  # add dummy layer for back rotations
     lays2rots.append(len(rotations) - 1)
-    return layers, rotations, lays2rots
+    return layers, rotations, lays2rots, planes
