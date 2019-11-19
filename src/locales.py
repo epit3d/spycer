@@ -15,13 +15,8 @@ class Locale:
     ColorModel = "Color triangles"
     MoveModel = "Move model"
     Slice3Axes = "Standard 3a slicing"
-    Slice5AxesByProfile = "5Axes slicing by profile"
-    Slice5Axes = "5Axes slicing"
     SliceVip = "Vip slicing"
     SaveGCode = "Save GCode"
-    SimplifyStl = "Simplify Stl"
-    CutStl = "Cut Stl"
-    ChangePlane = "Change plane"
 
     Tilted = "Tilted"
 
@@ -46,13 +41,8 @@ dicts = {
         MoveModel='Подвинуть модель',
         Slice='Нарезать на слои',
         Slice3Axes="Стандартная нарезка(3о)",
-        Slice5AxesByProfile="Нарезать по профилю(5о)",
-        Slice5Axes="Нарезка 5осевая",
         SliceVip="Нарезка vip",
         SaveGCode='Сохранить GCode',
-        SimplifyStl='Упростить модель',
-        CutStl='Разрезать модель',
-        ChangePlane='Сменить плоскость',
 
         Tilted='Наклонена',
     ),

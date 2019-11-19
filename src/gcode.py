@@ -1,6 +1,14 @@
 from params import InclineXValue, PlaneCenter
 
 
+class GCode:
+    def __init__(self, layers, rotations, lays2rots, planes):
+        self.layers = layers
+        self.rotations = rotations
+        self.lays2rots = lays2rots
+        self.planes = planes
+
+
 class Rotation:
     def __init__(self, x, z):
         self.x_rot = x
@@ -9,13 +17,15 @@ class Rotation:
     def __str__(self):
         return " x:" + str(self.x_rot) + " z:" + str(self.z_rot)
 
+
 class Plane:
-    def __init__(self,  tilt, rot, point):
+    def __init__(self, tilt, rot, point):
         self.tilted = tilt
         self.x = point[0]
         self.y = point[1]
         self.z = point[2]
         self.rot = rot
+
 
 def parseArgs(args, x, y, z, absolute=True):
     xr, yr, zr = 0, 0, 0
@@ -117,4 +127,4 @@ def parseGCode(lines):
 
     layers.append(layer)  # add dummy layer for back rotations
     lays2rots.append(len(rotations) - 1)
-    return layers, rotations, lays2rots, planes
+    return GCode(layers, rotations, lays2rots, planes)

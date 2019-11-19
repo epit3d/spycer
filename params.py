@@ -29,6 +29,11 @@ ColorizeStlCommand = "./goosli_colorizer --stl={stl} --out={out} --angle={angle}
 ColorizeResult = "colorize_triangles.txt"
 ColorizeColor = colors.GetColor3d("Red")
 
+AnalyzeStlCommand = "./goosli_analyzer --stl={stl} --out={out} " \
+                    "--originx={originx} --originy={originy} --originz={originz} " \
+                    "--rotcx={rotcx} --rotcy={rotcy} --rotcz={rotcz} "
+AnalyzeResult = "analyze_triangles.txt"
+
 SimplifyStlCommand = "./goosli_simplifier --stl={stl} --out={out} --triangles={triangles}"
 OutputSimplifiedStl = "goosli_simplified.stl"
 SimplifyTriangles = "500"
@@ -45,5 +50,3 @@ CutNormalI = -1
 CutNormalJ = 0
 CutNormalK = 0
 Cut2Move = (20, 0, 0)
-
-
