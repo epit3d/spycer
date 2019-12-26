@@ -175,75 +175,128 @@ class Gui(QWidget):
         bottom_layout.addWidget(self.removePlane_button, 2, 0)
 
         self.tilted_checkbox = QCheckBox(self.locale.Tilted)
+        self.tilted_checkbox.stateChanged.connect(self.applyPlaneChange)
         bottom_layout.addWidget(self.tilted_checkbox, 0, 3)
-
-        rotated_label = QLabel("Повёрнута:")  # TODO: to locales
-        bottom_layout.addWidget(rotated_label, 1, 2)
-        self.rotated_value = QLineEdit("31.0245")
-        bottom_layout.addWidget(self.rotated_value, 1, 3)
 
         x_label = QLabel("X:")  # TODO: to locales
         bottom_layout.addWidget(x_label, 0, 4)
         self.x_value = QLineEdit("3.0951")
+        self.x_value.editingFinished.connect(self.applyEditsChange)
         bottom_layout.addWidget(self.x_value, 0, 5)
 
         y_label = QLabel("Y:")  # TODO: to locales
         bottom_layout.addWidget(y_label, 1, 4)
         self.y_value = QLineEdit("5.5910")
+        self.y_value.editingFinished.connect(self.applyEditsChange)
         bottom_layout.addWidget(self.y_value, 1, 5)
 
         z_label = QLabel("Z:")  # TODO: to locales
         bottom_layout.addWidget(z_label, 2, 4)
         self.z_value = QLineEdit("89.5414")
+        self.z_value.editingFinished.connect(self.applyEditsChange)
         bottom_layout.addWidget(self.z_value, 2, 5)
+
+        rotated_label = QLabel("Повёрнута:")  # TODO: to locales
+        bottom_layout.addWidget(rotated_label, 3, 4)
+        self.rotated_value = QLineEdit("31.0245")
+        self.rotated_value.editingFinished.connect(self.applyEditsChange)
+        bottom_layout.addWidget(self.rotated_value, 3, 5)
 
         self.xSlider = QSlider()
         self.xSlider.setOrientation(QtCore.Qt.Horizontal)
-        self.xSlider.setMinimum(1)
+        self.xSlider.setMinimum(-100)
         self.xSlider.setMaximum(100)
         self.xSlider.setValue(1)
         self.xSlider.valueChanged.connect(self.applyPlaneChange)
-        bottom_layout.addWidget(self.xSlider, 0,6)
+        bottom_layout.addWidget(self.xSlider, 0, 6, 1, 2)
+        self.ySlider = QSlider()
+        self.ySlider.setOrientation(QtCore.Qt.Horizontal)
+        self.ySlider.setMinimum(-100)
+        self.ySlider.setMaximum(100)
+        self.ySlider.setValue(1)
+        self.ySlider.valueChanged.connect(self.applyPlaneChange)
+        bottom_layout.addWidget(self.ySlider, 1, 6, 1, 2)
+        self.zSlider = QSlider()
+        self.zSlider.setOrientation(QtCore.Qt.Horizontal)
+        self.zSlider.setMinimum(0)
+        self.zSlider.setMaximum(200)
+        self.zSlider.setValue(1)
+        self.zSlider.valueChanged.connect(self.applyPlaneChange)
+        bottom_layout.addWidget(self.zSlider, 2, 6, 1, 2)
+        self.rotSlider = QSlider()
+        self.rotSlider.setOrientation(QtCore.Qt.Horizontal)
+        self.rotSlider.setMinimum(-180)
+        self.rotSlider.setMaximum(180)
+        self.rotSlider.setValue(0)
+        self.rotSlider.valueChanged.connect(self.applyPlaneChange)
+        bottom_layout.addWidget(self.rotSlider, 3, 6, 1, 2)
 
-        self.applyPlane_button = QPushButton("Применить")  # TODO:
-        self.applyPlane_button.clicked.connect(self.applyPlaneChange)
-        bottom_layout.addWidget(self.applyPlane_button, 2, 2)
+        # self.applyPlane_button = QPushButton("Применить")  # TODO:
+        # self.applyPlane_button.clicked.connect(self.applyPlaneChange)
+        # bottom_layout.addWidget(self.applyPlane_button, 2, 2)
 
         bottom_panel = QWidget()
         bottom_panel.setLayout(bottom_layout)
 
         return bottom_panel
 
+    def applyEditsChange(self):
+        self.xSlider.setValue(float(self.x_value.text()))
+        self.ySlider.setValue(float(self.y_value.text()))
+        self.zSlider.setValue(float(self.z_value.text()))
+        self.rotSlider.setValue(float(self.rotated_value.text()))
+
     def applyPlaneChange(self):
+        self.x_value.setText(str(self.xSlider.value()))
+        self.y_value.setText(str(self.ySlider.value()))
+        self.z_value.setText(str(self.zSlider.value()))
+        self.rotated_value.setText(str(self.rotSlider.value()))
+
+        center = [float(self.xSlider.value()), float(self.ySlider.value()), float(self.zSlider.value())]
         ind = self.combo.currentIndex()
-        center = [float(self.xSlider.value()), float(self.y_value.text()), float(self.z_value.text())]
-        self.planes[ind] = gui_utils.Plane(self.tilted_checkbox.isChecked(), float(self.rotated_value.text()), center)
+        if ind == -1:
+            return
+        self.planes[ind] = gui_utils.Plane(self.tilted_checkbox.isChecked(), float(self.rotSlider.value()), center)
         self.drawPlanes()
 
     def addPlane(self):
-        path = [self.planes[-1].x, self.planes[-1].y, self.planes[-1].z + 10]
-        self.planes.append(gui_utils.Plane(False, 0, path))
+        if len(self.planes)==0:
+            self.planes.append(gui_utils.Plane(True, 0, [10,10,10]))
+        else:
+            path = [self.planes[-1].x, self.planes[-1].y, self.planes[-1].z + 10]
+            self.planes.append(gui_utils.Plane(False, 0, path))
         self.loadPlanes()
 
     def removePlane(self):
         ind = self.combo.currentIndex()
+        if ind == -1:
+            return
         del self.planes[ind]
         self.loadPlanes()
 
     def changeComboSelect(self):
-        plane = self.planes[self.combo.currentIndex()]
+        ind = self.combo.currentIndex()
+        if ind==-1:
+            return
+        plane = self.planes[ind]
         self.tilted_checkbox.setChecked(plane.tilted)
         self.rotated_value.setText(str(plane.rot))
         self.x_value.setText(str(plane.x))
         self.y_value.setText(str(plane.y))
         self.z_value.setText(str(plane.z))
+        self.xSlider.setValue(plane.x)
+        self.ySlider.setValue(plane.y)
+        self.zSlider.setValue(plane.z)
+        self.rotSlider.setValue(plane.rot)
+        self.planesActors[ind].GetProperty().SetColor(params.LastLayerColor)
+        self.reloadScene()
 
     def loadPlanes(self):
-        if len(self.planes) == 0:
-            self.bottom_panel.setEnabled(False)
-            return
+        #if len(self.planes) == 0:
+        #    self.bottom_panel.setEnabled(False)
+        #    return
 
-        self.bottom_panel.setEnabled(True)
+        #self.bottom_panel.setEnabled(True)
 
         self.combo.clear()
         for i in range(len(self.planes)):
@@ -262,10 +315,13 @@ class Gui(QWidget):
 
             act = gui_utils.createPlaneActorCircleByCenterAndRot([p.x, p.y, p.z], -60 if p.tilted else 0, p.rot)
             # act = utils.createPlaneActorCircleByCenterAndRot([p.x, p.y, p.z], 0,0)
-            #print("tilted" if p.tilted else "NOT")
+            # print("tilted" if p.tilted else "NOT")
             self.planesActors.append(act)
             self.render.AddActor(act)
-        #print("was draw planes: ",len(self.planes))
+        ind = self.combo.currentIndex()
+        if ind != -1:
+            self.planesActors[ind].GetProperty().SetColor(params.LastLayerColor)
+        # print("was draw planes: ",len(self.planes))
         self.reloadScene()
 
     def stateNothing(self):
@@ -367,7 +423,8 @@ class Gui(QWidget):
         for actor in self.actors:
             self.render.AddActor(actor)
 
-        self.loadPlanes()
+        #self.loadPlanes()
+        self.bottom_panel.setEnabled(False)
 
         if addStl:
             self.stateBoth(len(self.actors))
@@ -380,13 +437,13 @@ class Gui(QWidget):
 
     def loadSTL(self, filename, method=gui_utils.createStlActorInOrigin):
         self.stlActor, self.stlTranslation, self.stlBounds = method(filename)
-        self.xSlider.setMinimum(self.stlBounds[0])
-        self.xSlider.setMaximum(self.stlBounds[1])
-        self.ySlider.setMinimum(self.stlBounds[2])
-        self.ySlider.setMaximum(self.stlBounds[3])
-        self.zSlider.setMinimum(self.stlBounds[4])
-        self.zSlider.setMaximum(self.stlBounds[5])
-        print(self.stlTranslation)
+        # self.xSlider.setMinimum(self.stlBounds[0])
+        # self.xSlider.setMaximum(self.stlBounds[1])
+        # self.ySlider.setMinimum(self.stlBounds[2])
+        # self.ySlider.setMaximum(self.stlBounds[3])
+        # self.zSlider.setMinimum(self.stlBounds[4])
+        # self.zSlider.setMaximum(self.stlBounds[5])
+        # print(self.stlTranslation)
         self.xPosition_value.setText(str(self.stlTranslation[0])[:10])
         self.yPosition_value.setText(str(self.stlTranslation[1])[:10])
         self.zPosition_value.setText(str(self.stlTranslation[2])[:10])
@@ -395,6 +452,7 @@ class Gui(QWidget):
         self.render.AddActor(self.planeActor)
 
         self.render.AddActor(self.stlActor)
+        self.bottom_panel.setEnabled(True)
         self.loadPlanes()
         self.stateStl()
         self.openedStl = filename
@@ -513,7 +571,7 @@ class Gui(QWidget):
         subprocess.check_output(str.split(cmd))
         self.planes = gui_utils.read_planes()
         self.bottom_panel.setEnabled(True)
-        #self.openedStl = "cuttedSTL.stl"
+        # self.openedStl = "cuttedSTL.stl"
         self.loadSTL(self.openedStl, method=gui_utils.createStlActorInOrigin)
 
     def clearScene(self):
@@ -537,7 +595,8 @@ class Gui(QWidget):
     def openFile(self):
         try:
             filename = str(
-                QFileDialog.getOpenFileName(None, self.locale.OpenModel, "/home/l1va/Downloads/5axes_3d_printer/test","STL (*.stl)")[0])  # TODO: fix path
+                QFileDialog.getOpenFileName(None, self.locale.OpenModel, "/home/l1va/Downloads/5axes_3d_printer/test",
+                                            "STL (*.stl)")[0])  # TODO: fix path
             if filename != "":
                 self.planes = []
                 fileExt = os.path.splitext(filename)[1].upper()
