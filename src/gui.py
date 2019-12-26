@@ -197,6 +197,14 @@ class Gui(QWidget):
         self.z_value = QLineEdit("89.5414")
         bottom_layout.addWidget(self.z_value, 2, 5)
 
+        self.xSlider = QSlider()
+        self.xSlider.setOrientation(QtCore.Qt.Horizontal)
+        self.xSlider.setMinimum(1)
+        self.xSlider.setMaximum(100)
+        self.xSlider.setValue(1)
+        self.xSlider.valueChanged.connect(self.applyPlaneChange)
+        bottom_layout.addWidget(self.xSlider, 0,6)
+
         self.applyPlane_button = QPushButton("Применить")  # TODO:
         self.applyPlane_button.clicked.connect(self.applyPlaneChange)
         bottom_layout.addWidget(self.applyPlane_button, 2, 2)
@@ -208,23 +216,22 @@ class Gui(QWidget):
 
     def applyPlaneChange(self):
         ind = self.combo.currentIndex()
-        center = [float(self.x_value.text()), float(self.y_value.text()), float(self.z_value.text())]
-        self.gode.planes[ind] = gcode.Plane(self.tilted_checkbox.isChecked(), float(self.rotated_value.text()), center)
-        # self.loadPlanes()
+        center = [float(self.xSlider.value()), float(self.y_value.text()), float(self.z_value.text())]
+        self.planes[ind] = gui_utils.Plane(self.tilted_checkbox.isChecked(), float(self.rotated_value.text()), center)
         self.drawPlanes()
 
     def addPlane(self):
-        path = [self.gode.planes[-1].x, self.gode.planes[-1].y, self.gode.planes[-1].z + 10]
-        self.gode.planes.append(gcode.Plane(False, 0, path))
+        path = [self.planes[-1].x, self.planes[-1].y, self.planes[-1].z + 10]
+        self.planes.append(gui_utils.Plane(False, 0, path))
         self.loadPlanes()
 
     def removePlane(self):
         ind = self.combo.currentIndex()
-        del self.gode.planes[ind]
+        del self.planes[ind]
         self.loadPlanes()
 
     def changeComboSelect(self):
-        plane = self.gode.planes[self.combo.currentIndex()]
+        plane = self.planes[self.combo.currentIndex()]
         self.tilted_checkbox.setChecked(plane.tilted)
         self.rotated_value.setText(str(plane.rot))
         self.x_value.setText(str(plane.x))
@@ -232,14 +239,14 @@ class Gui(QWidget):
         self.z_value.setText(str(plane.z))
 
     def loadPlanes(self):
-        if len(self.gode.planes) == 0:
+        if len(self.planes) == 0:
             self.bottom_panel.setEnabled(False)
             return
 
         self.bottom_panel.setEnabled(True)
 
         self.combo.clear()
-        for i in range(len(self.gode.planes)):
+        for i in range(len(self.planes)):
             self.combo.addItem("Плоскость " + str(i + 1))
 
         self.changeComboSelect()
@@ -250,14 +257,15 @@ class Gui(QWidget):
         for p in self.planesActors:
             self.render.RemoveActor(p)
         self.planesActors = []
-        for p in self.gode.planes:
+        for p in self.planes:
             # rot = self.rotations[self.lays2rots[-1]]
 
             act = gui_utils.createPlaneActorCircleByCenterAndRot([p.x, p.y, p.z], -60 if p.tilted else 0, p.rot)
             # act = utils.createPlaneActorCircleByCenterAndRot([p.x, p.y, p.z], 0,0)
+            #print("tilted" if p.tilted else "NOT")
             self.planesActors.append(act)
             self.render.AddActor(act)
-
+        #print("was draw planes: ",len(self.planes))
         self.reloadScene()
 
     def stateNothing(self):
@@ -339,8 +347,8 @@ class Gui(QWidget):
                                float(self.zPosition_value.text())]
         print(self.stlTranslation)
         transform = vtk.vtkTransform()
-        transform.Translate(-self.stlTranslation[0], -self.stlTranslation[1],
-                            -self.stlTranslation[2])
+        transform.Translate(self.stlTranslation[0], self.stlTranslation[1],
+                            self.stlTranslation[2])
         self.stlActor.SetUserTransform(transform)
         self.reloadScene()
 
@@ -371,7 +379,13 @@ class Gui(QWidget):
         self.reloadScene()
 
     def loadSTL(self, filename, method=gui_utils.createStlActorInOrigin):
-        self.stlActor, self.stlTranslation = method(filename)
+        self.stlActor, self.stlTranslation, self.stlBounds = method(filename)
+        self.xSlider.setMinimum(self.stlBounds[0])
+        self.xSlider.setMaximum(self.stlBounds[1])
+        self.ySlider.setMinimum(self.stlBounds[2])
+        self.ySlider.setMaximum(self.stlBounds[3])
+        self.zSlider.setMinimum(self.stlBounds[4])
+        self.zSlider.setMaximum(self.stlBounds[5])
         print(self.stlTranslation)
         self.xPosition_value.setText(str(self.stlTranslation[0])[:10])
         self.yPosition_value.setText(str(self.stlTranslation[1])[:10])
@@ -381,6 +395,7 @@ class Gui(QWidget):
         self.render.AddActor(self.planeActor)
 
         self.render.AddActor(self.stlActor)
+        self.loadPlanes()
         self.stateStl()
         self.openedStl = filename
         self.render.ResetCamera()
@@ -418,8 +433,8 @@ class Gui(QWidget):
                 self.actors[block].SetUserTransform(transform)
 
             self.rotatePlane(currRotation)
-            for i in range(len(self.planesActors)):
-                self.rotateAnyPlane(self.planesActors[i], self.gode.planes[i], currRotation)
+            for i in range(len(self.planes)):
+                self.rotateAnyPlane(self.planesActors[i], self.planes[i], currRotation)
         self.currLayerNumber = newSliderValue
         self.reloadScene()
 
@@ -485,6 +500,7 @@ class Gui(QWidget):
     def analyzeModel(self):
         values = {
             "stl": format_path(self.openedStl),
+            "angle": self.colorizeAngle_value.text(),
             "out": params.AnalyzeResult,
             "originx": self.stlTranslation[0],
             "originy": self.stlTranslation[1],
@@ -495,7 +511,10 @@ class Gui(QWidget):
         }
         cmd = params.AnalyzeStlCommand.format(**values)
         subprocess.check_output(str.split(cmd))
-        self.loadSTL(self.openedStl, method=gui_utils.createStlActorInOriginWithColorize)
+        self.planes = gui_utils.read_planes()
+        self.bottom_panel.setEnabled(True)
+        #self.openedStl = "cuttedSTL.stl"
+        self.loadSTL(self.openedStl, method=gui_utils.createStlActorInOrigin)
 
     def clearScene(self):
         self.render.RemoveAllViewProps()
@@ -510,16 +529,17 @@ class Gui(QWidget):
                 actor.VisibilityOff()
             self.stlActor.VisibilityOn()
         else:
-            for actor in self.actors:
-                actor.VisibilityOn()
+            for layer in range(self.pictureSlider.value()):
+                self.actors[layer].VisibilityOn()
             self.stlActor.VisibilityOff()
         self.reloadScene()
 
     def openFile(self):
         try:
             filename = str(
-                QFileDialog.getOpenFileName(None, self.locale.OpenModel, "/home/l1va/Downloads")[0])  # TODO: fix path
+                QFileDialog.getOpenFileName(None, self.locale.OpenModel, "/home/l1va/Downloads/5axes_3d_printer/test","STL (*.stl)")[0])  # TODO: fix path
             if filename != "":
+                self.planes = []
                 fileExt = os.path.splitext(filename)[1].upper()
                 filename = str(Path(filename))
                 if fileExt == ".STL":

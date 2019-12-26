@@ -26,27 +26,12 @@ SliceCommand = "./goosli --stl={stl} --gcode={gcode} --thickness={thickness} " \
 OutputGCode = "goosli_out.gcode"
 
 ColorizeStlCommand = "./goosli_colorizer --stl={stl} --out={out} --angle={angle}"
-ColorizeResult = "colorize_triangles.txt"
+ColorizeResult = "colorize_triangles.bin"
 ColorizeColor = colors.GetColor3d("Red")
 
-AnalyzeStlCommand = "./goosli_analyzer --stl={stl} --out={out} " \
+AnalyzeStlCommand = "./goosli_analyzer --stl={stl} --angle={angle} --out={out} " \
                     "--originx={originx} --originy={originy} --originz={originz} " \
                     "--rotcx={rotcx} --rotcy={rotcy} --rotcz={rotcz} "
 AnalyzeResult = "analyze_triangles.txt"
 
-SimplifyStlCommand = "./goosli_simplifier --stl={stl} --out={out} --triangles={triangles}"
-OutputSimplifiedStl = "goosli_simplified.stl"
-SimplifyTriangles = "500"
 
-CutStlCommand = "./goosli_cutter --stl={stl} --out1={out1} --out2={out2} " \
-                "--pointx={pointx} --pointy={pointy} --pointz={pointz} " \
-                "--normali={normali} --normalj={normalj} --normalk={normalk}"
-OutputCutStl1 = "goosli_cut1.stl"
-OutputCutStl2 = "goosli_cut2.stl"
-CutPointX = 0
-CutPointY = 0
-CutPointZ = 30
-CutNormalI = -1
-CutNormalJ = 0
-CutNormalK = 0
-Cut2Move = (20, 0, 0)
