@@ -1,6 +1,6 @@
 import vtk
 
-Lang = "en"
+Lang = "ru"
 Debug = True
 
 colors = vtk.vtkNamedColors()
@@ -11,39 +11,28 @@ PlaneColor = colors.GetColor3d("Cyan")
 
 InclineXValue = 60
 
-PlaneCenter = (0, 0, -50)
+PlaneCenter = (0, 0, 0)
+RotationCenter = (0, 0, 50)
 PlaneXSize = 200
 PlaneYSize = 200
 PlaneDiameter = 250
 
 SliceCommand = "./goosli --stl={stl} --gcode={gcode} --thickness={thickness} " \
                "--originx={originx} --originy={originy} --originz={originz} " \
-               "--planecx={planecx} --planecy={planecy} --planecz={planecz} " \
+               "--rotcx={rotcx} --rotcy={rotcy} --rotcz={rotcz} " \
                "--wall_thickness={wall_thickness} --fill_density={fill_density} --bed_temperature={bed_temperature} " \
                "--extruder_temperature={extruder_temperature} --print_speed={print_speed} --nozzle={nozzle} " \
-               "--slicing_type={slicing_type}"
+               "--slicing_type={slicing_type} --planes_file={planes_file}"
 OutputGCode = "goosli_out.gcode"
+PlanesFile = "planes_file.txt"
 
 ColorizeStlCommand = "./goosli_colorizer --stl={stl} --out={out} --angle={angle}"
-ColorizeAngle = "60"
-ColorizeResult = "colorize_triangles.txt"
+ColorizeResult = "colorize_triangles.bin"
 ColorizeColor = colors.GetColor3d("Red")
 
-SimplifyStlCommand = "./goosli_simplifier --stl={stl} --out={out} --triangles={triangles}"
-OutputSimplifiedStl = "goosli_simplified.stl"
-SimplifyTriangles = "500"
-
-CutStlCommand = "./goosli_cutter --stl={stl} --out1={out1} --out2={out2} " \
-                "--pointx={pointx} --pointy={pointy} --pointz={pointz} " \
-                "--normali={normali} --normalj={normalj} --normalk={normalk}"
-OutputCutStl1 = "goosli_cut1.stl"
-OutputCutStl2 = "goosli_cut2.stl"
-CutPointX = 0
-CutPointY = 0
-CutPointZ = 30
-CutNormalI = -1
-CutNormalJ = 0
-CutNormalK = 0
-Cut2Move = (20, 0, 0)
+AnalyzeStlCommand = "./goosli_analyzer --stl={stl} --angle={angle} --out={out} " \
+                    "--originx={originx} --originy={originy} --originz={originz} " \
+                    "--rotcx={rotcx} --rotcy={rotcy} --rotcz={rotcz} "
+AnalyzeResult = "analyze_triangles.txt"
 
 

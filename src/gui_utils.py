@@ -10,74 +10,55 @@ def findStlOrigin(vtkBlock):
     return x_mid, y_mid, bound[4]
 
 
-def createPlaneActor():
-    planeSource = vtk.vtkPlaneSource()
-    # small indent from object plane, render problems, 200x200 plane
-    xsize = params.PlaneXSize
-    ysize = params.PlaneYSize
-    center = params.PlaneCenter
-    planeSource.SetOrigin(center[0] - xsize / 2, center[1] - ysize / 2, center[2] - 0.1)
-    planeSource.SetPoint1(center[0] + xsize / 2, center[1] - ysize / 2, center[2] - 0.1)
-    planeSource.SetPoint2(center[0] - xsize / 2, center[1] + ysize / 2, center[2] - 0.1)
-    planeSource.Update()
-    planeActor = build_actor(planeSource)
-    planeActor.GetProperty().SetColor(params.PlaneColor)
-    return planeActor
-
-
-def createPlaneActor2():
-    xsize = params.PlaneXSize
-    ysize = params.PlaneYSize
-    center = params.PlaneCenter
-
-    points = vtk.vtkPoints()
-    points.InsertNextPoint((center[0] - xsize / 2, center[1] - ysize / 2, center[2] - 0.1))
-    points.InsertNextPoint((center[0] + xsize / 2, center[1] - ysize / 2, center[2] - 0.1))
-    points.InsertNextPoint((center[0] + xsize / 2, center[1] + ysize / 2, center[2] - 0.1))
-    points.InsertNextPoint((center[0] - xsize / 2, center[1] + ysize / 2, center[2] - 0.1))
-
-    triangle = vtk.vtkTriangle()
-    triangle.GetPointIds().SetId(0, 0)
-    triangle.GetPointIds().SetId(1, 1)
-    triangle.GetPointIds().SetId(2, 2)
-
-    triangle2 = vtk.vtkTriangle()
-    triangle2.GetPointIds().SetId(0, 2)
-    triangle2.GetPointIds().SetId(1, 3)
-    triangle2.GetPointIds().SetId(2, 0)
-
-    triangles = vtk.vtkCellArray()
-    triangles.InsertNextCell(triangle)
-    triangles.InsertNextCell(triangle2)
-
-    colors = vtk.vtkUnsignedCharArray()
-    colors.SetNumberOfComponents(3)
-    colors.SetName("Colors")
-    colors.InsertNextTuple3(255, 0, 0)
-    colors.InsertNextTuple3(0, 255, 0)
-    colors.InsertNextTuple3(0, 0, 255)
-    colors.InsertNextTuple3(0, 255, 0)
-
-    trianglePolyData = vtk.vtkPolyData()
-    trianglePolyData.SetPoints(points)
-    trianglePolyData.SetPolys(triangles)
-    trianglePolyData.GetPointData().SetScalars(colors)
-
-    return build_actor(trianglePolyData, True)
+def getBounds(vtkBlock):
+    bound = [0, 0, 0, 0, 0, 0]
+    vtkBlock.GetBounds(bound)
+    return bound
 
 
 def createPlaneActorCircle():
+    return createPlaneActorCircleByCenter(params.PlaneCenter)
+
+
+def createPlaneActorCircleByCenter(center):
     cylinder = vtk.vtkCylinderSource()
     cylinder.SetResolution(50)
     cylinder.SetRadius(params.PlaneDiameter / 2)
     cylinder.SetHeight(0.1)
-    cylinder.SetCenter(params.PlaneCenter[0], params.PlaneCenter[2] - 0.1, params.PlaneCenter[1])  # WHAT? vtk :(
+    cylinder.SetCenter(center[0], center[2] - 0.1, center[1])  # WHAT? vtk :(
     mapper = vtk.vtkPolyDataMapper()
     mapper.SetInputConnection(cylinder.GetOutputPort())
     actor = vtk.vtkActor()
     actor.SetMapper(mapper)
     actor.GetProperty().SetColor(params.PlaneColor)
     actor.RotateX(90)
+    return actor
+
+
+def createPlaneActorCircleByCenterAndRot(center, x_rot, z_rot):  # TODO: rename me
+    cylinder = vtk.vtkCylinderSource()
+    cylinder.SetResolution(50)
+    cylinder.SetRadius(params.PlaneDiameter / 3)  # TODO: remove hardcode
+    cylinder.SetHeight(0.1)
+    # cylinder.SetCenter(center[0], center[2] - 0.1, center[1])  # WHAT? vtk :(
+    mapper = vtk.vtkPolyDataMapper()
+    mapper.SetInputConnection(cylinder.GetOutputPort())
+    actor = vtk.vtkActor()
+    actor.SetMapper(mapper)
+    actor.GetProperty().SetColor(params.PlaneColor)
+    actor.GetProperty().SetOpacity(0.3)
+    actor.RotateX(90)
+    # actor.RotateX(x_rot)
+    # actor.SetPosition(center[0], center[1],center[2] - 0.1)
+    # actor.RotateY(x_rot)
+    # actor.GetUserTransform()
+    transform = vtk.vtkTransform()
+    transform.PostMultiply()
+    transform.RotateX(x_rot)
+    transform.PostMultiply()
+    transform.RotateZ(z_rot)
+    transform.Translate(center[0], center[1], center[2] - 0.1)
+    actor.SetUserTransform(transform)
     return actor
 
 
@@ -123,7 +104,7 @@ def createStlActorInOrigin(filename, colorize=False):
     c = params.PlaneCenter
     transform.Translate(-origin[0] + c[0], -origin[1] + c[1], -origin[2] + c[2])
     actor.SetUserTransform(transform)
-    return actor, origin
+    return actor, (-origin[0], -origin[1], -origin[2]), getBounds(output)  # return not origin but applied translation
 
 
 def makeBlocks(layers):
@@ -232,3 +213,26 @@ def build_actor(source, as_is=False):
     actor = vtk.vtkActor()
     actor.SetMapper(mapper)
     return actor
+
+
+class Plane:
+    def __init__(self, tilt, rot, point):
+        self.tilted = tilt
+        self.x = point[0]
+        self.y = point[1]
+        self.z = point[2]
+        self.rot = rot
+
+    def toFile(self):
+        return "X" + str(self.x) + " Y" + str(self.y) + " Z" + str(self.z) + \
+               " T" + str(self.tilted).lower() + " R" + str(self.rot)
+
+
+def read_planes():
+    planes = []
+    with open(params.AnalyzeResult) as fp:
+        for line in fp:
+            v = line.strip().split(' ')
+            planes.append(Plane(v[3][1:] == "true", float(v[4][1:]),
+                                (float(v[0][1:]), float(v[1][1:]), float(v[2][1:]))))
+    return planes
