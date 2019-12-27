@@ -22,8 +22,9 @@ SliceCommand = "./goosli --stl={stl} --gcode={gcode} --thickness={thickness} " \
                "--rotcx={rotcx} --rotcy={rotcy} --rotcz={rotcz} " \
                "--wall_thickness={wall_thickness} --fill_density={fill_density} --bed_temperature={bed_temperature} " \
                "--extruder_temperature={extruder_temperature} --print_speed={print_speed} --nozzle={nozzle} " \
-               "--slicing_type={slicing_type}"
+               "--slicing_type={slicing_type} --planes_file={planes_file}"
 OutputGCode = "goosli_out.gcode"
+PlanesFile = "planes_file.txt"
 
 ColorizeStlCommand = "./goosli_colorizer --stl={stl} --out={out} --angle={angle}"
 ColorizeResult = "colorize_triangles.bin"

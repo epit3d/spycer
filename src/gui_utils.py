@@ -9,10 +9,12 @@ def findStlOrigin(vtkBlock):
     y_mid = (bound[2] + bound[3]) / 2
     return x_mid, y_mid, bound[4]
 
+
 def getBounds(vtkBlock):
     bound = [0, 0, 0, 0, 0, 0]
     vtkBlock.GetBounds(bound)
     return bound
+
 
 def createPlaneActorCircle():
     return createPlaneActorCircleByCenter(params.PlaneCenter)
@@ -36,7 +38,7 @@ def createPlaneActorCircleByCenter(center):
 def createPlaneActorCircleByCenterAndRot(center, x_rot, z_rot):  # TODO: rename me
     cylinder = vtk.vtkCylinderSource()
     cylinder.SetResolution(50)
-    cylinder.SetRadius(params.PlaneDiameter /3)  # TODO: remove hardcode
+    cylinder.SetRadius(params.PlaneDiameter / 3)  # TODO: remove hardcode
     cylinder.SetHeight(0.1)
     # cylinder.SetCenter(center[0], center[2] - 0.1, center[1])  # WHAT? vtk :(
     mapper = vtk.vtkPolyDataMapper()
@@ -102,7 +104,7 @@ def createStlActorInOrigin(filename, colorize=False):
     c = params.PlaneCenter
     transform.Translate(-origin[0] + c[0], -origin[1] + c[1], -origin[2] + c[2])
     actor.SetUserTransform(transform)
-    return actor, (-origin[0], -origin[1],-origin[2]), getBounds(output)  # return not origin but applied translation
+    return actor, (-origin[0], -origin[1], -origin[2]), getBounds(output)  # return not origin but applied translation
 
 
 def makeBlocks(layers):
@@ -212,6 +214,7 @@ def build_actor(source, as_is=False):
     actor.SetMapper(mapper)
     return actor
 
+
 class Plane:
     def __init__(self, tilt, rot, point):
         self.tilted = tilt
@@ -220,10 +223,16 @@ class Plane:
         self.z = point[2]
         self.rot = rot
 
+    def toFile(self):
+        return "X" + str(self.x) + " Y" + str(self.y) + " Z" + str(self.z) + \
+               " T" + str(self.tilted).lower() + " R" + str(self.rot)
+
+
 def read_planes():
     planes = []
     with open(params.AnalyzeResult) as fp:
-       for line in fp:
-           v = line.strip().split(' ')
-           planes.append(Plane(v[3][1:]=="true" ,float(v[4][1:]), ( float(v[0][1:]),float(v[1][1:]),float(v[2][1:]) ) ))
+        for line in fp:
+            v = line.strip().split(' ')
+            planes.append(Plane(v[3][1:] == "true", float(v[4][1:]),
+                                (float(v[0][1:]), float(v[1][1:]), float(v[2][1:]))))
     return planes

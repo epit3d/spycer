@@ -130,6 +130,10 @@ class Gui(QWidget):
         loadModel_button.clicked.connect(self.openFile)
         right_panel.addWidget(loadModel_button, 15, 1, 1, 1)
 
+        self.editPlanes_button = QPushButton("Редактировать")  # TODO: locales
+        self.editPlanes_button.clicked.connect(lambda: self.loadSTL(self.openedStl))
+        right_panel.addWidget(self.editPlanes_button, 15, 2, 1, 1)
+
         self.slice3a_button = QPushButton(self.locale.Slice3Axes)
         self.slice3a_button.clicked.connect(lambda: self.sliceSTL("3axes"))
         right_panel.addWidget(self.slice3a_button, 16, 1, 1, 1)
@@ -336,6 +340,7 @@ class Gui(QWidget):
         self.move_button.setEnabled(False)
         self.slice3a_button.setEnabled(False)
         self.colorModel_button.setEnabled(False)
+        self.editPlanes_button.setEnabled(False)
         # self.slice5aProfile_button.setEnabled(False)
         # self.slice5a_button.setEnabled(False)
         self.sliceVip_button.setEnabled(False)
@@ -355,6 +360,7 @@ class Gui(QWidget):
         self.move_button.setEnabled(False)
         self.slice3a_button.setEnabled(False)
         self.colorModel_button.setEnabled(False)
+        self.editPlanes_button.setEnabled(True)
         # self.slice5aProfile_button.setEnabled(False)
         # self.slice5a_button.setEnabled(False)
         self.sliceVip_button.setEnabled(False)
@@ -373,6 +379,7 @@ class Gui(QWidget):
         self.move_button.setEnabled(True)
         self.slice3a_button.setEnabled(True)
         self.colorModel_button.setEnabled(True)
+        self.editPlanes_button.setEnabled(False)
         # self.slice5aProfile_button.setEnabled(True)
         # self.slice5a_button.setEnabled(True)
         self.sliceVip_button.setEnabled(True)
@@ -392,6 +399,7 @@ class Gui(QWidget):
         self.move_button.setEnabled(True)
         self.slice3a_button.setEnabled(True)
         self.colorModel_button.setEnabled(True)
+        self.editPlanes_button.setEnabled(True)
         # self.slice5aProfile_button.setEnabled(True)
         # self.slice5a_button.setEnabled(True)
         self.sliceVip_button.setEnabled(True)
@@ -538,12 +546,20 @@ class Gui(QWidget):
             "print_speed": self.printSpeed_value.text(),
             "nozzle": self.nozzle_value.text(),
             "slicing_type": slicing_type,
+            "planes_file": params.PlanesFile,
         }
+        self.savePlanesToFile()
         cmd = params.SliceCommand.format(**values)
         print(cmd)
         subprocess.check_output(str.split(cmd))
         self.stlActor.VisibilityOff()
         self.loadGCode(params.OutputGCode, True)
+
+    def savePlanesToFile(self):
+        with open(params.PlanesFile, 'w') as out:
+            for p in self.planes:
+                out.write(p.toFile() + '\n')
+
 
     def colorizeModel(self):
         values = {
