@@ -4,6 +4,8 @@ import params
 class Locale:
     Thickness = "Layer thickness, mm:"
     PrintSpeed = "Print speed, mm/s:"
+    PrintSpeedLayer1 = "Print speed, Layer1, mm/s"
+    PrintSpeedWall = "Print speed, walls, mm/s"
     ExtruderTemp = "Print temperature, °C:"
     BedTemp = "Bed temperature, °C:"
     FillDensity = "Fill density, %:"
@@ -17,6 +19,7 @@ class Locale:
     Slice3Axes = "Standard 3a slicing"
     SliceVip = "Vip slicing"
     SaveGCode = "Save GCode"
+    FanOffLayer1="Fan Off, Layer 1"
 
     Tilted = "Tilted"
 
@@ -29,6 +32,8 @@ dicts = {
     "ru": Locale(
         Thickness='Толщина слоя, мм:',
         PrintSpeed='Скорость печати, мм/с:',
+        PrintSpeedLayer1='Скорость печати первого слоя, мм/с',
+        PrintSpeedWall='Скорость печати стенок, мм/с',
         ExtruderTemp='Температура печати, °C:',
         BedTemp='Температура стола, °C:',
         FillDensity='Плотность заполнения, %:',
@@ -43,6 +48,7 @@ dicts = {
         Slice3Axes="Стандартная нарезка(3о)",
         SliceVip="Нарезка vip",
         SaveGCode='Сохранить GCode',
+        FanOffLayer1="Выключить вентилятор на первом слое",
 
         Tilted='Наклонена',
     ),

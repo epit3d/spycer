@@ -65,97 +65,118 @@ class Gui(QWidget):
         right_panel.setSpacing(5)
         right_panel.setColumnStretch(0, 2)
 
+        # Front-end development at its best
+        self.cur_row = 1
+        def get_next_row():
+            self.cur_row += 1
+            return self.cur_row
+        def get_cur_row():
+            return self.cur_row
+
         thickness_label = QLabel(self.locale.Thickness)
         self.thickness_value = QLineEdit("0.2")
-        right_panel.addWidget(thickness_label, 2, 1)
-        right_panel.addWidget(self.thickness_value, 2, 2)
+        right_panel.addWidget(thickness_label, get_next_row(), 1)
+        right_panel.addWidget(self.thickness_value, get_cur_row(), 2)
 
         printSpeed_label = QLabel(self.locale.PrintSpeed)
         self.printSpeed_value = QLineEdit("50")
-        right_panel.addWidget(printSpeed_label, 3, 1)
-        right_panel.addWidget(self.printSpeed_value, 3, 2)
+        right_panel.addWidget(printSpeed_label, get_next_row(), 1)
+        right_panel.addWidget(self.printSpeed_value, get_cur_row(), 2)
+
+        printSpeedLayer1_label = QLabel(self.locale.PrintSpeedLayer1)
+        self.printSpeedLayer1_value = QLineEdit("50")
+        right_panel.addWidget(printSpeedLayer1_label, get_next_row(), 1)
+        right_panel.addWidget(self.printSpeedLayer1_value, get_cur_row(), 2)
+
+        printSpeedWall_label = QLabel(self.locale.PrintSpeedWall)
+        self.printSpeedWall_value = QLineEdit("50")
+        right_panel.addWidget(printSpeedWall_label, get_next_row(), 1)
+        right_panel.addWidget(self.printSpeedWall_value, get_cur_row(), 2)
 
         extruderTemp_label = QLabel(self.locale.ExtruderTemp)
         self.extruderTemp_value = QLineEdit("200")
-        right_panel.addWidget(extruderTemp_label, 4, 1)
-        right_panel.addWidget(self.extruderTemp_value, 4, 2)
+        right_panel.addWidget(extruderTemp_label, get_next_row(), 1)
+        right_panel.addWidget(self.extruderTemp_value, get_cur_row(), 2)
 
         bedTemp_label = QLabel(self.locale.BedTemp)
         self.bedTemp_value = QLineEdit("60")
-        right_panel.addWidget(bedTemp_label, 5, 1)
-        right_panel.addWidget(self.bedTemp_value, 5, 2)
+        right_panel.addWidget(bedTemp_label, get_next_row(), 1)
+        right_panel.addWidget(self.bedTemp_value, get_cur_row(), 2)
 
         fillDensity_label = QLabel(self.locale.FillDensity)
         self.fillDensity_value = QLineEdit("20")
-        right_panel.addWidget(fillDensity_label, 6, 1)
-        right_panel.addWidget(self.fillDensity_value, 6, 2)
+        right_panel.addWidget(fillDensity_label, get_next_row(), 1)
+        right_panel.addWidget(self.fillDensity_value, get_cur_row(), 2)
 
         wallThickness_label = QLabel(self.locale.WallThickness)
         self.wallThickness_value = QLineEdit("0.8")
-        right_panel.addWidget(wallThickness_label, 7, 1)
-        right_panel.addWidget(self.wallThickness_value, 7, 2)
+        right_panel.addWidget(wallThickness_label, get_next_row(), 1)
+        right_panel.addWidget(self.wallThickness_value, get_cur_row(), 2)
 
         nozzle_label = QLabel(self.locale.Nozzle)
         self.nozzle_value = QLineEdit("0.4")
-        right_panel.addWidget(nozzle_label, 8, 1)
-        right_panel.addWidget(self.nozzle_value, 8, 2)
+        right_panel.addWidget(nozzle_label, get_next_row(), 1)
+        right_panel.addWidget(self.nozzle_value, get_cur_row(), 2)
+
+        self.fanOffLayer1_box = QCheckBox(self.locale.FanOffLayer1)
+        right_panel.addWidget(self.fanOffLayer1_box, get_next_row(), 1)
 
         self.modelSwitch_box = QCheckBox(self.locale.ShowStl)
         self.modelSwitch_box.stateChanged.connect(self.switchModels)
-        right_panel.addWidget(self.modelSwitch_box, 9, 1)
+        right_panel.addWidget(self.modelSwitch_box, get_next_row(), 1)
 
         self.slider_label = QLabel(self.locale.LayersCount)
         self.layersNumber_label = QLabel()
-        right_panel.addWidget(self.slider_label, 10, 1)
-        right_panel.addWidget(self.layersNumber_label, 10, 2)
+        right_panel.addWidget(self.slider_label, get_next_row(), 1)
+        right_panel.addWidget(self.layersNumber_label, get_cur_row(), 2)
 
         self.pictureSlider = QSlider()
         self.pictureSlider.setOrientation(QtCore.Qt.Horizontal)
         self.pictureSlider.setMinimum(1)
         self.pictureSlider.setValue(1)
         self.pictureSlider.valueChanged.connect(self.changeLayerView)
-        right_panel.addWidget(self.pictureSlider, 11, 1, 1, 2)
+        right_panel.addWidget(self.pictureSlider, get_next_row(), 1, 1, 2)
 
         self.xPosition_value = QLineEdit("0")
-        right_panel.addWidget(self.xPosition_value, 13, 1)
+        right_panel.addWidget(self.xPosition_value, get_next_row(), 1)
         self.yPosition_value = QLineEdit("0")
-        right_panel.addWidget(self.yPosition_value, 13, 2)
+        right_panel.addWidget(self.yPosition_value, get_cur_row(), 2)
         self.zPosition_value = QLineEdit("0")
-        right_panel.addWidget(self.zPosition_value, 14, 1)
+        right_panel.addWidget(self.zPosition_value, get_next_row(), 1)
         self.move_button = QPushButton(self.locale.MoveModel)
         self.move_button.clicked.connect(self.moveModel)
-        right_panel.addWidget(self.move_button, 14, 2, 1, 1)
+        right_panel.addWidget(self.move_button, get_cur_row(), 2, 1, 1)
 
         loadModel_button = QPushButton(self.locale.OpenModel)
         loadModel_button.clicked.connect(self.openFile)
-        right_panel.addWidget(loadModel_button, 15, 1, 1, 1)
+        right_panel.addWidget(loadModel_button, get_next_row(), 1, 1, 1)
 
         self.editPlanes_button = QPushButton("Редактировать")  # TODO: locales
         self.editPlanes_button.clicked.connect(lambda: self.loadSTL(self.openedStl))
-        right_panel.addWidget(self.editPlanes_button, 15, 2, 1, 1)
+        right_panel.addWidget(self.editPlanes_button, get_cur_row(), 2, 1, 1)
 
         self.slice3a_button = QPushButton(self.locale.Slice3Axes)
         self.slice3a_button.clicked.connect(lambda: self.sliceSTL("3axes"))
-        right_panel.addWidget(self.slice3a_button, 16, 1, 1, 1)
+        right_panel.addWidget(self.slice3a_button, get_next_row(), 1, 1, 1)
 
         self.sliceVip_button = QPushButton(self.locale.SliceVip)
         self.sliceVip_button.clicked.connect(lambda: self.sliceSTL("vip"))
-        right_panel.addWidget(self.sliceVip_button, 16, 2, 1, 1)
+        right_panel.addWidget(self.sliceVip_button, get_cur_row(), 2, 1, 1)
 
         self.saveGCode_button = QPushButton(self.locale.SaveGCode)
         self.saveGCode_button.clicked.connect(self.saveGCodeFile)
-        right_panel.addWidget(self.saveGCode_button, 17, 1, 1, 1)
+        right_panel.addWidget(self.saveGCode_button, get_next_row(), 1, 1, 1)
 
         self.analyzeModel_button = QPushButton("Анализировать")  # TODO: locales
         self.analyzeModel_button.clicked.connect(self.analyzeModel)
-        right_panel.addWidget(self.analyzeModel_button, 17, 2, 1, 1)
+        right_panel.addWidget(self.analyzeModel_button, get_cur_row(), 2, 1, 1)
 
         self.colorizeAngle_value = QLineEdit("30")
-        right_panel.addWidget(self.colorizeAngle_value, 18, 1)
+        right_panel.addWidget(self.colorizeAngle_value, get_next_row(), 1)
 
         self.colorModel_button = QPushButton(self.locale.ColorModel)
         self.colorModel_button.clicked.connect(self.colorizeModel)
-        right_panel.addWidget(self.colorModel_button, 18, 2, 1, 1)
+        right_panel.addWidget(self.colorModel_button, get_cur_row(), 2, 1, 1)
 
         return right_panel
 
@@ -544,12 +565,16 @@ class Gui(QWidget):
             "bed_temperature": self.bedTemp_value.text(),
             "extruder_temperature": self.extruderTemp_value.text(),
             "print_speed": self.printSpeed_value.text(),
+            "print_speed_layer1": self.printSpeedLayer1_value.text(),
+            "print_speed_wall": self.printSpeedWall_value.text(),
             "nozzle": self.nozzle_value.text(),
             "slicing_type": slicing_type,
             "planes_file": params.PlanesFile,
         }
         self.savePlanesToFile()
         cmd = params.SliceCommand.format(**values)
+        if self.fanOffLayer1_box.isChecked():
+            cmd += " --fan_off_layer1"
         print(cmd)
         subprocess.check_output(str.split(cmd))
         self.stlActor.VisibilityOff()
