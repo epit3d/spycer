@@ -11,6 +11,7 @@ class Locale:
     FillDensity = "Fill density, %:"
     WallThickness = "Wall thickness, mm:"
     Nozzle = 'Nozzle diameter, mm:'
+    FillingType = 'Filling type:'
     ShowStl = "Show stl"
     LayersCount = "Layers count:"
     OpenModel = "Open model"
@@ -41,6 +42,7 @@ dicts = {
         Nozzle='Диаметр сопла, мм:',
         ShowStl='Отображение STL модели',
         LayersCount='Отображаемые слои:',
+        FillingType='Тип заполнения:',
         OpenModel='Открыть модель',
         ColorModel='Подкрасить треугольники',
         MoveModel='Подвинуть модель',

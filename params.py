@@ -23,7 +23,9 @@ SliceCommand = "./goosli --stl={stl} --gcode={gcode} --thickness={thickness} " \
                "--wall_thickness={wall_thickness} --fill_density={fill_density} --bed_temperature={bed_temperature} " \
                "--extruder_temperature={extruder_temperature} --print_speed={print_speed} --nozzle={nozzle} " \
                "--slicing_type={slicing_type} --planes_file={planes_file} " \
-               "--print_speed_layer1={print_speed_layer1} --print_speed_wall={print_speed_wall} "
+               "--print_speed_layer1={print_speed_layer1} --print_speed_wall={print_speed_wall} " \
+               "--filling_type={filling_type}"
+
 OutputGCode = "goosli_out.gcode"
 PlanesFile = "planes_file.txt"
 
