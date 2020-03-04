@@ -120,10 +120,12 @@ class Gui(QWidget):
 
         filling_type_label = QLabel(self.locale.FillingType)
         right_panel.addWidget(filling_type_label, get_next_row(), 1)
-        filling_type_values = QWidget()
-        self.filling_type_values = QComboBox(filling_type_values)
+        filling_type_valuesW = QWidget()
+        self.filling_type_values = QComboBox(filling_type_valuesW)
         self.filling_type_values.addItems(self.locale.FillingTypeValues)
-        right_panel.addWidget(filling_type_values, get_cur_row(), 2)
+        # todo fix displaying shifting
+        right_panel.addWidget(filling_type_valuesW, get_cur_row(), 2)
+
 
         self.fanOffLayer1_box = QCheckBox(self.locale.FanOffLayer1)
         right_panel.addWidget(self.fanOffLayer1_box, get_next_row(), 1)
