@@ -578,7 +578,7 @@ class Gui(QWidget):
             "print_speed_layer1": self.printSpeedLayer1_value.text(),
             "print_speed_wall": self.printSpeedWall_value.text(),
             "nozzle": self.nozzle_value.text(),
-            "filling_type": self.filling_type_values.currentIndex(),
+            "filling_type": locales.getLocaleByLang("en").FillingTypeValues[self.filling_type_values.currentIndex()],
             "slicing_type": slicing_type,
             "planes_file": params.PlanesFile,
         }

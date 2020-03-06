@@ -62,3 +62,9 @@ def getLocale():
     if params.Lang in dicts:
         return dicts[params.Lang]
     return dicts["en"]
+
+
+def getLocaleByLang(lang):
+    if lang in dicts:
+        return dicts[lang]
+    return dicts["en"]
