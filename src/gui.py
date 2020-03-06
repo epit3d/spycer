@@ -120,10 +120,11 @@ class Gui(QWidget):
 
         filling_type_label = QLabel(self.locale.FillingType)
         right_panel.addWidget(filling_type_label, get_next_row(), 1)
+        # todo fix displaying shifting (feature is below)
+        right_panel.addWidget(self.nozzle_value, get_cur_row(), 2)
         filling_type_valuesW = QWidget()
         self.filling_type_values = QComboBox(filling_type_valuesW)
         self.filling_type_values.addItems(self.locale.FillingTypeValues)
-        # todo fix displaying shifting
         right_panel.addWidget(filling_type_valuesW, get_cur_row(), 2)
 
 
