@@ -118,6 +118,16 @@ class Gui(QWidget):
         right_panel.addWidget(nozzle_label, get_next_row(), 1)
         right_panel.addWidget(self.nozzle_value, get_cur_row(), 2)
 
+        filling_type_label = QLabel(self.locale.FillingType)
+        right_panel.addWidget(filling_type_label, get_next_row(), 1)
+        # todo fix displaying shifting (feature is below)
+        right_panel.addWidget(self.nozzle_value, get_cur_row(), 2)
+        filling_type_valuesW = QWidget()
+        self.filling_type_values = QComboBox(filling_type_valuesW)
+        self.filling_type_values.addItems(self.locale.FillingTypeValues)
+        right_panel.addWidget(filling_type_valuesW, get_cur_row(), 2)
+
+
         self.fanOffLayer1_box = QCheckBox(self.locale.FanOffLayer1)
         right_panel.addWidget(self.fanOffLayer1_box, get_next_row(), 1)
 
@@ -568,6 +578,7 @@ class Gui(QWidget):
             "print_speed_layer1": self.printSpeedLayer1_value.text(),
             "print_speed_wall": self.printSpeedWall_value.text(),
             "nozzle": self.nozzle_value.text(),
+            "filling_type": locales.getLocaleByLang("en").FillingTypeValues[self.filling_type_values.currentIndex()],
             "slicing_type": slicing_type,
             "planes_file": params.PlanesFile,
         }

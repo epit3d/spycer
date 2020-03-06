@@ -11,6 +11,8 @@ class Locale:
     FillDensity = "Fill density, %:"
     WallThickness = "Wall thickness, mm:"
     Nozzle = 'Nozzle diameter, mm:'
+    FillingType = 'Filling type:'
+    FillingTypeValues = ["Lines", "Squares", "Triangles"]
     ShowStl = "Show stl"
     LayersCount = "Layers count:"
     OpenModel = "Open model"
@@ -20,7 +22,6 @@ class Locale:
     SliceVip = "Vip slicing"
     SaveGCode = "Save GCode"
     FanOffLayer1="Fan Off, Layer 1"
-
     Tilted = "Tilted"
 
     def __init__(self, **entries):
@@ -41,6 +42,8 @@ dicts = {
         Nozzle='Диаметр сопла, мм:',
         ShowStl='Отображение STL модели',
         LayersCount='Отображаемые слои:',
+        FillingType='Тип заполнения:',
+        FillingTypeValues = ["Линии", "Квадраты", "Треугольники"],
         OpenModel='Открыть модель',
         ColorModel='Подкрасить треугольники',
         MoveModel='Подвинуть модель',
@@ -58,4 +61,10 @@ dicts = {
 def getLocale():
     if params.Lang in dicts:
         return dicts[params.Lang]
+    return dicts["en"]
+
+
+def getLocaleByLang(lang):
+    if lang in dicts:
+        return dicts[lang]
     return dicts["en"]
