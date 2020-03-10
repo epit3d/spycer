@@ -44,8 +44,8 @@ class Gui(QWidget):
         self.planes = []
         self.planesActors = []
 
-        self.openedStl = "/home/l1va/Downloads/1_odn2.stl"  # TODO: removeme
-        self.loadSTL(self.openedStl)
+        #self.openedStl = "/home/l1va/Downloads/1_odn2.stl"  # TODO: removeme
+        #self.loadSTL(self.openedStl)
         # self.colorizeModel()
 
     def init3dWidget(self):
