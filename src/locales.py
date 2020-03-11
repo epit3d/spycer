@@ -23,6 +23,9 @@ class Locale:
     SaveGCode = "Save GCode"
     FanOffLayer1="Fan Off, Layer 1"
     Tilted = "Tilted"
+    Retraction = "Retraction"
+    RetractionDistance = "Retraction Distance"
+    RetractionSpeed = "Retraction Speed"
 
     def __init__(self, **entries):
         self.__dict__.update(entries)
@@ -52,7 +55,9 @@ dicts = {
         SliceVip="Нарезка vip",
         SaveGCode='Сохранить GCode',
         FanOffLayer1="Выключить вентилятор на первом слое",
-
+        Retraction="Ретракция",
+        RetractionDistance="Ретракция, Дистанция, мм",
+        RetractionSpeed="Ретракция, Скорость, мм/с",
         Tilted='Наклонена',
     ),
 }
