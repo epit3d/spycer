@@ -127,6 +127,23 @@ class Gui(QWidget):
         self.filling_type_values.addItems(self.locale.FillingTypeValues)
         right_panel.addWidget(filling_type_valuesW, get_cur_row(), 2)
 
+        ### RETRACTION UI ###
+        retractionOn_label = QLabel(self.locale.Retraction)
+        self.retractionOn_box = QCheckBox()
+        right_panel.addWidget(retractionOn_label, get_next_row(), 1)
+        right_panel.addWidget(self.retractionOn_box, get_cur_row(), 2)
+
+        retractionDistance_label = QLabel(self.locale.RetractionDistance)
+        self.retractionDistance_value = QLineEdit("0")
+        right_panel.addWidget(retractionDistance_label, get_next_row(), 1)
+        right_panel.addWidget(self.retractionDistance_value, get_cur_row(), 2)
+
+        retractionSpeed_label = QLabel(self.locale.RetractionSpeed)
+        self.retractionSpeed_value = QLineEdit("0")
+        right_panel.addWidget(retractionSpeed_label, get_next_row(), 1)
+        right_panel.addWidget(self.retractionSpeed_value, get_cur_row(), 2)
+        ###
+
 
         self.fanOffLayer1_box = QCheckBox(self.locale.FanOffLayer1)
         right_panel.addWidget(self.fanOffLayer1_box, get_next_row(), 1)
@@ -139,6 +156,7 @@ class Gui(QWidget):
         self.layersNumber_label = QLabel()
         right_panel.addWidget(self.slider_label, get_next_row(), 1)
         right_panel.addWidget(self.layersNumber_label, get_cur_row(), 2)
+
 
         self.pictureSlider = QSlider()
         self.pictureSlider.setOrientation(QtCore.Qt.Horizontal)
@@ -581,11 +599,19 @@ class Gui(QWidget):
             "filling_type": locales.getLocaleByLang("en").FillingTypeValues[self.filling_type_values.currentIndex()],
             "slicing_type": slicing_type,
             "planes_file": params.PlanesFile,
+
+            "retraction_speed": self.retractionSpeed_value.text(),
+            "retraction_distance": self.retractionDistance_value.text()
         }
         self.savePlanesToFile()
+
+        # Prepare a slicing command line command
         cmd = params.SliceCommand.format(**values)
         if self.fanOffLayer1_box.isChecked():
             cmd += " --fan_off_layer1"
+        if self.retractionOn_box.isChecked():
+            cmd += " --retraction_on"
+        
         print(cmd)
         subprocess.check_output(str.split(cmd))
         self.stlActor.VisibilityOff()
