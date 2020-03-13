@@ -599,7 +599,7 @@ class Gui(QWidget):
             "filling_type": locales.getLocaleByLang("en").FillingTypeValues[self.filling_type_values.currentIndex()],
             "slicing_type": slicing_type,
             "planes_file": params.PlanesFile,
-
+            "angle": self.colorizeAngle_value.text(),
             "retraction_speed": self.retractionSpeed_value.text(),
             "retraction_distance": self.retractionDistance_value.text()
         }
