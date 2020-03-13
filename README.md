@@ -31,6 +31,8 @@ Tested on Windows 10, Visual studio 2019, python 3.7 x64
 ### Language
 Default lang is 'ru' but you can easy change it to en in params.py (change to Lang='en')
 
+### Build exe
+python setup.py build
 
 ### Result
 ![Spycer preview](imgs/spycer.gif)
