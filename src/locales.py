@@ -26,6 +26,7 @@ class Locale:
     Retraction = "Retraction"
     RetractionDistance = "Retraction Distance"
     RetractionSpeed = "Retraction Speed"
+    SupportsOn = "Add supports"
 
     def __init__(self, **entries):
         self.__dict__.update(entries)
@@ -59,6 +60,7 @@ dicts = {
         RetractionDistance="Ретракция, Дистанция, мм",
         RetractionSpeed="Ретракция, Скорость, мм/с",
         Tilted='Наклонена',
+        SupportsOn='Добавить поддержки',
     ),
 }
 
