@@ -152,6 +152,9 @@ class Gui(QWidget):
         self.modelSwitch_box.stateChanged.connect(self.switchModels)
         right_panel.addWidget(self.modelSwitch_box, get_next_row(), 1)
 
+        self.supportsOn = QCheckBox(self.locale.SupportsOn)
+        right_panel.addWidget(self.supportsOn, get_next_row(), 1)
+
         self.slider_label = QLabel(self.locale.LayersCount)
         self.layersNumber_label = QLabel()
         right_panel.addWidget(self.slider_label, get_next_row(), 1)
@@ -611,6 +614,8 @@ class Gui(QWidget):
             cmd += " --fan_off_layer1"
         if self.retractionOn_box.isChecked():
             cmd += " --retraction_on"
+        if self.supportsOn.isChecked():
+            cmd += " --supports_on"
         
         print(cmd)
         subprocess.check_output(str.split(cmd))
