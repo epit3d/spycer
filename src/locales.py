@@ -21,12 +21,17 @@ class Locale:
     Slice3Axes = "Standard 3a slicing"
     SliceVip = "Vip slicing"
     SaveGCode = "Save GCode"
-    FanOffLayer1="Fan Off, Layer 1"
+    FanOffLayer1 = "Fan Off, Layer 1"
     Tilted = "Tilted"
     Retraction = "Retraction"
     RetractionDistance = "Retraction Distance"
     RetractionSpeed = "Retraction Speed"
     SupportsOn = "Add supports"
+    EditPlanes = "Edit"
+    Analyze = "Analyze"
+    AddPlane = "Add"
+    DeletePlane = "DeletePlane"
+    Rotated = "Rotated"
 
     def __init__(self, **entries):
         self.__dict__.update(entries)
@@ -47,7 +52,7 @@ dicts = {
         ShowStl='Отображение STL модели',
         LayersCount='Отображаемые слои:',
         FillingType='Тип заполнения:',
-        FillingTypeValues = ["Линии", "Квадраты", "Треугольники"],
+        FillingTypeValues=["Линии", "Квадраты", "Треугольники"],
         OpenModel='Открыть модель',
         ColorModel='Подкрасить треугольники',
         MoveModel='Подвинуть модель',
@@ -61,6 +66,11 @@ dicts = {
         RetractionSpeed="Ретракция, Скорость, мм/с",
         Tilted='Наклонена',
         SupportsOn='Добавить поддержки',
+        EditPlanes='Редактировать',
+        Analyze='Анализировать',
+        AddPlane='Добавить',
+        DeletePlane="Удалить",
+        Rotated="Повёрнута",
     ),
 }
 

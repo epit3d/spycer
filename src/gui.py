@@ -44,8 +44,8 @@ class Gui(QWidget):
         self.planes = []
         self.planesActors = []
 
-        #self.openedStl = "/home/l1va/Downloads/1_odn2.stl"  # TODO: removeme
-        #self.loadSTL(self.openedStl)
+        # self.openedStl = "/home/l1va/Downloads/1_odn2.stl"  # TODO: removeme
+        # self.loadSTL(self.openedStl)
         # self.colorizeModel()
 
     def init3dWidget(self):
@@ -67,9 +67,11 @@ class Gui(QWidget):
 
         # Front-end development at its best
         self.cur_row = 1
+
         def get_next_row():
             self.cur_row += 1
             return self.cur_row
+
         def get_cur_row():
             return self.cur_row
 
@@ -144,7 +146,6 @@ class Gui(QWidget):
         right_panel.addWidget(self.retractionSpeed_value, get_cur_row(), 2)
         ###
 
-
         self.fanOffLayer1_box = QCheckBox(self.locale.FanOffLayer1)
         right_panel.addWidget(self.fanOffLayer1_box, get_next_row(), 1)
 
@@ -159,7 +160,6 @@ class Gui(QWidget):
         self.layersNumber_label = QLabel()
         right_panel.addWidget(self.slider_label, get_next_row(), 1)
         right_panel.addWidget(self.layersNumber_label, get_cur_row(), 2)
-
 
         self.pictureSlider = QSlider()
         self.pictureSlider.setOrientation(QtCore.Qt.Horizontal)
@@ -182,7 +182,7 @@ class Gui(QWidget):
         loadModel_button.clicked.connect(self.openFile)
         right_panel.addWidget(loadModel_button, get_next_row(), 1, 1, 1)
 
-        self.editPlanes_button = QPushButton("Редактировать")  # TODO: locales
+        self.editPlanes_button = QPushButton(self.locale.EditPlanes)
         self.editPlanes_button.clicked.connect(lambda: self.loadSTL(self.openedStl))
         right_panel.addWidget(self.editPlanes_button, get_cur_row(), 2, 1, 1)
 
@@ -198,7 +198,7 @@ class Gui(QWidget):
         self.saveGCode_button.clicked.connect(self.saveGCodeFile)
         right_panel.addWidget(self.saveGCode_button, get_next_row(), 1, 1, 1)
 
-        self.analyzeModel_button = QPushButton("Анализировать")  # TODO: locales
+        self.analyzeModel_button = QPushButton(self.locale.Analyze)
         self.analyzeModel_button.clicked.connect(self.analyzeModel)
         right_panel.addWidget(self.analyzeModel_button, get_cur_row(), 2, 1, 1)
 
@@ -217,7 +217,7 @@ class Gui(QWidget):
         bottom_layout.setSpacing(5)
         bottom_layout.setColumnStretch(7, 1)
 
-        self.addPlane_button = QPushButton("Добавить")
+        self.addPlane_button = QPushButton(self.locale.AddPlane)
         self.addPlane_button.clicked.connect(self.addPlane)
         bottom_layout.addWidget(self.addPlane_button, 1, 0)
 
@@ -226,7 +226,7 @@ class Gui(QWidget):
         self.combo.currentIndexChanged.connect(self.changeComboSelect)
         bottom_layout.addWidget(comboW, 0, 0, 1, 2)
 
-        self.removePlane_button = QPushButton("Удалить")
+        self.removePlane_button = QPushButton(self.locale.DeletePlane)
         self.removePlane_button.clicked.connect(self.removePlane)
         bottom_layout.addWidget(self.removePlane_button, 2, 0)
 
@@ -234,25 +234,25 @@ class Gui(QWidget):
         self.tilted_checkbox.stateChanged.connect(self.applyPlaneChange)
         bottom_layout.addWidget(self.tilted_checkbox, 0, 3)
 
-        x_label = QLabel("X:")  # TODO: to locales
+        x_label = QLabel("X:")
         bottom_layout.addWidget(x_label, 0, 4)
         self.x_value = QLineEdit("3.0951")
         self.x_value.editingFinished.connect(self.applyEditsChange)
         bottom_layout.addWidget(self.x_value, 0, 5)
 
-        y_label = QLabel("Y:")  # TODO: to locales
+        y_label = QLabel("Y:")
         bottom_layout.addWidget(y_label, 1, 4)
         self.y_value = QLineEdit("5.5910")
         self.y_value.editingFinished.connect(self.applyEditsChange)
         bottom_layout.addWidget(self.y_value, 1, 5)
 
-        z_label = QLabel("Z:")  # TODO: to locales
+        z_label = QLabel("Z:")
         bottom_layout.addWidget(z_label, 2, 4)
         self.z_value = QLineEdit("89.5414")
         self.z_value.editingFinished.connect(self.applyEditsChange)
         bottom_layout.addWidget(self.z_value, 2, 5)
 
-        rotated_label = QLabel("Повёрнута:")  # TODO: to locales
+        rotated_label = QLabel(self.locale.Rotated)
         bottom_layout.addWidget(rotated_label, 3, 4)
         self.rotated_value = QLineEdit("31.0245")
         self.rotated_value.editingFinished.connect(self.applyEditsChange)
@@ -287,10 +287,6 @@ class Gui(QWidget):
         self.rotSlider.valueChanged.connect(self.applyPlaneChange)
         bottom_layout.addWidget(self.rotSlider, 3, 6, 1, 2)
 
-        # self.applyPlane_button = QPushButton("Применить")  # TODO:
-        # self.applyPlane_button.clicked.connect(self.applyPlaneChange)
-        # bottom_layout.addWidget(self.applyPlane_button, 2, 2)
-
         bottom_panel = QWidget()
         bottom_panel.setLayout(bottom_layout)
 
@@ -316,8 +312,8 @@ class Gui(QWidget):
         self.drawPlanes()
 
     def addPlane(self):
-        if len(self.planes)==0:
-            self.planes.append(gui_utils.Plane(True, 0, [10,10,10]))
+        if len(self.planes) == 0:
+            self.planes.append(gui_utils.Plane(True, 0, [10, 10, 10]))
         else:
             path = [self.planes[-1].x, self.planes[-1].y, self.planes[-1].z + 10]
             self.planes.append(gui_utils.Plane(False, 0, path))
@@ -332,7 +328,7 @@ class Gui(QWidget):
 
     def changeComboSelect(self):
         ind = self.combo.currentIndex()
-        if ind==-1:
+        if ind == -1:
             return
         plane = self.planes[ind]
         self.tilted_checkbox.setChecked(plane.tilted)
@@ -348,11 +344,11 @@ class Gui(QWidget):
         self.reloadScene()
 
     def loadPlanes(self):
-        #if len(self.planes) == 0:
+        # if len(self.planes) == 0:
         #    self.bottom_panel.setEnabled(False)
         #    return
 
-        #self.bottom_panel.setEnabled(True)
+        # self.bottom_panel.setEnabled(True)
 
         self.combo.clear()
         for i in range(len(self.planes)):
@@ -483,7 +479,7 @@ class Gui(QWidget):
         for actor in self.actors:
             self.render.AddActor(actor)
 
-        #self.loadPlanes()
+        # self.loadPlanes()
         self.bottom_panel.setEnabled(False)
 
         if addStl:
@@ -497,13 +493,6 @@ class Gui(QWidget):
 
     def loadSTL(self, filename, method=gui_utils.createStlActorInOrigin):
         self.stlActor, self.stlTranslation, self.stlBounds = method(filename)
-        # self.xSlider.setMinimum(self.stlBounds[0])
-        # self.xSlider.setMaximum(self.stlBounds[1])
-        # self.ySlider.setMinimum(self.stlBounds[2])
-        # self.ySlider.setMaximum(self.stlBounds[3])
-        # self.zSlider.setMinimum(self.stlBounds[4])
-        # self.zSlider.setMaximum(self.stlBounds[5])
-        # print(self.stlTranslation)
         self.xPosition_value.setText(str(self.stlTranslation[0])[:10])
         self.yPosition_value.setText(str(self.stlTranslation[1])[:10])
         self.zPosition_value.setText(str(self.stlTranslation[2])[:10])
@@ -616,7 +605,7 @@ class Gui(QWidget):
             cmd += " --retraction_on"
         if self.supportsOn.isChecked():
             cmd += " --supports_on"
-        
+
         print(cmd)
         subprocess.check_output(str.split(cmd))
         self.stlActor.VisibilityOff()
@@ -626,7 +615,6 @@ class Gui(QWidget):
         with open(params.PlanesFile, 'w') as out:
             for p in self.planes:
                 out.write(p.toFile() + '\n')
-
 
     def colorizeModel(self):
         values = {
