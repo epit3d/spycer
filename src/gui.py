@@ -146,6 +146,11 @@ class Gui(QWidget):
         right_panel.addWidget(self.retractionSpeed_value, get_cur_row(), 2)
         ###
 
+        supportOffset_label = QLabel(self.locale.SupportOffset)
+        self.supportOffset_value = QLineEdit("1.0")
+        right_panel.addWidget(supportOffset_label, get_next_row(), 1)
+        right_panel.addWidget(self.supportOffset_value, get_cur_row(), 2)
+
         self.fanOffLayer1_box = QCheckBox(self.locale.FanOffLayer1)
         right_panel.addWidget(self.fanOffLayer1_box, get_next_row(), 1)
 
@@ -593,7 +598,8 @@ class Gui(QWidget):
             "planes_file": params.PlanesFile,
             "angle": self.colorizeAngle_value.text(),
             "retraction_speed": self.retractionSpeed_value.text(),
-            "retraction_distance": self.retractionDistance_value.text()
+            "retraction_distance": self.retractionDistance_value.text(),
+            "support_offset": self.supportOffset_value.text()
         }
         self.savePlanesToFile()
 
