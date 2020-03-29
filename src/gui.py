@@ -354,9 +354,9 @@ class Gui(QWidget):
         for i in range(len(self.planes)):
             self.combo.addItem("Плоскость " + str(i + 1))
 
-        self.changeComboSelect()
-
         self.drawPlanes()
+
+        self.changeComboSelect()
 
     def drawPlanes(self):  # TODO: optimize
         for p in self.planesActors:
@@ -691,10 +691,10 @@ class Gui(QWidget):
         except IOError as e:
             print("Error during file saving:", e)
 
-    # def debugMe(self):
-    #     debug.readFile(self.render, "/home/l1va/debug.txt", 4)
-    #     # debug.readFile(self.render, "/home/l1va/debug_simplified.txt", "Red", 3)
-    #     self.reloadScene()
+    def debugMe(self):
+         debug.readFile(self.render, "/home/l1va/debug.txt", 4)
+         # debug.readFile(self.render, "/home/l1va/debug_simplified.txt", "Red", 3)
+         self.reloadScene()
 
 
 def format_path(path):
