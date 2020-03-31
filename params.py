@@ -25,7 +25,8 @@ SliceCommand = "./goosli --stl={stl} --gcode={gcode} --thickness={thickness} " \
                "--slicing_type={slicing_type} --planes_file={planes_file} " \
                "--print_speed_layer1={print_speed_layer1} --print_speed_wall={print_speed_wall} " \
                "--filling_type={filling_type} --angle={angle} " \
-               "--retraction_speed={retraction_speed} --retraction_distance={retraction_distance}"
+               "--retraction_speed={retraction_speed} --retraction_distance={retraction_distance} " \
+               "--support_offset={support_offset}"
 
 OutputGCode = "goosli_out.gcode"
 PlanesFile = "planes_file.txt"

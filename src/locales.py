@@ -32,6 +32,7 @@ class Locale:
     AddPlane = "Add"
     DeletePlane = "DeletePlane"
     Rotated = "Rotated"
+    SupportOffset = "Support offset"
 
     def __init__(self, **entries):
         self.__dict__.update(entries)
@@ -71,6 +72,8 @@ dicts = {
         AddPlane='Добавить',
         DeletePlane="Удалить",
         Rotated="Повёрнута",
+        SupportOffset="Отступ поддержки от детали",
+
     ),
 }
 
