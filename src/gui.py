@@ -302,6 +302,12 @@ class Gui(QWidget):
         self.ySlider.setValue(float(self.y_value.text()))
         self.zSlider.setValue(float(self.z_value.text()))
         self.rotSlider.setValue(float(self.rotated_value.text()))
+        center = [float(self.x_value.text()), float(self.y_value.text()), float(self.z_value.text())]
+        ind = self.combo.currentIndex()
+        if ind == -1:
+            return
+        self.planes[ind] = gui_utils.Plane(self.tilted_checkbox.isChecked(), float(self.rotSlider.value()), center)
+        self.drawPlanes()
 
     def applyPlaneChange(self):
         self.x_value.setText(str(self.xSlider.value()))
@@ -698,9 +704,9 @@ class Gui(QWidget):
             print("Error during file saving:", e)
 
     def debugMe(self):
-         debug.readFile(self.render, "/home/l1va/debug.txt", 4)
-         # debug.readFile(self.render, "/home/l1va/debug_simplified.txt", "Red", 3)
-         self.reloadScene()
+        debug.readFile(self.render, "/home/l1va/debug.txt", 4)
+        # debug.readFile(self.render, "/home/l1va/debug_simplified.txt", "Red", 3)
+        self.reloadScene()
 
 
 def format_path(path):
