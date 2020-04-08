@@ -17,7 +17,7 @@ PlaneXSize = 200
 PlaneYSize = 200
 PlaneDiameter = 250
 
-SliceCommand = "./goosli --stl={stl} --gcode={gcode} --thickness={thickness} " \
+SliceCommand = "./goosli --stl={stl} --gcode={gcode} --layer_height={layer_height} " \
                "--originx={originx} --originy={originy} --originz={originz} " \
                "--rotcx={rotcx} --rotcy={rotcy} --rotcz={rotcz} " \
                "--wall_thickness={wall_thickness} --fill_density={fill_density} --bed_temperature={bed_temperature} " \

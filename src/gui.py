@@ -75,10 +75,10 @@ class Gui(QWidget):
         def get_cur_row():
             return self.cur_row
 
-        thickness_label = QLabel(self.locale.Thickness)
-        self.thickness_value = QLineEdit("0.2")
-        right_panel.addWidget(thickness_label, get_next_row(), 1)
-        right_panel.addWidget(self.thickness_value, get_cur_row(), 2)
+        layer_height_label = QLabel(self.locale.LayerHeight)
+        self.layer_height_value = QLineEdit("0.2")
+        right_panel.addWidget(layer_height_label, get_next_row(), 1)
+        right_panel.addWidget(self.layer_height_value, get_cur_row(), 2)
 
         printSpeed_label = QLabel(self.locale.PrintSpeed)
         self.printSpeed_value = QLineEdit("50")
@@ -590,7 +590,7 @@ class Gui(QWidget):
             "rotcy": params.RotationCenter[1],
             "rotcz": params.RotationCenter[2],
 
-            "thickness": self.thickness_value.text(),
+            "layer_height": self.layer_height_value.text(),
             "wall_thickness": self.wallThickness_value.text(),
             "fill_density": self.fillDensity_value.text(),
             "bed_temperature": self.bedTemp_value.text(),

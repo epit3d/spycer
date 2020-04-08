@@ -2,7 +2,7 @@ import params
 
 
 class Locale:
-    Thickness = "Layer thickness, mm:"
+    LayerHeight = "Layer height, mm:"
     PrintSpeed = "Print speed, mm/s:"
     PrintSpeedLayer1 = "Print speed, Layer1, mm/s"
     PrintSpeedWall = "Print speed, walls, mm/s"
@@ -41,7 +41,7 @@ class Locale:
 dicts = {
     "en": Locale(),
     "ru": Locale(
-        Thickness='Толщина слоя, мм:',
+        LayerHeight='Высота слоя, мм:',
         PrintSpeed='Скорость печати, мм/с:',
         PrintSpeedLayer1='Скорость печати первого слоя, мм/с',
         PrintSpeedWall='Скорость печати стенок, мм/с',
