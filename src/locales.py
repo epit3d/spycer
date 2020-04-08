@@ -10,7 +10,7 @@ class Locale:
     BedTemp = "Bed temperature, °C:"
     FillDensity = "Fill density, %:"
     WallThickness = "Wall thickness, mm:"
-    Nozzle = 'Nozzle diameter, mm:'
+    LineWidth = 'Line width, mm:'
     FillingType = 'Filling type:'
     FillingTypeValues = ["Lines", "Squares", "Triangles"]
     ShowStl = "Show stl"
@@ -49,7 +49,7 @@ dicts = {
         BedTemp='Температура стола, °C:',
         FillDensity='Плотность заполнения, %:',
         WallThickness='Толщина стенок, мм:',
-        Nozzle='Диаметр сопла, мм:',
+        LineWidth='Ширина линии, мм:',
         ShowStl='Отображение STL модели',
         LayersCount='Отображаемые слои:',
         FillingType='Тип заполнения:',
