@@ -2,7 +2,7 @@ import params
 
 
 class Locale:
-    Thickness = "Layer thickness, mm:"
+    LayerHeight = "Layer height, mm:"
     PrintSpeed = "Print speed, mm/s:"
     PrintSpeedLayer1 = "Print speed, Layer1, mm/s"
     PrintSpeedWall = "Print speed, walls, mm/s"
@@ -10,7 +10,7 @@ class Locale:
     BedTemp = "Bed temperature, °C:"
     FillDensity = "Fill density, %:"
     WallThickness = "Wall thickness, mm:"
-    Nozzle = 'Nozzle diameter, mm:'
+    LineWidth = 'Line width, mm:'
     FillingType = 'Filling type:'
     FillingTypeValues = ["Lines", "Squares", "Triangles"]
     ShowStl = "Show stl"
@@ -41,7 +41,7 @@ class Locale:
 dicts = {
     "en": Locale(),
     "ru": Locale(
-        Thickness='Толщина слоя, мм:',
+        LayerHeight='Высота слоя, мм:',
         PrintSpeed='Скорость печати, мм/с:',
         PrintSpeedLayer1='Скорость печати первого слоя, мм/с',
         PrintSpeedWall='Скорость печати стенок, мм/с',
@@ -49,7 +49,7 @@ dicts = {
         BedTemp='Температура стола, °C:',
         FillDensity='Плотность заполнения, %:',
         WallThickness='Толщина стенок, мм:',
-        Nozzle='Диаметр сопла, мм:',
+        LineWidth='Ширина линии, мм:',
         ShowStl='Отображение STL модели',
         LayersCount='Отображаемые слои:',
         FillingType='Тип заполнения:',

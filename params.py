@@ -17,11 +17,11 @@ PlaneXSize = 200
 PlaneYSize = 200
 PlaneDiameter = 250
 
-SliceCommand = "./goosli --stl={stl} --gcode={gcode} --thickness={thickness} " \
+SliceCommand = "./goosli --stl={stl} --gcode={gcode} --layer_height={layer_height} " \
                "--originx={originx} --originy={originy} --originz={originz} " \
                "--rotcx={rotcx} --rotcy={rotcy} --rotcz={rotcz} " \
                "--wall_thickness={wall_thickness} --fill_density={fill_density} --bed_temperature={bed_temperature} " \
-               "--extruder_temperature={extruder_temperature} --print_speed={print_speed} --nozzle={nozzle} " \
+               "--extruder_temperature={extruder_temperature} --print_speed={print_speed} --line_width={line_width} " \
                "--slicing_type={slicing_type} --planes_file={planes_file} " \
                "--print_speed_layer1={print_speed_layer1} --print_speed_wall={print_speed_wall} " \
                "--filling_type={filling_type} --angle={angle} " \

@@ -75,10 +75,10 @@ class Gui(QWidget):
         def get_cur_row():
             return self.cur_row
 
-        thickness_label = QLabel(self.locale.Thickness)
-        self.thickness_value = QLineEdit("0.2")
-        right_panel.addWidget(thickness_label, get_next_row(), 1)
-        right_panel.addWidget(self.thickness_value, get_cur_row(), 2)
+        layer_height_label = QLabel(self.locale.LayerHeight)
+        self.layer_height_value = QLineEdit("0.2")
+        right_panel.addWidget(layer_height_label, get_next_row(), 1)
+        right_panel.addWidget(self.layer_height_value, get_cur_row(), 2)
 
         printSpeed_label = QLabel(self.locale.PrintSpeed)
         self.printSpeed_value = QLineEdit("50")
@@ -115,15 +115,15 @@ class Gui(QWidget):
         right_panel.addWidget(wallThickness_label, get_next_row(), 1)
         right_panel.addWidget(self.wallThickness_value, get_cur_row(), 2)
 
-        nozzle_label = QLabel(self.locale.Nozzle)
-        self.nozzle_value = QLineEdit("0.4")
-        right_panel.addWidget(nozzle_label, get_next_row(), 1)
-        right_panel.addWidget(self.nozzle_value, get_cur_row(), 2)
+        line_width_label = QLabel(self.locale.LineWidth)
+        self.line_width_value = QLineEdit("0.4")
+        right_panel.addWidget(line_width_label, get_next_row(), 1)
+        right_panel.addWidget(self.line_width_value, get_cur_row(), 2)
 
         filling_type_label = QLabel(self.locale.FillingType)
         right_panel.addWidget(filling_type_label, get_next_row(), 1)
         # todo fix displaying shifting (feature is below)
-        right_panel.addWidget(self.nozzle_value, get_cur_row(), 2)
+        right_panel.addWidget(self.line_width_value, get_cur_row(), 2)
         filling_type_valuesW = QWidget()
         self.filling_type_values = QComboBox(filling_type_valuesW)
         self.filling_type_values.addItems(self.locale.FillingTypeValues)
@@ -590,7 +590,7 @@ class Gui(QWidget):
             "rotcy": params.RotationCenter[1],
             "rotcz": params.RotationCenter[2],
 
-            "thickness": self.thickness_value.text(),
+            "layer_height": self.layer_height_value.text(),
             "wall_thickness": self.wallThickness_value.text(),
             "fill_density": self.fillDensity_value.text(),
             "bed_temperature": self.bedTemp_value.text(),
@@ -598,7 +598,7 @@ class Gui(QWidget):
             "print_speed": self.printSpeed_value.text(),
             "print_speed_layer1": self.printSpeedLayer1_value.text(),
             "print_speed_wall": self.printSpeedWall_value.text(),
-            "nozzle": self.nozzle_value.text(),
+            "line_width": self.line_width_value.text(),
             "filling_type": locales.getLocaleByLang("en").FillingTypeValues[self.filling_type_values.currentIndex()],
             "slicing_type": slicing_type,
             "planes_file": params.PlanesFile,
