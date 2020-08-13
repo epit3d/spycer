@@ -33,6 +33,7 @@ class Locale:
     DeletePlane = "DeletePlane"
     Rotated = "Rotated"
     SupportOffset = "Support offset"
+    FloatParsingError = "Error in float number"
 
     def __init__(self, **entries):
         self.__dict__.update(entries)
@@ -73,7 +74,7 @@ dicts = {
         DeletePlane="Удалить",
         Rotated="Повёрнута",
         SupportOffset="Отступ поддержки от детали",
-
+        FloatParsingError="Ошибка в написании дробного числа",
     ),
 }
 

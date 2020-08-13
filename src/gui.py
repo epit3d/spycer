@@ -11,6 +11,7 @@ from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
 import params
 from src import debug, gcode, locales, gui_utils
+from src.gui_utils import isfloat, showErrorDialog
 
 NothingState = "nothing"
 GCodeState = "gcode"
@@ -236,31 +237,31 @@ class Gui(QWidget):
         bottom_layout.addWidget(self.removePlane_button, 2, 0)
 
         self.tilted_checkbox = QCheckBox(self.locale.Tilted)
-        self.tilted_checkbox.stateChanged.connect(self.applyPlaneChange)
+        self.tilted_checkbox.stateChanged.connect(lambda: self.applySliderChange(self.rotated_value, self.rotSlider))
         bottom_layout.addWidget(self.tilted_checkbox, 0, 3)
 
         x_label = QLabel("X:")
         bottom_layout.addWidget(x_label, 0, 4)
         self.x_value = QLineEdit("3.0951")
-        self.x_value.editingFinished.connect(self.applyEditsChange)
+        self.x_value.editingFinished.connect(lambda: self.applyFieldChange(self.x_value, self.xSlider))
         bottom_layout.addWidget(self.x_value, 0, 5)
 
         y_label = QLabel("Y:")
         bottom_layout.addWidget(y_label, 1, 4)
         self.y_value = QLineEdit("5.5910")
-        self.y_value.editingFinished.connect(self.applyEditsChange)
+        self.y_value.editingFinished.connect(lambda: self.applyFieldChange(self.y_value, self.ySlider))
         bottom_layout.addWidget(self.y_value, 1, 5)
 
         z_label = QLabel("Z:")
         bottom_layout.addWidget(z_label, 2, 4)
         self.z_value = QLineEdit("89.5414")
-        self.z_value.editingFinished.connect(self.applyEditsChange)
+        self.z_value.editingFinished.connect(lambda: self.applyFieldChange(self.z_value, self.zSlider))
         bottom_layout.addWidget(self.z_value, 2, 5)
 
         rotated_label = QLabel(self.locale.Rotated)
         bottom_layout.addWidget(rotated_label, 3, 4)
         self.rotated_value = QLineEdit("31.0245")
-        self.rotated_value.editingFinished.connect(self.applyEditsChange)
+        self.rotated_value.editingFinished.connect(lambda: self.applyFieldChange(self.rotated_value, self.rotSlider))
         bottom_layout.addWidget(self.rotated_value, 3, 5)
 
         self.xSlider = QSlider()
@@ -268,28 +269,28 @@ class Gui(QWidget):
         self.xSlider.setMinimum(-100)
         self.xSlider.setMaximum(100)
         self.xSlider.setValue(1)
-        self.xSlider.valueChanged.connect(self.applyPlaneChange)
+        self.xSlider.valueChanged.connect(lambda: self.applySliderChange(self.x_value, self.xSlider))
         bottom_layout.addWidget(self.xSlider, 0, 6, 1, 2)
         self.ySlider = QSlider()
         self.ySlider.setOrientation(QtCore.Qt.Horizontal)
         self.ySlider.setMinimum(-100)
         self.ySlider.setMaximum(100)
         self.ySlider.setValue(1)
-        self.ySlider.valueChanged.connect(self.applyPlaneChange)
+        self.ySlider.valueChanged.connect(lambda: self.applySliderChange(self.y_value, self.ySlider))
         bottom_layout.addWidget(self.ySlider, 1, 6, 1, 2)
         self.zSlider = QSlider()
         self.zSlider.setOrientation(QtCore.Qt.Horizontal)
         self.zSlider.setMinimum(0)
         self.zSlider.setMaximum(200)
         self.zSlider.setValue(1)
-        self.zSlider.valueChanged.connect(self.applyPlaneChange)
+        self.zSlider.valueChanged.connect(lambda: self.applySliderChange(self.z_value, self.zSlider))
         bottom_layout.addWidget(self.zSlider, 2, 6, 1, 2)
         self.rotSlider = QSlider()
         self.rotSlider.setOrientation(QtCore.Qt.Horizontal)
         self.rotSlider.setMinimum(-180)
         self.rotSlider.setMaximum(180)
         self.rotSlider.setValue(0)
-        self.rotSlider.valueChanged.connect(self.applyPlaneChange)
+        self.rotSlider.valueChanged.connect(lambda: self.applySliderChange(self.rotated_value, self.rotSlider))
         bottom_layout.addWidget(self.rotSlider, 3, 6, 1, 2)
 
         bottom_panel = QWidget()
@@ -297,25 +298,20 @@ class Gui(QWidget):
 
         return bottom_panel
 
-    def applyEditsChange(self):
-        self.xSlider.setValue(float(self.x_value.text()))
-        self.ySlider.setValue(float(self.y_value.text()))
-        self.zSlider.setValue(float(self.z_value.text()))
-        self.rotSlider.setValue(float(self.rotated_value.text()))
-        center = [float(self.x_value.text()), float(self.y_value.text()), float(self.z_value.text())]
-        ind = self.combo.currentIndex()
-        if ind == -1:
-            return
-        self.planes[ind] = gui_utils.Plane(self.tilted_checkbox.isChecked(), float(self.rotSlider.value()), center)
-        self.drawPlanes()
+    def applyFieldChange(self, field, slider):
+        if isfloat(field.text()):
+            slider.setValue(float(field.text()))
+        else:
+            field.setText(str(slider.value()))
+            showErrorDialog(self.locale.FloatParsingError)
+        self.applyPlaneChangeCommon()
 
-    def applyPlaneChange(self):
-        self.x_value.setText(str(self.xSlider.value()))
-        self.y_value.setText(str(self.ySlider.value()))
-        self.z_value.setText(str(self.zSlider.value()))
-        self.rotated_value.setText(str(self.rotSlider.value()))
+    def applySliderChange(self, field, slider):
+        field.setText(str(slider.value()))
+        self.applyPlaneChangeCommon()
 
-        center = [float(self.xSlider.value()), float(self.ySlider.value()), float(self.zSlider.value())]
+    def applyPlaneChangeCommon(self):
+        center = [float(self.x_value.text()),float(self.y_value.text()),float(self.z_value.text())]
         ind = self.combo.currentIndex()
         if ind == -1:
             return

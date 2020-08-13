@@ -1,4 +1,6 @@
 import vtk
+from PyQt5.QtWidgets import QMessageBox
+
 import params
 
 
@@ -236,3 +238,24 @@ def read_planes():
             planes.append(Plane(v[3][1:] == "true", float(v[4][1:]),
                                 (float(v[0][1:]), float(v[1][1:]), float(v[2][1:]))))
     return planes
+
+def isfloat(value):
+  try:
+    float(value)
+    return True
+  except ValueError:
+    return False
+
+def showErrorDialog(text_msg):
+    msg = QMessageBox()
+    msg.setIcon(QMessageBox.Critical)
+
+    msg.setText(text_msg)
+    #msg.setInformativeText("This is additional information")
+    msg.setWindowTitle("Error")
+    #msg.setDetailedText("The details are as follows:")
+    msg.setStandardButtons(QMessageBox.Close)
+    #msg.buttonClicked.connect(msgbtn)
+
+    retval = msg.exec_()
+    #print "value of pressed message box button:", retval
