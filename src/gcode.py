@@ -41,9 +41,9 @@ def parseArgs(args, x, y, z, absolute=True):
     return xr + x, yr + y, zr + z, z_rot
 
 
-def parseRotation(args):
-    x, _, z, _ = parseArgs(args, 0, 0, 0)
-    return Rotation(-x, -z)
+# def parseRotation(args):
+#     x, _, z, _ = parseArgs(args, 0, 0, 0)
+#     return Rotation(-x, -z)
 
 
 def readGCode(filename):
@@ -95,12 +95,12 @@ def parseGCode(lines):
             elif args[0] == "G1":  # draw to
                 x, y, z, _ = parseArgs(args[1:], x, y, z, abs_pos)
                 path.append([x, y, z])
-            elif args[0] == "G62":  # rotate plate
-                finishLayer()  # rotation could not be inside the layer
-                rotations.append(parseRotation(args[1:]))
+            # elif args[0] == "G62":  # rotate plate
+            #     finishLayer()  # rotation could not be inside the layer
+            #     rotations.append(parseRotation(args[1:]))
             elif args[0] == "M43":  # incline X
                 finishLayer()  # rotation could not be inside the layer
-                rotations.append(Rotation(-InclineXValue, rotations[-1].z_rot))
+                rotations.append(Rotation(InclineXValue, rotations[-1].z_rot))
             elif args[0] == "M42":  # incline X BACK
                 finishLayer()  # rotation could not be inside the layer
                 rotations.append(Rotation(0, rotations[-1].z_rot))
