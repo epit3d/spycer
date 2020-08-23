@@ -136,24 +136,33 @@ def wrapWithActors(blocks, rotations, lays2rots):
     for i in range(len(blocks)):
         block = blocks[i]
         actor = build_actor(block, True)
-        transform = vtk.vtkTransform()
         # rotate to abs coords firstly and then apply last rotation
-        transform.PostMultiply()
-        transform.RotateX(-rotations[lays2rots[i]].x_rot)
-        transform.PostMultiply()
-        transform.RotateZ(-rotations[lays2rots[i]].z_rot)
-
-        transform.PostMultiply()
-        transform.RotateZ(rotations[-1].z_rot)
-        transform.PostMultiply()
-        transform.RotateX(rotations[-1].x_rot)
-        actor.SetUserTransform(transform)
+        tnf = prepareTransform(rotations[lays2rots[i]], rotations[-1])
+        actor.SetUserTransform(tnf)
 
         actor.GetProperty().SetColor(params.LayerColor)
         actors.append(actor)
 
     actors[-1].GetProperty().SetColor(params.LastLayerColor)
     return actors
+
+
+def prepareTransform(cancelRot, applyRot):
+    tf = vtk.vtkTransform()
+    tf.PostMultiply()
+    tf.Translate(-params.RotationCenter[0], -params.RotationCenter[1], -params.RotationCenter[2])
+    tf.PostMultiply()
+    tf.RotateX(-cancelRot.x_rot)
+    tf.PostMultiply()
+    tf.RotateZ(-cancelRot.z_rot)
+
+    tf.PostMultiply()
+    tf.RotateZ(applyRot.z_rot)
+    tf.PostMultiply()
+    tf.RotateX(applyRot.x_rot)
+    tf.PostMultiply()
+    tf.Translate(params.RotationCenter[0], params.RotationCenter[1], params.RotationCenter[2])
+    return tf
 
 
 def colorizeSTL(output):
@@ -239,23 +248,25 @@ def read_planes():
                                 (float(v[0][1:]), float(v[1][1:]), float(v[2][1:]))))
     return planes
 
+
 def isfloat(value):
-  try:
-    float(value)
-    return True
-  except ValueError:
-    return False
+    try:
+        float(value)
+        return True
+    except ValueError:
+        return False
+
 
 def showErrorDialog(text_msg):
     msg = QMessageBox()
     msg.setIcon(QMessageBox.Critical)
 
     msg.setText(text_msg)
-    #msg.setInformativeText("This is additional information")
+    # msg.setInformativeText("This is additional information")
     msg.setWindowTitle("Error")
-    #msg.setDetailedText("The details are as follows:")
+    # msg.setDetailedText("The details are as follows:")
     msg.setStandardButtons(QMessageBox.Close)
-    #msg.buttonClicked.connect(msgbtn)
+    # msg.buttonClicked.connect(msgbtn)
 
     retval = msg.exec_()
-    #print "value of pressed message box button:", retval
+    # print "value of pressed message box button:", retval

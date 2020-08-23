@@ -533,47 +533,42 @@ class Gui(QWidget):
         if self.gode.lays2rots[newSliderValue - 1] != self.gode.lays2rots[self.currLayerNumber - 1]:
             currRotation = self.gode.rotations[self.gode.lays2rots[newSliderValue - 1]]
             for block in range(newSliderValue):
-                transform = vtk.vtkTransform()
-
-                transform.PostMultiply()
-                transform.RotateX(-self.gode.rotations[self.gode.lays2rots[block]].x_rot)
-                transform.PostMultiply()
-                transform.RotateZ(-self.gode.rotations[self.gode.lays2rots[block]].z_rot)
-
-                transform.PostMultiply()
-                transform.RotateZ(currRotation.z_rot)
-                transform.PostMultiply()
-                transform.RotateX(currRotation.x_rot)
-                self.actors[block].SetUserTransform(transform)
+                # revert prev rotation firstly and then apply current
+                tf = gui_utils.prepareTransform(self.gode.rotations[self.gode.lays2rots[block]], currRotation)
+                self.actors[block].SetUserTransform(tf)
 
             self.rotatePlane(currRotation)
-            for i in range(len(self.planes)):
-                self.rotateAnyPlane(self.planesActors[i], self.planes[i], currRotation)
+            # for i in range(len(self.planes)):
+            #     self.rotateAnyPlane(self.planesActors[i], self.planes[i], currRotation)
         self.currLayerNumber = newSliderValue
         self.reloadScene()
 
     def rotatePlane(self, rotation):
         transform = vtk.vtkTransform()
         transform.PostMultiply()
+        transform.Translate(-params.RotationCenter[0], -params.RotationCenter[1], -params.RotationCenter[2])
+        transform.PostMultiply()
         transform.RotateZ(rotation.z_rot)
         transform.PostMultiply()
         transform.RotateX(rotation.x_rot)
+        transform.PostMultiply()
+        transform.Translate(params.RotationCenter[0], params.RotationCenter[1], params.RotationCenter[2])
         self.planeActor.SetUserTransform(transform)
         self.planeTransform = transform
 
-    def rotateAnyPlane(self, planeActor, plane, rotation):
-        transform = vtk.vtkTransform()
-        transform.PostMultiply()
-        transform.RotateX(-60 if plane.tilted else 0)
-        transform.PostMultiply()
-        transform.RotateZ(plane.rot)
-        transform.Translate(plane.x, plane.y, plane.z - 0.1)
-
-        transform.PostMultiply()
-        transform.RotateZ(rotation.z_rot)
-        transform.PostMultiply()
-        transform.RotateX(rotation.x_rot)
-        planeActor.SetUserTransform(transform)
+    # def rotateAnyPlane(self, planeActor, plane, rotation):
+    #     transform = vtk.vtkTransform()
+    #     transform.PostMultiply()
+    #     transform.RotateX(-60 if plane.tilted else 0)
+    #     transform.PostMultiply()
+    #     transform.RotateZ(plane.rot)
+    #     transform.Translate(plane.x, plane.y, plane.z - 0.1)
+    #
+    #     transform.PostMultiply()
+    #     transform.RotateZ(rotation.z_rot)
+    #     transform.PostMultiply()
+    #     transform.RotateX(rotation.x_rot)
+    #     planeActor.SetUserTransform(transform)
 
     def sliceSTL(self, slicing_type):
         values = {
