@@ -1,6 +1,7 @@
 import os
 import shlex
 import subprocess
+import sys
 from pathlib import Path
 
 from shutil import copy2
@@ -613,8 +614,7 @@ class Gui(QWidget):
         if self.supportsOn.isChecked():
             cmd += " --supports_on"
 
-        print(cmd)
-        subprocess.check_output(shlex.split(cmd))
+        call_command(cmd)
         self.stlActor.VisibilityOff()
         self.loadGCode(params.OutputGCode, True)
 
@@ -630,7 +630,7 @@ class Gui(QWidget):
             "angle": self.colorizeAngle_value.text(),
         }
         cmd = params.ColorizeStlCommand.format(**values)
-        subprocess.check_output(shlex.split(cmd))
+        call_command(cmd)
         self.loadSTL(self.openedStl, method=gui_utils.createStlActorInOriginWithColorize)
 
     def analyzeModel(self):
@@ -646,7 +646,7 @@ class Gui(QWidget):
             "rotcz": params.RotationCenter[2],
         }
         cmd = params.AnalyzeStlCommand.format(**values)
-        subprocess.check_output(shlex.split(cmd))
+        call_command(cmd)
         self.planes = gui_utils.read_planes()
         self.bottom_panel.setEnabled(True)
         # self.openedStl = "cuttedSTL.stl"
@@ -705,6 +705,16 @@ class Gui(QWidget):
         debug.readFile(self.render, "/home/l1va/debug.txt", 4)
         # debug.readFile(self.render, "/home/l1va/debug_simplified.txt", "Red", 3)
         self.reloadScene()
+
+
+def call_command(cmd):
+    try:
+        cmds = shlex.split(cmd)
+        print(cmds)
+        subprocess.check_output(cmds)
+    except:
+        print("Error:", sys.exc_info())
+        gui_utils.showErrorDialog(repr(sys.exc_info()))
 
 
 def format_path(path):
