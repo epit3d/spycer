@@ -1,6 +1,6 @@
 import vtk
 
-Lang = "en"
+Lang = "ru"
 Debug = True
 
 colors = vtk.vtkNamedColors()
@@ -13,7 +13,7 @@ PlaneColor = colors.GetColor3d("Cyan")
 InclineXValue = 60
 
 PlaneCenter = (0, 0, 0)
-RotationCenter = (0, 0, 50)
+RotationCenter = (0, 0, 63.5)
 PlaneXSize = 200
 PlaneYSize = 200
 PlaneDiameter = 250

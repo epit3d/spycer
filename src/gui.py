@@ -708,6 +708,4 @@ class Gui(QWidget):
 
 
 def format_path(path):
-    if " " in path:
-        return '"{}"'.format(path)
-    return path
+    return '"{}"'.format(path)
