@@ -6,6 +6,7 @@ Debug = True
 colors = vtk.vtkNamedColors()
 LastLayerColor = colors.GetColor3d("Red")
 LayerColor = colors.GetColor3d("White")
+BlueColor = colors.GetColor3d("Blue")
 BackgroundColor = colors.GetColor3d("SlateGray")
 PlaneColor = colors.GetColor3d("Cyan")
 

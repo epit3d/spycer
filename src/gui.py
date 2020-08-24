@@ -41,6 +41,10 @@ class Gui(QWidget):
         self.planeTransform = vtk.vtkTransform()
         self.render.AddActor(self.planeActor)
 
+        self.boxActors = gui_utils.createBoxActors()
+        for b in self.boxActors:
+            self.render.AddActor(b)
+
         self.stateNothing()
         self.render.ResetCamera()
 
@@ -480,7 +484,6 @@ class Gui(QWidget):
         self.actors = gui_utils.wrapWithActors(blocks, gode.rotations, gode.lays2rots)
 
         self.clearScene()
-        self.render.AddActor(self.planeActor)
         if addStl:
             self.render.AddActor(self.stlActor)
 
@@ -507,7 +510,6 @@ class Gui(QWidget):
         self.zPosition_value.setText(str(self.stlTranslation[2])[:10])
 
         self.clearScene()
-        self.render.AddActor(self.planeActor)
 
         self.render.AddActor(self.stlActor)
         self.bottom_panel.setEnabled(True)
@@ -652,6 +654,9 @@ class Gui(QWidget):
 
     def clearScene(self):
         self.render.RemoveAllViewProps()
+        self.render.AddActor(self.planeActor)
+        for b in self.boxActors:
+            self.render.AddActor(b)
 
     def reloadScene(self):
         self.render.Modified()

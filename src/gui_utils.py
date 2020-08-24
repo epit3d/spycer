@@ -64,6 +64,51 @@ def createPlaneActorCircleByCenterAndRot(center, x_rot, z_rot):  # TODO: rename 
     return actor
 
 
+def createBoxActors():
+    res = []
+    cylinder = vtk.vtkCylinderSource()
+    cylinder.SetResolution(50)
+    cylinder.SetRadius(3)
+    cylinder.SetHeight(200)
+    cylinder.SetCenter(params.PlaneCenter[0] - 100, params.PlaneCenter[2], params.PlaneCenter[1] + 100)  # WHAT? vtk :(
+    mapper = vtk.vtkPolyDataMapper()
+    mapper.SetInputConnection(cylinder.GetOutputPort())
+    actor = vtk.vtkActor()
+    actor.SetMapper(mapper)
+    actor.GetProperty().SetColor(params.BlueColor)
+    actor.RotateX(90)
+    res.append(actor)
+
+    cylinder = vtk.vtkCylinderSource()
+    cylinder.SetResolution(50)
+    cylinder.SetRadius(3)
+    cylinder.SetHeight(200)
+
+    cylinder.SetCenter(params.PlaneCenter[0] + 100, params.PlaneCenter[2], params.PlaneCenter[1] - 100)  # WHAT? vtk :(
+    mapper = vtk.vtkPolyDataMapper()
+    mapper.SetInputConnection(cylinder.GetOutputPort())
+    actor = vtk.vtkActor()
+    actor.SetMapper(mapper)
+    actor.GetProperty().SetColor(params.PlaneColor)
+    actor.RotateY(90)
+    res.append(actor)
+
+    cylinder = vtk.vtkCylinderSource()
+    cylinder.SetResolution(50)
+    cylinder.SetRadius(3)
+    cylinder.SetHeight(200)
+    cylinder.SetCenter(params.PlaneCenter[0] - 100, params.PlaneCenter[2], params.PlaneCenter[1] - 100)  # WHAT? vtk :(
+    mapper = vtk.vtkPolyDataMapper()
+    mapper.SetInputConnection(cylinder.GetOutputPort())
+    actor = vtk.vtkActor()
+    actor.SetMapper(mapper)
+    actor.GetProperty().SetColor(params.LastLayerColor)
+    actor.RotateZ(90)
+    res.append(actor)
+
+    return res
+
+
 def createAxes(interactor):
     axesWidget = vtk.vtkOrientationMarkerWidget()
     rgba = [0] * 4
