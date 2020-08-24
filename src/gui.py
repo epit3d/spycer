@@ -1,6 +1,8 @@
 import os
+import shlex
 import subprocess
 from pathlib import Path
+
 from shutil import copy2
 
 import vtk
@@ -311,7 +313,7 @@ class Gui(QWidget):
         self.applyPlaneChangeCommon()
 
     def applyPlaneChangeCommon(self):
-        center = [float(self.x_value.text()),float(self.y_value.text()),float(self.z_value.text())]
+        center = [float(self.x_value.text()), float(self.y_value.text()), float(self.z_value.text())]
         ind = self.combo.currentIndex()
         if ind == -1:
             return
@@ -610,7 +612,7 @@ class Gui(QWidget):
             cmd += " --supports_on"
 
         print(cmd)
-        subprocess.check_output(str.split(cmd))
+        subprocess.check_output(shlex.split(cmd))
         self.stlActor.VisibilityOff()
         self.loadGCode(params.OutputGCode, True)
 
@@ -626,7 +628,7 @@ class Gui(QWidget):
             "angle": self.colorizeAngle_value.text(),
         }
         cmd = params.ColorizeStlCommand.format(**values)
-        subprocess.check_output(str.split(cmd))
+        subprocess.check_output(shlex.split(cmd))
         self.loadSTL(self.openedStl, method=gui_utils.createStlActorInOriginWithColorize)
 
     def analyzeModel(self):
@@ -642,7 +644,7 @@ class Gui(QWidget):
             "rotcz": params.RotationCenter[2],
         }
         cmd = params.AnalyzeStlCommand.format(**values)
-        subprocess.check_output(str.split(cmd))
+        subprocess.check_output(shlex.split(cmd))
         self.planes = gui_utils.read_planes()
         self.bottom_panel.setEnabled(True)
         # self.openedStl = "cuttedSTL.stl"
