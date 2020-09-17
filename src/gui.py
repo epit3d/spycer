@@ -9,7 +9,7 @@ from shutil import copy2
 import vtk
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import (QWidget, QLabel, QTabWidget, QLineEdit, QComboBox, QGridLayout, QSlider, QCheckBox,
-                             QPushButton, QFileDialog)
+                             QPushButton, QFileDialog, QScrollArea, QGroupBox)
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
 import params
@@ -30,7 +30,7 @@ class Gui(QWidget):
 
         main_grid = QGridLayout()
         main_grid.addWidget(self.init3dWidget(), 0, 0, 20, 5)
-        main_grid.addLayout(self.initRightPanel(), 0, 5, 20, 2)
+        main_grid.addWidget(self.initRightPanel(), 0, 5, 20, 2)
 
         self.bottom_panel = self.initBottomPanel()
         self.bottom_panel.setEnabled(False)
@@ -159,6 +159,11 @@ class Gui(QWidget):
         right_panel.addWidget(supportOffset_label, get_next_row(), 1)
         right_panel.addWidget(self.supportOffset_value, get_cur_row(), 2)
 
+        skirtLineCount_label = QLabel(self.locale.SkirtLineCount)
+        self.skirtLineCount_value = QLineEdit("3")
+        right_panel.addWidget(skirtLineCount_label, get_next_row(), 1)
+        right_panel.addWidget(self.skirtLineCount_value, get_cur_row(), 2)
+
         self.fanOffLayer1_box = QCheckBox(self.locale.FanOffLayer1)
         right_panel.addWidget(self.fanOffLayer1_box, get_next_row(), 1)
 
@@ -222,7 +227,15 @@ class Gui(QWidget):
         self.colorModel_button.clicked.connect(self.colorizeModel)
         right_panel.addWidget(self.colorModel_button, get_cur_row(), 2, 1, 1)
 
-        return right_panel
+        mygroupbox = QGroupBox('Settings')
+        mygroupbox.setLayout(right_panel)
+        scroll = QScrollArea()
+        scroll.setWidget(mygroupbox)
+        scroll.setWidgetResizable(True)
+        #scroll.setFixedHeight(400)
+        #layout = QVBoxLayout()
+
+        return scroll
 
     def initBottomPanel(self):
 
@@ -601,7 +614,8 @@ class Gui(QWidget):
             "angle": self.colorizeAngle_value.text(),
             "retraction_speed": self.retractionSpeed_value.text(),
             "retraction_distance": self.retractionDistance_value.text(),
-            "support_offset": self.supportOffset_value.text()
+            "support_offset": self.supportOffset_value.text(),
+            "skirt_line_count": self.skirtLineCount_value.text()
         }
         self.savePlanesToFile()
 
@@ -617,6 +631,7 @@ class Gui(QWidget):
         call_command(cmd)
         self.stlActor.VisibilityOff()
         self.loadGCode(params.OutputGCode, True)
+        #self.debugMe()
 
     def savePlanesToFile(self):
         with open(params.PlanesFile, 'w') as out:
