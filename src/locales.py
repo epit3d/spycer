@@ -34,6 +34,7 @@ class Locale:
     Rotated = "Rotated"
     SupportOffset = "Support offset"
     FloatParsingError = "Error in float number"
+    SkirtLineCount = "Skirt lines count"
 
     def __init__(self, **entries):
         self.__dict__.update(entries)
@@ -75,6 +76,7 @@ dicts = {
         Rotated="Повёрнута",
         SupportOffset="Отступ поддержки от детали",
         FloatParsingError="Ошибка в написании дробного числа",
+        SkirtLineCount = "Количество слоёв юбки",
     ),
 }
 

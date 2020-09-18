@@ -1,7 +1,6 @@
 import vtk
 
 Lang = "ru"
-Debug = True
 
 colors = vtk.vtkNamedColors()
 LastLayerColor = colors.GetColor3d("Red")
@@ -27,7 +26,7 @@ SliceCommand = "./goosli --stl={stl} --gcode={gcode} --layer_height={layer_heigh
                "--print_speed_layer1={print_speed_layer1} --print_speed_wall={print_speed_wall} " \
                "--filling_type={filling_type} --angle={angle} " \
                "--retraction_speed={retraction_speed} --retraction_distance={retraction_distance} " \
-               "--support_offset={support_offset}"
+               "--support_offset={support_offset} --skirt_line_count={skirt_line_count}"
 
 OutputGCode = "goosli_out.gcode"
 PlanesFile = "planes_file.txt"

@@ -1,6 +1,7 @@
 import os
 import shlex
 import subprocess
+import sys
 from pathlib import Path
 
 from shutil import copy2
@@ -8,7 +9,7 @@ from shutil import copy2
 import vtk
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import (QWidget, QLabel, QTabWidget, QLineEdit, QComboBox, QGridLayout, QSlider, QCheckBox,
-                             QPushButton, QFileDialog)
+                             QPushButton, QFileDialog, QScrollArea, QGroupBox)
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
 import params
@@ -29,7 +30,7 @@ class Gui(QWidget):
 
         main_grid = QGridLayout()
         main_grid.addWidget(self.init3dWidget(), 0, 0, 20, 5)
-        main_grid.addLayout(self.initRightPanel(), 0, 5, 20, 2)
+        main_grid.addWidget(self.initRightPanel(), 0, 5, 20, 2)
 
         self.bottom_panel = self.initBottomPanel()
         self.bottom_panel.setEnabled(False)
@@ -158,6 +159,11 @@ class Gui(QWidget):
         right_panel.addWidget(supportOffset_label, get_next_row(), 1)
         right_panel.addWidget(self.supportOffset_value, get_cur_row(), 2)
 
+        skirtLineCount_label = QLabel(self.locale.SkirtLineCount)
+        self.skirtLineCount_value = QLineEdit("3")
+        right_panel.addWidget(skirtLineCount_label, get_next_row(), 1)
+        right_panel.addWidget(self.skirtLineCount_value, get_cur_row(), 2)
+
         self.fanOffLayer1_box = QCheckBox(self.locale.FanOffLayer1)
         right_panel.addWidget(self.fanOffLayer1_box, get_next_row(), 1)
 
@@ -221,7 +227,15 @@ class Gui(QWidget):
         self.colorModel_button.clicked.connect(self.colorizeModel)
         right_panel.addWidget(self.colorModel_button, get_cur_row(), 2, 1, 1)
 
-        return right_panel
+        mygroupbox = QGroupBox('Settings')
+        mygroupbox.setLayout(right_panel)
+        scroll = QScrollArea()
+        scroll.setWidget(mygroupbox)
+        scroll.setWidgetResizable(True)
+        #scroll.setFixedHeight(400)
+        #layout = QVBoxLayout()
+
+        return scroll
 
     def initBottomPanel(self):
 
@@ -600,7 +614,8 @@ class Gui(QWidget):
             "angle": self.colorizeAngle_value.text(),
             "retraction_speed": self.retractionSpeed_value.text(),
             "retraction_distance": self.retractionDistance_value.text(),
-            "support_offset": self.supportOffset_value.text()
+            "support_offset": self.supportOffset_value.text(),
+            "skirt_line_count": self.skirtLineCount_value.text()
         }
         self.savePlanesToFile()
 
@@ -613,10 +628,10 @@ class Gui(QWidget):
         if self.supportsOn.isChecked():
             cmd += " --supports_on"
 
-        print(cmd)
-        subprocess.check_output(shlex.split(cmd))
+        call_command(cmd)
         self.stlActor.VisibilityOff()
         self.loadGCode(params.OutputGCode, True)
+        #self.debugMe()
 
     def savePlanesToFile(self):
         with open(params.PlanesFile, 'w') as out:
@@ -630,7 +645,7 @@ class Gui(QWidget):
             "angle": self.colorizeAngle_value.text(),
         }
         cmd = params.ColorizeStlCommand.format(**values)
-        subprocess.check_output(shlex.split(cmd))
+        call_command(cmd)
         self.loadSTL(self.openedStl, method=gui_utils.createStlActorInOriginWithColorize)
 
     def analyzeModel(self):
@@ -646,7 +661,7 @@ class Gui(QWidget):
             "rotcz": params.RotationCenter[2],
         }
         cmd = params.AnalyzeStlCommand.format(**values)
-        subprocess.check_output(shlex.split(cmd))
+        call_command(cmd)
         self.planes = gui_utils.read_planes()
         self.bottom_panel.setEnabled(True)
         # self.openedStl = "cuttedSTL.stl"
@@ -705,6 +720,16 @@ class Gui(QWidget):
         debug.readFile(self.render, "/home/l1va/debug.txt", 4)
         # debug.readFile(self.render, "/home/l1va/debug_simplified.txt", "Red", 3)
         self.reloadScene()
+
+
+def call_command(cmd):
+    try:
+        cmds = shlex.split(cmd)
+        print(cmds)
+        subprocess.check_output(cmds)
+    except:
+        print("Error:", sys.exc_info())
+        gui_utils.showErrorDialog(repr(sys.exc_info()))
 
 
 def format_path(path):
