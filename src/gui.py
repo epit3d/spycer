@@ -727,9 +727,9 @@ def call_command(cmd):
         cmds = shlex.split(cmd)
         print(cmds)
         subprocess.check_output(cmds)
-    except:
+    except subprocess.CalledProcessError as er:
         print("Error:", sys.exc_info())
-        gui_utils.showErrorDialog(repr(sys.exc_info()))
+        gui_utils.showErrorDialog(repr(er.output))
 
 
 def format_path(path):
