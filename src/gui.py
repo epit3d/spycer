@@ -692,7 +692,7 @@ class Gui(QWidget):
         try:
             filename = str(
                 QFileDialog.getOpenFileName(None, self.locale.OpenModel, "/home/l1va/Downloads/5axes_3d_printer/test",
-                                            "STL (*.stl)")[0])  # TODO: fix path
+                                            "STL (*.stl);;Gcode (*.gcode)")[0])  # TODO: fix path
             if filename != "":
                 self.planes = []
                 fileExt = os.path.splitext(filename)[1].upper()
