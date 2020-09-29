@@ -537,7 +537,9 @@ class Gui(QWidget):
         newSliderValue = self.pictureSlider.value()
 
         self.actors[newSliderValue - 1].GetProperty().SetColor(params.LastLayerColor)
+        self.actors[newSliderValue - 1].GetProperty().SetLineWidth(4)
         self.actors[self.currLayerNumber - 1].GetProperty().SetColor(params.LayerColor)
+        self.actors[self.currLayerNumber - 1].GetProperty().SetLineWidth(1)
 
         self.layersNumber_label.setText(str(newSliderValue))
 
