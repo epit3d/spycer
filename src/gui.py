@@ -537,7 +537,9 @@ class Gui(QWidget):
         newSliderValue = self.pictureSlider.value()
 
         self.actors[newSliderValue - 1].GetProperty().SetColor(params.LastLayerColor)
+        self.actors[newSliderValue - 1].GetProperty().SetLineWidth(4)
         self.actors[self.currLayerNumber - 1].GetProperty().SetColor(params.LayerColor)
+        self.actors[self.currLayerNumber - 1].GetProperty().SetLineWidth(1)
 
         self.layersNumber_label.setText(str(newSliderValue))
 
@@ -692,7 +694,7 @@ class Gui(QWidget):
         try:
             filename = str(
                 QFileDialog.getOpenFileName(None, self.locale.OpenModel, "/home/l1va/Downloads/5axes_3d_printer/test",
-                                            "STL (*.stl)")[0])  # TODO: fix path
+                                            "STL (*.stl);;Gcode (*.gcode)")[0])  # TODO: fix path
             if filename != "":
                 self.planes = []
                 fileExt = os.path.splitext(filename)[1].upper()
@@ -727,9 +729,9 @@ def call_command(cmd):
         cmds = shlex.split(cmd)
         print(cmds)
         subprocess.check_output(cmds)
-    except:
+    except subprocess.CalledProcessError as er:
         print("Error:", sys.exc_info())
-        gui_utils.showErrorDialog(repr(sys.exc_info()))
+        gui_utils.showErrorDialog(repr(er.output))
 
 
 def format_path(path):
