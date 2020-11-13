@@ -36,6 +36,7 @@ class Locale:
     FloatParsingError = "Error in float number"
     SkirtLineCount = "Skirt lines count"
     Plane = "Plane"
+    AddOnePlaneError = "Add at least one plane"
 
     def __init__(self, **entries):
         self.__dict__.update(entries)
@@ -79,6 +80,7 @@ dicts = {
         FloatParsingError="Ошибка в написании дробного числа",
         SkirtLineCount="Количество слоёв юбки",
         Plane="Плоскость",
+        AddOnePlaneError="Добавьте хотя бы одну плоскость",
     ),
 }
 

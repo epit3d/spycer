@@ -591,6 +591,9 @@ class Gui(QWidget):
     #     planeActor.SetUserTransform(transform)
 
     def sliceSTL(self, slicing_type):
+        if slicing_type == "vip" and len(self.planes)==0:
+            showErrorDialog(self.locale.AddOnePlaneError)
+            return
         values = {
             "stl": format_path(self.openedStl),
             "gcode": params.OutputGCode,
