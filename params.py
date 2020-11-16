@@ -2,6 +2,7 @@ import vtk
 
 Lang = "ru"
 
+# Available colors: https://en.wikipedia.org/wiki/File:SVG_Recognized_color_keyword_names.svg
 colors = vtk.vtkNamedColors()
 LastLayerColor = colors.GetColor3d("Red")
 LayerColor = colors.GetColor3d("White")

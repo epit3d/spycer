@@ -1,7 +1,7 @@
 import sys
 from cx_Freeze import setup, Executable
 
-buildOptions = dict(includes=['src/'])
+buildOptions = dict(includes=['src/'], packages=['vtkmodules'], excludes=['tkinter'])
 
 base = None
 if sys.platform == "win32":

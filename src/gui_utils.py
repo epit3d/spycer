@@ -48,7 +48,7 @@ def createPlaneActorCircleByCenterAndRot(center, x_rot, z_rot):  # TODO: rename 
     actor = vtk.vtkActor()
     actor.SetMapper(mapper)
     actor.GetProperty().SetColor(params.PlaneColor)
-    actor.GetProperty().SetOpacity(0.3)
+    # actor.GetProperty().SetOpacity(0.3)
     actor.RotateX(90)
     # actor.RotateX(x_rot)
     # actor.SetPosition(center[0], center[1],center[2] - 0.1)

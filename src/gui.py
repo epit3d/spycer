@@ -48,7 +48,7 @@ class Gui(QWidget):
 
         self.stateNothing()
         self.render.ResetCamera()
-
+        self.render.SetUseDepthPeeling(True)
         self.planes = []
         self.planesActors = []
 
@@ -232,8 +232,8 @@ class Gui(QWidget):
         scroll = QScrollArea()
         scroll.setWidget(mygroupbox)
         scroll.setWidgetResizable(True)
-        #scroll.setFixedHeight(400)
-        #layout = QVBoxLayout()
+        # scroll.setFixedHeight(400)
+        # layout = QVBoxLayout()
 
         return scroll
 
@@ -379,7 +379,7 @@ class Gui(QWidget):
 
         self.combo.clear()
         for i in range(len(self.planes)):
-            self.combo.addItem("Плоскость " + str(i + 1))
+            self.combo.addItem(self.locale.Plane + " " + str(i + 1))
 
         self.drawPlanes()
 
@@ -591,6 +591,9 @@ class Gui(QWidget):
     #     planeActor.SetUserTransform(transform)
 
     def sliceSTL(self, slicing_type):
+        if slicing_type == "vip" and len(self.planes)==0:
+            showErrorDialog(self.locale.AddOnePlaneError)
+            return
         values = {
             "stl": format_path(self.openedStl),
             "gcode": params.OutputGCode,
@@ -633,7 +636,7 @@ class Gui(QWidget):
         call_command(cmd)
         self.stlActor.VisibilityOff()
         self.loadGCode(params.OutputGCode, True)
-        #self.debugMe()
+        # self.debugMe()
 
     def savePlanesToFile(self):
         with open(params.PlanesFile, 'w') as out:
