@@ -209,6 +209,16 @@ def prepareTransform(cancelRot, applyRot):
     tf.Translate(params.RotationCenter[0], params.RotationCenter[1], params.RotationCenter[2])
     return tf
 
+def planeTf(rotation):
+    transform = vtk.vtkTransform()
+    transform.PostMultiply()
+    transform.Translate(-params.RotationCenter[0], -params.RotationCenter[1], -params.RotationCenter[2])
+    transform.PostMultiply()
+    transform.RotateZ(rotation.z_rot)
+    transform.PostMultiply()
+    transform.RotateX(rotation.x_rot)
+    transform.PostMultiply()
+    transform.Translate(params.RotationCenter[0], params.RotationCenter[1], params.RotationCenter[2])
 
 def colorizeSTL(output):
     polys = output.GetPolys()
