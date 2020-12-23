@@ -1,18 +1,13 @@
-import sys
-
-from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QGridLayout, QVBoxLayout
 import vtk
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import (QMainWindow, QWidget, QLabel, QTabWidget, QLineEdit, QComboBox, QGridLayout, QSlider,
-                             QCheckBox,
-                             QPushButton, QFileDialog, QScrollArea, QGroupBox)
+from PyQt5.QtWidgets import (QMainWindow, QWidget, QLabel, QLineEdit, QComboBox, QGridLayout, QSlider,
+                             QCheckBox, QVBoxLayout,
+                             QPushButton, QFileDialog, QScrollArea, QGroupBox, QAction)
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
-import params
 from src import locales, gui_utils
-from src.gui import Gui
-from src.gui_utils import showErrorDialog
+from src.gui_utils import plane_tf
+from src.settings import sett, get_color
 
 NothingState = "nothing"
 GCodeState = "gcode"
@@ -20,22 +15,24 @@ StlState = "stl"
 BothState = "both"
 
 
-class MainWindow(QtWidgets.QMainWindow):
+class MainWindow(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle('Spycer')
-        self.statusBar().showMessage('Ready')
+        # self.statusBar().showMessage('Ready')
 
         self.locale = locales.getLocale()
 
         # Menu
         bar = self.menuBar()
         file_menu = bar.addMenu('File')
+        self.open_action = QAction('Open', self)
+        # close_action = QAction('Close', self)
+        file_menu.addAction(self.open_action)
+        # file_menu.addAction(close_action)
         settings_menu = bar.addMenu('Settings')
-        open_action = QtWidgets.QAction('Open', self)
-        close_action = QtWidgets.QAction('Close', self)
-        file_menu.addAction(open_action)
-        file_menu.addAction(close_action)
+        self.save_sett_action = QAction('Save', self)
+        settings_menu.addAction(self.save_sett_action)
 
         # main parts
         central_widget = QWidget()
@@ -56,14 +53,14 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # close_action.triggered.connect(self.close)
 
-    ####################
+        ####################
 
     def init3d_widget(self):
         widget3d = QVTKRenderWindowInteractor()
         widget3d.Initialize()
         widget3d.Start()
         self.render = vtk.vtkRenderer()
-        self.render.SetBackground(params.BackgroundColor)
+        self.render.SetBackground(get_color(sett().colors.background))
         widget3d.GetRenderWindow().AddRenderer(self.render)
         self.interactor = widget3d.GetRenderWindow().GetInteractor()
         self.interactor.GetInteractorStyle().SetCurrentStyleToTrackballCamera()
@@ -85,7 +82,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def init_right_panel(self):
         right_panel = QGridLayout()
         right_panel.setSpacing(5)
-        right_panel.setColumnStretch(0, 2)
+        # right_panel.setColumnStretch(0, 2)
 
         # Front-end development at its best
         self.cur_row = 1
@@ -98,47 +95,47 @@ class MainWindow(QtWidgets.QMainWindow):
             return self.cur_row
 
         layer_height_label = QLabel(self.locale.LayerHeight)
-        self.layer_height_value = QLineEdit("0.2")
+        self.layer_height_value = QLineEdit(str(sett().slicing.layer_height))
         right_panel.addWidget(layer_height_label, get_next_row(), 1)
         right_panel.addWidget(self.layer_height_value, get_cur_row(), 2)
 
         print_speed_label = QLabel(self.locale.PrintSpeed)
-        self.print_speed_value = QLineEdit("50")
+        self.print_speed_value = QLineEdit(str(sett().slicing.print_speed))
         right_panel.addWidget(print_speed_label, get_next_row(), 1)
         right_panel.addWidget(self.print_speed_value, get_cur_row(), 2)
 
         print_speed_layer1_label = QLabel(self.locale.PrintSpeedLayer1)
-        self.print_speed_layer1_value = QLineEdit("50")
+        self.print_speed_layer1_value = QLineEdit(str(sett().slicing.print_speed_layer1))
         right_panel.addWidget(print_speed_layer1_label, get_next_row(), 1)
         right_panel.addWidget(self.print_speed_layer1_value, get_cur_row(), 2)
 
         print_speed_wall_label = QLabel(self.locale.PrintSpeedWall)
-        self.print_speed_wall_value = QLineEdit("50")
+        self.print_speed_wall_value = QLineEdit(str(sett().slicing.print_speed_wall))
         right_panel.addWidget(print_speed_wall_label, get_next_row(), 1)
         right_panel.addWidget(self.print_speed_wall_value, get_cur_row(), 2)
 
         extruder_temp_label = QLabel(self.locale.ExtruderTemp)
-        self.extruder_temp_value = QLineEdit("200")
+        self.extruder_temp_value = QLineEdit(str(sett().slicing.extruder_temperature))
         right_panel.addWidget(extruder_temp_label, get_next_row(), 1)
         right_panel.addWidget(self.extruder_temp_value, get_cur_row(), 2)
 
         bed_temp_label = QLabel(self.locale.BedTemp)
-        self.bed_temp_value = QLineEdit("60")
+        self.bed_temp_value = QLineEdit(str(sett().slicing.bed_temperature))
         right_panel.addWidget(bed_temp_label, get_next_row(), 1)
         right_panel.addWidget(self.bed_temp_value, get_cur_row(), 2)
 
         fill_density_label = QLabel(self.locale.FillDensity)
-        self.fill_density_value = QLineEdit("20")
+        self.fill_density_value = QLineEdit(str(sett().slicing.fill_density))
         right_panel.addWidget(fill_density_label, get_next_row(), 1)
         right_panel.addWidget(self.fill_density_value, get_cur_row(), 2)
 
         wall_thickness_label = QLabel(self.locale.WallThickness)
-        self.wall_thickness_value = QLineEdit("0.8")
+        self.wall_thickness_value = QLineEdit(str(sett().slicing.wall_thickness))
         right_panel.addWidget(wall_thickness_label, get_next_row(), 1)
         right_panel.addWidget(self.wall_thickness_value, get_cur_row(), 2)
 
         line_width_label = QLabel(self.locale.LineWidth)
-        self.line_width_value = QLineEdit("0.4")
+        self.line_width_value = QLineEdit(str(sett().slicing.line_width))
         right_panel.addWidget(line_width_label, get_next_row(), 1)
         right_panel.addWidget(self.line_width_value, get_cur_row(), 2)
 
@@ -149,85 +146,102 @@ class MainWindow(QtWidgets.QMainWindow):
         filling_type_values_widget = QWidget()
         self.filling_type_values = QComboBox(filling_type_values_widget)
         self.filling_type_values.addItems(self.locale.FillingTypeValues)
+        ind = locales.getLocaleByLang("en").FillingTypeValues.index(sett().slicing.filling_type)
+        self.filling_type_values.setCurrentIndex(ind)
         right_panel.addWidget(filling_type_values_widget, get_cur_row(), 2)
 
         retraction_on_label = QLabel(self.locale.Retraction)
         self.retraction_on_box = QCheckBox()
+        if sett().slicing.retraction_on:
+            self.retraction_on_box.setCheckState(QtCore.Qt.Checked)
         right_panel.addWidget(retraction_on_label, get_next_row(), 1)
         right_panel.addWidget(self.retraction_on_box, get_cur_row(), 2)
 
         retraction_distance_label = QLabel(self.locale.RetractionDistance)
-        self.retraction_distance_value = QLineEdit("0")
+        self.retraction_distance_value = QLineEdit(str(sett().slicing.retraction_distance))
         right_panel.addWidget(retraction_distance_label, get_next_row(), 1)
         right_panel.addWidget(self.retraction_distance_value, get_cur_row(), 2)
 
         retraction_speed_label = QLabel(self.locale.RetractionSpeed)
-        self.retraction_speed_value = QLineEdit("0")
+        self.retraction_speed_value = QLineEdit(str(sett().slicing.retraction_speed))
         right_panel.addWidget(retraction_speed_label, get_next_row(), 1)
         right_panel.addWidget(self.retraction_speed_value, get_cur_row(), 2)
 
         support_offset_label = QLabel(self.locale.SupportOffset)
-        self.support_offset_value = QLineEdit("1.0")
+        self.support_offset_value = QLineEdit(str(sett().slicing.support_offset))
         right_panel.addWidget(support_offset_label, get_next_row(), 1)
         right_panel.addWidget(self.support_offset_value, get_cur_row(), 2)
 
         skirt_line_count_label = QLabel(self.locale.SkirtLineCount)
-        self.skirt_line_count_value = QLineEdit("3")
+        self.skirt_line_count_value = QLineEdit(str(sett().slicing.skirt_line_count))
         right_panel.addWidget(skirt_line_count_label, get_next_row(), 1)
         right_panel.addWidget(self.skirt_line_count_value, get_cur_row(), 2)
 
-        self.fan_off_layer1_box = QCheckBox(self.locale.FanOffLayer1)
-        right_panel.addWidget(self.fan_off_layer1_box, get_next_row(), 1)
+        fan_off_layer1_label = QLabel(self.locale.FanOffLayer1)
+        self.fan_off_layer1_box = QCheckBox()
+        if sett().slicing.fan_off_layer1:
+            self.fan_off_layer1_box.setCheckState(QtCore.Qt.Checked)
+        right_panel.addWidget(fan_off_layer1_label, get_next_row(), 1)
+        right_panel.addWidget(self.fan_off_layer1_box, get_cur_row(), 2)
+
+        supports_on_label = QLabel(self.locale.SupportsOn)
+        self.supports_on_box = QCheckBox()
+        if sett().slicing.supports_on:
+            self.supports_on_box.setCheckState(QtCore.Qt.Checked)
+        right_panel.addWidget(supports_on_label, get_next_row(), 1)
+        right_panel.addWidget(self.supports_on_box, get_cur_row(), 2)
+
+        # BUTTONS
+        buttons_layout = QGridLayout()
+        buttons_layout.setSpacing(5)
+        # buttons_layout.setColumnStretch(0, 2)
 
         self.model_switch_box = QCheckBox(self.locale.ShowStl)
-        right_panel.addWidget(self.model_switch_box, get_next_row(), 1)
-
-        self.supports_on = QCheckBox(self.locale.SupportsOn)
-        right_panel.addWidget(self.supports_on, get_next_row(), 1)
+        buttons_layout.addWidget(self.model_switch_box, get_next_row(), 1)
 
         self.slider_label = QLabel(self.locale.LayersCount)
         self.layers_number_label = QLabel()
-        right_panel.addWidget(self.slider_label, get_next_row(), 1)
-        right_panel.addWidget(self.layers_number_label, get_cur_row(), 2)
+        buttons_layout.addWidget(self.slider_label, get_next_row(), 1)
+        buttons_layout.addWidget(self.layers_number_label, get_cur_row(), 2)
 
         self.picture_slider = QSlider()
         self.picture_slider.setOrientation(QtCore.Qt.Horizontal)
         self.picture_slider.setMinimum(1)
         self.picture_slider.setValue(1)
-        right_panel.addWidget(self.picture_slider, get_next_row(), 1, 1, 2)
+        buttons_layout.addWidget(self.picture_slider, get_next_row(), 1, 1, 2)
 
         self.x_position_value = QLineEdit("0")
-        right_panel.addWidget(self.x_position_value, get_next_row(), 1)
+        buttons_layout.addWidget(self.x_position_value, get_next_row(), 1)
         self.y_position_value = QLineEdit("0")
-        right_panel.addWidget(self.y_position_value, get_cur_row(), 2)
+        buttons_layout.addWidget(self.y_position_value, get_cur_row(), 2)
         self.z_position_value = QLineEdit("0")
-        right_panel.addWidget(self.z_position_value, get_next_row(), 1)
+        buttons_layout.addWidget(self.z_position_value, get_next_row(), 1)
         self.move_button = QPushButton(self.locale.MoveModel)
-        right_panel.addWidget(self.move_button, get_cur_row(), 2, 1, 1)
+        buttons_layout.addWidget(self.move_button, get_cur_row(), 2, 1, 1)
 
         self.load_model_button = QPushButton(self.locale.OpenModel)
-        right_panel.addWidget(self.load_model_button, get_next_row(), 1, 1, 1)
+        buttons_layout.addWidget(self.load_model_button, get_next_row(), 1, 1, 1)
 
         self.edit_planes_button = QPushButton(self.locale.EditPlanes)
-        right_panel.addWidget(self.edit_planes_button, get_cur_row(), 2, 1, 1)
+        buttons_layout.addWidget(self.edit_planes_button, get_cur_row(), 2, 1, 1)
 
         self.slice3a_button = QPushButton(self.locale.Slice3Axes)
-        right_panel.addWidget(self.slice3a_button, get_next_row(), 1, 1, 1)
+        buttons_layout.addWidget(self.slice3a_button, get_next_row(), 1, 1, 1)
 
         self.slice_vip_button = QPushButton(self.locale.SliceVip)
-        right_panel.addWidget(self.slice_vip_button, get_cur_row(), 2, 1, 1)
+        buttons_layout.addWidget(self.slice_vip_button, get_cur_row(), 2, 1, 1)
 
         self.save_gcode_button = QPushButton(self.locale.SaveGCode)
-        right_panel.addWidget(self.save_gcode_button, get_next_row(), 1, 1, 1)
+        buttons_layout.addWidget(self.save_gcode_button, get_next_row(), 1, 1, 1)
 
         self.analyze_model_button = QPushButton(self.locale.Analyze)
-        right_panel.addWidget(self.analyze_model_button, get_cur_row(), 2, 1, 1)
+        buttons_layout.addWidget(self.analyze_model_button, get_cur_row(), 2, 1, 1)
 
-        self.colorize_angle_value = QLineEdit("30")
-        right_panel.addWidget(self.colorize_angle_value, get_next_row(), 1)
+        self.colorize_angle_value = QLineEdit(str(sett().slicing.angle))
+        buttons_layout.addWidget(self.colorize_angle_value, get_next_row(), 1)
 
         self.color_model_button = QPushButton(self.locale.ColorModel)
-        right_panel.addWidget(self.color_model_button, get_cur_row(), 2, 1, 1)
+        buttons_layout.addWidget(self.color_model_button, get_cur_row(), 2, 1, 1)
 
         panel_widget = QWidget()
         panel_widget.setLayout(right_panel)
@@ -239,9 +253,19 @@ class MainWindow(QtWidgets.QMainWindow):
 
         v_layout = QVBoxLayout()
         v_layout.addWidget(scroll)
-        mygroupbox = QGroupBox('Settings')  # TODO: locale
-        mygroupbox.setLayout(v_layout)
-        return mygroupbox
+        settings_group = QGroupBox('Settings')  # TODO: locale
+        settings_group.setLayout(v_layout)
+
+        buttons_group = QWidget()
+        buttons_group.setLayout(buttons_layout)
+
+        high_layout = QVBoxLayout()
+        high_layout.addWidget(settings_group)
+        high_layout.addWidget(buttons_group)
+        high_widget = QWidget()
+        high_widget.setLayout(high_layout)
+
+        return high_widget
 
     def init_bottom_panel(self):
         bottom_layout = QGridLayout()
@@ -332,12 +356,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.render.Modified()
         self.interactor.Render()
 
-    def change_layer_view(self, prev_value):
+    def change_layer_view(self, prev_value, gcd):
         new_slider_value = self.picture_slider.value()
 
-        self.actors[new_slider_value - 1].GetProperty().SetColor(params.LastLayerColor)
+        self.actors[new_slider_value - 1].GetProperty().SetColor(get_color(sett().colors.last_layer))
         self.actors[new_slider_value - 1].GetProperty().SetLineWidth(4)
-        self.actors[prev_value - 1].GetProperty().SetColor(params.LayerColor)
+        self.actors[prev_value - 1].GetProperty().SetColor(get_color(sett().colors.layer))
         self.actors[prev_value - 1].GetProperty().SetLineWidth(1)
 
         self.layers_number_label.setText(str(new_slider_value))
@@ -349,14 +373,14 @@ class MainWindow(QtWidgets.QMainWindow):
             for layer in range(prev_value, new_slider_value):
                 self.actors[layer].VisibilityOn()
 
-        if self.gode.lays2rots[new_slider_value - 1] != self.gode.lays2rots[prev_value - 1]:
-            currRotation = self.gode.rotations[self.gode.lays2rots[new_slider_value - 1]]
+        if gcd.lays2rots[new_slider_value - 1] != gcd.lays2rots[prev_value - 1]:
+            curr_rotation = gcd.rotations[gcd.lays2rots[new_slider_value - 1]]
             for block in range(new_slider_value):
                 # revert prev rotation firstly and then apply current
-                tf = gui_utils.prepareTransform(self.gode.rotations[self.gode.lays2rots[block]], currRotation)
+                tf = gui_utils.prepareTransform(gcd.rotations[gcd.lays2rots[block]], curr_rotation)
                 self.actors[block].SetUserTransform(tf)
 
-            self.rotatePlane(currRotation)
+            self.rotate_plane(plane_tf(curr_rotation))
             # for i in range(len(self.planes)):
             #     self.rotateAnyPlane(self.planesActors[i], self.planes[i], currRotation)
         self.reload_scene()
@@ -383,30 +407,30 @@ class MainWindow(QtWidgets.QMainWindow):
         self.render.ResetCamera()
         self.reload_scene()
 
-    def load_splanes(self, splanes):
-        self.recreate_splanes(splanes)
+    def reload_splanes(self, splanes):
+        self._recreate_splanes(splanes)
         self.combo_box.clear()
         for i in range(len(splanes)):
             self.combo_box.addItem(self.locale.Plane + " " + str(i + 1))
 
-    def recreate_splanes(self, splanes):
+    def _recreate_splanes(self, splanes):
         for p in self.splanes_actors:
             self.render.RemoveActor(p)
         self.splanes_actors = []
         for p in splanes:
-            act = gui_utils.createPlaneActorCircleByCenterAndRot([p.x, p.y, p.z], -60 if p.tilted else 0, p.rot)
+            act = gui_utils.create_splane_actor([p.x, p.y, p.z], -60 if p.tilted else 0, p.rot)
             self.splanes_actors.append(act)
             self.render.AddActor(act)
         self.reload_scene()
 
     def update_splane(self, sp, ind):
         self.render.RemoveActor(self.splanes_actors[ind])
-        act = gui_utils.createPlaneActorCircleByCenterAndRot([sp.x, sp.y, sp.z], -60 if sp.tilted else 0, sp.rot)
+        act = gui_utils.create_splane_actor([sp.x, sp.y, sp.z], -60 if sp.tilted else 0, sp.rot)
         self.splanes_actors[ind] = act
         self.render.AddActor(act)
         sel = self.combo_box.currentIndex()
-        if sel != -1:
-            self.splanes_actors[sel].GetProperty().SetColor(params.LastLayerColor)
+        if sel == ind:
+            self.splanes_actors[sel].GetProperty().SetColor(get_color(sett().colors.last_layer))
         self.reload_scene()
 
     def change_combo_select(self, plane, ind):
@@ -420,29 +444,33 @@ class MainWindow(QtWidgets.QMainWindow):
         self.zSlider.setValue(plane.z)
         self.rotSlider.setValue(plane.rot)
         for p in self.splanes_actors:
-            p.GetProperty().SetColor(params.PlaneColor)
-        self.splanes_actors[ind].GetProperty().SetColor(params.LastLayerColor)
+            p.GetProperty().SetColor(get_color(sett().colors.splane))
+        self.splanes_actors[ind].GetProperty().SetColor(get_color(sett().colors.last_layer))
         self.reload_scene()
 
-    def load_gcode(self, actors, is_add_stl, plane_tf):
+    def load_gcode(self, actors, is_from_stl, plane_tf):
         self.clear_scene()
-        if is_add_stl:
+        if is_from_stl:
+            self.stlActor.VisibilityOff()
             self.render.AddActor(self.stlActor)
 
-        self.planeActor.SetUserTransform(plane_tf)
-        self.planeTransform = plane_tf
+        self.rotate_plane(plane_tf)
 
         self.actors = actors
         for actor in self.actors:
             self.render.AddActor(actor)
 
-        if is_add_stl:
+        if is_from_stl:
             self.state_both(len(self.actors))
         else:
             self.state_gcode(len(self.actors))
 
         self.render.ResetCamera()
         self.reload_scene()
+
+    def rotate_plane(self, tf):
+        self.planeActor.SetUserTransform(tf)
+        self.planeTransform = tf
 
     def save_gcode_dialog(self):
         return QFileDialog.getSaveFileName(None, self.locale.SaveGCode, "", "Gcode (*.gcode)")[0]

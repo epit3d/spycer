@@ -1,4 +1,4 @@
-import params
+from src.settings import sett
 
 
 class Locale:
@@ -86,8 +86,9 @@ dicts = {
 
 
 def getLocale():
-    if params.Lang in dicts:
-        return dicts[params.Lang]
+    lang = sett().common.lang
+    if lang in dicts:
+        return dicts[lang]
     return dicts["en"]
 
 

@@ -1,4 +1,6 @@
 import os
+import subprocess
+import sys
 from functools import partial
 from pathlib import Path
 from shutil import copy2
@@ -6,9 +8,9 @@ from shutil import copy2
 from PyQt5 import QtCore
 import vtk
 
-from src import gui_utils, gcode, locales
-from src.gui_utils import showErrorDialog, planeTf, isfloat
-from src.locales import Locale
+from src import gui_utils, locales
+from src.gui_utils import showErrorDialog, plane_tf, isfloat
+from src.settings import sett, save_settings
 
 
 class MainController:
@@ -18,12 +20,14 @@ class MainController:
         self._connect_signals()
 
     def _connect_signals(self):
+        self.view.open_action.triggered.connect(self.open_file)
+        self.view.save_sett_action.triggered.connect(partial(self.save_settings, "vip"))
         # right panel
         self.view.model_switch_box.stateChanged.connect(self.switch_models)
         self.view.picture_slider.valueChanged.connect(self.change_layer_view)
         self.view.move_button.clicked.connect(self.move_model)
         self.view.load_model_button.clicked.connect(self.open_file)
-        self.view.edit_planes_button.clicked.connect(partial(self.load_stl, self.model.opened_stl, load_planes=True))
+        self.view.edit_planes_button.clicked.connect(partial(self.load_stl, self.model.opened_stl, load_splanes=True))
         self.view.slice3a_button.clicked.connect(partial(self.slice_stl, "3axes"))
         self.view.slice_vip_button.clicked.connect(partial(self.slice_stl, "vip"))
         self.view.save_gcode_button.clicked.connect(self.save_gcode_file)
@@ -58,7 +62,7 @@ class MainController:
         self.view.reload_scene()
 
     def change_layer_view(self):
-        self.model.current_slider_value = self.view.change_layer_view(self.model.current_slider_value)
+        self.model.current_slider_value = self.view.change_layer_view(self.model.current_slider_value, self.model.gcode)
 
     def move_model(self):
         tf = [float(self.view.x_position_value.text()), float(self.view.y_position_value.text()),
@@ -84,69 +88,64 @@ class MainController:
         except IOError as e:
             showErrorDialog("Error during file opening:" + str(e))
 
-    def load_stl(self, filename, method=gui_utils.createStlActorInOrigin, load_planes=False):
+    def load_stl(self, filename, method=gui_utils.createStlActorInOrigin, load_splanes=False):
         stl_actor, self.model.stl_translation, _ = method(filename)  # TODO:
 
         self.model.opened_stl = filename
         self.view.load_stl(stl_actor, self.model.stl_translation)
-        if load_planes:
-            self.view.load_splanes(self.model.splanes)
+        if load_splanes:
+            self.view.reload_splanes(self.model.splanes)
 
-    def load_gcode(self, filename, addStl):
+    def load_gcode(self, filename, is_from_stl):
         gc = self.model.load_gcode(filename)
         blocks = gui_utils.makeBlocks(gc.layers)
         actors = gui_utils.wrapWithActors(blocks, gc.rotations, gc.lays2rots)
 
-        self.view.load_gcode(actors, addStl, planeTf(gc.rotations[-1]))
+        self.view.load_gcode(actors, is_from_stl, plane_tf(gc.rotations[-1]))
 
     def slice_stl(self, slicing_type):
-        pass
-        # if slicing_type == "vip" and len(self.model.planes)==0:
-        #     showErrorDialog(self.locale.AddOnePlaneError)
-        #     return
-        # values = {
-        #     "stl": format_path(self.openedStl),
-        #     "gcode": params.OutputGCode,
-        #     "originx": self.stlTranslation[0],
-        #     "originy": self.stlTranslation[1],
-        #     "originz": self.stlTranslation[2],
-        #     "rotcx": params.RotationCenter[0],
-        #     "rotcy": params.RotationCenter[1],
-        #     "rotcz": params.RotationCenter[2],
-        #
-        #     "layer_height": self.layer_height_value.text(),
-        #     "wall_thickness": self.wallThickness_value.text(),
-        #     "fill_density": self.fillDensity_value.text(),
-        #     "bed_temperature": self.bedTemp_value.text(),
-        #     "extruder_temperature": self.extruderTemp_value.text(),
-        #     "print_speed": self.printSpeed_value.text(),
-        #     "print_speed_layer1": self.printSpeedLayer1_value.text(),
-        #     "print_speed_wall": self.printSpeedWall_value.text(),
-        #     "line_width": self.line_width_value.text(),
-        #     "filling_type": locales.getLocaleByLang("en").FillingTypeValues[self.filling_type_values.currentIndex()],
-        #     "slicing_type": slicing_type,
-        #     "planes_file": params.PlanesFile,
-        #     "angle": self.colorizeAngle_value.text(),
-        #     "retraction_speed": self.retractionSpeed_value.text(),
-        #     "retraction_distance": self.retractionDistance_value.text(),
-        #     "support_offset": self.supportOffset_value.text(),
-        #     "skirt_line_count": self.skirtLineCount_value.text()
-        # }
-        # self.savePlanesToFile()
-        #
-        # # Prepare a slicing command line command
-        # cmd = params.SliceCommand.format(**values)
-        # if self.fanOffLayer1_box.isChecked():
-        #     cmd += " --fan_off_layer1"
-        # if self.retractionOn_box.isChecked():
-        #     cmd += " --retraction_on"
-        # if self.supportsOn.isChecked():
-        #     cmd += " --supports_on"
-        #
-        # call_command(cmd)
-        # self.stlActor.VisibilityOff()
-        # self.loadGCode(params.OutputGCode, True)
+        if slicing_type == "vip" and len(self.model.splanes) == 0:
+            showErrorDialog(locales.getLocale().AddOnePlaneError)
+            return
+
+        s = sett()
+        save_splanes_to_file(self.model.splanes, s.slicing.splanes_file)
+        self.save_settings(slicing_type)
+
+        call_command(s.slicing.cmd)
+
+        self.load_gcode(s.slicing.gcode_file, True)
         # self.debugMe()
+
+    def save_settings(self, slicing_type):
+        s = sett()
+        s.slicing.stl_file = format_path(self.model.opened_stl)
+        s.slicing.originx = self.model.stl_translation[0]
+        s.slicing.originy = self.model.stl_translation[1]
+        s.slicing.originz = self.model.stl_translation[2]
+        s.slicing.layer_height = float(self.view.layer_height_value.text())
+        s.slicing.print_speed = int(self.view.print_speed_value.text())
+        s.slicing.print_speed_layer1 = int(self.view.print_speed_layer1_value.text())
+        s.slicing.print_speed_wall = int(self.view.print_speed_wall_value.text())
+        s.slicing.extruder_temperature = int(self.view.extruder_temp_value.text())
+        s.slicing.bed_temperature = int(self.view.bed_temp_value.text())
+        s.slicing.fill_density = int(self.view.fill_density_value.text())
+        s.slicing.wall_thickness = float(self.view.wall_thickness_value.text())
+        s.slicing.line_width = float(self.view.line_width_value.text())
+        s.slicing.filling_type = locales.getLocaleByLang("en").FillingTypeValues[
+            self.view.filling_type_values.currentIndex()]
+        s.slicing.retraction_on = self.view.retraction_on_box.isChecked()
+        s.slicing.retraction_distance = float(self.view.retraction_distance_value.text())
+        s.slicing.retraction_speed = int(self.view.retraction_speed_value.text())
+        s.slicing.support_offset = float(self.view.support_offset_value.text())
+        s.slicing.skirt_line_count = int(self.view.skirt_line_count_value.text())
+        s.slicing.fan_off_layer1 = self.view.fan_off_layer1_box.isChecked()
+        s.slicing.supports_on = self.view.supports_on_box.isChecked()
+        s.slicing.angle = int(self.view.colorize_angle_value.text())
+
+        s.slicing.slicing_type = slicing_type
+
+        save_settings()
 
     def save_gcode_file(self):
         try:
@@ -159,48 +158,32 @@ class MainController:
             showErrorDialog("Error during file saving:" + str(e))
 
     def analyze_model(self):
-        pass
-        # values = {
-        #     "stl": format_path(self.openedStl),
-        #     "angle": self.colorizeAngle_value.text(),
-        #     "out": params.AnalyzeResult,
-        #     "originx": self.stlTranslation[0],
-        #     "originy": self.stlTranslation[1],
-        #     "originz": self.stlTranslation[2],
-        #     "rotcx": params.RotationCenter[0],
-        #     "rotcy": params.RotationCenter[1],
-        #     "rotcz": params.RotationCenter[2],
-        # }
-        # cmd = params.AnalyzeStlCommand.format(**values)
-        # call_command(cmd)
-        # self.planes = gui_utils.read_planes()
-        # self.bottom_panel.setEnabled(True)
-        # # self.openedStl = "cuttedSTL.stl"
-        # self.loadSTL(self.openedStl, method=gui_utils.createStlActorInOrigin)
+        self.save_settings("vip")
+
+        s = sett()
+        call_command(s.analyzer.cmd)
+        self.model.planes = gui_utils.read_planes(s.analyzer.result)
+        self.load_stl(self.model.opened_stl, method=gui_utils.createStlActorInOrigin, load_splanes=True)
 
     def colorize_model(self):
-        pass
-        # values = {
-        #     "stl": format_path(self.openedStl),
-        #     "out": params.ColorizeResult,
-        #     "angle": self.colorizeAngle_value.text(),
-        # }
-        # cmd = params.ColorizeStlCommand.format(**values)
-        # call_command(cmd)
-        # self.loadSTL(self.openedStl, method=gui_utils.createStlActorInOriginWithColorize)
+        self.save_settings("vip")
 
-    ################ bottom panel
+        s = sett()
+        call_command(s.colorizer.cmd)
+        self.load_stl(self.model.opened_stl, method=gui_utils.createStlActorInOriginWithColorize)
+
+    # ######################bottom panel
 
     def add_splane(self):
         self.model.add_splane()
-        self.view.load_splanes(self.model.splanes)
+        self.view.reload_splanes(self.model.splanes)
 
     def remove_splane(self):
         ind = self.view.combo_box.currentIndex()
         if ind == -1:
             return
         del self.model.splanes[ind]
-        self.view.load_splanes(self.model.splanes)
+        self.view.reload_splanes(self.model.splanes)
 
     def change_combo_select(self):
         ind = self.view.combo_box.currentIndex()
@@ -228,3 +211,31 @@ class MainController:
         self.model.splanes[ind] = gui_utils.Plane(self.view.tilted_checkbox.isChecked(),
                                                   float(self.view.rotSlider.value()), center)
         self.view.update_splane(self.model.splanes[ind], ind)
+
+    # def debugMe(self):
+    #     debug.readFile(self.render, "/home/l1va/debug.txt", 4)
+    #     # debug.readFile(self.render, "/home/l1va/debug_simplified.txt", "Red", 3)
+    #     self.reloadScene()
+
+
+def format_path(path):
+    if " " in path:
+        return '"{}"'.format(path)
+    return path
+
+
+def call_command(cmd):
+    try:
+        cmds = cmd.split(" ")
+        # print(cmds)
+        subprocess.check_output(cmds,stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as er:
+        print("Error:", sys.exc_info())
+        print("Error2:", er.output)
+        gui_utils.showErrorDialog(repr(er.output))
+
+
+def save_splanes_to_file(splanes, filename):
+    with open(filename, 'w') as out:
+        for p in splanes:
+            out.write(p.toFile() + '\n')

@@ -1,6 +1,3 @@
-from params import InclineXValue, PlaneCenter
-
-
 class GCode:
     def __init__(self, layers, rotations, lays2rots):
         self.layers = layers
