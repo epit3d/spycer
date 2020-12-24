@@ -16,6 +16,8 @@ common:
   lang: ru
   splane_diameter: 150
 hardware: 
+  bar_diameter: 1.75
+  flow: 1.0
   plane_center_x: 0
   plane_center_y: 0
   plane_center_z: 0
@@ -26,6 +28,7 @@ hardware:
 slicing: 
   angle: 30
   bed_temperature: 60
+  bottom_layers: 3
   cmd: ./goosli --cmd=slice --settings=settings.yaml
   extruder_temperature: 200
   fan_off_layer1: false
@@ -49,4 +52,5 @@ slicing:
   stl_file: ''
   support_offset: 1.0
   supports_on: false
+  top_layers: 3
   wall_thickness: 0.8
