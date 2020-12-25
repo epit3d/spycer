@@ -3,7 +3,7 @@ from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QLabel, QLineEdit, QComboBox, QGridLayout, QSlider,
                              QCheckBox, QVBoxLayout,
-                             QPushButton, QFileDialog, QScrollArea, QGroupBox, QAction, QDialog)
+                             QPushButton, QFileDialog, QScrollArea, QGroupBox, QAction, QDialog, QListWidget)
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
 from src import locales, gui_utils
@@ -277,68 +277,65 @@ class MainWindow(QMainWindow):
         bottom_layout.setSpacing(5)
         bottom_layout.setColumnStretch(7, 1)
 
-
-
-        combo_widget = QWidget()
-        self.combo_box = QComboBox(combo_widget)
-        bottom_layout.addWidget(combo_widget, 0, 0, 1, 2)
-
-        self.add_plane_button = QPushButton(self.locale.AddPlane)
-        bottom_layout.addWidget(self.add_plane_button, 1, 3)
-
-        self.remove_plane_button = QPushButton(self.locale.DeletePlane)
-        bottom_layout.addWidget(self.remove_plane_button, 2, 3)
+        self.splanes_list = QListWidget()
+        bottom_layout.addWidget(self.splanes_list, 0, 0, 4, 1)
 
         self.tilted_checkbox = QCheckBox(self.locale.Tilted)
-        bottom_layout.addWidget(self.tilted_checkbox, 0, 3)
+        bottom_layout.addWidget(self.tilted_checkbox, 0, 2)
 
         self.hide_checkbox = QCheckBox(self.locale.Hide)
-        bottom_layout.addWidget(self.hide_checkbox, 1, 3)
+        bottom_layout.addWidget(self.hide_checkbox, 1, 2)
+
+        self.add_plane_button = QPushButton(self.locale.AddPlane)
+        bottom_layout.addWidget(self.add_plane_button, 2, 2)
+
+        self.remove_plane_button = QPushButton(self.locale.DeletePlane)
+        bottom_layout.addWidget(self.remove_plane_button, 3, 2)
 
         x_label = QLabel("X:")
-        bottom_layout.addWidget(x_label, 0, 4)
+        bottom_layout.addWidget(x_label, 0, 3)
         self.x_value = QLineEdit("3.0951")
-        bottom_layout.addWidget(self.x_value, 0, 5)
+        bottom_layout.addWidget(self.x_value, 0, 4)
 
         y_label = QLabel("Y:")
-        bottom_layout.addWidget(y_label, 1, 4)
+        bottom_layout.addWidget(y_label, 1, 3)
         self.y_value = QLineEdit("5.5910")
-        bottom_layout.addWidget(self.y_value, 1, 5)
+        bottom_layout.addWidget(self.y_value, 1, 4)
 
         z_label = QLabel("Z:")
-        bottom_layout.addWidget(z_label, 2, 4)
+        bottom_layout.addWidget(z_label, 2, 3)
         self.z_value = QLineEdit("89.5414")
-        bottom_layout.addWidget(self.z_value, 2, 5)
+        bottom_layout.addWidget(self.z_value, 2, 4)
 
         rotated_label = QLabel(self.locale.Rotated)
-        bottom_layout.addWidget(rotated_label, 3, 4)
+        bottom_layout.addWidget(rotated_label, 3, 3)
         self.rotated_value = QLineEdit("31.0245")
-        bottom_layout.addWidget(self.rotated_value, 3, 5)
+        bottom_layout.addWidget(self.rotated_value, 3, 4)
 
         self.xSlider = QSlider()
         self.xSlider.setOrientation(QtCore.Qt.Horizontal)
         self.xSlider.setMinimum(-100)
         self.xSlider.setMaximum(100)
         self.xSlider.setValue(1)
-        bottom_layout.addWidget(self.xSlider, 0, 6, 1, 2)
+        bottom_layout.addWidget(self.xSlider, 0, 5, 1, 3)
         self.ySlider = QSlider()
         self.ySlider.setOrientation(QtCore.Qt.Horizontal)
         self.ySlider.setMinimum(-100)
         self.ySlider.setMaximum(100)
         self.ySlider.setValue(1)
-        bottom_layout.addWidget(self.ySlider, 1, 6, 1, 2)
+        bottom_layout.addWidget(self.ySlider, 1, 5, 1, 3)
         self.zSlider = QSlider()
         self.zSlider.setOrientation(QtCore.Qt.Horizontal)
         self.zSlider.setMinimum(0)
         self.zSlider.setMaximum(200)
         self.zSlider.setValue(1)
-        bottom_layout.addWidget(self.zSlider, 2, 6, 1, 2)
+        bottom_layout.addWidget(self.zSlider, 2, 5, 1, 3)
         self.rotSlider = QSlider()
         self.rotSlider.setOrientation(QtCore.Qt.Horizontal)
         self.rotSlider.setMinimum(-180)
         self.rotSlider.setMaximum(180)
         self.rotSlider.setValue(0)
-        bottom_layout.addWidget(self.rotSlider, 3, 6, 1, 2)
+        bottom_layout.addWidget(self.rotSlider, 3, 5, 1, 3)
 
         bottom_panel = QWidget()
         bottom_panel.setLayout(bottom_layout)
@@ -436,9 +433,10 @@ class MainWindow(QMainWindow):
 
     def reload_splanes(self, splanes):
         self._recreate_splanes(splanes)
-        self.combo_box.clear()
+        self.splanes_list.clear()
         for i in range(len(splanes)):
-            self.combo_box.addItem(self.locale.Plane + " " + str(i + 1))
+            self.splanes_list.addItem(self.locale.Plane + " " + str(i + 1))
+
         self.reload_scene()
 
     def _recreate_splanes(self, splanes):
@@ -455,7 +453,7 @@ class MainWindow(QMainWindow):
         act = gui_utils.create_splane_actor([sp.x, sp.y, sp.z], -60 if sp.tilted else 0, sp.rot)
         self.splanes_actors[ind] = act
         self.render.AddActor(act)
-        sel = self.combo_box.currentIndex()
+        sel = self.splanes_list.currentRow()
         if sel == ind:
             self.splanes_actors[sel].GetProperty().SetColor(get_color(sett().colors.last_layer))
         self.reload_scene()

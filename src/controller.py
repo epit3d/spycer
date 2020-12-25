@@ -38,7 +38,7 @@ class MainController:
 
         # bottom panel
         self.view.add_plane_button.clicked.connect(self.add_splane)
-        self.view.combo_box.currentIndexChanged.connect(self.change_combo_select)
+        self.view.splanes_list.currentItemChanged.connect(self.change_combo_select)
         self.view.remove_plane_button.clicked.connect(self.remove_splane)
         self.view.tilted_checkbox.stateChanged.connect(
             partial(self.apply_slider_change, self.view.rotated_value, self.view.rotSlider))
@@ -176,14 +176,14 @@ class MainController:
         self.view.reload_splanes(self.model.splanes)
 
     def remove_splane(self):
-        ind = self.view.combo_box.currentIndex()
+        ind = self.view.splanes_list.currentRow()
         if ind == -1:
             return
         del self.model.splanes[ind]
         self.view.reload_splanes(self.model.splanes)
 
     def change_combo_select(self):
-        ind = self.view.combo_box.currentIndex()
+        ind = self.view.splanes_list.currentRow()
         if ind == -1:
             return
         self.view.change_combo_select(self.model.splanes[ind], ind)
@@ -202,7 +202,7 @@ class MainController:
 
     def update_splane_common(self):
         center = [float(self.view.x_value.text()), float(self.view.y_value.text()), float(self.view.z_value.text())]
-        ind = self.view.combo_box.currentIndex()
+        ind = self.view.splanes_list.currentRow()
         if ind == -1:
             return
         self.model.splanes[ind] = gui_utils.Plane(self.view.tilted_checkbox.isChecked(),
