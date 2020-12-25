@@ -3,7 +3,7 @@ from src import gui_utils, gcode
 
 class MainModel:
     def __init__(self):
-        self.current_slider_value = 0
+        self.current_slider_value = None
         self.stl_translation = [0.0, 0.0, 0.0]
         self.opened_stl = ""
         self.gcode = None
@@ -12,6 +12,7 @@ class MainModel:
         self.planesActors = []
 
     def load_gcode(self, filename):
+        self.current_slider_value = None
         self.opened_gcode = filename
         self.gcode = gcode.readGCode(filename)
         return self.gcode

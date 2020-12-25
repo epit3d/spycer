@@ -23,6 +23,7 @@ class Locale:
     SaveGCode = "Save GCode"
     FanOffLayer1 = "Fan Off, Layer 1"
     Tilted = "Tilted"
+    Hide = "Hide"
     Retraction = "Retraction"
     RetractionDistance = "Retraction Distance"
     RetractionSpeed = "Retraction Speed"
@@ -70,6 +71,7 @@ dicts = {
         RetractionDistance="Ретракция, Дистанция, мм",
         RetractionSpeed="Ретракция, Скорость, мм/с",
         Tilted='Наклонена',
+        Hide='Скрыть',
         SupportsOn='Добавить поддержки',
         EditPlanes='Редактировать',
         Analyze='Анализировать',

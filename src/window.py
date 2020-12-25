@@ -38,7 +38,6 @@ class MainWindow(QMainWindow):
         self.contacts_about_action = QAction('About', self)
         contacts_menu.addAction(self.contacts_about_action)
 
-
         # main parts
         central_widget = QWidget()
         main_grid = QGridLayout()
@@ -51,6 +50,7 @@ class MainWindow(QMainWindow):
         self.state_nothing()
 
         # ###################TODO:
+        self.actors = []
 
         # self.openedStl = "/home/l1va/Downloads/1_odn2.stl"  # TODO: removeme
         # self.loadSTL(self.openedStl)
@@ -211,8 +211,8 @@ class MainWindow(QMainWindow):
 
         self.picture_slider = QSlider()
         self.picture_slider.setOrientation(QtCore.Qt.Horizontal)
-        self.picture_slider.setMinimum(1)
-        self.picture_slider.setValue(1)
+        self.picture_slider.setMinimum(0)
+        self.picture_slider.setValue(0)
         buttons_layout.addWidget(self.picture_slider, get_next_row(), 1, 1, 2)
 
         self.x_position_value = QLineEdit("0")
@@ -290,6 +290,9 @@ class MainWindow(QMainWindow):
         self.tilted_checkbox = QCheckBox(self.locale.Tilted)
         bottom_layout.addWidget(self.tilted_checkbox, 0, 3)
 
+        self.hide_checkbox = QCheckBox(self.locale.Hide)
+        bottom_layout.addWidget(self.hide_checkbox, 1, 3)
+
         x_label = QLabel("X:")
         bottom_layout.addWidget(x_label, 0, 4)
         self.x_value = QLineEdit("3.0951")
@@ -341,33 +344,41 @@ class MainWindow(QMainWindow):
         self.bottom_panel = bottom_panel
         return bottom_panel
 
-    def show_stl_hide_gcode(self):
-        for actor in self.actors:
-            actor.VisibilityOff()
-        self.stlActor.VisibilityOn()
-
-    def show_gcode_hide_stl(self):
-        for layer in range(self.picture_slider.value()):
-            self.actors[layer].VisibilityOn()
-        self.stlActor.VisibilityOff()
+    def switch_stl_gcode(self):
+        if self.model_switch_box.isChecked():
+            for actor in self.actors:
+                actor.VisibilityOff()
+            self.stlActor.VisibilityOn()
+        else:
+            for layer in range(self.picture_slider.value()):
+                self.actors[layer].VisibilityOn()
+            self.stlActor.VisibilityOff()
+        self.reload_scene()
 
     def clear_scene(self):
         self.render.RemoveAllViewProps()
         self.render.AddActor(self.planeActor)
+        self.rotate_plane(vtk.vtkTransform())
         for b in self.boxActors:
             self.render.AddActor(b)
+        for s in self.splanes_actors:
+            self.render.AddActor(s)
 
     def reload_scene(self):
         self.render.Modified()
         self.interactor.Render()
 
     def change_layer_view(self, prev_value, gcd):
+
         new_slider_value = self.picture_slider.value()
+        if prev_value is None:
+            return new_slider_value
 
         self.actors[new_slider_value - 1].GetProperty().SetColor(get_color(sett().colors.last_layer))
         self.actors[new_slider_value - 1].GetProperty().SetLineWidth(4)
-        self.actors[prev_value - 1].GetProperty().SetColor(get_color(sett().colors.layer))
-        self.actors[prev_value - 1].GetProperty().SetLineWidth(1)
+        if len(self.actors) > prev_value - 1:
+            self.actors[prev_value - 1].GetProperty().SetColor(get_color(sett().colors.layer))
+            self.actors[prev_value - 1].GetProperty().SetLineWidth(1)
 
         self.layers_number_label.setText(str(new_slider_value))
 
@@ -412,11 +423,21 @@ class MainWindow(QMainWindow):
         self.render.ResetCamera()
         self.reload_scene()
 
+    def hide_splanes(self):
+        if self.hide_checkbox.isChecked():
+            for s in self.splanes_actors:
+                s.VisibilityOff()
+        else:
+            for s in self.splanes_actors:
+                s.VisibilityOn()
+        self.reload_scene()
+
     def reload_splanes(self, splanes):
         self._recreate_splanes(splanes)
         self.combo_box.clear()
         for i in range(len(splanes)):
             self.combo_box.addItem(self.locale.Plane + " " + str(i + 1))
+        self.reload_scene()
 
     def _recreate_splanes(self, splanes):
         for p in self.splanes_actors:
@@ -426,7 +447,6 @@ class MainWindow(QMainWindow):
             act = gui_utils.create_splane_actor([p.x, p.y, p.z], -60 if p.tilted else 0, p.rot)
             self.splanes_actors.append(act)
             self.render.AddActor(act)
-        self.reload_scene()
 
     def update_splane(self, sp, ind):
         self.render.RemoveActor(self.splanes_actors[ind])
@@ -484,21 +504,22 @@ class MainWindow(QMainWindow):
         d = QDialog()
         d.setWindowTitle("About Epit3d")
         d.setWindowModality(Qt.ApplicationModal)
-        d.setMinimumSize(250,200)
+        d.setMinimumSize(250, 200)
 
-        v_layout=QVBoxLayout()
+        v_layout = QVBoxLayout()
 
         site_label = QLabel("Site Url: <a href=\"https://www.epit3d.ru/\">epit3d.ru</a>")
         site_label.setOpenExternalLinks(True)
-        #site_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        # site_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
         v_layout.addWidget(site_label)
 
         phone_label = QLabel("Phone: +7 (960) 086-11-97")
         phone_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
         v_layout.addWidget(phone_label)
 
-        email_label = QLabel("E-mail: <a href='mailto:Info@epit3d.ru?subject=FASP Question&body=My question is ...'>Info@epit3d.ru</a>")
-        #email_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        email_label = QLabel(
+            "E-mail: <a href='mailto:Info@epit3d.ru?subject=FASP Question&body=My question is ...'>Info@epit3d.ru</a>")
+        # email_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
         site_label.setOpenExternalLinks(True)
         v_layout.addWidget(email_label)
 
@@ -548,7 +569,7 @@ class MainWindow(QMainWindow):
 
     def state_stl(self):
         self.model_switch_box.setEnabled(False)
-        self.model_switch_box.setChecked(False)
+        self.model_switch_box.setChecked(True)
         self.slider_label.setEnabled(False)
         self.layers_number_label.setEnabled(False)
         self.layers_number_label.setText(" ")

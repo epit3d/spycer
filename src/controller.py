@@ -25,11 +25,11 @@ class MainController:
         self.view.contacts_about_action.triggered.connect(self.view.about_dialog)
 
         # right panel
-        self.view.model_switch_box.stateChanged.connect(self.switch_models)
+        self.view.model_switch_box.stateChanged.connect(self.view.switch_stl_gcode)
         self.view.picture_slider.valueChanged.connect(self.change_layer_view)
         self.view.move_button.clicked.connect(self.move_model)
         self.view.load_model_button.clicked.connect(self.open_file)
-        self.view.edit_planes_button.clicked.connect(partial(self.load_stl, self.model.opened_stl, load_splanes=True))
+        self.view.edit_planes_button.clicked.connect(self.load_stl)
         self.view.slice3a_button.clicked.connect(partial(self.slice_stl, "3axes"))
         self.view.slice_vip_button.clicked.connect(partial(self.slice_stl, "vip"))
         self.view.save_gcode_button.clicked.connect(self.save_gcode_file)
@@ -42,6 +42,7 @@ class MainController:
         self.view.remove_plane_button.clicked.connect(self.remove_splane)
         self.view.tilted_checkbox.stateChanged.connect(
             partial(self.apply_slider_change, self.view.rotated_value, self.view.rotSlider))
+        self.view.hide_checkbox.stateChanged.connect(self.view.hide_splanes)
         self.view.x_value.editingFinished.connect(
             partial(self.apply_field_change, self.view.x_value, self.view.xSlider))
         self.view.y_value.editingFinished.connect(
@@ -55,13 +56,6 @@ class MainController:
         self.view.zSlider.valueChanged.connect(partial(self.apply_slider_change, self.view.z_value, self.view.zSlider))
         self.view.rotSlider.valueChanged.connect(
             partial(self.apply_slider_change, self.view.rotated_value, self.view.rotSlider))
-
-    def switch_models(self, state):
-        if state == QtCore.Qt.Checked:
-            self.view.show_stl_hide_gcode()
-        else:
-            self.view.show_gcode_hide_stl()
-        self.view.reload_scene()
 
     def change_layer_view(self):
         self.model.current_slider_value = self.view.change_layer_view(self.model.current_slider_value, self.model.gcode)
@@ -90,13 +84,14 @@ class MainController:
         except IOError as e:
             showErrorDialog("Error during file opening:" + str(e))
 
-    def load_stl(self, filename, method=gui_utils.createStlActorInOrigin, load_splanes=False):
-        stl_actor, self.model.stl_translation, _ = method(filename)  # TODO:
+    def load_stl(self, filename, colorize=False):
+        if filename is None or filename is "":
+            filename = self.model.opened_stl
+        # print("load STL: ", filename)
+        stl_actor, self.model.stl_translation, _ = gui_utils.createStlActorInOrigin(filename, colorize)
 
         self.model.opened_stl = filename
         self.view.load_stl(stl_actor, self.model.stl_translation)
-        if load_splanes:
-            self.view.reload_splanes(self.model.splanes)
 
     def load_gcode(self, filename, is_from_stl):
         gc = self.model.load_gcode(filename)
@@ -165,14 +160,14 @@ class MainController:
         s = sett()
         call_command(s.analyzer.cmd)
         self.model.planes = gui_utils.read_planes(s.analyzer.result)
-        self.load_stl(self.model.opened_stl, method=gui_utils.createStlActorInOrigin, load_splanes=True)
+        self.load_stl(self.model.opened_stl)
 
     def colorize_model(self):
         self.save_settings("vip")
 
         s = sett()
         call_command(s.colorizer.cmd)
-        self.load_stl(self.model.opened_stl, method=gui_utils.createStlActorInOriginWithColorize)
+        self.load_stl(self.model.opened_stl, colorize=True)
 
     # ######################bottom panel
 
@@ -230,7 +225,7 @@ def call_command(cmd):
     try:
         cmds = cmd.split(" ")
         # print(cmds)
-        subprocess.check_output(cmds,stderr=subprocess.STDOUT)
+        subprocess.check_output(cmds, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as er:
         print("Error:", sys.exc_info())
         print("Error2:", er.output)

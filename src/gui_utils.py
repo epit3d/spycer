@@ -136,16 +136,6 @@ def createStlActor(filename):
     return build_actor(reader), reader
 
 
-def createStlActorInOriginWithColorize(filename):
-    # actor, reader = createStlActor(filename)
-    # output = reader.GetOutput()
-    # actor = colorizeSTL(output)
-    # origin = findStlOrigin(output)
-    # print(origin)
-    # return actor, (0,0,0)
-    return createStlActorInOrigin(filename, colorize=True)
-
-
 def createStlActorInOrigin(filename, colorize=False):
     actor, reader = createStlActor(filename)
     output = reader.GetOutput()
