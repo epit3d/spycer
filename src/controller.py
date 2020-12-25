@@ -22,6 +22,8 @@ class MainController:
     def _connect_signals(self):
         self.view.open_action.triggered.connect(self.open_file)
         self.view.save_sett_action.triggered.connect(partial(self.save_settings, "vip"))
+        self.view.contacts_about_action.triggered.connect(self.view.about_dialog)
+
         # right panel
         self.view.model_switch_box.stateChanged.connect(self.switch_models)
         self.view.picture_slider.valueChanged.connect(self.change_layer_view)

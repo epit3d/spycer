@@ -1,8 +1,9 @@
 import vtk
 from PyQt5 import QtCore
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QLabel, QLineEdit, QComboBox, QGridLayout, QSlider,
                              QCheckBox, QVBoxLayout,
-                             QPushButton, QFileDialog, QScrollArea, QGroupBox, QAction)
+                             QPushButton, QFileDialog, QScrollArea, QGroupBox, QAction, QDialog)
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
 from src import locales, gui_utils
@@ -33,6 +34,10 @@ class MainWindow(QMainWindow):
         settings_menu = bar.addMenu('Settings')
         self.save_sett_action = QAction('Save', self)
         settings_menu.addAction(self.save_sett_action)
+        contacts_menu = bar.addMenu('Contacts')
+        self.contacts_about_action = QAction('About', self)
+        contacts_menu.addAction(self.contacts_about_action)
+
 
         # main parts
         central_widget = QWidget()
@@ -474,6 +479,35 @@ class MainWindow(QMainWindow):
 
     def save_gcode_dialog(self):
         return QFileDialog.getSaveFileName(None, self.locale.SaveGCode, "", "Gcode (*.gcode)")[0]
+
+    def about_dialog(self):
+        d = QDialog()
+        d.setWindowTitle("About Epit3d")
+        d.setWindowModality(Qt.ApplicationModal)
+        d.setMinimumSize(250,200)
+
+        v_layout=QVBoxLayout()
+
+        site_label = QLabel("Site Url: <a href=\"https://www.epit3d.ru/\">epit3d.ru</a>")
+        site_label.setOpenExternalLinks(True)
+        #site_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        v_layout.addWidget(site_label)
+
+        phone_label = QLabel("Phone: +7 (960) 086-11-97")
+        phone_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        v_layout.addWidget(phone_label)
+
+        email_label = QLabel("E-mail: <a href='mailto:Info@epit3d.ru?subject=FASP Question&body=My question is ...'>Info@epit3d.ru</a>")
+        #email_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        site_label.setOpenExternalLinks(True)
+        v_layout.addWidget(email_label)
+
+        ok = QPushButton("ok")
+        ok.clicked.connect(d.close)
+        v_layout.addWidget(ok)
+
+        d.setLayout(v_layout)
+        d.exec_()
 
     def state_nothing(self):
         self.model_switch_box.setEnabled(False)
