@@ -1,7 +1,7 @@
 import vtk
 from PyQt5.QtWidgets import QMessageBox
 
-import params
+from src.settings import sett, get_color
 
 
 def findStlOrigin(vtkBlock):
@@ -19,35 +19,37 @@ def getBounds(vtkBlock):
 
 
 def createPlaneActorCircle():
-    return createPlaneActorCircleByCenter(params.PlaneCenter)
+    s = sett().hardware
+    center = [s.plane_center_x, s.plane_center_y, s.plane_center_z]
+    return createPlaneActorCircleByCenter(center)
 
 
 def createPlaneActorCircleByCenter(center):
     cylinder = vtk.vtkCylinderSource()
     cylinder.SetResolution(50)
-    cylinder.SetRadius(params.PlaneDiameter / 2)
+    cylinder.SetRadius(sett().hardware.plane_diameter / 2)
     cylinder.SetHeight(0.1)
     cylinder.SetCenter(center[0], center[2] - 0.1, center[1])  # WHAT? vtk :(
     mapper = vtk.vtkPolyDataMapper()
     mapper.SetInputConnection(cylinder.GetOutputPort())
     actor = vtk.vtkActor()
     actor.SetMapper(mapper)
-    actor.GetProperty().SetColor(params.PlaneColor)
+    actor.GetProperty().SetColor(get_color(sett().colors.plane))
     actor.RotateX(90)
     return actor
 
 
-def createPlaneActorCircleByCenterAndRot(center, x_rot, z_rot):  # TODO: rename me
+def create_splane_actor(center, x_rot, z_rot):
     cylinder = vtk.vtkCylinderSource()
     cylinder.SetResolution(50)
-    cylinder.SetRadius(params.PlaneDiameter / 3)  # TODO: remove hardcode
+    cylinder.SetRadius(sett().common.splane_diameter / 2)
     cylinder.SetHeight(0.1)
     # cylinder.SetCenter(center[0], center[2] - 0.1, center[1])  # WHAT? vtk :(
     mapper = vtk.vtkPolyDataMapper()
     mapper.SetInputConnection(cylinder.GetOutputPort())
     actor = vtk.vtkActor()
     actor.SetMapper(mapper)
-    actor.GetProperty().SetColor(params.PlaneColor)
+    actor.GetProperty().SetColor(get_color(sett().colors.splane))
     # actor.GetProperty().SetOpacity(0.3)
     actor.RotateX(90)
     # actor.RotateX(x_rot)
@@ -65,17 +67,20 @@ def createPlaneActorCircleByCenterAndRot(center, x_rot, z_rot):  # TODO: rename 
 
 
 def createBoxActors():
+    s = sett()
+
     res = []
     cylinder = vtk.vtkCylinderSource()
     cylinder.SetResolution(50)
     cylinder.SetRadius(3)
     cylinder.SetHeight(200)
-    cylinder.SetCenter(params.PlaneCenter[0] - 100, params.PlaneCenter[2], params.PlaneCenter[1] + 100)  # WHAT? vtk :(
+    cylinder.SetCenter(s.hardware.plane_center_x - 100, s.hardware.plane_center_z,
+                       s.hardware.plane_center_y + 100)  # WHAT? vtk :(
     mapper = vtk.vtkPolyDataMapper()
     mapper.SetInputConnection(cylinder.GetOutputPort())
     actor = vtk.vtkActor()
     actor.SetMapper(mapper)
-    actor.GetProperty().SetColor(params.BlueColor)
+    actor.GetProperty().SetColor(get_color(s.colors.blue))
     actor.RotateX(90)
     res.append(actor)
 
@@ -84,12 +89,13 @@ def createBoxActors():
     cylinder.SetRadius(3)
     cylinder.SetHeight(200)
 
-    cylinder.SetCenter(params.PlaneCenter[0] + 100, params.PlaneCenter[2], params.PlaneCenter[1] - 100)  # WHAT? vtk :(
+    cylinder.SetCenter(s.hardware.plane_center_x + 100, s.hardware.plane_center_z,
+                       s.hardware.plane_center_y - 100)  # WHAT? vtk :(
     mapper = vtk.vtkPolyDataMapper()
     mapper.SetInputConnection(cylinder.GetOutputPort())
     actor = vtk.vtkActor()
     actor.SetMapper(mapper)
-    actor.GetProperty().SetColor(params.PlaneColor)
+    actor.GetProperty().SetColor(get_color(s.colors.plane))
     actor.RotateY(90)
     res.append(actor)
 
@@ -97,12 +103,13 @@ def createBoxActors():
     cylinder.SetResolution(50)
     cylinder.SetRadius(3)
     cylinder.SetHeight(200)
-    cylinder.SetCenter(params.PlaneCenter[0] - 100, params.PlaneCenter[2], params.PlaneCenter[1] - 100)  # WHAT? vtk :(
+    cylinder.SetCenter(s.hardware.plane_center_x - 100, s.hardware.plane_center_z,
+                       s.hardware.plane_center_y - 100)  # WHAT? vtk :(
     mapper = vtk.vtkPolyDataMapper()
     mapper.SetInputConnection(cylinder.GetOutputPort())
     actor = vtk.vtkActor()
     actor.SetMapper(mapper)
-    actor.GetProperty().SetColor(params.LastLayerColor)
+    actor.GetProperty().SetColor(get_color(s.colors.last_layer))
     actor.RotateZ(90)
     res.append(actor)
 
@@ -129,16 +136,6 @@ def createStlActor(filename):
     return build_actor(reader), reader
 
 
-def createStlActorInOriginWithColorize(filename):
-    # actor, reader = createStlActor(filename)
-    # output = reader.GetOutput()
-    # actor = colorizeSTL(output)
-    # origin = findStlOrigin(output)
-    # print(origin)
-    # return actor, (0,0,0)
-    return createStlActorInOrigin(filename, colorize=True)
-
-
 def createStlActorInOrigin(filename, colorize=False):
     actor, reader = createStlActor(filename)
     output = reader.GetOutput()
@@ -148,8 +145,9 @@ def createStlActorInOrigin(filename, colorize=False):
 
     origin = findStlOrigin(output)
     transform = vtk.vtkTransform()
-    c = params.PlaneCenter
-    transform.Translate(-origin[0] + c[0], -origin[1] + c[1], -origin[2] + c[2])
+    s = sett()
+    transform.Translate(-origin[0] + s.hardware.plane_center_x, -origin[1] + s.hardware.plane_center_y,
+                        -origin[2] + s.hardware.plane_center_z)
     actor.SetUserTransform(transform)
     return actor, (-origin[0], -origin[1], -origin[2]), getBounds(output)  # return not origin but applied translation
 
@@ -178,6 +176,7 @@ def makeBlocks(layers):
 
 def wrapWithActors(blocks, rotations, lays2rots):
     actors = []
+    s = sett()
     for i in range(len(blocks)):
         block = blocks[i]
         actor = build_actor(block, True)
@@ -185,17 +184,18 @@ def wrapWithActors(blocks, rotations, lays2rots):
         tnf = prepareTransform(rotations[lays2rots[i]], rotations[-1])
         actor.SetUserTransform(tnf)
 
-        actor.GetProperty().SetColor(params.LayerColor)
+        actor.GetProperty().SetColor(get_color(s.colors.layer))
         actors.append(actor)
 
-    actors[-1].GetProperty().SetColor(params.LastLayerColor)
+    actors[-1].GetProperty().SetColor(get_color(s.colors.last_layer))
     return actors
 
 
 def prepareTransform(cancelRot, applyRot):
+    sh = sett().hardware
     tf = vtk.vtkTransform()
     tf.PostMultiply()
-    tf.Translate(-params.RotationCenter[0], -params.RotationCenter[1], -params.RotationCenter[2])
+    tf.Translate(-sh.rotation_center_x, -sh.rotation_center_y, -sh.rotation_center_z)
     tf.PostMultiply()
     tf.RotateX(-cancelRot.x_rot)
     tf.PostMultiply()
@@ -206,7 +206,21 @@ def prepareTransform(cancelRot, applyRot):
     tf.PostMultiply()
     tf.RotateX(applyRot.x_rot)
     tf.PostMultiply()
-    tf.Translate(params.RotationCenter[0], params.RotationCenter[1], params.RotationCenter[2])
+    tf.Translate(sh.rotation_center_x, sh.rotation_center_y, sh.rotation_center_z)
+    return tf
+
+
+def plane_tf(rotation):
+    sh = sett().hardware
+    tf = vtk.vtkTransform()
+    tf.PostMultiply()
+    tf.Translate(-sh.rotation_center_x, -sh.rotation_center_y, -sh.rotation_center_z)
+    tf.PostMultiply()
+    tf.RotateZ(rotation.z_rot)
+    tf.PostMultiply()
+    tf.RotateX(rotation.x_rot)
+    tf.PostMultiply()
+    tf.Translate(sh.rotation_center_x, sh.rotation_center_y, sh.rotation_center_z)
     return tf
 
 
@@ -215,7 +229,7 @@ def colorizeSTL(output):
     allpoints = output.GetPoints()
 
     tocolor = []
-    with open(params.ColorizeResult, "rb") as f:
+    with open(sett().colorizer.result, "rb") as f:
         content = f.read()
         for b in content:
             if b == 1:
@@ -250,7 +264,7 @@ def colorizeSTL(output):
     trianglePolyData2.SetPolys(triangles2)
 
     actor = build_actor(trianglePolyData, True)
-    actor.GetProperty().SetColor(params.ColorizeColor)
+    actor.GetProperty().SetColor(get_color(sett().colorizer.color))
     actor2 = build_actor(trianglePolyData2, True)
 
     assembly = vtk.vtkAssembly()
@@ -284,9 +298,9 @@ class Plane:
                " T" + str(self.tilted).lower() + " R" + str(self.rot)
 
 
-def read_planes():
+def read_planes(filename):
     planes = []
-    with open(params.AnalyzeResult) as fp:
+    with open(filename) as fp:
         for line in fp:
             v = line.strip().split(' ')
             planes.append(Plane(v[3][1:] == "true", float(v[4][1:]),

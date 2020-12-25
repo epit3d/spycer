@@ -1,0 +1,56 @@
+analyzer: 
+  cmd: ./goosli --cmd=analyze --settings=settings.yaml
+  result: analyze_triangles.txt
+colorizer: 
+  cmd: ./goosli --cmd=colorize --settings=settings.yaml
+  color: Red
+  result: colorize_triangles.bin
+colors: 
+  background: SlateGray
+  blue: Blue
+  last_layer: Red
+  layer: White
+  plane: Cyan
+  splane: Gold
+common: 
+  lang: ru
+  splane_diameter: 150
+hardware: 
+  bar_diameter: 1.75
+  flow: 1.0
+  plane_center_x: 0
+  plane_center_y: 0
+  plane_center_z: 0
+  plane_diameter: 250
+  rotation_center_x: 0
+  rotation_center_y: 0
+  rotation_center_z: 63.5
+slicing: 
+  angle: 30
+  bed_temperature: 60
+  bottom_layers: 3
+  cmd: ./goosli --cmd=slice --settings=settings.yaml
+  extruder_temperature: 200
+  fan_off_layer1: false
+  fill_density: 20
+  filling_type: Triangles
+  gcode_file: goosli_out.gcode
+  layer_height: 0.2
+  line_width: 0.4
+  originx: 0.0
+  originy: 0.0
+  originz: 0.0
+  print_speed: 50
+  print_speed_layer1: 50
+  print_speed_wall: 50
+  retraction_distance: 0.3
+  retraction_on: true
+  retraction_speed: 50
+  skirt_line_count: 3
+  slicing_type: vip
+  splanes_file: planes_file.txt
+  stl_file: ''
+  support_offset: 1.0
+  supports_on: false
+  top_layers: 3
+  wall_thickness: 0.8
