@@ -277,15 +277,17 @@ class MainWindow(QMainWindow):
         bottom_layout.setSpacing(5)
         bottom_layout.setColumnStretch(7, 1)
 
-        self.add_plane_button = QPushButton(self.locale.AddPlane)
-        bottom_layout.addWidget(self.add_plane_button, 1, 0)
+
 
         combo_widget = QWidget()
         self.combo_box = QComboBox(combo_widget)
         bottom_layout.addWidget(combo_widget, 0, 0, 1, 2)
 
+        self.add_plane_button = QPushButton(self.locale.AddPlane)
+        bottom_layout.addWidget(self.add_plane_button, 1, 3)
+
         self.remove_plane_button = QPushButton(self.locale.DeletePlane)
-        bottom_layout.addWidget(self.remove_plane_button, 2, 0)
+        bottom_layout.addWidget(self.remove_plane_button, 2, 3)
 
         self.tilted_checkbox = QCheckBox(self.locale.Tilted)
         bottom_layout.addWidget(self.tilted_checkbox, 0, 3)
