@@ -437,6 +437,8 @@ class MainWindow(QMainWindow):
         for i in range(len(splanes)):
             self.splanes_list.addItem(self.locale.Plane + " " + str(i + 1))
 
+        if len(splanes) >0:
+            self.splanes_list.setCurrentRow(len(splanes)-1)
         self.reload_scene()
 
     def _recreate_splanes(self, splanes):

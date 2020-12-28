@@ -29,7 +29,7 @@ class MainController:
         self.view.picture_slider.valueChanged.connect(self.change_layer_view)
         self.view.move_button.clicked.connect(self.move_model)
         self.view.load_model_button.clicked.connect(self.open_file)
-        self.view.edit_planes_button.clicked.connect(self.load_stl)
+        self.view.edit_planes_button.clicked.connect(partial(self.load_stl, None))
         self.view.slice3a_button.clicked.connect(partial(self.slice_stl, "3axes"))
         self.view.slice_vip_button.clicked.connect(partial(self.slice_stl, "vip"))
         self.view.save_gcode_button.clicked.connect(self.save_gcode_file)
@@ -87,7 +87,6 @@ class MainController:
     def load_stl(self, filename, colorize=False):
         if filename is None or filename is "":
             filename = self.model.opened_stl
-        # print("load STL: ", filename)
         stl_actor, self.model.stl_translation, _ = gui_utils.createStlActorInOrigin(filename, colorize)
 
         self.model.opened_stl = filename
@@ -116,7 +115,7 @@ class MainController:
 
     def save_settings(self, slicing_type):
         s = sett()
-        s.slicing.stl_file = format_path(self.model.opened_stl)
+        s.slicing.stl_file = self.model.opened_stl
         s.slicing.originx = self.model.stl_translation[0]
         s.slicing.originy = self.model.stl_translation[1]
         s.slicing.originz = self.model.stl_translation[2]
@@ -213,12 +212,6 @@ class MainController:
     #     debug.readFile(self.render, "/home/l1va/debug.txt", 4)
     #     # debug.readFile(self.render, "/home/l1va/debug_simplified.txt", "Red", 3)
     #     self.reloadScene()
-
-
-def format_path(path):
-    if " " in path:
-        return '"{}"'.format(path)
-    return path
 
 
 def call_command(cmd):
