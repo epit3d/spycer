@@ -30,6 +30,8 @@ slicing:
   bed_temperature: 60
   bottom_layers: 3
   cmd: ./goosli --cmd=slice --settings=settings.yaml
+  ftetwild_cmd: ./ftetwild.exe
+  smooth_cmd: ./FASP.exe
   extruder_temperature: 200
   fan_off_layer1: false
   fill_density: 20
@@ -48,7 +50,7 @@ slicing:
   retraction_on: true
   retraction_speed: 50
   skirt_line_count: 3
-  slicing_type: vip
+  slicing_type: smooth
   splanes_file: planes_file.txt
   stl_file: ''
   support_offset: 1.0

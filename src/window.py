@@ -221,6 +221,9 @@ class MainWindow(QMainWindow):
         buttons_layout.addWidget(self.y_position_value, get_cur_row(), 2)
         self.z_position_value = QLineEdit("0")
         buttons_layout.addWidget(self.z_position_value, get_next_row(), 1)
+        self.smoothSlice_button = QPushButton("smooth slice") #TODO: locale
+        buttons_layout.addWidget(self.smoothSlice_button, get_cur_row(), 1, 1, 1)
+
         self.move_button = QPushButton(self.locale.MoveModel)
         buttons_layout.addWidget(self.move_button, get_cur_row(), 2, 1, 1)
 

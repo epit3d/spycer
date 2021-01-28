@@ -27,6 +27,7 @@ class MainController:
         # right panel
         self.view.model_switch_box.stateChanged.connect(self.view.switch_stl_gcode)
         self.view.picture_slider.valueChanged.connect(self.change_layer_view)
+        self.view.smoothSlice_button.clicked.connect(self.slice_smooth)
         self.view.move_button.clicked.connect(self.move_model)
         self.view.load_model_button.clicked.connect(self.open_file)
         self.view.edit_planes_button.clicked.connect(partial(self.load_stl, None))
@@ -112,6 +113,13 @@ class MainController:
 
         self.load_gcode(s.slicing.gcode_file, True)
         # self.debugMe()
+
+    def slice_smooth(self):
+        s = sett()
+        self.save_settings("smooth")
+        call_command( s.slicing.ftetwild_cmd)
+        call_command(s.slicing.smooth_cmd)
+        self.load_gcode(s.slicing.gcode_file, True)
 
     def save_settings(self, slicing_type):
         s = sett()
