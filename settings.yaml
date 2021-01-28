@@ -37,9 +37,10 @@ slicing:
   gcode_file: goosli_out.gcode
   layer_height: 0.2
   line_width: 0.4
-  originx: -27.095199584960938
-  originy: -0.0
-  originz: -0.0
+  mesh_file: goosli_middle.msh
+  originx: 0.0
+  originy: 0.0
+  originz: 0.0
   print_speed: 50
   print_speed_layer1: 50
   print_speed_wall: 50
@@ -49,7 +50,7 @@ slicing:
   skirt_line_count: 3
   slicing_type: vip
   splanes_file: planes_file.txt
-  stl_file: /home/l1va/Downloads/5axes_3d_printer/test/path emp/1_od n2.stl
+  stl_file: ''
   support_offset: 1.0
   supports_on: false
   top_layers: 3

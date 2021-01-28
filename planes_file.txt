@@ -1,1 +1,1 @@
-X10 Y10 Z10 Ttrue R0
+X10.0 Y10.0 Z10.0 Ttrue R0.0
