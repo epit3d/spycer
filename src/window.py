@@ -182,6 +182,11 @@ class MainWindow(QMainWindow):
         right_panel.addWidget(skirt_line_count_label, get_next_row(), 1)
         right_panel.addWidget(self.skirt_line_count_value, get_cur_row(), 2)
 
+        fan_speed_label = QLabel(self.locale.FanSpeed)
+        self.fan_speed_value = QLineEdit(str(sett().slicing.fan_speed))
+        right_panel.addWidget(fan_speed_label, get_next_row(), 1)
+        right_panel.addWidget(self.fan_speed_value, get_cur_row(), 2)
+
         fan_off_layer1_label = QLabel(self.locale.FanOffLayer1)
         self.fan_off_layer1_box = QCheckBox()
         if sett().slicing.fan_off_layer1:

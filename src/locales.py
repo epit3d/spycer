@@ -36,6 +36,7 @@ class Locale:
     SupportOffset = "Support offset"
     FloatParsingError = "Error in float number"
     SkirtLineCount = "Skirt lines count"
+    FanSpeed = "Fan Speed, %:"
     Plane = "Plane"
     AddOnePlaneError = "Add at least one plane"
 
@@ -81,6 +82,7 @@ dicts = {
         SupportOffset="Отступ поддержки от детали",
         FloatParsingError="Ошибка в написании дробного числа",
         SkirtLineCount="Количество слоёв юбки",
+        FanSpeed="Скорость вентилятора, %",
         Plane="Плоскость",
         AddOnePlaneError="Добавьте хотя бы одну плоскость",
     ),

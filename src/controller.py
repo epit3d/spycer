@@ -117,7 +117,7 @@ class MainController:
     def slice_smooth(self):
         s = sett()
         self.save_settings("smooth")
-        call_command( s.slicing.ftetwild_cmd)
+        call_command(s.slicing.ftetwild_cmd)
         call_command(s.slicing.smooth_cmd)
         self.load_gcode(s.slicing.gcode_file, True)
 
@@ -144,6 +144,7 @@ class MainController:
         s.slicing.support_offset = float(self.view.support_offset_value.text())
         s.slicing.skirt_line_count = int(self.view.skirt_line_count_value.text())
         s.slicing.fan_off_layer1 = self.view.fan_off_layer1_box.isChecked()
+        s.slicing.fan_speed = int(self.view.fan_speed_value.text())
         s.slicing.supports_on = self.view.supports_on_box.isChecked()
         s.slicing.angle = int(self.view.colorize_angle_value.text())
 
