@@ -40,8 +40,8 @@ slicing:
   layer_height: 0.2
   line_width: 0.4
   mesh_file: goosli_middle.msh
-  originx: -17.553549766540527
-  originy: -0.012199878692626953
+  originx: -27.095199584960938
+  originy: -0.0
   originz: -0.0
   print_speed: 50
   print_speed_layer1: 50
@@ -53,7 +53,7 @@ slicing:
   slicing_type: 3axes
   smooth_cmd: ./FASP.exe
   splanes_file: planes_file.txt
-  stl_file: /home/l1va/Downloads/5axes_3d_printer/test/___odnbez.stl
+  stl_file: /home/l1va/Downloads/1_odn2.stl
   support_offset: 1.0
   supports_on: false
   top_layers: 3

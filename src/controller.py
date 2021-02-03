@@ -62,14 +62,6 @@ class MainController:
         self.model.current_slider_value = self.view.change_layer_view(self.model.current_slider_value, self.model.gcode)
 
     def move_model(self):
-        # tf = [float(self.view.x_position_value.text()), float(self.view.y_position_value.text()),
-        #       float(self.view.z_position_value.text())]
-        # self.model.stl_translation = tf
-        #
-        # vtk_tf = vtk.vtkTransform()
-        # vtk_tf.Translate(tf[0], tf[1], tf[2])
-        # self.view.move_stl(vtk_tf)
-
         self.view.move_stl2()
 
     def open_file(self):
@@ -120,6 +112,9 @@ class MainController:
         s = sett()
         self.save_settings("smooth")
         call_command(s.slicing.ftetwild_cmd)
+        #todo
+        #./FloatTetwild_bin.exe -i "+s.slicing.stl_file+" -o goosli_middle.msh").split(" ")
+
         call_command(s.slicing.smooth_cmd)
         self.load_gcode(s.slicing.gcode_file, True)
 

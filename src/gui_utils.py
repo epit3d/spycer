@@ -5,8 +5,7 @@ from src.settings import sett, get_color
 
 
 def findStlOrigin(vtkBlock):
-    bound = [0, 0, 0, 0, 0, 0]
-    vtkBlock.GetBounds(bound)
+    bound = getBounds(vtkBlock)
     x_mid = (bound[0] + bound[1]) / 2
     y_mid = (bound[2] + bound[3]) / 2
     return x_mid, y_mid, bound[4]

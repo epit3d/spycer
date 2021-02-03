@@ -66,7 +66,20 @@ boxWidget.SetProp3D(maceActor)
 boxWidget.PlaceWidget()
 boxWidget.AddObserver("InteractionEvent", TransformActor)
 
-#axesWidget = gui_utils.createAxes(iren)
+cylinder = vtk.vtkCylinderSource()
+cylinder.SetResolution(50)
+cylinder.SetRadius(2)
+cylinder.SetHeight(0.1)
+cylinder.SetCenter(0,0,0)  # WHAT? vtk :(
+mapper = vtk.vtkPolyDataMapper()
+mapper.SetInputConnection(cylinder.GetOutputPort())
+actor = vtk.vtkActor()
+actor.SetMapper(mapper)
+actor.RotateX(90)
+
+ren.AddActor(actor)
+
+axesWidget = gui_utils.createAxes(iren)
 
 iren.Initialize()
 renWin.Render()

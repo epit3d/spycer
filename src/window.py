@@ -14,6 +14,7 @@ NothingState = "nothing"
 GCodeState = "gcode"
 StlState = "stl"
 BothState = "both"
+MovingState = "moving"
 
 
 class MainWindow(QMainWindow):
@@ -52,8 +53,6 @@ class MainWindow(QMainWindow):
         # ###################TODO:
         self.actors = []
 
-        # self.openedStl = "/home/l1va/Downloads/1_odn2.stl"  # TODO: removeme
-        # self.loadSTL(self.openedStl)
         # self.colorizeModel()
 
         # close_action.triggered.connect(self.close)
@@ -70,10 +69,10 @@ class MainWindow(QMainWindow):
         self.interactor = widget3d.GetRenderWindow().GetInteractor()
         self.interactor.GetInteractorStyle().SetCurrentStyleToTrackballCamera()
 
-        self.actor_interactor_style = interactor_style.ActorInteractorStyle(self.updateTransform)
-        self.actor_interactor_style.SetDefaultRenderer(self.render)
+        # self.actor_interactor_style = interactor_style.ActorInteractorStyle(self.updateTransform)
+        # self.actor_interactor_style.SetDefaultRenderer(self.render)
         # self.interactor.SetInteractorStyle(style)
-        self.camera_interactor_style = interactor_style.CameraInteractorStyle()
+        # self.camera_interactor_style = interactor_style.CameraInteractorStyle()
         # self.camera_interactor_style.SetDefaultRenderer(self.render)
 
         self.axesWidget = gui_utils.createAxes(self.interactor)
@@ -429,19 +428,57 @@ class MainWindow(QMainWindow):
         self.reload_scene()
         return new_slider_value
 
-    def move_stl(self, tf):
-        self.stlActor.SetUserTransform(tf)
-        self.reload_scene()
-
     def move_stl2(self):
         if self.move_button.isChecked():
-            self.interactor.SetInteractorStyle(self.actor_interactor_style)
+            self.state_moving()
+
+            # self.interactor.SetInteractorStyle(self.actor_interactor_style)
+
+            self.axesWidget.SetEnabled(False)
+            if self.boxWidget is None:
+                self.boxWidget = vtk.vtkBoxWidget()
+                self.boxWidget.SetInteractor(self.interactor)
+                # self.boxWidget.SetProp3D(self.stlActor)
+                self.boxWidget.SetPlaceFactor(1.25)
+                self.boxWidget.SetHandleSize(0.005)
+                self.boxWidget.SetEnabled(True)
+                # self.boxWidget.SetScalingEnabled(False)
+
+                # hack for boxWidget - 1. reset actor transform
+                # 2. place boxWidget
+                # 3. apply transform to actor and boxWidget
+                tf = self.stlActor.GetUserTransform()
+                self.stlActor.SetUserTransform(vtk.vtkTransform())
+                self.boxWidget.SetProp3D(self.stlActor)
+                self.boxWidget.PlaceWidget()
+                self.boxWidget.SetTransform(tf)
+                self.stlActor.SetUserTransform(tf)
+
+                def TransformActor(obj, event):
+                    tf = vtk.vtkTransform()
+                    obj.GetTransform(tf)
+                    # print(tf.GetScale())
+                    self.stlActor.SetUserTransform(tf)
+                    self.updateTransform()
+
+                self.boxWidget.AddObserver("InteractionEvent", TransformActor)
+            else:
+                self.boxWidget.SetEnabled(True)
             # self.interactor.GetInteractorStyle().SetCurrentStyleToTrackballActor()
         else:
-            self.interactor.SetInteractorStyle(self.camera_interactor_style)
-            print(self.stlActor.GetUserTransform())
-            print(self.stlActor.GetBounds())
+            self.state_stl()  # TODO: might be not stl but both or gcode
+            # self.interactor.SetInteractorStyle(self.camera_interactor_style)
+            self.boxWidget.SetEnabled(False)
+            self.axesWidget.SetEnabled(True)
+            xc, yc, zmin = gui_utils.findStlOrigin(self.stlActor)
+            tf = self.stlActor.GetUserTransform()
+            tf.PostMultiply()
+            tf.Translate(0, 0, -zmin)
+            self.stlActor.SetUserTransform(tf)
+            self.boxWidget.SetTransform(tf)
+            self.updateTransform()
             # self.interactor.GetInteractorStyle().SetCurrentStyleToTrackballCamera()
+        self.reload_scene()
 
     def updateTransform(self):
         tf = self.stlActor.GetUserTransform()
@@ -449,28 +486,22 @@ class MainWindow(QMainWindow):
         # self.x_position_value.setText(str(x)[:10])
         # self.y_position_value.setText(str(y)[:10])
         # self.z_position_value.setText(str(z)[:10])
-        self.xyz_position_value.setText("Position: " + str(x)[:10] + " " + str(y)[:10] + " " + str(z)[:10])
+        self.xyz_position_value.setText("Position: " + strF(x) + " " + strF(y) + " " + strF(z))
         a, b, c = tf.GetScale()
-        self.xyz_scale_value.setText("Scale: " + str(a)[:10] + " " + str(b)[:10] + " " + str(c)[:10])
+        self.xyz_scale_value.setText("Scale: " + strF(a) + " " + strF(b) + " " + strF(c))
         i, j, k = tf.GetOrientation()
-        self.xyz_orient_value.setText("Orientation: " + str(i)[:10] + " " + str(j)[:10] + " " + str(k)[:10])
+        self.xyz_orient_value.setText("Orientation: " + strF(i) + " " + strF(j) + " " + strF(k))
 
     def open_dialog(self):
         return QFileDialog.getOpenFileName(None, self.locale.OpenModel, "/home/l1va/Downloads/5axes_3d_printer/test",
                                            "STL (*.stl *.STL);;Gcode (*.gcode)")[0]  # TODO: fix path
 
-    def load_stl(self, stl_actor, stl_translation):
+    def load_stl(self, stl_actor):
         self.clear_scene()
+        self.boxWidget = None
         self.stlActor = stl_actor
-        self.actor_interactor_style.setStlActor(self.stlActor)
-
-        x, y, z = stl_translation
-        # self.x_position_value.setText(str(x)[:10])
-        # self.y_position_value.setText(str(y)[:10])
-        # self.z_position_value.setText(str(z)[:10])
-        self.xyz_position_value.setText("Position: " + str(x)[:10] + " " + str(y)[:10] + " " + str(z)[:10])
-        self.xyz_scale_value.setText("Scale: 1 1 1")
-        self.xyz_orient_value.setText("Orientation: 0 0 0")
+        # self.actor_interactor_style.setStlActor(self.stlActor)
+        self.updateTransform()
 
         self.render.AddActor(self.stlActor)
         self.state_stl()
@@ -596,6 +627,7 @@ class MainWindow(QMainWindow):
         self.picture_slider.setEnabled(False)
         self.picture_slider.setSliderPosition(0)
         self.move_button.setEnabled(False)
+        self.load_model_button.setEnabled(True)
         self.slice3a_button.setEnabled(False)
         self.color_model_button.setEnabled(False)
         self.analyze_model_button.setEnabled(False)
@@ -615,6 +647,7 @@ class MainWindow(QMainWindow):
         self.picture_slider.setMaximum(layers_count)
         self.picture_slider.setSliderPosition(layers_count)
         self.move_button.setEnabled(False)
+        self.load_model_button.setEnabled(True)
         self.slice3a_button.setEnabled(False)
         self.color_model_button.setEnabled(False)
         self.analyze_model_button.setEnabled(False)
@@ -633,6 +666,7 @@ class MainWindow(QMainWindow):
         self.picture_slider.setEnabled(False)
         self.picture_slider.setSliderPosition(0)
         self.move_button.setEnabled(True)
+        self.load_model_button.setEnabled(True)
         self.slice3a_button.setEnabled(True)
         self.color_model_button.setEnabled(True)
         self.analyze_model_button.setEnabled(False)
@@ -641,6 +675,25 @@ class MainWindow(QMainWindow):
         self.save_gcode_button.setEnabled(False)
         self.bottom_panel.setEnabled(True)
         self.state = StlState
+
+    def state_moving(self):
+        self.model_switch_box.setEnabled(False)
+        self.model_switch_box.setChecked(True)
+        self.slider_label.setEnabled(False)
+        self.layers_number_label.setEnabled(False)
+        self.layers_number_label.setText(" ")
+        self.picture_slider.setEnabled(False)
+        self.picture_slider.setSliderPosition(0)
+        self.move_button.setEnabled(True)
+        self.load_model_button.setEnabled(False)
+        self.slice3a_button.setEnabled(False)
+        self.color_model_button.setEnabled(False)
+        self.analyze_model_button.setEnabled(False)
+        self.edit_planes_button.setEnabled(False)
+        self.slice_vip_button.setEnabled(False)
+        self.save_gcode_button.setEnabled(False)
+        self.bottom_panel.setEnabled(False)
+        self.state = MovingState
 
     def state_both(self, layers_count):
         self.model_switch_box.setEnabled(True)
@@ -652,6 +705,7 @@ class MainWindow(QMainWindow):
         self.picture_slider.setMaximum(layers_count)
         self.picture_slider.setSliderPosition(layers_count)
         self.move_button.setEnabled(True)
+        self.load_model_button.setEnabled(True)
         self.slice3a_button.setEnabled(True)
         self.color_model_button.setEnabled(True)
         self.analyze_model_button.setEnabled(False)
@@ -660,3 +714,11 @@ class MainWindow(QMainWindow):
         self.save_gcode_button.setEnabled(True)
         self.bottom_panel.setEnabled(True)
         self.state = BothState
+
+
+def strF(v):  # cut 3 numbers after the point in float
+    s = str(v)
+    i = s.find(".")
+    if i != -1:
+        s = s[:min(len(s), i + 3)]
+    return s
