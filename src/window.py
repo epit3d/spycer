@@ -244,7 +244,7 @@ class MainWindow(QMainWindow):
         self.xyz_orient_value = QLabel("Orientation: 0 0 0")
         buttons_layout.addWidget(self.xyz_orient_value, get_next_row(), 1, 1, 2)
 
-        self.smoothSlice_button = QPushButton("smooth slice")  # TODO: locale
+        self.smoothSlice_button = QPushButton(self.locale.SmoothSlice)
         buttons_layout.addWidget(self.smoothSlice_button, get_next_row(), 1, 1, 1)
 
         self.move_button = QPushButton(self.locale.MoveModel)

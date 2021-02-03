@@ -39,6 +39,7 @@ class Locale:
     FanSpeed = "Fan Speed, %:"
     Plane = "Plane"
     AddOnePlaneError = "Add at least one plane"
+    SmoothSlice = "Smooth Slice (Beta)"
 
     def __init__(self, **entries):
         self.__dict__.update(entries)
@@ -85,6 +86,7 @@ dicts = {
         FanSpeed="Скорость вентилятора, %",
         Plane="Плоскость",
         AddOnePlaneError="Добавьте хотя бы одну плоскость",
+        SmoothSlice="Smooth Slice (Beta)"
     ),
 }
 

@@ -35,7 +35,7 @@ slicing:
   fan_speed: 95
   fill_density: 20
   filling_type: Triangles
-  ftetwild_cmd: ./ftetwild.exe
+  ftetwild_cmd: ./FloatTetwild_bin.exe -i sett.slicing.stl_file -o goosli_middle.msh
   gcode_file: goosli_out.gcode
   layer_height: 0.2
   line_width: 0.4

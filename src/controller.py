@@ -111,10 +111,9 @@ class MainController:
     def slice_smooth(self):
         s = sett()
         self.save_settings("smooth")
-        call_command(s.slicing.ftetwild_cmd)
-        #todo
-        #./FloatTetwild_bin.exe -i "+s.slicing.stl_file+" -o goosli_middle.msh").split(" ")
 
+        ft_cmd = s.slicing.ftetwild_cmd.replace("sett.slicing.stl_file", s.slicing.stl_file)
+        call_command(ft_cmd)
         call_command(s.slicing.smooth_cmd)
         self.load_gcode(s.slicing.gcode_file, True)
 
