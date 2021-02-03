@@ -82,10 +82,9 @@ class MainController:
     def load_stl(self, filename, colorize=False):
         if filename is None or filename is "":
             filename = self.model.opened_stl
-        stl_actor, self.model.stl_translation, _ = gui_utils.createStlActorInOrigin(filename, colorize)
-
+        stl_actor = gui_utils.createStlActorInOrigin(filename, colorize)
         self.model.opened_stl = filename
-        self.view.load_stl(stl_actor, self.model.stl_translation)
+        self.view.load_stl(stl_actor)
 
     def load_gcode(self, filename, is_from_stl):
         gc = self.model.load_gcode(filename)
@@ -120,9 +119,12 @@ class MainController:
     def save_settings(self, slicing_type):
         s = sett()
         s.slicing.stl_file = self.model.opened_stl
-        s.slicing.originx = self.model.stl_translation[0]
-        s.slicing.originy = self.model.stl_translation[1]
-        s.slicing.originz = self.model.stl_translation[2]
+        tf = vtk.vtkTransform()
+        if self.view.stlActor is not None:
+            tf = self.view.stlActor.GetUserTransform()
+        s.slicing.originx, s.slicing.originy, s.slicing.originz = tf.GetPosition()
+        s.slicing.rotationx, s.slicing.rotationy, s.slicing.rotationz = tf.GetOrientation()
+        s.slicing.scalex, s.slicing.scaley, s.slicing.scalez = tf.GetScale()
         s.slicing.layer_height = float(self.view.layer_height_value.text())
         s.slicing.print_speed = int(self.view.print_speed_value.text())
         s.slicing.print_speed_layer1 = int(self.view.print_speed_layer1_value.text())

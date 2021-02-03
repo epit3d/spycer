@@ -52,7 +52,7 @@ class MainWindow(QMainWindow):
 
         # ###################TODO:
         self.actors = []
-
+        self.stlActor = None
         # self.colorizeModel()
 
         # close_action.triggered.connect(self.close)
@@ -626,6 +626,7 @@ class MainWindow(QMainWindow):
         self.layers_number_label.setText(" ")
         self.picture_slider.setEnabled(False)
         self.picture_slider.setSliderPosition(0)
+        self.smoothSlice_button.setEnabled(False)
         self.move_button.setEnabled(False)
         self.load_model_button.setEnabled(True)
         self.slice3a_button.setEnabled(False)
@@ -646,6 +647,7 @@ class MainWindow(QMainWindow):
         self.picture_slider.setEnabled(True)
         self.picture_slider.setMaximum(layers_count)
         self.picture_slider.setSliderPosition(layers_count)
+        self.smoothSlice_button.setEnabled(False)
         self.move_button.setEnabled(False)
         self.load_model_button.setEnabled(True)
         self.slice3a_button.setEnabled(False)
@@ -665,6 +667,7 @@ class MainWindow(QMainWindow):
         self.layers_number_label.setText(" ")
         self.picture_slider.setEnabled(False)
         self.picture_slider.setSliderPosition(0)
+        self.smoothSlice_button.setEnabled(True)
         self.move_button.setEnabled(True)
         self.load_model_button.setEnabled(True)
         self.slice3a_button.setEnabled(True)
@@ -684,6 +687,7 @@ class MainWindow(QMainWindow):
         self.layers_number_label.setText(" ")
         self.picture_slider.setEnabled(False)
         self.picture_slider.setSliderPosition(0)
+        self.smoothSlice_button.setEnabled(False)
         self.move_button.setEnabled(True)
         self.load_model_button.setEnabled(False)
         self.slice3a_button.setEnabled(False)
@@ -704,6 +708,7 @@ class MainWindow(QMainWindow):
         self.picture_slider.setEnabled(True)
         self.picture_slider.setMaximum(layers_count)
         self.picture_slider.setSliderPosition(layers_count)
+        self.smoothSlice_button.setEnabled(True)
         self.move_button.setEnabled(True)
         self.load_model_button.setEnabled(True)
         self.slice3a_button.setEnabled(True)

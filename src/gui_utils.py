@@ -148,7 +148,7 @@ def createStlActorInOrigin(filename, colorize=False):
     transform.Translate(-origin[0] + s.hardware.plane_center_x, -origin[1] + s.hardware.plane_center_y,
                         -origin[2] + s.hardware.plane_center_z)
     actor.SetUserTransform(transform)
-    return actor, (-origin[0], -origin[1], -origin[2]), getBounds(output)  # return not origin but applied translation
+    return actor
 
 
 def makeBlocks(layers):

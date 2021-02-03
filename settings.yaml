@@ -40,20 +40,26 @@ slicing:
   layer_height: 0.2
   line_width: 0.4
   mesh_file: goosli_middle.msh
-  originx: -27.095199584960938
-  originy: -0.0
-  originz: -0.0
+  originx: 34.18250175443659
+  originy: -16.98024240363457
+  originz: 17.538703082138134
   print_speed: 50
   print_speed_layer1: 50
   print_speed_wall: 50
   retraction_distance: 0.3
   retraction_on: true
   retraction_speed: 50
+  rotationx: -29.590723233365974
+  rotationy: 13.884527594674974
+  rotationz: 41.99918568990012
+  scalex: 0.9999999999999971
+  scaley: 1.0000000000000013
+  scalez: 0.999999999999997
   skirt_line_count: 3
-  slicing_type: 3axes
+  slicing_type: vip
   smooth_cmd: ./FASP.exe
   splanes_file: planes_file.txt
-  stl_file: /home/l1va/Downloads/1_odn2.stl
+  stl_file: /home/l1va/Downloads/5axes_3d_printer/test/1_odn2.stl
   support_offset: 1.0
   supports_on: false
   top_layers: 3
