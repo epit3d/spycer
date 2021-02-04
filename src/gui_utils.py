@@ -5,8 +5,7 @@ from src.settings import sett, get_color
 
 
 def findStlOrigin(vtkBlock):
-    bound = [0, 0, 0, 0, 0, 0]
-    vtkBlock.GetBounds(bound)
+    bound = getBounds(vtkBlock)
     x_mid = (bound[0] + bound[1]) / 2
     y_mid = (bound[2] + bound[3]) / 2
     return x_mid, y_mid, bound[4]
@@ -149,7 +148,7 @@ def createStlActorInOrigin(filename, colorize=False):
     transform.Translate(-origin[0] + s.hardware.plane_center_x, -origin[1] + s.hardware.plane_center_y,
                         -origin[2] + s.hardware.plane_center_z)
     actor.SetUserTransform(transform)
-    return actor, (-origin[0], -origin[1], -origin[2]), getBounds(output)  # return not origin but applied translation
+    return actor
 
 
 def makeBlocks(layers):

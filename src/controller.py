@@ -27,9 +27,10 @@ class MainController:
         # right panel
         self.view.model_switch_box.stateChanged.connect(self.view.switch_stl_gcode)
         self.view.picture_slider.valueChanged.connect(self.change_layer_view)
+        self.view.smoothSlice_button.clicked.connect(self.slice_smooth)
         self.view.move_button.clicked.connect(self.move_model)
         self.view.load_model_button.clicked.connect(self.open_file)
-        self.view.edit_planes_button.clicked.connect(self.load_stl)
+        self.view.edit_planes_button.clicked.connect(partial(self.load_stl, None))
         self.view.slice3a_button.clicked.connect(partial(self.slice_stl, "3axes"))
         self.view.slice_vip_button.clicked.connect(partial(self.slice_stl, "vip"))
         self.view.save_gcode_button.clicked.connect(self.save_gcode_file)
@@ -61,13 +62,7 @@ class MainController:
         self.model.current_slider_value = self.view.change_layer_view(self.model.current_slider_value, self.model.gcode)
 
     def move_model(self):
-        tf = [float(self.view.x_position_value.text()), float(self.view.y_position_value.text()),
-              float(self.view.z_position_value.text())]
-        self.model.stl_translation = tf
-
-        vtk_tf = vtk.vtkTransform()
-        vtk_tf.Translate(tf[0], tf[1], tf[2])
-        self.view.move_stl(vtk_tf)
+        self.view.move_stl2()
 
     def open_file(self):
         try:
@@ -87,11 +82,9 @@ class MainController:
     def load_stl(self, filename, colorize=False):
         if filename is None or filename is "":
             filename = self.model.opened_stl
-        # print("load STL: ", filename)
-        stl_actor, self.model.stl_translation, _ = gui_utils.createStlActorInOrigin(filename, colorize)
-
+        stl_actor = gui_utils.createStlActorInOrigin(filename, colorize)
         self.model.opened_stl = filename
-        self.view.load_stl(stl_actor, self.model.stl_translation)
+        self.view.load_stl(stl_actor)
 
     def load_gcode(self, filename, is_from_stl):
         gc = self.model.load_gcode(filename)
@@ -114,12 +107,24 @@ class MainController:
         self.load_gcode(s.slicing.gcode_file, True)
         # self.debugMe()
 
+    def slice_smooth(self):
+        s = sett()
+        self.save_settings("smooth")
+
+        ft_cmd = s.slicing.ftetwild_cmd.replace("sett.slicing.stl_file", s.slicing.stl_file)
+        call_command(ft_cmd)
+        call_command(s.slicing.smooth_cmd)
+        self.load_gcode(s.slicing.gcode_file, True)
+
     def save_settings(self, slicing_type):
         s = sett()
-        s.slicing.stl_file = format_path(self.model.opened_stl)
-        s.slicing.originx = self.model.stl_translation[0]
-        s.slicing.originy = self.model.stl_translation[1]
-        s.slicing.originz = self.model.stl_translation[2]
+        s.slicing.stl_file = self.model.opened_stl
+        tf = vtk.vtkTransform()
+        if self.view.stlActor is not None:
+            tf = self.view.stlActor.GetUserTransform()
+        s.slicing.originx, s.slicing.originy, s.slicing.originz = tf.GetPosition()
+        s.slicing.rotationx, s.slicing.rotationy, s.slicing.rotationz = tf.GetOrientation()
+        s.slicing.scalex, s.slicing.scaley, s.slicing.scalez = tf.GetScale()
         s.slicing.layer_height = float(self.view.layer_height_value.text())
         s.slicing.print_speed = int(self.view.print_speed_value.text())
         s.slicing.print_speed_layer1 = int(self.view.print_speed_layer1_value.text())
@@ -137,6 +142,7 @@ class MainController:
         s.slicing.support_offset = float(self.view.support_offset_value.text())
         s.slicing.skirt_line_count = int(self.view.skirt_line_count_value.text())
         s.slicing.fan_off_layer1 = self.view.fan_off_layer1_box.isChecked()
+        s.slicing.fan_speed = int(self.view.fan_speed_value.text())
         s.slicing.supports_on = self.view.supports_on_box.isChecked()
         s.slicing.angle = int(self.view.colorize_angle_value.text())
 
@@ -213,10 +219,6 @@ class MainController:
     #     debug.readFile(self.render, "/home/l1va/debug.txt", 4)
     #     # debug.readFile(self.render, "/home/l1va/debug_simplified.txt", "Red", 3)
     #     self.reloadScene()
-
-
-def format_path(path):
-    return '"{}"'.format(path)
 
 
 def call_command(cmd):

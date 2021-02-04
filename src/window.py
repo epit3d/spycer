@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import (QMainWindow, QWidget, QLabel, QLineEdit, QComboBox,
                              QPushButton, QFileDialog, QScrollArea, QGroupBox, QAction, QDialog, QListWidget)
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
-from src import locales, gui_utils
+from src import locales, gui_utils, interactor_style
 from src.gui_utils import plane_tf
 from src.settings import sett, get_color
 
@@ -14,6 +14,7 @@ NothingState = "nothing"
 GCodeState = "gcode"
 StlState = "stl"
 BothState = "both"
+MovingState = "moving"
 
 
 class MainWindow(QMainWindow):
@@ -51,9 +52,7 @@ class MainWindow(QMainWindow):
 
         # ###################TODO:
         self.actors = []
-
-        # self.openedStl = "/home/l1va/Downloads/1_odn2.stl"  # TODO: removeme
-        # self.loadSTL(self.openedStl)
+        self.stlActor = None
         # self.colorizeModel()
 
         # close_action.triggered.connect(self.close)
@@ -62,13 +61,20 @@ class MainWindow(QMainWindow):
 
     def init3d_widget(self):
         widget3d = QVTKRenderWindowInteractor()
-        widget3d.Initialize()
-        widget3d.Start()
+
         self.render = vtk.vtkRenderer()
         self.render.SetBackground(get_color(sett().colors.background))
+
         widget3d.GetRenderWindow().AddRenderer(self.render)
         self.interactor = widget3d.GetRenderWindow().GetInteractor()
         self.interactor.GetInteractorStyle().SetCurrentStyleToTrackballCamera()
+
+        # self.actor_interactor_style = interactor_style.ActorInteractorStyle(self.updateTransform)
+        # self.actor_interactor_style.SetDefaultRenderer(self.render)
+        # self.interactor.SetInteractorStyle(style)
+        # self.camera_interactor_style = interactor_style.CameraInteractorStyle()
+        # self.camera_interactor_style.SetDefaultRenderer(self.render)
+
         self.axesWidget = gui_utils.createAxes(self.interactor)
 
         self.planeActor = gui_utils.createPlaneActorCircle()
@@ -78,11 +84,33 @@ class MainWindow(QMainWindow):
         for b in self.boxActors:
             self.render.AddActor(b)
 
+        self.add_legend()
+
         self.splanes_actors = []
 
         self.render.ResetCamera()
         self.render.SetUseDepthPeeling(True)
+
+        widget3d.Initialize()
+        widget3d.Start()
+
         return widget3d
+
+    def add_legend(self):
+        legendSphereSource = vtk.vtkSphereSource()  # TODO: it is hack that post errors to console
+        legendSphere = legendSphereSource.GetOutput()
+
+        self.legend = vtk.vtkLegendBoxActor()
+        self.legend.SetNumberOfEntries(3)
+        self.legend.GetEntryTextProperty().SetFontSize(15)
+        self.legend.GetPositionCoordinate().SetCoordinateSystemToNormalizedViewport()
+        self.legend.GetPositionCoordinate().SetValue(0, 0)
+        self.legend.GetPosition2Coordinate().SetCoordinateSystemToDisplay()
+        self.legend.GetPosition2Coordinate().SetValue(290, 3 * 30)
+        self.legend.SetEntry(0, legendSphere, "rotate - left mouse button", [1, 1, 1])
+        self.legend.SetEntry(1, legendSphere, "move - middle mouse button (or shift+left)", [1, 1, 1])
+        self.legend.SetEntry(2, legendSphere, "scale - right mouse button", [1, 1, 1])
+        self.render.AddActor(self.legend)
 
     def init_right_panel(self):
         right_panel = QGridLayout()
@@ -182,6 +210,11 @@ class MainWindow(QMainWindow):
         right_panel.addWidget(skirt_line_count_label, get_next_row(), 1)
         right_panel.addWidget(self.skirt_line_count_value, get_cur_row(), 2)
 
+        fan_speed_label = QLabel(self.locale.FanSpeed)
+        self.fan_speed_value = QLineEdit(str(sett().slicing.fan_speed))
+        right_panel.addWidget(fan_speed_label, get_next_row(), 1)
+        right_panel.addWidget(self.fan_speed_value, get_cur_row(), 2)
+
         fan_off_layer1_label = QLabel(self.locale.FanOffLayer1)
         self.fan_off_layer1_box = QCheckBox()
         if sett().slicing.fan_off_layer1:
@@ -215,13 +248,25 @@ class MainWindow(QMainWindow):
         self.picture_slider.setValue(0)
         buttons_layout.addWidget(self.picture_slider, get_next_row(), 1, 1, 2)
 
-        self.x_position_value = QLineEdit("0")
-        buttons_layout.addWidget(self.x_position_value, get_next_row(), 1)
-        self.y_position_value = QLineEdit("0")
-        buttons_layout.addWidget(self.y_position_value, get_cur_row(), 2)
-        self.z_position_value = QLineEdit("0")
-        buttons_layout.addWidget(self.z_position_value, get_next_row(), 1)
+        # self.x_position_value = QLineEdit("0")
+        # buttons_layout.addWidget(self.x_position_value, get_next_row(), 1)
+        # self.y_position_value = QLineEdit("0")
+        # buttons_layout.addWidget(self.y_position_value, get_cur_row(), 2)
+        # self.z_position_value = QLineEdit("0")
+        # buttons_layout.addWidget(self.z_position_value, get_next_row(), 1)
+
+        self.xyz_position_value = QLabel("Position: 0 0 0")
+        buttons_layout.addWidget(self.xyz_position_value, get_next_row(), 1, 1, 2)
+        self.xyz_scale_value = QLabel("Scale: 1 1 1")
+        buttons_layout.addWidget(self.xyz_scale_value, get_next_row(), 1, 1, 2)
+        self.xyz_orient_value = QLabel("Orientation: 0 0 0")
+        buttons_layout.addWidget(self.xyz_orient_value, get_next_row(), 1, 1, 2)
+
+        self.smoothSlice_button = QPushButton(self.locale.SmoothSlice)
+        buttons_layout.addWidget(self.smoothSlice_button, get_next_row(), 1, 1, 1)
+
         self.move_button = QPushButton(self.locale.MoveModel)
+        self.move_button.setCheckable(True)
         buttons_layout.addWidget(self.move_button, get_cur_row(), 2, 1, 1)
 
         self.load_model_button = QPushButton(self.locale.OpenModel)
@@ -357,6 +402,7 @@ class MainWindow(QMainWindow):
     def clear_scene(self):
         self.render.RemoveAllViewProps()
         self.render.AddActor(self.planeActor)
+        self.render.AddActor(self.legend)
         self.rotate_plane(vtk.vtkTransform())
         for b in self.boxActors:
             self.render.AddActor(b)
@@ -401,21 +447,80 @@ class MainWindow(QMainWindow):
         self.reload_scene()
         return new_slider_value
 
-    def move_stl(self, tf):
-        self.stlActor.SetUserTransform(tf)
+    def move_stl2(self):
+        if self.move_button.isChecked():
+            self.state_moving()
+
+            # self.interactor.SetInteractorStyle(self.actor_interactor_style)
+
+            self.axesWidget.SetEnabled(False)
+            if self.boxWidget is None:
+                self.boxWidget = vtk.vtkBoxWidget()
+                self.boxWidget.SetInteractor(self.interactor)
+                # self.boxWidget.SetProp3D(self.stlActor)
+                self.boxWidget.SetPlaceFactor(1.25)
+                self.boxWidget.SetHandleSize(0.005)
+                self.boxWidget.SetEnabled(True)
+                self.boxWidget.SetScalingEnabled(False)
+
+                # hack for boxWidget - 1. reset actor transform
+                # 2. place boxWidget
+                # 3. apply transform to actor and boxWidget
+                tf = self.stlActor.GetUserTransform()
+                self.stlActor.SetUserTransform(vtk.vtkTransform())
+                self.boxWidget.SetProp3D(self.stlActor)
+                self.boxWidget.PlaceWidget()
+                self.boxWidget.SetTransform(tf)
+                self.stlActor.SetUserTransform(tf)
+
+                def TransformActor(obj, event):
+                    tf = vtk.vtkTransform()
+                    obj.GetTransform(tf)
+                    # print(tf.GetScale())
+                    self.stlActor.SetUserTransform(tf)
+                    self.updateTransform()
+
+                self.boxWidget.AddObserver("InteractionEvent", TransformActor)
+            else:
+                self.boxWidget.SetEnabled(True)
+            # self.interactor.GetInteractorStyle().SetCurrentStyleToTrackballActor()
+        else:
+            self.state_stl()  # TODO: might be not stl but both or gcode
+            # self.interactor.SetInteractorStyle(self.camera_interactor_style)
+            self.boxWidget.SetEnabled(False)
+            self.axesWidget.SetEnabled(True)
+            xc, yc, zmin = gui_utils.findStlOrigin(self.stlActor)
+            tf = self.stlActor.GetUserTransform()
+            tf.PostMultiply()
+            tf.Translate(0, 0, -zmin)
+            self.stlActor.SetUserTransform(tf)
+            self.boxWidget.SetTransform(tf)
+            self.updateTransform()
+            # self.interactor.GetInteractorStyle().SetCurrentStyleToTrackballCamera()
         self.reload_scene()
+
+    def updateTransform(self):
+        tf = self.stlActor.GetUserTransform()
+        x, y, z = tf.GetPosition()
+        # self.x_position_value.setText(str(x)[:10])
+        # self.y_position_value.setText(str(y)[:10])
+        # self.z_position_value.setText(str(z)[:10])
+        self.xyz_position_value.setText("Position: " + strF(x) + " " + strF(y) + " " + strF(z))
+        a, b, c = tf.GetScale()
+        self.xyz_scale_value.setText("Scale: " + strF(a) + " " + strF(b) + " " + strF(c))
+        i, j, k = tf.GetOrientation()
+        self.xyz_orient_value.setText("Orientation: " + strF(i) + " " + strF(j) + " " + strF(k))
 
     def open_dialog(self):
         return QFileDialog.getOpenFileName(None, self.locale.OpenModel, "/home/l1va/Downloads/5axes_3d_printer/test",
                                            "STL (*.stl *.STL);;Gcode (*.gcode)")[0]  # TODO: fix path
 
-    def load_stl(self, stl_actor, stl_translation):
+    def load_stl(self, stl_actor):
         self.clear_scene()
+        self.boxWidget = None
         self.stlActor = stl_actor
-
-        self.x_position_value.setText(str(stl_translation[0])[:10])
-        self.y_position_value.setText(str(stl_translation[1])[:10])
-        self.z_position_value.setText(str(stl_translation[2])[:10])
+        # self.actor_interactor_style.setStlActor(self.stlActor)
+        self.updateTransform()
 
         self.render.AddActor(self.stlActor)
         self.state_stl()
@@ -437,6 +542,8 @@ class MainWindow(QMainWindow):
         for i in range(len(splanes)):
             self.splanes_list.addItem(self.locale.Plane + " " + str(i + 1))
 
+        if len(splanes) > 0:
+            self.splanes_list.setCurrentRow(len(splanes) - 1)
         self.reload_scene()
 
     def _recreate_splanes(self, splanes):
@@ -538,7 +645,9 @@ class MainWindow(QMainWindow):
         self.layers_number_label.setText(" ")
         self.picture_slider.setEnabled(False)
         self.picture_slider.setSliderPosition(0)
+        self.smoothSlice_button.setEnabled(False)
         self.move_button.setEnabled(False)
+        self.load_model_button.setEnabled(True)
         self.slice3a_button.setEnabled(False)
         self.color_model_button.setEnabled(False)
         self.analyze_model_button.setEnabled(False)
@@ -557,7 +666,9 @@ class MainWindow(QMainWindow):
         self.picture_slider.setEnabled(True)
         self.picture_slider.setMaximum(layers_count)
         self.picture_slider.setSliderPosition(layers_count)
+        self.smoothSlice_button.setEnabled(False)
         self.move_button.setEnabled(False)
+        self.load_model_button.setEnabled(True)
         self.slice3a_button.setEnabled(False)
         self.color_model_button.setEnabled(False)
         self.analyze_model_button.setEnabled(False)
@@ -575,7 +686,9 @@ class MainWindow(QMainWindow):
         self.layers_number_label.setText(" ")
         self.picture_slider.setEnabled(False)
         self.picture_slider.setSliderPosition(0)
+        self.smoothSlice_button.setEnabled(True)
         self.move_button.setEnabled(True)
+        self.load_model_button.setEnabled(True)
         self.slice3a_button.setEnabled(True)
         self.color_model_button.setEnabled(True)
         self.analyze_model_button.setEnabled(False)
@@ -584,6 +697,26 @@ class MainWindow(QMainWindow):
         self.save_gcode_button.setEnabled(False)
         self.bottom_panel.setEnabled(True)
         self.state = StlState
+
+    def state_moving(self):
+        self.model_switch_box.setEnabled(False)
+        self.model_switch_box.setChecked(True)
+        self.slider_label.setEnabled(False)
+        self.layers_number_label.setEnabled(False)
+        self.layers_number_label.setText(" ")
+        self.picture_slider.setEnabled(False)
+        self.picture_slider.setSliderPosition(0)
+        self.smoothSlice_button.setEnabled(False)
+        self.move_button.setEnabled(True)
+        self.load_model_button.setEnabled(False)
+        self.slice3a_button.setEnabled(False)
+        self.color_model_button.setEnabled(False)
+        self.analyze_model_button.setEnabled(False)
+        self.edit_planes_button.setEnabled(False)
+        self.slice_vip_button.setEnabled(False)
+        self.save_gcode_button.setEnabled(False)
+        self.bottom_panel.setEnabled(False)
+        self.state = MovingState
 
     def state_both(self, layers_count):
         self.model_switch_box.setEnabled(True)
@@ -594,7 +727,9 @@ class MainWindow(QMainWindow):
         self.picture_slider.setEnabled(True)
         self.picture_slider.setMaximum(layers_count)
         self.picture_slider.setSliderPosition(layers_count)
+        self.smoothSlice_button.setEnabled(True)
         self.move_button.setEnabled(True)
+        self.load_model_button.setEnabled(True)
         self.slice3a_button.setEnabled(True)
         self.color_model_button.setEnabled(True)
         self.analyze_model_button.setEnabled(False)
@@ -603,3 +738,11 @@ class MainWindow(QMainWindow):
         self.save_gcode_button.setEnabled(True)
         self.bottom_panel.setEnabled(True)
         self.state = BothState
+
+
+def strF(v):  # cut 3 numbers after the point in float
+    s = str(v)
+    i = s.find(".")
+    if i != -1:
+        s = s[:min(len(s), i + 3)]
+    return s

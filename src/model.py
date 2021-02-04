@@ -4,7 +4,6 @@ from src import gui_utils, gcode
 class MainModel:
     def __init__(self):
         self.current_slider_value = None
-        self.stl_translation = [0.0, 0.0, 0.0]
         self.opened_stl = ""
         self.gcode = None
         self.opened_gcode = ""

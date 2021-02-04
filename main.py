@@ -14,7 +14,7 @@ if __name__ == "__main__":
     window = MainWindow()
     model = MainModel()
     cntrl = MainController(window, model)
-
+    #cntrl.load_stl("/home/l1va/Downloads/1_odn2.stl")  # TODO: removeme
     window.showMaximized()
     window.show()
 

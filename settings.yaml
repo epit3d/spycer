@@ -32,24 +32,34 @@ slicing:
   cmd: ./goosli --cmd=slice --settings=settings.yaml
   extruder_temperature: 200
   fan_off_layer1: false
+  fan_speed: 95
   fill_density: 20
   filling_type: Triangles
+  ftetwild_cmd: ./FloatTetwild_bin.exe -i sett.slicing.stl_file -o goosli_middle.msh
   gcode_file: goosli_out.gcode
   layer_height: 0.2
   line_width: 0.4
-  originx: 0.0
-  originy: 0.0
-  originz: 0.0
+  mesh_file: goosli_middle.msh
+  originx: 43.26799957111282
+  originy: 38.55473017684402
+  originz: 15.668192441495945
   print_speed: 50
   print_speed_layer1: 50
   print_speed_wall: 50
   retraction_distance: 0.3
   retraction_on: true
   retraction_speed: 50
+  rotationx: -3.572603488368519
+  rotationy: 17.17415365142365
+  rotationz: 75.32477813368416
+  scalex: 0.9999999999999998
+  scaley: 1.0000000000000013
+  scalez: 1.0000000000000007
   skirt_line_count: 3
-  slicing_type: vip
+  slicing_type: 3axes
+  smooth_cmd: ./FASP.exe
   splanes_file: planes_file.txt
-  stl_file: ''
+  stl_file: /home/l1va/Downloads/5axes_3d_printer/test/___odnbez.stl
   support_offset: 1.0
   supports_on: false
   top_layers: 3
