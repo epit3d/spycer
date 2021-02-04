@@ -84,6 +84,8 @@ class MainWindow(QMainWindow):
         for b in self.boxActors:
             self.render.AddActor(b)
 
+        self.add_legend()
+
         self.splanes_actors = []
 
         self.render.ResetCamera()
@@ -93,6 +95,22 @@ class MainWindow(QMainWindow):
         widget3d.Start()
 
         return widget3d
+
+    def add_legend(self):
+        legendSphereSource = vtk.vtkSphereSource()  # TODO: it is hack that post errors to console
+        legendSphere = legendSphereSource.GetOutput()
+
+        self.legend = vtk.vtkLegendBoxActor()
+        self.legend.SetNumberOfEntries(3)
+        self.legend.GetEntryTextProperty().SetFontSize(15)
+        self.legend.GetPositionCoordinate().SetCoordinateSystemToNormalizedViewport()
+        self.legend.GetPositionCoordinate().SetValue(0, 0)
+        self.legend.GetPosition2Coordinate().SetCoordinateSystemToDisplay()
+        self.legend.GetPosition2Coordinate().SetValue(290, 3 * 30)
+        self.legend.SetEntry(0, legendSphere, "rotate - left mouse button", [1, 1, 1])
+        self.legend.SetEntry(1, legendSphere, "move - middle mouse button (or shift+left)", [1, 1, 1])
+        self.legend.SetEntry(2, legendSphere, "scale - right mouse button", [1, 1, 1])
+        self.render.AddActor(self.legend)
 
     def init_right_panel(self):
         right_panel = QGridLayout()
@@ -384,6 +402,7 @@ class MainWindow(QMainWindow):
     def clear_scene(self):
         self.render.RemoveAllViewProps()
         self.render.AddActor(self.planeActor)
+        self.render.AddActor(self.legend)
         self.rotate_plane(vtk.vtkTransform())
         for b in self.boxActors:
             self.render.AddActor(b)
@@ -442,7 +461,7 @@ class MainWindow(QMainWindow):
                 self.boxWidget.SetPlaceFactor(1.25)
                 self.boxWidget.SetHandleSize(0.005)
                 self.boxWidget.SetEnabled(True)
-                # self.boxWidget.SetScalingEnabled(False)
+                self.boxWidget.SetScalingEnabled(False)
 
                 # hack for boxWidget - 1. reset actor transform
                 # 2. place boxWidget
