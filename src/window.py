@@ -97,8 +97,8 @@ class MainWindow(QMainWindow):
         return widget3d
 
     def add_legend(self):
-        legendSphereSource = vtk.vtkSphereSource()  # TODO: it is hack that post errors to console
-        legendSphere = legendSphereSource.GetOutput()
+        hackData =vtk.vtkPolyData() # it is hack to pass value to legend
+        hackData.SetPoints(vtk.vtkPoints())
 
         self.legend = vtk.vtkLegendBoxActor()
         self.legend.SetNumberOfEntries(3)
@@ -107,9 +107,9 @@ class MainWindow(QMainWindow):
         self.legend.GetPositionCoordinate().SetValue(0, 0)
         self.legend.GetPosition2Coordinate().SetCoordinateSystemToDisplay()
         self.legend.GetPosition2Coordinate().SetValue(290, 3 * 30)
-        self.legend.SetEntry(0, legendSphere, "rotate - left mouse button", [1, 1, 1])
-        self.legend.SetEntry(1, legendSphere, "move - middle mouse button (or shift+left)", [1, 1, 1])
-        self.legend.SetEntry(2, legendSphere, "scale - right mouse button", [1, 1, 1])
+        self.legend.SetEntry(0, hackData, "rotate - left mouse button", [1, 1, 1])
+        self.legend.SetEntry(1, hackData, "move - middle mouse button (or shift+left)", [1, 1, 1])
+        self.legend.SetEntry(2, hackData, "scale - right mouse button", [1, 1, 1])
         self.render.AddActor(self.legend)
 
     def init_right_panel(self):
