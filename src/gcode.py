@@ -110,7 +110,7 @@ def parseGCode(lines):
                     path.append([x, y, z])
                 elif t == 1:  # rotate
                     finishLayer()  # rotation could not be inside the layer
-                    rotations.append(Rotation(rotations[-1].x_rot, -parseRotation(args[1:])))
+                    rotations.append(Rotation(rotations[-1].x_rot, parseRotation(args[1:])))
                 else:  # inclines
                     finishLayer()  # rotation could not be inside the layer
                     rotations.append(Rotation(parseRotation(args[1:]), rotations[-1].z_rot))

@@ -41,8 +41,7 @@ class MainController:
         self.view.add_plane_button.clicked.connect(self.add_splane)
         self.view.splanes_list.currentItemChanged.connect(self.change_combo_select)
         self.view.remove_plane_button.clicked.connect(self.remove_splane)
-        self.view.tilted_checkbox.stateChanged.connect(
-            partial(self.apply_slider_change, self.view.rotated_value, self.view.rotSlider))
+
         self.view.hide_checkbox.stateChanged.connect(self.view.hide_splanes)
         self.view.x_value.editingFinished.connect(
             partial(self.apply_field_change, self.view.x_value, self.view.xSlider))
@@ -57,6 +56,8 @@ class MainController:
         self.view.zSlider.valueChanged.connect(partial(self.apply_slider_change, self.view.z_value, self.view.zSlider))
         self.view.rotSlider.valueChanged.connect(
             partial(self.apply_slider_change, self.view.rotated_value, self.view.rotSlider))
+        self.view.incSlider.valueChanged.connect(
+            partial(self.apply_slider_change, self.view.incline_value, self.view.incSlider))
 
     def change_layer_view(self):
         self.model.current_slider_value = self.view.change_layer_view(self.model.current_slider_value, self.model.gcode)
@@ -91,7 +92,7 @@ class MainController:
         blocks = gui_utils.makeBlocks(gc.layers)
         actors = gui_utils.wrapWithActors(blocks, gc.rotations, gc.lays2rots)
 
-        self.view.load_gcode(actors, is_from_stl, plane_tf(gc.rotations[-1]))
+        self.view.load_gcode(actors, is_from_stl, plane_tf(gc.rotations[0]))
 
     def slice_stl(self, slicing_type):
         if slicing_type == "vip" and len(self.model.splanes) == 0:
@@ -211,7 +212,7 @@ class MainController:
         ind = self.view.splanes_list.currentRow()
         if ind == -1:
             return
-        self.model.splanes[ind] = gui_utils.Plane(self.view.tilted_checkbox.isChecked(),
+        self.model.splanes[ind] = gui_utils.Plane(float(self.view.incSlider.value()),
                                                   float(self.view.rotSlider.value()), center)
         self.view.update_splane(self.model.splanes[ind], ind)
 

@@ -180,7 +180,7 @@ def wrapWithActors(blocks, rotations, lays2rots):
         block = blocks[i]
         actor = build_actor(block, True)
         # rotate to abs coords firstly and then apply last rotation
-        tnf = prepareTransform(rotations[lays2rots[i]], rotations[-1])
+        tnf = prepareTransform(rotations[lays2rots[i]], rotations[0])
         actor.SetUserTransform(tnf)
 
         actor.GetProperty().SetColor(get_color(s.colors.layer))
@@ -285,8 +285,8 @@ def build_actor(source, as_is=False):
 
 
 class Plane:
-    def __init__(self, tilt, rot, point):
-        self.tilted = tilt
+    def __init__(self, incl, rot, point):
+        self.incline = incl
         self.x = point[0]
         self.y = point[1]
         self.z = point[2]
@@ -294,7 +294,7 @@ class Plane:
 
     def toFile(self):
         return "X" + str(self.x) + " Y" + str(self.y) + " Z" + str(self.z) + \
-               " T" + str(self.tilted).lower() + " R" + str(self.rot)
+               " T" + str(self.incline) + " R" + str(self.rot)
 
 
 def read_planes(filename):
@@ -302,7 +302,7 @@ def read_planes(filename):
     with open(filename) as fp:
         for line in fp:
             v = line.strip().split(' ')
-            planes.append(Plane(v[3][1:] == "true", float(v[4][1:]),
+            planes.append(Plane(float(v[3][1:]), float(v[4][1:]),
                                 (float(v[0][1:]), float(v[1][1:]), float(v[2][1:]))))
     return planes
 

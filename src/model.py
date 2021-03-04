@@ -18,7 +18,7 @@ class MainModel:
 
     def add_splane(self):
         if len(self.splanes) == 0:
-            self.splanes.append(gui_utils.Plane(True, 0, [10, 10, 10]))
+            self.splanes.append(gui_utils.Plane(-60, 0, [10, 10, 10]))
         else:
             path = [self.splanes[-1].x, self.splanes[-1].y, self.splanes[-1].z + 10]
-            self.splanes.append(gui_utils.Plane(False, 0, path))
+            self.splanes.append(gui_utils.Plane(0, 0, path))
