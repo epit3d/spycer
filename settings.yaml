@@ -13,7 +13,7 @@ colors:
   plane: Cyan
   splane: Gold
 common: 
-  lang: ru
+  lang: en
   splane_diameter: 150
 hardware: 
   bar_diameter: 1.75
@@ -40,9 +40,9 @@ slicing:
   layer_height: 0.2
   line_width: 0.4
   mesh_file: goosli_middle.msh
-  originx: -17.553549766540527
-  originy: -0.012199878692626953
-  originz: -30.0
+  originx: -32.50089979171753
+  originy: 0.032849788665771484
+  originz: 0.0
   print_speed: 50
   print_speed_layer1: 50
   print_speed_wall: 50
@@ -59,7 +59,7 @@ slicing:
   slicing_type: vip
   smooth_cmd: ./FASP.exe
   splanes_file: planes_file.txt
-  stl_file: /home/l1va/Downloads/5axes_3d_printer/test/out1.stl
+  stl_file: /home/l1va/Downloads/5axes_3d_printer/test/odnzak.stl.stl
   support_offset: 1.0
   supports_on: false
   top_layers: 3
