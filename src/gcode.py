@@ -1,3 +1,7 @@
+from src import gui_utils
+import vtk
+
+
 class GCode:
     def __init__(self, layers, rotations, lays2rots):
         self.layers = layers
@@ -14,11 +18,27 @@ class Rotation:
         return " x:" + str(self.x_rot) + " z:" + str(self.z_rot)
 
 
-def parseArgs(args, x, y, z, absolute=True):
-    xr, yr, zr = 0, 0, 0
-    z_rot = None
+class Point:
+    def __init__(self, x, y, z, a, b):
+        self.x = x
+        self.y = y
+        self.z = z
+        self.a = a
+        self.b = b
+
+    def xyz(self, rot):
+        cur = [self.x, self.y, self.z]
+        if self.a == 0:
+            return cur
+        tf = gui_utils.prepareTransform(Rotation(self.a, self.b), rot)
+        res = tf.TransformPoint(cur)
+        return res
+
+
+def parseArgs(args, x, y, z, a, b, absolute=True):
+    xr, yr, zr, ar, br = 0, 0, 0, 0, 0
     if absolute:
-        xr, yr, zr = x, y, z
+        xr, yr, zr, ar, br = x, y, z, a, b
 
     for arg in args:
         if len(arg) == 0:
@@ -29,13 +49,15 @@ def parseArgs(args, x, y, z, absolute=True):
             yr = float(arg[1:])
         elif arg[0] == "Z":
             zr = float(arg[1:])
-        # elif arg[0] == "A":
-        #     z_rot = -float(arg[1:])
+        elif arg[0] == "A":
+            ar = float(arg[1:])
+        elif arg[0] == "B":
+            br = float(arg[1:])
         elif arg[0] == ";":
             break
     if absolute:
-        return xr, yr, zr, z_rot
-    return xr + x, yr + y, zr + z, z_rot
+        return xr, yr, zr, ar, br
+    return xr + x, yr + y, zr + z, ar + a, br + b
 
 
 def parseRotation(args):
@@ -65,17 +87,21 @@ def parseGCode(lines):
     planes = []
 
     rotations.append(Rotation(0, 0))
-    x, y, z = 0, 0, 0
+    x, y, z, a, b = 0, 0, 0, 0, 0
     abs_pos = True  # absolute positioning
 
     def finishLayer():
         nonlocal path, layer
         if len(path) > 1:
             layer.append(path)
-        path = [[x, y, z]]
+
+        path = [Point(x, y, z, a, b)]
         if len(layer) > 0:
             layers.append(layer)
+            if a != 0:  # TODO: fixme
+                rotations.append(Rotation(layer[-1][-1].a, layer[-1][-1].b))
             lays2rots.append(len(rotations) - 1)
+
         layer = []
 
     t = 0  # select extruder (t==0) or incline (t==2) or rotate (t==1)
@@ -99,15 +125,16 @@ def parseGCode(lines):
             if args[0] == "G0":  # move to (or rotate)
                 if len(path) > 1:  # finish path and start new
                     layer.append(path)
-                x, y, z, z_rot = parseArgs(args[1:], x, y, z, abs_pos)
-                path = [[x, y, z]]
-                if z_rot is not None:
-                    finishLayer()
-                    rotations.append(Rotation(rotations[-1].x_rot, z_rot))
+                x, y, z, a, b = parseArgs(args[1:], x, y, z, a, b, abs_pos)
+                path = [Point(x, y, z, a, b)]
             elif args[0] == "G1":  # draw to
                 if t == 0:
-                    x, y, z, _ = parseArgs(args[1:], x, y, z, abs_pos)
-                    path.append([x, y, z])
+                    x, y, z, a, b = parseArgs(args[1:], x, y, z, a, b, abs_pos)
+                    path.append(Point(x, y, z, a, b))
+                    # if len(layers)>4050:  #TODO REMOVEMe
+                    #     break
+                    # finishLayer()
+
                 elif t == 1:  # rotate
                     finishLayer()  # rotation could not be inside the layer
                     rotations.append(Rotation(rotations[-1].x_rot, parseRotation(args[1:])))
