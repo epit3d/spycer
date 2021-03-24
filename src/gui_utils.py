@@ -151,21 +151,21 @@ def createStlActorInOrigin(filename, colorize=False):
     return actor
 
 
-def makeBlocks(layers):
+def makeBlocks(layers, rotations, lays2rots):
     blocks = []
-    for layer in layers:
+    for i in range(len(layers)):
         points = vtk.vtkPoints()
         lines = vtk.vtkCellArray()
         block = vtk.vtkPolyData()
         points_count = 0
-        for path in layer:
+        for path in layers[i]:
             line = vtk.vtkLine()
             for k in range(len(path) - 1):
-                points.InsertNextPoint(path[k])
+                points.InsertNextPoint(path[k].xyz(rotations[lays2rots[i]]))
                 line.GetPointIds().SetId(0, points_count + k)
                 line.GetPointIds().SetId(1, points_count + k + 1)
                 lines.InsertNextCell(line)
-            points.InsertNextPoint(path[-1])  # not forget to add last point
+            points.InsertNextPoint(path[-1].xyz(rotations[lays2rots[i]]))  # not forget to add last point
             points_count += len(path)
         block.SetPoints(points)
         block.SetLines(lines)
@@ -189,17 +189,23 @@ def wrapWithActors(blocks, rotations, lays2rots):
     actors[-1].GetProperty().SetColor(get_color(s.colors.last_layer))
     return actors
 
-
+#  R(V - rotcentr) + rotcenter
 def prepareTransform(cancelRot, applyRot):
     sh = sett().hardware
     tf = vtk.vtkTransform()
+    #cancel rotation
     tf.PostMultiply()
     tf.Translate(-sh.rotation_center_x, -sh.rotation_center_y, -sh.rotation_center_z)
     tf.PostMultiply()
     tf.RotateX(-cancelRot.x_rot)
     tf.PostMultiply()
     tf.RotateZ(-cancelRot.z_rot)
+    #tf.PostMultiply()    #Translates are canceled T+T-=0
+    #tf.Translate(sh.rotation_center_x, sh.rotation_center_y, sh.rotation_center_z)
 
+    #apply rotation
+    #tf.PostMultiply()
+    #tf.Translate(-sh.rotation_center_x, -sh.rotation_center_y, -sh.rotation_center_z)
     tf.PostMultiply()
     tf.RotateZ(applyRot.z_rot)
     tf.PostMultiply()
@@ -207,7 +213,6 @@ def prepareTransform(cancelRot, applyRot):
     tf.PostMultiply()
     tf.Translate(sh.rotation_center_x, sh.rotation_center_y, sh.rotation_center_z)
     return tf
-
 
 def plane_tf(rotation):
     sh = sett().hardware

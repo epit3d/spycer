@@ -89,7 +89,7 @@ class MainController:
 
     def load_gcode(self, filename, is_from_stl):
         gc = self.model.load_gcode(filename)
-        blocks = gui_utils.makeBlocks(gc.layers)
+        blocks = gui_utils.makeBlocks(gc.layers, gc.rotations, gc.lays2rots)
         actors = gui_utils.wrapWithActors(blocks, gc.rotations, gc.lays2rots)
 
         self.view.load_gcode(actors, is_from_stl, plane_tf(gc.rotations[0]))
