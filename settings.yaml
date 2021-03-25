@@ -13,7 +13,7 @@ colors:
   plane: Cyan
   splane: Gold
 common: 
-  lang: en
+  lang: ru
   splane_diameter: 150
 hardware: 
   bar_diameter: 1.75
