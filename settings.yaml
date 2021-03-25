@@ -29,6 +29,7 @@ slicing:
   angle: 30
   bed_temperature: 60
   bottom_layers: 3
+  bottom_of_cut_layers: 1
   cmd: ./goosli --cmd=slice --settings=settings.yaml
   extruder_temperature: 200
   fan_off_layer1: false
@@ -62,5 +63,4 @@ slicing:
   stl_file: /home/l1va/Downloads/5axes_3d_printer/test/odnzak.stl.stl
   support_offset: 1.0
   supports_on: false
-  top_layers: 3
   wall_thickness: 0.8
