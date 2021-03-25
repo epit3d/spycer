@@ -97,8 +97,8 @@ class MainWindow(QMainWindow):
         return widget3d
 
     def add_legend(self):
-        legendSphereSource = vtk.vtkSphereSource()  # TODO: it is hack that post errors to console
-        legendSphere = legendSphereSource.GetOutput()
+        hackData = vtk.vtkPolyData()  # it is hack to pass value to legend
+        hackData.SetPoints(vtk.vtkPoints())
 
         self.legend = vtk.vtkLegendBoxActor()
         self.legend.SetNumberOfEntries(3)
@@ -107,9 +107,9 @@ class MainWindow(QMainWindow):
         self.legend.GetPositionCoordinate().SetValue(0, 0)
         self.legend.GetPosition2Coordinate().SetCoordinateSystemToDisplay()
         self.legend.GetPosition2Coordinate().SetValue(290, 3 * 30)
-        self.legend.SetEntry(0, legendSphere, "rotate - left mouse button", [1, 1, 1])
-        self.legend.SetEntry(1, legendSphere, "move - middle mouse button (or shift+left)", [1, 1, 1])
-        self.legend.SetEntry(2, legendSphere, "scale - right mouse button", [1, 1, 1])
+        self.legend.SetEntry(0, hackData, "rotate - left mouse button", [1, 1, 1])
+        self.legend.SetEntry(1, hackData, "move - middle mouse button (or shift+left)", [1, 1, 1])
+        self.legend.SetEntry(2, hackData, "scale - right mouse button", [1, 1, 1])
         self.render.AddActor(self.legend)
 
     def init_right_panel(self):
@@ -325,8 +325,8 @@ class MainWindow(QMainWindow):
         self.splanes_list = QListWidget()
         bottom_layout.addWidget(self.splanes_list, 0, 0, 4, 1)
 
-        self.tilted_checkbox = QCheckBox(self.locale.Tilted)
-        bottom_layout.addWidget(self.tilted_checkbox, 0, 2)
+        # self.tilted_checkbox = QCheckBox(self.locale.Tilted)
+        # bottom_layout.addWidget(self.tilted_checkbox, 0, 2)
 
         self.hide_checkbox = QCheckBox(self.locale.Hide)
         bottom_layout.addWidget(self.hide_checkbox, 1, 2)
@@ -357,6 +357,11 @@ class MainWindow(QMainWindow):
         self.rotated_value = QLineEdit("31.0245")
         bottom_layout.addWidget(self.rotated_value, 3, 4)
 
+        incline_label = QLabel(self.locale.Tilted)
+        bottom_layout.addWidget(incline_label, 4, 3)
+        self.incline_value = QLineEdit("0")
+        bottom_layout.addWidget(self.incline_value, 4, 4)
+
         self.xSlider = QSlider()
         self.xSlider.setOrientation(QtCore.Qt.Horizontal)
         self.xSlider.setMinimum(-100)
@@ -381,6 +386,12 @@ class MainWindow(QMainWindow):
         self.rotSlider.setMaximum(180)
         self.rotSlider.setValue(0)
         bottom_layout.addWidget(self.rotSlider, 3, 5, 1, 3)
+        self.incSlider = QSlider()
+        self.incSlider.setOrientation(QtCore.Qt.Horizontal)
+        self.incSlider.setMinimum(-60)
+        self.incSlider.setMaximum(0)
+        self.incSlider.setValue(0)
+        bottom_layout.addWidget(self.incSlider, 4, 5, 1, 3)
 
         bottom_panel = QWidget()
         bottom_panel.setLayout(bottom_layout)
@@ -413,30 +424,37 @@ class MainWindow(QMainWindow):
         self.render.Modified()
         self.interactor.Render()
 
-    def change_layer_view(self, prev_value, gcd):
+    def change_layer_view(self, prev_value, gcd): # shows +1 layer to preview finish
 
         new_slider_value = self.picture_slider.value()
         if prev_value is None:
             return new_slider_value
 
-        self.actors[new_slider_value - 1].GetProperty().SetColor(get_color(sett().colors.last_layer))
-        self.actors[new_slider_value - 1].GetProperty().SetLineWidth(4)
-        if len(self.actors) > prev_value - 1:
-            self.actors[prev_value - 1].GetProperty().SetColor(get_color(sett().colors.layer))
-            self.actors[prev_value - 1].GetProperty().SetLineWidth(1)
+        last = False if len(self.actors) > new_slider_value else True
+        prev_last = False if len(self.actors) > prev_value else True
+
+        if not last:
+            self.actors[new_slider_value].GetProperty().SetColor(get_color(sett().colors.last_layer))
+            self.actors[new_slider_value].GetProperty().SetLineWidth(4)
+        if not prev_last:
+            self.actors[prev_value].GetProperty().SetColor(get_color(sett().colors.layer))
+            self.actors[prev_value].GetProperty().SetLineWidth(1)
 
         self.layers_number_label.setText(str(new_slider_value))
 
         if new_slider_value < prev_value:
-            for layer in range(new_slider_value, prev_value):
+            for layer in range(new_slider_value+1, prev_value if prev_last else prev_value+1):
                 self.actors[layer].VisibilityOff()
         else:
-            for layer in range(prev_value, new_slider_value):
+            for layer in range(prev_value, new_slider_value if last else new_slider_value+1):
                 self.actors[layer].VisibilityOn()
 
-        if gcd.lays2rots[new_slider_value - 1] != gcd.lays2rots[prev_value - 1]:
-            curr_rotation = gcd.rotations[gcd.lays2rots[new_slider_value - 1]]
-            for block in range(new_slider_value):
+        new_rot = gcd.lays2rots[0] if last else gcd.lays2rots[new_slider_value]
+        prev_rot = gcd.lays2rots[0] if prev_last else gcd.lays2rots[prev_value]
+
+        if new_rot != prev_rot:
+            curr_rotation = gcd.rotations[new_rot]
+            for block in range(new_slider_value if last else new_slider_value+1):
                 # revert prev rotation firstly and then apply current
                 tf = gui_utils.prepareTransform(gcd.rotations[gcd.lays2rots[block]], curr_rotation)
                 self.actors[block].SetUserTransform(tf)
@@ -551,13 +569,13 @@ class MainWindow(QMainWindow):
             self.render.RemoveActor(p)
         self.splanes_actors = []
         for p in splanes:
-            act = gui_utils.create_splane_actor([p.x, p.y, p.z], -60 if p.tilted else 0, p.rot)
+            act = gui_utils.create_splane_actor([p.x, p.y, p.z], p.incline, p.rot)
             self.splanes_actors.append(act)
             self.render.AddActor(act)
 
     def update_splane(self, sp, ind):
         self.render.RemoveActor(self.splanes_actors[ind])
-        act = gui_utils.create_splane_actor([sp.x, sp.y, sp.z], -60 if sp.tilted else 0, sp.rot)
+        act = gui_utils.create_splane_actor([sp.x, sp.y, sp.z], sp.incline, sp.rot)
         self.splanes_actors[ind] = act
         self.render.AddActor(act)
         sel = self.splanes_list.currentRow()
@@ -566,8 +584,8 @@ class MainWindow(QMainWindow):
         self.reload_scene()
 
     def change_combo_select(self, plane, ind):
-        self.tilted_checkbox.setChecked(plane.tilted)
         self.rotated_value.setText(str(plane.rot))
+        self.incline_value.setText(str(plane.incline))
         self.x_value.setText(str(plane.x))
         self.y_value.setText(str(plane.y))
         self.z_value.setText(str(plane.z))
@@ -575,6 +593,7 @@ class MainWindow(QMainWindow):
         self.ySlider.setValue(plane.y)
         self.zSlider.setValue(plane.z)
         self.rotSlider.setValue(plane.rot)
+        self.incSlider.setValue(plane.incline)
         for p in self.splanes_actors:
             p.GetProperty().SetColor(get_color(sett().colors.splane))
         self.splanes_actors[ind].GetProperty().SetColor(get_color(sett().colors.last_layer))
@@ -603,6 +622,10 @@ class MainWindow(QMainWindow):
     def rotate_plane(self, tf):
         self.planeActor.SetUserTransform(tf)
         self.planeTransform = tf
+
+        # i, j, k = tf.GetOrientation()
+        # print("Orientation: " + strF(i) + " " + strF(j) + " " + strF(k))
+        # self.xyz_orient_value.setText("Orientation: " + strF(i) + " " + strF(j) + " " + strF(k))
 
     def save_gcode_dialog(self):
         return QFileDialog.getSaveFileName(None, self.locale.SaveGCode, "", "Gcode (*.gcode)")[0]
@@ -654,6 +677,7 @@ class MainWindow(QMainWindow):
         self.edit_planes_button.setEnabled(False)
         self.slice_vip_button.setEnabled(False)
         self.save_gcode_button.setEnabled(False)
+        self.hide_checkbox.setChecked(False)
         self.bottom_panel.setEnabled(False)
         self.state = NothingState
 
@@ -662,10 +686,10 @@ class MainWindow(QMainWindow):
         self.model_switch_box.setChecked(False)
         self.slider_label.setEnabled(True)
         self.layers_number_label.setEnabled(True)
-        self.layers_number_label.setText(str(layers_count))
+        self.layers_number_label.setText(str(layers_count ))
         self.picture_slider.setEnabled(True)
-        self.picture_slider.setMaximum(layers_count)
-        self.picture_slider.setSliderPosition(layers_count)
+        self.picture_slider.setMaximum(layers_count )
+        self.picture_slider.setSliderPosition(layers_count )
         self.smoothSlice_button.setEnabled(False)
         self.move_button.setEnabled(False)
         self.load_model_button.setEnabled(True)
@@ -675,6 +699,7 @@ class MainWindow(QMainWindow):
         self.edit_planes_button.setEnabled(True)
         self.slice_vip_button.setEnabled(False)
         self.save_gcode_button.setEnabled(True)
+        self.hide_checkbox.setChecked(True)
         self.bottom_panel.setEnabled(False)
         self.state = GCodeState
 
@@ -695,6 +720,7 @@ class MainWindow(QMainWindow):
         self.edit_planes_button.setEnabled(False)
         self.slice_vip_button.setEnabled(True)
         self.save_gcode_button.setEnabled(False)
+        self.hide_checkbox.setChecked(False)
         self.bottom_panel.setEnabled(True)
         self.state = StlState
 
@@ -715,6 +741,7 @@ class MainWindow(QMainWindow):
         self.edit_planes_button.setEnabled(False)
         self.slice_vip_button.setEnabled(False)
         self.save_gcode_button.setEnabled(False)
+        #self.hide_checkbox.setChecked(False)
         self.bottom_panel.setEnabled(False)
         self.state = MovingState
 
@@ -723,10 +750,10 @@ class MainWindow(QMainWindow):
         self.model_switch_box.setChecked(False)
         self.slider_label.setEnabled(True)
         self.layers_number_label.setEnabled(True)
-        self.layers_number_label.setText(str(layers_count))
+        self.layers_number_label.setText(str(layers_count ))
         self.picture_slider.setEnabled(True)
-        self.picture_slider.setMaximum(layers_count)
-        self.picture_slider.setSliderPosition(layers_count)
+        self.picture_slider.setMaximum(layers_count )
+        self.picture_slider.setSliderPosition(layers_count )
         self.smoothSlice_button.setEnabled(True)
         self.move_button.setEnabled(True)
         self.load_model_button.setEnabled(True)
@@ -736,6 +763,7 @@ class MainWindow(QMainWindow):
         self.edit_planes_button.setEnabled(True)
         self.slice_vip_button.setEnabled(True)
         self.save_gcode_button.setEnabled(True)
+        self.hide_checkbox.setChecked(True)
         self.bottom_panel.setEnabled(True)
         self.state = BothState
 

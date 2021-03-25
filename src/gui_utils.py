@@ -151,21 +151,21 @@ def createStlActorInOrigin(filename, colorize=False):
     return actor
 
 
-def makeBlocks(layers):
+def makeBlocks(layers, rotations, lays2rots):
     blocks = []
-    for layer in layers:
+    for i in range(len(layers)):
         points = vtk.vtkPoints()
         lines = vtk.vtkCellArray()
         block = vtk.vtkPolyData()
         points_count = 0
-        for path in layer:
+        for path in layers[i]:
             line = vtk.vtkLine()
             for k in range(len(path) - 1):
-                points.InsertNextPoint(path[k])
+                points.InsertNextPoint(path[k].xyz(rotations[lays2rots[i]]))
                 line.GetPointIds().SetId(0, points_count + k)
                 line.GetPointIds().SetId(1, points_count + k + 1)
                 lines.InsertNextCell(line)
-            points.InsertNextPoint(path[-1])  # not forget to add last point
+            points.InsertNextPoint(path[-1].xyz(rotations[lays2rots[i]]))  # not forget to add last point
             points_count += len(path)
         block.SetPoints(points)
         block.SetLines(lines)
@@ -180,7 +180,7 @@ def wrapWithActors(blocks, rotations, lays2rots):
         block = blocks[i]
         actor = build_actor(block, True)
         # rotate to abs coords firstly and then apply last rotation
-        tnf = prepareTransform(rotations[lays2rots[i]], rotations[-1])
+        tnf = prepareTransform(rotations[lays2rots[i]], rotations[0])
         actor.SetUserTransform(tnf)
 
         actor.GetProperty().SetColor(get_color(s.colors.layer))
@@ -189,17 +189,23 @@ def wrapWithActors(blocks, rotations, lays2rots):
     actors[-1].GetProperty().SetColor(get_color(s.colors.last_layer))
     return actors
 
-
+#  R(V - rotcentr) + rotcenter
 def prepareTransform(cancelRot, applyRot):
     sh = sett().hardware
     tf = vtk.vtkTransform()
+    #cancel rotation
     tf.PostMultiply()
     tf.Translate(-sh.rotation_center_x, -sh.rotation_center_y, -sh.rotation_center_z)
     tf.PostMultiply()
     tf.RotateX(-cancelRot.x_rot)
     tf.PostMultiply()
     tf.RotateZ(-cancelRot.z_rot)
+    #tf.PostMultiply()    #Translates are canceled T+T-=0
+    #tf.Translate(sh.rotation_center_x, sh.rotation_center_y, sh.rotation_center_z)
 
+    #apply rotation
+    #tf.PostMultiply()
+    #tf.Translate(-sh.rotation_center_x, -sh.rotation_center_y, -sh.rotation_center_z)
     tf.PostMultiply()
     tf.RotateZ(applyRot.z_rot)
     tf.PostMultiply()
@@ -207,7 +213,6 @@ def prepareTransform(cancelRot, applyRot):
     tf.PostMultiply()
     tf.Translate(sh.rotation_center_x, sh.rotation_center_y, sh.rotation_center_z)
     return tf
-
 
 def plane_tf(rotation):
     sh = sett().hardware
@@ -285,8 +290,8 @@ def build_actor(source, as_is=False):
 
 
 class Plane:
-    def __init__(self, tilt, rot, point):
-        self.tilted = tilt
+    def __init__(self, incl, rot, point):
+        self.incline = incl
         self.x = point[0]
         self.y = point[1]
         self.z = point[2]
@@ -294,7 +299,7 @@ class Plane:
 
     def toFile(self):
         return "X" + str(self.x) + " Y" + str(self.y) + " Z" + str(self.z) + \
-               " T" + str(self.tilted).lower() + " R" + str(self.rot)
+               " T" + str(self.incline) + " R" + str(self.rot)
 
 
 def read_planes(filename):
@@ -302,7 +307,7 @@ def read_planes(filename):
     with open(filename) as fp:
         for line in fp:
             v = line.strip().split(' ')
-            planes.append(Plane(v[3][1:] == "true", float(v[4][1:]),
+            planes.append(Plane(float(v[3][1:]), float(v[4][1:]),
                                 (float(v[0][1:]), float(v[1][1:]), float(v[2][1:]))))
     return planes
 

@@ -37,6 +37,7 @@ see params.py
 python setup.py build
 
 ### Result
+![Spycer preview](imgs/5axes.gif)
 ![Spycer preview](imgs/spycer.gif)
 
 Feel free to open issues and create pull requests.
