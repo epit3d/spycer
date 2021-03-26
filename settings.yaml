@@ -63,4 +63,5 @@ slicing:
   stl_file: /home/l1va/Downloads/5axes_3d_printer/test/odnzak.stl.stl
   support_offset: 1.0
   supports_on: false
+  t_geodesic: 0.0
   wall_thickness: 0.8
