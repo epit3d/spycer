@@ -39,7 +39,8 @@ class Locale:
     FanSpeed = "Fan Speed, %:"
     Plane = "Plane"
     AddOnePlaneError = "Add at least one plane"
-    SmoothSlice = "Smooth Slice (Beta)"
+    SmoothSlice = "Non planar 5d (Beta)"
+    SmoothFlatSlice = "Non planar (Beta)"
 
     def __init__(self, **entries):
         self.__dict__.update(entries)
@@ -65,7 +66,7 @@ dicts = {
         ColorModel='Подкрасить треугольники',
         MoveModel='Подвинуть модель',
         Slice='Нарезать на слои',
-        Slice3Axes="Стандартная нарезка(3о)",
+        Slice3Axes="Стандартная нарезка(3d)",
         SliceVip="Нарезка vip",
         SaveGCode='Сохранить GCode',
         FanOffLayer1="Выключить вентилятор на первом слое",
@@ -86,7 +87,9 @@ dicts = {
         FanSpeed="Скорость вентилятора, %",
         Plane="Плоскость",
         AddOnePlaneError="Добавьте хотя бы одну плоскость",
-        SmoothSlice="Smooth Slice (Beta)"
+        SmoothSlice="Непланарная 5d (Beta)",
+        SmoothFlatSlice="Непланарная (Beta)"
+
     ),
 }
 

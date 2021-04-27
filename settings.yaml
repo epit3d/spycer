@@ -36,6 +36,7 @@ slicing:
   fan_speed: 95
   fill_density: 20
   filling_type: Triangles
+  flat_5d: 0
   ftetwild_cmd: ./FloatTetwild_bin.exe -i sett.slicing.stl_file -o goosli_middle.msh
   gcode_file: goosli_out.gcode
   layer_height: 0.2
@@ -63,4 +64,5 @@ slicing:
   stl_file: /home/l1va/Downloads/5axes_3d_printer/test/odnzak.stl.stl
   support_offset: 1.0
   supports_on: false
+  t_geodesic: 0.0
   wall_thickness: 0.8
