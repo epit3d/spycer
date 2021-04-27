@@ -262,18 +262,30 @@ class MainWindow(QMainWindow):
         self.xyz_orient_value = QLabel("Orientation: 0 0 0")
         buttons_layout.addWidget(self.xyz_orient_value, get_next_row(), 1, 1, 2)
 
-        self.smoothSlice_button = QPushButton(self.locale.SmoothSlice)
-        buttons_layout.addWidget(self.smoothSlice_button, get_next_row(), 1, 1, 1)
+        self.load_model_button = QPushButton(self.locale.OpenModel)
+        buttons_layout.addWidget(self.load_model_button, get_next_row(), 1, 1, 1)
 
         self.move_button = QPushButton(self.locale.MoveModel)
         self.move_button.setCheckable(True)
         buttons_layout.addWidget(self.move_button, get_cur_row(), 2, 1, 1)
 
-        self.load_model_button = QPushButton(self.locale.OpenModel)
-        buttons_layout.addWidget(self.load_model_button, get_next_row(), 1, 1, 1)
+        self.colorize_angle_value = QLineEdit(str(sett().slicing.angle))
+        buttons_layout.addWidget(self.colorize_angle_value, get_next_row(), 1)
+
+        self.color_model_button = QPushButton(self.locale.ColorModel)
+        buttons_layout.addWidget(self.color_model_button, get_cur_row(), 2, 1, 1)
+
+        self.analyze_model_button = QPushButton(self.locale.Analyze)
+        buttons_layout.addWidget(self.analyze_model_button, get_next_row(), 1, 1, 1)
 
         self.edit_planes_button = QPushButton(self.locale.EditPlanes)
         buttons_layout.addWidget(self.edit_planes_button, get_cur_row(), 2, 1, 1)
+
+        self.smoothFlatSlice_button = QPushButton(self.locale.SmoothFlatSlice)
+        buttons_layout.addWidget(self.smoothFlatSlice_button, get_next_row(), 1, 1, 1)
+
+        self.smoothSlice_button = QPushButton(self.locale.SmoothSlice)
+        buttons_layout.addWidget(self.smoothSlice_button, get_cur_row(), 2, 1, 1)
 
         self.slice3a_button = QPushButton(self.locale.Slice3Axes)
         buttons_layout.addWidget(self.slice3a_button, get_next_row(), 1, 1, 1)
@@ -282,16 +294,7 @@ class MainWindow(QMainWindow):
         buttons_layout.addWidget(self.slice_vip_button, get_cur_row(), 2, 1, 1)
 
         self.save_gcode_button = QPushButton(self.locale.SaveGCode)
-        buttons_layout.addWidget(self.save_gcode_button, get_next_row(), 1, 1, 1)
-
-        self.analyze_model_button = QPushButton(self.locale.Analyze)
-        buttons_layout.addWidget(self.analyze_model_button, get_cur_row(), 2, 1, 1)
-
-        self.colorize_angle_value = QLineEdit(str(sett().slicing.angle))
-        buttons_layout.addWidget(self.colorize_angle_value, get_next_row(), 1)
-
-        self.color_model_button = QPushButton(self.locale.ColorModel)
-        buttons_layout.addWidget(self.color_model_button, get_cur_row(), 2, 1, 1)
+        buttons_layout.addWidget(self.save_gcode_button, get_next_row(), 1, 1, 2)
 
         panel_widget = QWidget()
         panel_widget.setLayout(right_panel)
@@ -424,7 +427,7 @@ class MainWindow(QMainWindow):
         self.render.Modified()
         self.interactor.Render()
 
-    def change_layer_view(self, prev_value, gcd): # shows +1 layer to preview finish
+    def change_layer_view(self, prev_value, gcd):  # shows +1 layer to preview finish
 
         new_slider_value = self.picture_slider.value()
         if prev_value is None:
@@ -443,10 +446,10 @@ class MainWindow(QMainWindow):
         self.layers_number_label.setText(str(new_slider_value))
 
         if new_slider_value < prev_value:
-            for layer in range(new_slider_value+1, prev_value if prev_last else prev_value+1):
+            for layer in range(new_slider_value + 1, prev_value if prev_last else prev_value + 1):
                 self.actors[layer].VisibilityOff()
         else:
-            for layer in range(prev_value, new_slider_value if last else new_slider_value+1):
+            for layer in range(prev_value, new_slider_value if last else new_slider_value + 1):
                 self.actors[layer].VisibilityOn()
 
         new_rot = gcd.lays2rots[0] if last else gcd.lays2rots[new_slider_value]
@@ -454,7 +457,7 @@ class MainWindow(QMainWindow):
 
         if new_rot != prev_rot:
             curr_rotation = gcd.rotations[new_rot]
-            for block in range(new_slider_value if last else new_slider_value+1):
+            for block in range(new_slider_value if last else new_slider_value + 1):
                 # revert prev rotation firstly and then apply current
                 tf = gui_utils.prepareTransform(gcd.rotations[gcd.lays2rots[block]], curr_rotation)
                 self.actors[block].SetUserTransform(tf)
@@ -669,6 +672,7 @@ class MainWindow(QMainWindow):
         self.picture_slider.setEnabled(False)
         self.picture_slider.setSliderPosition(0)
         self.smoothSlice_button.setEnabled(False)
+        self.smoothFlatSlice_button.setEnabled(False)
         self.move_button.setEnabled(False)
         self.load_model_button.setEnabled(True)
         self.slice3a_button.setEnabled(False)
@@ -686,11 +690,12 @@ class MainWindow(QMainWindow):
         self.model_switch_box.setChecked(False)
         self.slider_label.setEnabled(True)
         self.layers_number_label.setEnabled(True)
-        self.layers_number_label.setText(str(layers_count ))
+        self.layers_number_label.setText(str(layers_count))
         self.picture_slider.setEnabled(True)
-        self.picture_slider.setMaximum(layers_count )
-        self.picture_slider.setSliderPosition(layers_count )
+        self.picture_slider.setMaximum(layers_count)
+        self.picture_slider.setSliderPosition(layers_count)
         self.smoothSlice_button.setEnabled(False)
+        self.smoothFlatSlice_button.setEnabled(False)
         self.move_button.setEnabled(False)
         self.load_model_button.setEnabled(True)
         self.slice3a_button.setEnabled(False)
@@ -712,6 +717,7 @@ class MainWindow(QMainWindow):
         self.picture_slider.setEnabled(False)
         self.picture_slider.setSliderPosition(0)
         self.smoothSlice_button.setEnabled(True)
+        self.smoothFlatSlice_button.setEnabled(True)
         self.move_button.setEnabled(True)
         self.load_model_button.setEnabled(True)
         self.slice3a_button.setEnabled(True)
@@ -733,6 +739,7 @@ class MainWindow(QMainWindow):
         self.picture_slider.setEnabled(False)
         self.picture_slider.setSliderPosition(0)
         self.smoothSlice_button.setEnabled(False)
+        self.smoothFlatSlice_button.setEnabled(False)
         self.move_button.setEnabled(True)
         self.load_model_button.setEnabled(False)
         self.slice3a_button.setEnabled(False)
@@ -741,7 +748,7 @@ class MainWindow(QMainWindow):
         self.edit_planes_button.setEnabled(False)
         self.slice_vip_button.setEnabled(False)
         self.save_gcode_button.setEnabled(False)
-        #self.hide_checkbox.setChecked(False)
+        # self.hide_checkbox.setChecked(False)
         self.bottom_panel.setEnabled(False)
         self.state = MovingState
 
@@ -750,11 +757,12 @@ class MainWindow(QMainWindow):
         self.model_switch_box.setChecked(False)
         self.slider_label.setEnabled(True)
         self.layers_number_label.setEnabled(True)
-        self.layers_number_label.setText(str(layers_count ))
+        self.layers_number_label.setText(str(layers_count))
         self.picture_slider.setEnabled(True)
-        self.picture_slider.setMaximum(layers_count )
-        self.picture_slider.setSliderPosition(layers_count )
+        self.picture_slider.setMaximum(layers_count)
+        self.picture_slider.setSliderPosition(layers_count)
         self.smoothSlice_button.setEnabled(True)
+        self.smoothFlatSlice_button.setEnabled(True)
         self.move_button.setEnabled(True)
         self.load_model_button.setEnabled(True)
         self.slice3a_button.setEnabled(True)
