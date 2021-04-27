@@ -111,8 +111,6 @@ class MainController:
 
     def slice_smooth(self, flat5d):
         s = sett()
-        print("FFFFFFFFFFFFFFFf")
-        print(flat5d)
         s.slicing.flat_5d = flat5d
         self.save_settings("smooth")
 
