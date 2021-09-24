@@ -165,6 +165,5 @@ class InteractionAroundActivePlane:
         # update position and camera
         self.pos = unit(self.pos) * self.distanceToFocal
         self.render.GetActiveCamera().SetPosition(*self.pos[:3])
-        print(self.pos[:3])
         self.render.GetActiveCamera().SetFocalPoint(*self.focalPoint[:3])
         self.interactor.ReInitialize()
