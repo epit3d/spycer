@@ -1,5 +1,10 @@
+from typing import Tuple, List
+
 import vtk
 from PyQt5.QtWidgets import QMessageBox
+from vtkmodules.vtkCommonColor import vtkNamedColors
+from vtkmodules.vtkFiltersSources import vtkLineSource
+from vtkmodules.vtkRenderingCore import vtkActor, vtkPolyDataMapper
 
 from src.settings import sett, get_color
 
@@ -189,23 +194,24 @@ def wrapWithActors(blocks, rotations, lays2rots):
     actors[-1].GetProperty().SetColor(get_color(s.colors.last_layer))
     return actors
 
+
 #  R(V - rotcentr) + rotcenter
 def prepareTransform(cancelRot, applyRot):
     sh = sett().hardware
     tf = vtk.vtkTransform()
-    #cancel rotation
+    # cancel rotation
     tf.PostMultiply()
     tf.Translate(-sh.rotation_center_x, -sh.rotation_center_y, -sh.rotation_center_z)
     tf.PostMultiply()
     tf.RotateX(-cancelRot.x_rot)
     tf.PostMultiply()
     tf.RotateZ(-cancelRot.z_rot)
-    #tf.PostMultiply()    #Translates are canceled T+T-=0
-    #tf.Translate(sh.rotation_center_x, sh.rotation_center_y, sh.rotation_center_z)
+    # tf.PostMultiply()    #Translates are canceled T+T-=0
+    # tf.Translate(sh.rotation_center_x, sh.rotation_center_y, sh.rotation_center_z)
 
-    #apply rotation
-    #tf.PostMultiply()
-    #tf.Translate(-sh.rotation_center_x, -sh.rotation_center_y, -sh.rotation_center_z)
+    # apply rotation
+    # tf.PostMultiply()
+    # tf.Translate(-sh.rotation_center_x, -sh.rotation_center_y, -sh.rotation_center_z)
     tf.PostMultiply()
     tf.RotateZ(applyRot.z_rot)
     tf.PostMultiply()
@@ -213,6 +219,7 @@ def prepareTransform(cancelRot, applyRot):
     tf.PostMultiply()
     tf.Translate(sh.rotation_center_x, sh.rotation_center_y, sh.rotation_center_z)
     return tf
+
 
 def plane_tf(rotation):
     sh = sett().hardware
@@ -333,3 +340,42 @@ def showErrorDialog(text_msg):
 
     retval = msg.exec_()
     # print "value of pressed message box button:", retval
+
+
+def createCustomXYaxis(origin: Tuple[float, float, float], endPoints: List[Tuple[float, float, float]]) -> List[
+    vtkActor]:
+    """
+    Function creates 4 ended axes which describe position of focal point
+    :param origin:
+    :param endPoints:
+    :return:
+    """
+
+    output = []
+
+    for endPoint in endPoints:
+        output.append(createLine(origin, endPoint, color="lightgreen"))
+
+    return output
+
+
+def createLine(point1: tuple, point2: tuple, color: str = "Black") -> vtkActor:
+    """
+    :param point1:
+    :param point2:
+    :param color:
+    :return:
+    """
+    line = vtkLineSource()
+
+    line.SetPoint1(*point1)
+    line.SetPoint2(*point2)
+
+    mapper = vtkPolyDataMapper()
+    mapper.SetInputConnection(line.GetOutputPort())
+
+    actor = vtkActor()
+    actor.SetMapper(mapper)
+    actor.GetProperty().SetColor(vtkNamedColors().GetColor3d(color))
+
+    return actor

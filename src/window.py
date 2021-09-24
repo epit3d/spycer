@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import (QMainWindow, QWidget, QLabel, QLineEdit, QComboBox,
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
 from src import locales, gui_utils, interactor_style
+from src.InteractorAroundActivePlane import InteractionAroundActivePlane
 from src.gui_utils import plane_tf
 from src.settings import sett, get_color
 
@@ -67,7 +68,27 @@ class MainWindow(QMainWindow):
 
         widget3d.GetRenderWindow().AddRenderer(self.render)
         self.interactor = widget3d.GetRenderWindow().GetInteractor()
-        self.interactor.GetInteractorStyle().SetCurrentStyleToTrackballCamera()
+        self.interactor.SetInteractorStyle(None)
+
+        self.interactor.Initialize()
+        self.interactor.Start()
+
+        self.render.ResetCamera()
+        # self.render.GetActiveCamera().AddObserver('ModifiedEvent', CameraModifiedCallback)
+
+        # set position of camera to (5, 5, 5) and look at (0, 0, 0) and z-axis is looking up
+        self.render.GetActiveCamera().SetPosition(5, 5, 5)
+        self.render.GetActiveCamera().SetFocalPoint(0, 0, 0)
+        self.render.GetActiveCamera().SetViewUp(0, 0, 1)
+
+        self.customInteractor = InteractionAroundActivePlane(self.interactor, self.render)
+        self.interactor.AddObserver("MouseWheelBackwardEvent", self.customInteractor.middleBtnPress)
+        self.interactor.AddObserver("MouseWheelForwardEvent", self.customInteractor.middleBtnPress)
+        self.interactor.AddObserver("RightButtonPressEvent", self.customInteractor.rightBtnPress)
+        self.interactor.AddObserver("RightButtonReleaseEvent", self.customInteractor.rightBtnPress)
+        self.interactor.AddObserver("LeftButtonPressEvent", self.customInteractor.leftBtnPress)
+        self.interactor.AddObserver("LeftButtonReleaseEvent", self.customInteractor.leftBtnPress)
+        self.interactor.AddObserver("MouseMoveEvent", self.customInteractor.mouseMove)
 
         # self.actor_interactor_style = interactor_style.ActorInteractorStyle(self.updateTransform)
         # self.actor_interactor_style.SetDefaultRenderer(self.render)
@@ -88,8 +109,8 @@ class MainWindow(QMainWindow):
 
         self.splanes_actors = []
 
-        self.render.ResetCamera()
-        self.render.SetUseDepthPeeling(True)
+        # self.render.ResetCamera()
+        # self.render.SetUseDepthPeeling(True)
 
         widget3d.Initialize()
         widget3d.Start()
