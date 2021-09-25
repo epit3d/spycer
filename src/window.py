@@ -51,7 +51,6 @@ class MainWindow(QMainWindow):
         main_grid = QGridLayout()
         main_grid.addWidget(self.init3d_widget(), 0, 0, 20, 5)
         main_grid.addWidget(self.init_right_panel(), 0, 5, 20, 2)
-        main_grid.addWidget(self.init_bottom_panel(), 20, 0, 2, 7)
         central_widget.setLayout(main_grid)
         self.setCentralWidget(central_widget)
 
@@ -342,12 +341,13 @@ class MainWindow(QMainWindow):
         high_layout = QVBoxLayout()
         high_layout.addWidget(settings_group)
         high_layout.addWidget(buttons_group)
+        high_layout.addWidget(self.init_figure_panel())
         high_widget = QWidget()
         high_widget.setLayout(high_layout)
 
         return high_widget
 
-    def init_bottom_panel(self):
+    def init_figure_panel(self):
         bottom_layout = QGridLayout()
         bottom_layout.setSpacing(5)
         bottom_layout.setColumnStretch(7, 1)
