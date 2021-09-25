@@ -200,9 +200,8 @@ class MainWindow(QMainWindow):
 
         filling_type_label = QLabel(self.locale.FillingType)
         right_panel.addWidget(filling_type_label, get_next_row(), 1)
-        # todo fix displaying shifting (feature is below - line_width_value again to cut view of dropbox)
-        right_panel.addWidget(QLineEdit("0"), get_cur_row(), 2)
         filling_type_values_widget = QWidget()
+        filling_type_values_widget.setMinimumHeight(20)
         self.filling_type_values = QComboBox(filling_type_values_widget)
         self.filling_type_values.addItems(self.locale.FillingTypeValues)
         ind = locales.getLocaleByLang("en").FillingTypeValues.index(sett().slicing.filling_type)
