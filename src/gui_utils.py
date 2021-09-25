@@ -1,4 +1,4 @@
-from typing import Tuple, List
+from typing import Tuple, List, Dict
 
 import vtk
 from PyQt5.QtWidgets import QMessageBox
@@ -307,6 +307,27 @@ class Plane:
     def toFile(self):
         return "X" + str(self.x) + " Y" + str(self.y) + " Z" + str(self.z) + \
                " T" + str(self.incline) + " R" + str(self.rot)
+
+    def params(self) -> Dict[str, float]:
+        return {
+            "X": self.x,
+            "Y": self.y,
+            "Z": self.z,
+            "Rotation": self.rot,
+            "Tilt": self.incline
+        }
+
+
+class Cone:
+    # TODO implement class cone
+    def __init__(self):
+        raise NotImplementedError()
+
+    def toFile(self):
+        raise NotImplementedError()
+
+    def params(self) -> Dict[str, float]:
+        raise NotImplementedError()
 
 
 def read_planes(filename):

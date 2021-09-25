@@ -2,7 +2,7 @@
 Provides a class creating a new window to edit parameters of custom figures
 """
 import sys
-from typing import List, Callable, Dict, Tuple
+from typing import List, Callable, Dict, Tuple, Optional
 
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QSlider, QLineEdit, QApplication, QGridLayout, QWidget, QLabel, QSizePolicy
@@ -15,7 +15,8 @@ class FigureEditor(QWidget):
     """
 
     def __init__(self, params: List[str], constrains: List[Tuple[int, int]],
-                 on_change: Callable[[Dict[str, float]], None] = None):
+                 on_change: Callable[[Dict[str, float]], None] = None,
+                 initial_params: Optional[Dict[str, float]] = None):
         super().__init__()
         self.setWindowTitle("Parameters tooling")
 
@@ -24,7 +25,8 @@ class FigureEditor(QWidget):
         # self.layout.setColumnStretch(7, 1)
 
         self.params_widgets = []
-        self.params_dict: Dict[str, float] = dict((el, 0) for el in params)
+        self.params_dict: Dict[str, float] = dict(
+            (el, initial_params[el] if initial_params and initial_params[el] else 0) for el in params)
 
         for param_idx, param in enumerate(params):
             # add label for parameter name
@@ -63,7 +65,7 @@ class FigureEditor(QWidget):
                 return emmit_value
 
             # add an edit of values
-            edit = QLineEdit("0")
+            edit = QLineEdit(str(initial_params.get(param, 0)))
             edit.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
             edit.setMinimumWidth(40)
             self.params_widgets.append(edit)
@@ -74,7 +76,7 @@ class FigureEditor(QWidget):
             slider.setOrientation(QtCore.Qt.Horizontal)
             slider.setMinimum(constrains[param_idx][0])
             slider.setMaximum(constrains[param_idx][1])
-            slider.setValue(0)
+            slider.setValue((initial_params.get(param, 0)))
             slider.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             slider.setMinimumWidth(200)
 
@@ -88,10 +90,11 @@ class FigureEditor(QWidget):
 
 class PlaneEditor(FigureEditor):
     __params = ["X", "Y", "Z", "Rotation", "Tilt"]
-    __constrains = [(-100, 100), (-100, 100), (0, 200), (-180, 180), (0, 60)]
+    __constrains = [(-100, 100), (-100, 100), (0, 200), (-180, 180), (-60, 0)]
 
-    def __init__(self, on_change: Callable[[Dict[str, float]], None]):
-        super().__init__(self.__params, self.__constrains, on_change)
+    def __init__(self, on_change: Callable[[Dict[str, float]], None],
+                 initial_params: Optional[Dict[str, float]] = None):
+        super().__init__(self.__params, self.__constrains, on_change, initial_params)
 
     def params(self):
         return self.__params
@@ -113,8 +116,8 @@ if __name__ == "__main__":
 
 
     app = QApplication(sys.argv)
-    f1 = PlaneEditor(handle1)
-    f2 = PlaneEditor(handle2)
+    f1 = PlaneEditor(handle1, None)
+    f2 = PlaneEditor(handle2, None)
 
     f1.show()
     f2.show()

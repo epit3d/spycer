@@ -1,3 +1,5 @@
+from typing import Type, Optional
+
 import vtk
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
@@ -19,6 +21,10 @@ MovingState = "moving"
 
 
 class MainWindow(QMainWindow):
+    from src.figure_editor import FigureEditor
+    # by default it is None, because there is nothing to edit, will be updated by derived from FigureEditor
+    parameters_tooling: Optional[FigureEditor] = None
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle('Spycer')
@@ -360,63 +366,6 @@ class MainWindow(QMainWindow):
 
         self.remove_plane_button = QPushButton(self.locale.DeletePlane)
         bottom_layout.addWidget(self.remove_plane_button, 3, 2)
-
-        x_label = QLabel("X:")
-        bottom_layout.addWidget(x_label, 0, 3)
-        self.x_value = QLineEdit("3.0951")
-        bottom_layout.addWidget(self.x_value, 0, 4)
-
-        y_label = QLabel("Y:")
-        bottom_layout.addWidget(y_label, 1, 3)
-        self.y_value = QLineEdit("5.5910")
-        bottom_layout.addWidget(self.y_value, 1, 4)
-
-        z_label = QLabel("Z:")
-        bottom_layout.addWidget(z_label, 2, 3)
-        self.z_value = QLineEdit("89.5414")
-        bottom_layout.addWidget(self.z_value, 2, 4)
-
-        rotated_label = QLabel(self.locale.Rotated)
-        bottom_layout.addWidget(rotated_label, 3, 3)
-        self.rotated_value = QLineEdit("31.0245")
-        bottom_layout.addWidget(self.rotated_value, 3, 4)
-
-        incline_label = QLabel(self.locale.Tilted)
-        bottom_layout.addWidget(incline_label, 4, 3)
-        self.incline_value = QLineEdit("0")
-        bottom_layout.addWidget(self.incline_value, 4, 4)
-
-        self.xSlider = QSlider()
-        self.xSlider.setOrientation(QtCore.Qt.Horizontal)
-        self.xSlider.setMinimum(-100)
-        self.xSlider.setMaximum(100)
-        self.xSlider.setValue(1)
-        bottom_layout.addWidget(self.xSlider, 0, 5, 1, 3)
-        self.ySlider = QSlider()
-        self.ySlider.setOrientation(QtCore.Qt.Horizontal)
-        self.ySlider.setMinimum(-100)
-        self.ySlider.setMaximum(100)
-        self.ySlider.setValue(1)
-        bottom_layout.addWidget(self.ySlider, 1, 5, 1, 3)
-        self.zSlider = QSlider()
-        self.zSlider.setOrientation(QtCore.Qt.Horizontal)
-        self.zSlider.setMinimum(0)
-        self.zSlider.setMaximum(200)
-        self.zSlider.setValue(1)
-        bottom_layout.addWidget(self.zSlider, 2, 5, 1, 3)
-        self.rotSlider = QSlider()
-        self.rotSlider.setOrientation(QtCore.Qt.Horizontal)
-        self.rotSlider.setMinimum(-180)
-        self.rotSlider.setMaximum(180)
-        self.rotSlider.setValue(0)
-        bottom_layout.addWidget(self.rotSlider, 3, 5, 1, 3)
-        self.incSlider = QSlider()
-        self.incSlider.setOrientation(QtCore.Qt.Horizontal)
-        self.incSlider.setMinimum(-60)
-        self.incSlider.setMaximum(0)
-        self.incSlider.setValue(0)
-        bottom_layout.addWidget(self.incSlider, 4, 5, 1, 3)
-
         bottom_panel = QWidget()
         bottom_panel.setLayout(bottom_layout)
         bottom_panel.setEnabled(False)
@@ -608,16 +557,6 @@ class MainWindow(QMainWindow):
         self.reload_scene()
 
     def change_combo_select(self, plane, ind):
-        self.rotated_value.setText(str(plane.rot))
-        self.incline_value.setText(str(plane.incline))
-        self.x_value.setText(str(plane.x))
-        self.y_value.setText(str(plane.y))
-        self.z_value.setText(str(plane.z))
-        self.xSlider.setValue(plane.x)
-        self.ySlider.setValue(plane.y)
-        self.zSlider.setValue(plane.z)
-        self.rotSlider.setValue(plane.rot)
-        self.incSlider.setValue(plane.incline)
         for p in self.splanes_actors:
             p.GetProperty().SetColor(get_color(sett().colors.splane))
         self.splanes_actors[ind].GetProperty().SetColor(get_color(sett().colors.last_layer))
