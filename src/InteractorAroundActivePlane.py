@@ -55,9 +55,9 @@ def Raxis(axis: Tuple[float, float, float], a: float, origin=np.array([0, 0, 0])
 
 
 class InteractionAroundActivePlane:
-    pos = np.array([5, 5, 5, 0], dtype=float)
+    pos = np.array([250, 250, 250, 0], dtype=float)
     focalPoint = np.array([0, 0, 0, 0], dtype=float)
-    distanceToFocal = np.sqrt(75)
+    distanceToFocal = np.linalg.norm(pos - focalPoint)
 
     # True when we pressed left btn, False when we released
     isRotating = False
