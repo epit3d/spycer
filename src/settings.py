@@ -1,3 +1,9 @@
+import os
+import sys
+import tempfile as tmp
+from os import path
+import shutil
+
 import yaml
 import vtk
 
@@ -21,16 +27,42 @@ def get_color(key):
 
 
 def load_settings():
-    with open('settings.yaml') as f:
+    settings_filename = "settings.yaml"
+    temp_dir = tmp.gettempdir()
+
+    try:
+        bundle_path = sys._MEIPASS
+        if not path.exists(path.join(temp_dir, "spycer", settings_filename)):
+            # settings_path = path.join(bundle_path, settings_filename)
+            os.makedirs(path.join(temp_dir, "spycer"), exist_ok=True)
+            shutil.copyfile(path.join(bundle_path, settings_filename),
+                            path.join(path.join(temp_dir, "spycer", settings_filename)))
+    except Exception as e:
+        # print(e)
+        temp_dir = path.abspath(".")
+
+    with open(path.join(temp_dir, "spycer" if temp_dir != path.abspath(".") else "", settings_filename)) as f:
         data = yaml.safe_load(f)
         global _sett
         _sett = Settings(data)
+    # print(path.join(temp_dir, "spycer", settings_filename))
 
 
 def save_settings():
     temp = yaml.dump(_sett)
     temp = temp.replace("!!python/object:src.settings.Settings", "").strip()
-    with open('settings.yaml', "w") as f:
+
+    settings_filename = "settings.yaml"
+
+    try:
+        bundle_path = sys._MEIPASS
+        path_settings = path.join(tmp.gettempdir(), "spycer", settings_filename)
+    except Exception:
+        path_settings = path.join(path.abspath("."), settings_filename)
+
+    # print(path_settings)
+
+    with open(path_settings, "w") as f:
         f.write(temp)
 
 

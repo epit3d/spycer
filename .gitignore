@@ -5,3 +5,5 @@
 goosli*
 out.gcode
 data/
+build/
+dist/
