@@ -78,7 +78,7 @@ class MainController:
             showErrorDialog("Error during file opening:" + str(e))
 
     def load_stl(self, filename, colorize=False):
-        if filename is None or filename is "":
+        if filename is None or filename == "":
             filename = self.model.opened_stl
         stl_actor = gui_utils.createStlActorInOrigin(filename, colorize)
         self.model.opened_stl = filename
