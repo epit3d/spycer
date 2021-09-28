@@ -23,14 +23,14 @@ jobs:
       - name: Run pyinstaller
         run: |
           pyinstaller main.spec
-      - uses: papeloto/action-zip@v1
+      - name: Copy settings
+        uses: canastro/copy-file-action@master
         with:
-          files: dist/ sett.json
-          dest: result.zip
+          source: "settings.yaml"
+          target: "dist/settings.yaml"
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
           name: 'spycer-${{ matrix.os }}'
           path: |
             dist/
-            settings.yaml
