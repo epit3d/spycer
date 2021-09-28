@@ -6,7 +6,7 @@ block_cipher = None
 
 a = Analysis(['main.py'],
              binaries=[],
-             datas=[('src', 'src/'), ('settings.yaml', '.')],
+             datas=[('src', 'src/'), ('lib/settings.yaml', 'lib/')],
              hiddenimports=['vtkmodules', 'vtkmodules.all', 'vtkmodules.qt.QVTKRenderWindowInteractor', 'vtkmodules.util', 'vtkmodules.util.numpy_support', 'yaml'],
              hookspath=[],
              hooksconfig={},
