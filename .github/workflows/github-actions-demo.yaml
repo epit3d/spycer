@@ -24,7 +24,7 @@ jobs:
         run: |
           pyinstaller main.spec
       - name: Copy additional files
-        run: mkdir dist/lib && mv lib dist/lib
+        run: mv lib dist
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
