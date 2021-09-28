@@ -7,6 +7,8 @@ from shutil import copy2
 from typing import Dict
 
 import vtk
+from PyQt5 import QtCore
+from PyQt5.QtWidgets import QDesktopWidget
 
 from src import gui_utils, locales
 from src.figure_editor import PlaneEditor
@@ -54,6 +56,15 @@ class MainController:
         if self.view.parameters_tooling and not self.view.parameters_tooling.isHidden():
             self.view.parameters_tooling.close()
         self.view.parameters_tooling = PlaneEditor(self.update_plane_common, self.model.splanes[ind].params())
+
+        try:
+            main_window_left_pos = self.view.mapToGlobal(QtCore.QPoint(0, 0)).x()
+            self.view.parameters_tooling.move(main_window_left_pos,
+                                              self.view.height() - self.view.parameters_tooling.height() / 3)
+        except:
+            # everything could happen, but nothing should be broken
+            ...
+
         self.view.parameters_tooling.show()
 
     def change_layer_view(self):
