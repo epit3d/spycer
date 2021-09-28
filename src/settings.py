@@ -27,7 +27,7 @@ def get_color(key):
 
 
 def load_settings():
-    settings_filename = "settings.yaml"
+    settings_filename = path.join("lib", "settings.yaml")
     if getattr(sys, 'frozen', False):
         app_path = path.dirname(sys.executable)
         # uncomment if you want some protection that nothing would be broken
@@ -44,7 +44,7 @@ def load_settings():
 
 
 def save_settings():
-    settings_filename = "settings.yaml"
+    settings_filename = path.join("lib", "settings.yaml")
     if getattr(sys, 'frozen', False):
         app_path = path.dirname(sys.executable)
     else:
