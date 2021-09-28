@@ -23,11 +23,6 @@ jobs:
       - name: Run pyinstaller
         run: |
           pyinstaller main.spec
-      - name: Copy settings
-        uses: canastro/copy-file-action@master
-        with:
-          source: "settings.yaml"
-          target: "dist/settings.yaml"
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
