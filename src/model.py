@@ -22,3 +22,8 @@ class MainModel:
         else:
             path = [self.splanes[-1].x, self.splanes[-1].y, self.splanes[-1].z + 10]
             self.splanes.append(gui_utils.Plane(0, 0, path))
+
+    def add_cone(self):
+        # TODO add cone impl
+        ...
+        self.splanes.append(gui_utils.Cone())

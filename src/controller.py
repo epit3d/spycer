@@ -4,11 +4,14 @@ import sys
 from functools import partial
 from pathlib import Path
 from shutil import copy2
+from typing import Dict
 
-from PyQt5 import QtCore
 import vtk
+from PyQt5 import QtCore
+from PyQt5.QtWidgets import QDesktopWidget
 
 from src import gui_utils, locales
+from src.figure_editor import PlaneEditor
 from src.gui_utils import showErrorDialog, plane_tf, isfloat
 from src.settings import sett, save_settings
 
@@ -27,7 +30,7 @@ class MainController:
         # right panel
         self.view.model_switch_box.stateChanged.connect(self.view.switch_stl_gcode)
         self.view.picture_slider.valueChanged.connect(self.change_layer_view)
-        self.view.smoothSlice_button.clicked.connect(partial(self.slice_smooth,0))
+        self.view.smoothSlice_button.clicked.connect(partial(self.slice_smooth, 0))
         self.view.smoothFlatSlice_button.clicked.connect(partial(self.slice_smooth, 1))
         self.view.move_button.clicked.connect(self.move_model)
         self.view.load_model_button.clicked.connect(self.open_file)
@@ -40,25 +43,29 @@ class MainController:
 
         # bottom panel
         self.view.add_plane_button.clicked.connect(self.add_splane)
+        self.view.splanes_list.itemDoubleClicked.connect(self.change_figure_parameters)
         self.view.splanes_list.currentItemChanged.connect(self.change_combo_select)
         self.view.remove_plane_button.clicked.connect(self.remove_splane)
 
         self.view.hide_checkbox.stateChanged.connect(self.view.hide_splanes)
-        self.view.x_value.editingFinished.connect(
-            partial(self.apply_field_change, self.view.x_value, self.view.xSlider))
-        self.view.y_value.editingFinished.connect(
-            partial(self.apply_field_change, self.view.y_value, self.view.ySlider))
-        self.view.z_value.editingFinished.connect(
-            partial(self.apply_field_change, self.view.z_value, self.view.zSlider))
-        self.view.rotated_value.editingFinished.connect(
-            partial(self.apply_field_change, self.view.rotated_value, self.view.rotSlider))
-        self.view.xSlider.valueChanged.connect(partial(self.apply_slider_change, self.view.x_value, self.view.xSlider))
-        self.view.ySlider.valueChanged.connect(partial(self.apply_slider_change, self.view.y_value, self.view.ySlider))
-        self.view.zSlider.valueChanged.connect(partial(self.apply_slider_change, self.view.z_value, self.view.zSlider))
-        self.view.rotSlider.valueChanged.connect(
-            partial(self.apply_slider_change, self.view.rotated_value, self.view.rotSlider))
-        self.view.incSlider.valueChanged.connect(
-            partial(self.apply_slider_change, self.view.incline_value, self.view.incSlider))
+
+    def change_figure_parameters(self):
+        ind = self.view.splanes_list.currentRow()
+
+        # allow to show only one tooling for all figures
+        if self.view.parameters_tooling and not self.view.parameters_tooling.isHidden():
+            self.view.parameters_tooling.close()
+        self.view.parameters_tooling = PlaneEditor(self.update_plane_common, self.model.splanes[ind].params())
+
+        try:
+            main_window_left_pos = self.view.mapToGlobal(QtCore.QPoint(0, 0)).x()
+            self.view.parameters_tooling.move(main_window_left_pos,
+                                              self.view.height() - self.view.parameters_tooling.height() / 3)
+        except:
+            # everything could happen, but nothing should be broken
+            ...
+
+        self.view.parameters_tooling.show()
 
     def change_layer_view(self):
         self.model.current_slider_value = self.view.change_layer_view(self.model.current_slider_value, self.model.gcode)
@@ -82,7 +89,7 @@ class MainController:
             showErrorDialog("Error during file opening:" + str(e))
 
     def load_stl(self, filename, colorize=False):
-        if filename is None or filename is "":
+        if filename is None or filename == "":
             filename = self.model.opened_stl
         stl_actor = gui_utils.createStlActorInOrigin(filename, colorize)
         self.model.opened_stl = filename
@@ -197,25 +204,12 @@ class MainController:
             return
         self.view.change_combo_select(self.model.splanes[ind], ind)
 
-    def apply_field_change(self, field, slider):
-        if isfloat(field.text()):
-            slider.setValue(float(field.text()))
-        else:
-            field.setText(str(slider.value()))
-            showErrorDialog(locales.getLocale().FloatParsingError)
-        self.update_splane_common()
-
-    def apply_slider_change(self, field, slider):
-        field.setText(str(slider.value()))
-        self.update_splane_common()
-
-    def update_splane_common(self):
-        center = [float(self.view.x_value.text()), float(self.view.y_value.text()), float(self.view.z_value.text())]
+    def update_plane_common(self, values: Dict[str, float]):
+        center = [values.get("X", 0), values.get("Y", 0), values.get("Z", 0)]
         ind = self.view.splanes_list.currentRow()
         if ind == -1:
             return
-        self.model.splanes[ind] = gui_utils.Plane(float(self.view.incSlider.value()),
-                                                  float(self.view.rotSlider.value()), center)
+        self.model.splanes[ind] = gui_utils.Plane(values.get("Tilt", 0), values.get("Rotation", 0), center)
         self.view.update_splane(self.model.splanes[ind], ind)
 
     # def debugMe(self):
