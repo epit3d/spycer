@@ -11,8 +11,10 @@ from PyQt5 import QtCore
 from PyQt5.QtWidgets import QDesktopWidget
 
 from src import gui_utils, locales
-from src.figure_editor import PlaneEditor
-from src.gui_utils import showErrorDialog, plane_tf, isfloat
+from src.cone_slicing import cross_stl, load_mesh
+from src.figure_editor import PlaneEditor, ConeEditor
+from src.gcode import GCode, Rotation, Point
+from src.gui_utils import showErrorDialog, plane_tf, isfloat, Plane, Cone
 from src.settings import sett, save_settings
 
 
@@ -37,12 +39,14 @@ class MainController:
         self.view.edit_planes_button.clicked.connect(partial(self.load_stl, None))
         self.view.slice3a_button.clicked.connect(partial(self.slice_stl, "3axes"))
         self.view.slice_vip_button.clicked.connect(partial(self.slice_stl, "vip"))
+        self.view.slice_cone_button.clicked.connect(self.slice_cone)
         self.view.save_gcode_button.clicked.connect(self.save_gcode_file)
         self.view.analyze_model_button.clicked.connect(self.analyze_model)
         self.view.color_model_button.clicked.connect(self.colorize_model)
 
         # bottom panel
         self.view.add_plane_button.clicked.connect(self.add_splane)
+        self.view.add_cone_button.clicked.connect(self.add_cone)
         self.view.splanes_list.itemDoubleClicked.connect(self.change_figure_parameters)
         self.view.splanes_list.currentItemChanged.connect(self.change_combo_select)
         self.view.remove_plane_button.clicked.connect(self.remove_splane)
@@ -55,7 +59,11 @@ class MainController:
         # allow to show only one tooling for all figures
         if self.view.parameters_tooling and not self.view.parameters_tooling.isHidden():
             self.view.parameters_tooling.close()
-        self.view.parameters_tooling = PlaneEditor(self.update_plane_common, self.model.splanes[ind].params())
+
+        if isinstance(self.model.splanes[ind], Plane):
+            self.view.parameters_tooling = PlaneEditor(self.update_plane_common, self.model.splanes[ind].params())
+        elif isinstance(self.model.splanes[ind], Cone):
+            self.view.parameters_tooling = ConeEditor(self.update_cone_common, self.model.splanes[ind].params())
 
         try:
             main_window_left_pos = self.view.mapToGlobal(QtCore.QPoint(0, 0)).x()
@@ -115,6 +123,34 @@ class MainController:
 
         self.load_gcode(s.slicing.gcode_file, True)
         # self.debugMe()
+
+    def slice_cone(self):
+        print(self.model.splanes)
+        if len(self.model.splanes) == 0 or not isinstance(self.model.splanes[0], Cone):
+            showErrorDialog("Add a cone pls (Cone should be the first figure in the list) :(")
+            return
+
+        cone = self.model.splanes[0]
+        # slicing runs somewhere here
+        # print(f"slicing is performed for model {self.model.opened_stl}")
+        result = cross_stl(load_mesh(self.model.opened_stl), (cone.cone_angle, (cone.x, cone.y, cone.z)))
+        # print("result", result)
+
+        new_res = []
+
+        for layer in result:
+            new_layer = []
+            for [point1, point2] in layer:
+                new_layer.append([Point(*point1, 0, 0), Point(*point2, 0, 0)])
+            new_res.append(new_layer)
+
+        # result is layer-separated list of segments
+        gcode = GCode(new_res, [Rotation(0, 0)], [0] * len(new_res))
+        self.model.gcode = gcode
+        blocks = gui_utils.makeBlocks(gcode.layers, gcode.rotations, gcode.lays2rots)
+        actors = gui_utils.wrapWithActors(blocks, gcode.rotations, gcode.lays2rots)
+
+        self.view.load_gcode(actors, True, 0)
 
     def slice_smooth(self, flat5d):
         s = sett()
@@ -191,6 +227,10 @@ class MainController:
         self.model.add_splane()
         self.view.reload_splanes(self.model.splanes)
 
+    def add_cone(self):
+        self.model.add_cone()
+        self.view.reload_splanes(self.model.splanes)
+
     def remove_splane(self):
         ind = self.view.splanes_list.currentRow()
         if ind == -1:
@@ -211,6 +251,14 @@ class MainController:
             return
         self.model.splanes[ind] = gui_utils.Plane(values.get("Tilt", 0), values.get("Rotation", 0), center)
         self.view.update_splane(self.model.splanes[ind], ind)
+
+    def update_cone_common(self, values: Dict[str, float]):
+        center = [0, 0, values.get("Z", 0)]
+        ind = self.view.splanes_list.currentRow()
+        if ind == -1:
+            return
+        self.model.splanes[ind] = gui_utils.Cone(values.get("A", 0), tuple(center))
+        self.view.update_cone(self.model.splanes[ind], ind)
 
     # def debugMe(self):
     #     debug.readFile(self.render, "/home/l1va/debug.txt", 4)
