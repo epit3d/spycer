@@ -101,8 +101,8 @@ class PlaneEditor(FigureEditor):
 
 
 class ConeEditor(FigureEditor):
-    __params = ["X", "Y", "Z", "A"]
-    __constrains = [(-100, 100), (-100, 100), (0, 200), (0, 89)]
+    __params = ["Z", "A"]
+    __constrains = [(0, 200), (0, 89)]
 
     def __init__(self, on_change: Callable[[Dict[str, float]], None],
                  initial_params: Optional[Dict[str, float]] = None):

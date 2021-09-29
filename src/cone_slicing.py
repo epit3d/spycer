@@ -12,7 +12,7 @@ def load_mesh(filename: str) -> mesh:
 
 
 def cross_stl(mesh_input: mesh.Mesh, cone: Tuple[float, Tuple[float, float, float]]):
-    '''
+    """
     Intersection lines of stl model and cone surface
 
     mesh - triangles from stl model (opened with numpy-stl library)
@@ -28,25 +28,32 @@ def cross_stl(mesh_input: mesh.Mesh, cone: Tuple[float, Tuple[float, float, floa
     cone = [10, [0, 0, 0]]
     cone[0] - cone angle in degrees
     cone[1] - vertex of the cone: [x, y, z]
-    '''
-    cross_p_list = []
 
-    for triangle in mesh_input:
-        t = [triangle[:3], triangle[3:6], triangle[6:9]]
+    Function returns a List of paths for each layer
+    """
+    layers = []
+    # update function to return layers
+    for layer_idx in range(1):
+        cross_p_list = []
 
-        points = []
-        for x, y in ((t[0], t[1]), (t[0], t[2]), (t[1], t[2])):
-            cross_p = cone_cross(x, y, cone[0], np.array(cone[1]))  # find cross point(s) of line and cone
-            if cross_p:
-                if len(cross_p) == 3:  # one intersection point of line and cone
-                    if cross_p not in points:
-                        points.append(cross_p)
-                    elif len(cross_p) == 2:  # two intersection points of line and cone
-                        points = cross_p
-                    if len(points) in [2, 4, 6]:
-                        cross_p_list.append(points)  # add intersection lines
+        for triangle in mesh_input:
+            t = [triangle[:3], triangle[3:6], triangle[6:9]]
 
-    return cross_p_list  # example: array([[[ 2. , -0.7, 20. ], [ 2. , -0.7, 20. ]], [[ 1.6, -1.3, 20. ], [ 1.7, -1.3, 20. ]]])
+            points = []
+            for x, y in ((t[0], t[1]), (t[0], t[2]), (t[1], t[2])):
+                cross_p = cone_cross(x, y, cone[0], np.array(cone[1]))  # find cross point(s) of line and cone
+                if cross_p:
+                    if len(cross_p) == 3:  # one intersection point of line and cone
+                        if cross_p not in points:
+                            points.append(cross_p)
+                        elif len(cross_p) == 2:  # two intersection points of line and cone
+                            points = cross_p
+                        if len(points) in [2, 4, 6]:
+                            cross_p_list.append(points)  # add intersection lines
+
+        layers.append(cross_p_list)
+    return layers
+    # return cross_p_list  # example: array([[[ 2. , -0.7, 20. ], [ 2. , -0.7, 20. ]], [[ 1.6, -1.3, 20. ], [ 1.7, -1.3, 20. ]]])
 
 
 def cone_cross(p_1, p_2, alpha_cone=10.0, p_cone=np.array([0.0, 0.0, 0.0])):

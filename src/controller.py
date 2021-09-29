@@ -11,7 +11,9 @@ from PyQt5 import QtCore
 from PyQt5.QtWidgets import QDesktopWidget
 
 from src import gui_utils, locales
+from src.cone_slicing import cross_stl, load_mesh
 from src.figure_editor import PlaneEditor, ConeEditor
+from src.gcode import GCode, Rotation, Point
 from src.gui_utils import showErrorDialog, plane_tf, isfloat, Plane, Cone
 from src.settings import sett, save_settings
 
@@ -37,6 +39,7 @@ class MainController:
         self.view.edit_planes_button.clicked.connect(partial(self.load_stl, None))
         self.view.slice3a_button.clicked.connect(partial(self.slice_stl, "3axes"))
         self.view.slice_vip_button.clicked.connect(partial(self.slice_stl, "vip"))
+        self.view.slice_cone_button.clicked.connect(self.slice_cone)
         self.view.save_gcode_button.clicked.connect(self.save_gcode_file)
         self.view.analyze_model_button.clicked.connect(self.analyze_model)
         self.view.color_model_button.clicked.connect(self.colorize_model)
@@ -120,6 +123,34 @@ class MainController:
 
         self.load_gcode(s.slicing.gcode_file, True)
         # self.debugMe()
+
+    def slice_cone(self):
+        print(self.model.splanes)
+        if len(self.model.splanes) == 0 or not isinstance(self.model.splanes[0], Cone):
+            showErrorDialog("Add a cone pls (Cone should be the first figure in the list) :(")
+            return
+
+        cone = self.model.splanes[0]
+        # slicing runs somewhere here
+        # print(f"slicing is performed for model {self.model.opened_stl}")
+        result = cross_stl(load_mesh(self.model.opened_stl), (cone.cone_angle, (cone.x, cone.y, cone.z)))
+        # print("result", result)
+
+        new_res = []
+
+        for layer in result:
+            new_layer = []
+            for [point1, point2] in layer:
+                new_layer.append([Point(*point1, 0, 0), Point(*point2, 0, 0)])
+            new_res.append(new_layer)
+
+        # result is layer-separated list of segments
+        gcode = GCode(new_res, [Rotation(0, 0)], [0] * len(new_res))
+        self.model.gcode = gcode
+        blocks = gui_utils.makeBlocks(gcode.layers, gcode.rotations, gcode.lays2rots)
+        actors = gui_utils.wrapWithActors(blocks, gcode.rotations, gcode.lays2rots)
+
+        self.view.load_gcode(actors, True, 0)
 
     def slice_smooth(self, flat5d):
         s = sett()
@@ -222,7 +253,7 @@ class MainController:
         self.view.update_splane(self.model.splanes[ind], ind)
 
     def update_cone_common(self, values: Dict[str, float]):
-        center = [values.get("X", 0), values.get("Y", 0), values.get("Z", 0)]
+        center = [0, 0, values.get("Z", 0)]
         ind = self.view.splanes_list.currentRow()
         if ind == -1:
             return

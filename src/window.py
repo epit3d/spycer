@@ -318,8 +318,11 @@ class MainWindow(QMainWindow):
         self.slice_vip_button = QPushButton(self.locale.SliceVip)
         buttons_layout.addWidget(self.slice_vip_button, get_cur_row(), 2, 1, 1)
 
+        self.slice_cone_button = QPushButton("Slice cone")
+        buttons_layout.addWidget(self.slice_cone_button, get_next_row(), 1, 1, 1)
+
         self.save_gcode_button = QPushButton(self.locale.SaveGCode)
-        buttons_layout.addWidget(self.save_gcode_button, get_next_row(), 1, 1, 2)
+        buttons_layout.addWidget(self.save_gcode_button, get_cur_row(), 2, 1, 1)
 
         panel_widget = QWidget()
         panel_widget.setLayout(right_panel)
@@ -586,7 +589,8 @@ class MainWindow(QMainWindow):
             self.stlActor.VisibilityOff()
             self.render.AddActor(self.stlActor)
 
-        self.rotate_plane(plane_tf)
+        if plane_tf:
+            self.rotate_plane(plane_tf)
 
         self.actors = actors
         for actor in self.actors:
