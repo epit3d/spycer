@@ -10,7 +10,7 @@ from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
 from src import locales, gui_utils, interactor_style
 from src.InteractorAroundActivePlane import InteractionAroundActivePlane
-from src.gui_utils import plane_tf
+from src.gui_utils import plane_tf, Plane, Cone
 from src.settings import sett, get_color
 
 NothingState = "nothing"
@@ -363,8 +363,11 @@ class MainWindow(QMainWindow):
         self.add_plane_button = QPushButton(self.locale.AddPlane)
         bottom_layout.addWidget(self.add_plane_button, 2, 2)
 
+        self.add_cone_button = QPushButton("Add cone")
+        bottom_layout.addWidget(self.add_cone_button, 3, 2)
+
         self.remove_plane_button = QPushButton(self.locale.DeletePlane)
-        bottom_layout.addWidget(self.remove_plane_button, 3, 2)
+        bottom_layout.addWidget(self.remove_plane_button, 4, 2)
         bottom_panel = QWidget()
         bottom_panel.setLayout(bottom_layout)
         bottom_panel.setEnabled(False)
@@ -530,7 +533,8 @@ class MainWindow(QMainWindow):
         self._recreate_splanes(splanes)
         self.splanes_list.clear()
         for i in range(len(splanes)):
-            self.splanes_list.addItem(self.locale.Plane + " " + str(i + 1))
+            self.splanes_list.addItem("Figure" + " " + str(i + 1))
+            # self.splanes_list.addItem(self.locale.Plane + " " + str(i + 1))
 
         if len(splanes) > 0:
             self.splanes_list.setCurrentRow(len(splanes) - 1)
@@ -541,13 +545,28 @@ class MainWindow(QMainWindow):
             self.render.RemoveActor(p)
         self.splanes_actors = []
         for p in splanes:
-            act = gui_utils.create_splane_actor([p.x, p.y, p.z], p.incline, p.rot)
+            if isinstance(p, Plane):
+                act = gui_utils.create_splane_actor([p.x, p.y, p.z], p.incline, p.rot)
+            else:  # isinstance(p, Cone):
+                act = gui_utils.create_cone_actor((p.x, p.y, p.z), p.cone_angle)
+
+            # act = gui_utils.create_cone_actor((p.x, p.y, p.z), p.cone_angle)
             self.splanes_actors.append(act)
             self.render.AddActor(act)
 
     def update_splane(self, sp, ind):
         self.render.RemoveActor(self.splanes_actors[ind])
         act = gui_utils.create_splane_actor([sp.x, sp.y, sp.z], sp.incline, sp.rot)
+        self.splanes_actors[ind] = act
+        self.render.AddActor(act)
+        sel = self.splanes_list.currentRow()
+        if sel == ind:
+            self.splanes_actors[sel].GetProperty().SetColor(get_color(sett().colors.last_layer))
+        self.reload_scene()
+
+    def update_cone(self, cone: Cone, ind):
+        self.render.RemoveActor(self.splanes_actors[ind])
+        act = gui_utils.create_cone_actor((cone.x, cone.y, cone.z), cone.cone_angle)
         self.splanes_actors[ind] = act
         self.render.AddActor(act)
         sel = self.splanes_list.currentRow()

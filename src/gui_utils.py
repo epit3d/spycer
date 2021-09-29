@@ -3,7 +3,7 @@ from typing import Tuple, List, Dict
 import vtk
 from PyQt5.QtWidgets import QMessageBox
 from vtkmodules.vtkCommonColor import vtkNamedColors
-from vtkmodules.vtkFiltersSources import vtkLineSource
+from vtkmodules.vtkFiltersSources import vtkLineSource, vtkConeSource
 from vtkmodules.vtkRenderingCore import vtkActor, vtkPolyDataMapper
 
 from src.settings import sett, get_color
@@ -67,6 +67,25 @@ def create_splane_actor(center, x_rot, z_rot):
     transform.RotateZ(z_rot)
     transform.Translate(center[0], center[1], center[2] - 0.1)
     actor.SetUserTransform(transform)
+    return actor
+
+
+def create_cone_actor(vertex: Tuple[float, float, float], angle: float):
+    coneSource = vtkConeSource()
+    coneSource.SetCenter(*vertex)
+    coneSource.SetAngle(angle)
+    coneSource.SetResolution(60)
+    coneSource.SetHeight(150)
+    coneSource.SetDirection(0, 0, 1)
+    # update parameters
+
+    mapper = vtkPolyDataMapper()
+    mapper.SetInputConnection(coneSource.GetOutputPort())
+
+    actor = vtkActor()
+    actor.SetMapper(mapper)
+    actor.GetProperty().SetColor(get_color(sett().colors.splane))
+
     return actor
 
 
@@ -319,15 +338,20 @@ class Plane:
 
 
 class Cone:
-    # TODO implement class cone
-    def __init__(self):
-        raise NotImplementedError()
+    def __init__(self, cone_angle: float, point: Tuple[float, float, float]):
+        self.cone_angle = cone_angle
+        self.x, self.y, self.z = point
 
-    def toFile(self):
-        raise NotImplementedError()
+    def toFile(self) -> str:
+        return "X{} Y{} Z{} A{}".format(self.x, self.y, self.z, self.cone_angle)
 
     def params(self) -> Dict[str, float]:
-        raise NotImplementedError()
+        return {
+            "X": self.x,
+            "Y": self.y,
+            "Z": self.z,
+            "A": self.cone_angle
+        }
 
 
 def read_planes(filename):

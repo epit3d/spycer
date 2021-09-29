@@ -101,9 +101,15 @@ class PlaneEditor(FigureEditor):
 
 
 class ConeEditor(FigureEditor):
-    def __init__(self, params: List[str], constrains: List[Tuple[int, int]]):
-        super().__init__(params, constrains)
-        raise NotImplementedError()
+    __params = ["X", "Y", "Z", "A"]
+    __constrains = [(-100, 100), (-100, 100), (0, 200), (0, 89)]
+
+    def __init__(self, on_change: Callable[[Dict[str, float]], None],
+                 initial_params: Optional[Dict[str, float]] = None):
+        super().__init__(self.__params, self.__constrains, on_change, initial_params)
+
+    def params(self):
+        return self.__params
 
 
 if __name__ == "__main__":
