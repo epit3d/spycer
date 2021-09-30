@@ -1,11 +1,13 @@
+from typing import List
+
 from src import gui_utils
 import vtk
 
 
 class GCode:
     def __init__(self, layers, rotations, lays2rots):
-        self.layers = layers
-        self.rotations = rotations
+        self.layers: List[List[Point]] = layers
+        self.rotations: List[Rotation] = rotations
         self.lays2rots = lays2rots
 
 

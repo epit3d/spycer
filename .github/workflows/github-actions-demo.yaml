@@ -1,0 +1,33 @@
+name: GitHub Actions Demo
+on: [ push ]
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ ubuntu-18.04, ubuntu-20.04, windows-latest ]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip setuptools wheel flake8 pyinstaller
+          python3 -m pip install -r requirements.txt
+      - name: Lint with flake8
+        run: |
+          # stop the build if there are Python syntax errors or undefined names
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+      - name: Run pyinstaller
+        run: |
+          pyinstaller main.spec
+      - name: Copy additional files
+        run: mv lib dist
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: 'spycer-${{ matrix.os }}'
+          path: |
+            dist/

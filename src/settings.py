@@ -1,3 +1,9 @@
+import os
+import sys
+import tempfile as tmp
+from os import path
+import shutil
+
 import yaml
 import vtk
 
@@ -21,16 +27,32 @@ def get_color(key):
 
 
 def load_settings():
-    with open('settings.yaml') as f:
+    settings_filename = path.join("lib", "settings.yaml")
+    if getattr(sys, 'frozen', False):
+        app_path = path.dirname(sys.executable)
+        # uncomment if you want some protection that nothing would be broken
+        # if not path.exists(path.join(app_path, settings_filename)):
+        #     bundle_path = sys._MEIPASS
+        #     shutil.copyfile(path.join(bundle_path, settings_filename), path.join(app_path, settings_filename))
+    else:
+        # have to add .. because settings.py is under src folder
+        app_path = path.join(path.dirname(__file__), "..")
+    with open(path.join(app_path, settings_filename)) as f:
         data = yaml.safe_load(f)
         global _sett
         _sett = Settings(data)
 
 
 def save_settings():
+    settings_filename = path.join("lib", "settings.yaml")
+    if getattr(sys, 'frozen', False):
+        app_path = path.dirname(sys.executable)
+    else:
+        # have to add .. because settings.py is under src folder
+        app_path = path.join(path.dirname(__file__), "..")
     temp = yaml.dump(_sett)
     temp = temp.replace("!!python/object:src.settings.Settings", "").strip()
-    with open('settings.yaml', "w") as f:
+    with open(path.join(app_path, settings_filename), 'w') as f:
         f.write(temp)
 
 

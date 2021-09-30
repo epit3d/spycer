@@ -1,5 +1,10 @@
+from typing import Tuple, List, Dict
+
 import vtk
 from PyQt5.QtWidgets import QMessageBox
+from vtkmodules.vtkCommonColor import vtkNamedColors
+from vtkmodules.vtkFiltersSources import vtkLineSource, vtkConeSource
+from vtkmodules.vtkRenderingCore import vtkActor, vtkPolyDataMapper
 
 from src.settings import sett, get_color
 
@@ -62,6 +67,25 @@ def create_splane_actor(center, x_rot, z_rot):
     transform.RotateZ(z_rot)
     transform.Translate(center[0], center[1], center[2] - 0.1)
     actor.SetUserTransform(transform)
+    return actor
+
+
+def create_cone_actor(vertex: Tuple[float, float, float], angle: float):
+    coneSource = vtkConeSource()
+    coneSource.SetCenter(*vertex)
+    coneSource.SetAngle(angle)
+    coneSource.SetResolution(60)
+    coneSource.SetHeight(150)
+    coneSource.SetDirection(0, 0, 1)
+    # update parameters
+
+    mapper = vtkPolyDataMapper()
+    mapper.SetInputConnection(coneSource.GetOutputPort())
+
+    actor = vtkActor()
+    actor.SetMapper(mapper)
+    actor.GetProperty().SetColor(get_color(sett().colors.splane))
+
     return actor
 
 
@@ -189,23 +213,24 @@ def wrapWithActors(blocks, rotations, lays2rots):
     actors[-1].GetProperty().SetColor(get_color(s.colors.last_layer))
     return actors
 
+
 #  R(V - rotcentr) + rotcenter
 def prepareTransform(cancelRot, applyRot):
     sh = sett().hardware
     tf = vtk.vtkTransform()
-    #cancel rotation
+    # cancel rotation
     tf.PostMultiply()
     tf.Translate(-sh.rotation_center_x, -sh.rotation_center_y, -sh.rotation_center_z)
     tf.PostMultiply()
     tf.RotateX(-cancelRot.x_rot)
     tf.PostMultiply()
     tf.RotateZ(-cancelRot.z_rot)
-    #tf.PostMultiply()    #Translates are canceled T+T-=0
-    #tf.Translate(sh.rotation_center_x, sh.rotation_center_y, sh.rotation_center_z)
+    # tf.PostMultiply()    #Translates are canceled T+T-=0
+    # tf.Translate(sh.rotation_center_x, sh.rotation_center_y, sh.rotation_center_z)
 
-    #apply rotation
-    #tf.PostMultiply()
-    #tf.Translate(-sh.rotation_center_x, -sh.rotation_center_y, -sh.rotation_center_z)
+    # apply rotation
+    # tf.PostMultiply()
+    # tf.Translate(-sh.rotation_center_x, -sh.rotation_center_y, -sh.rotation_center_z)
     tf.PostMultiply()
     tf.RotateZ(applyRot.z_rot)
     tf.PostMultiply()
@@ -213,6 +238,7 @@ def prepareTransform(cancelRot, applyRot):
     tf.PostMultiply()
     tf.Translate(sh.rotation_center_x, sh.rotation_center_y, sh.rotation_center_z)
     return tf
+
 
 def plane_tf(rotation):
     sh = sett().hardware
@@ -301,6 +327,32 @@ class Plane:
         return "X" + str(self.x) + " Y" + str(self.y) + " Z" + str(self.z) + \
                " T" + str(self.incline) + " R" + str(self.rot)
 
+    def params(self) -> Dict[str, float]:
+        return {
+            "X": self.x,
+            "Y": self.y,
+            "Z": self.z,
+            "Rotation": self.rot,
+            "Tilt": self.incline
+        }
+
+
+class Cone:
+    def __init__(self, cone_angle: float, point: Tuple[float, float, float]):
+        self.cone_angle = cone_angle
+        self.x, self.y, self.z = point
+
+    def toFile(self) -> str:
+        return "X{} Y{} Z{} A{}".format(self.x, self.y, self.z, self.cone_angle)
+
+    def params(self) -> Dict[str, float]:
+        return {
+            "X": self.x,
+            "Y": self.y,
+            "Z": self.z,
+            "A": self.cone_angle
+        }
+
 
 def read_planes(filename):
     planes = []
@@ -333,3 +385,42 @@ def showErrorDialog(text_msg):
 
     retval = msg.exec_()
     # print "value of pressed message box button:", retval
+
+
+def createCustomXYaxis(origin: Tuple[float, float, float], endPoints: List[Tuple[float, float, float]]) -> List[
+    vtkActor]:
+    """
+    Function creates 4 ended axes which describe position of focal point
+    :param origin:
+    :param endPoints:
+    :return:
+    """
+
+    output = []
+
+    for endPoint in endPoints:
+        output.append(createLine(origin, endPoint, color="lightgreen"))
+
+    return output
+
+
+def createLine(point1: tuple, point2: tuple, color: str = "Black") -> vtkActor:
+    """
+    :param point1:
+    :param point2:
+    :param color:
+    :return:
+    """
+    line = vtkLineSource()
+
+    line.SetPoint1(*point1)
+    line.SetPoint2(*point2)
+
+    mapper = vtkPolyDataMapper()
+    mapper.SetInputConnection(line.GetOutputPort())
+
+    actor = vtkActor()
+    actor.SetMapper(mapper)
+    actor.GetProperty().SetColor(vtkNamedColors().GetColor3d(color))
+
+    return actor

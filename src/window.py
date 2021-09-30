@@ -1,3 +1,5 @@
+from typing import Type, Optional
+
 import vtk
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
@@ -7,7 +9,8 @@ from PyQt5.QtWidgets import (QMainWindow, QWidget, QLabel, QLineEdit, QComboBox,
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
 from src import locales, gui_utils, interactor_style
-from src.gui_utils import plane_tf
+from src.InteractorAroundActivePlane import InteractionAroundActivePlane
+from src.gui_utils import plane_tf, Plane, Cone
 from src.settings import sett, get_color
 
 NothingState = "nothing"
@@ -18,6 +21,10 @@ MovingState = "moving"
 
 
 class MainWindow(QMainWindow):
+    from src.figure_editor import FigureEditor
+    # by default it is None, because there is nothing to edit, will be updated by derived from FigureEditor
+    parameters_tooling: Optional[FigureEditor] = None
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle('Spycer')
@@ -44,7 +51,6 @@ class MainWindow(QMainWindow):
         main_grid = QGridLayout()
         main_grid.addWidget(self.init3d_widget(), 0, 0, 20, 5)
         main_grid.addWidget(self.init_right_panel(), 0, 5, 20, 2)
-        main_grid.addWidget(self.init_bottom_panel(), 20, 0, 2, 7)
         central_widget.setLayout(main_grid)
         self.setCentralWidget(central_widget)
 
@@ -67,7 +73,27 @@ class MainWindow(QMainWindow):
 
         widget3d.GetRenderWindow().AddRenderer(self.render)
         self.interactor = widget3d.GetRenderWindow().GetInteractor()
-        self.interactor.GetInteractorStyle().SetCurrentStyleToTrackballCamera()
+        self.interactor.SetInteractorStyle(None)
+
+        self.interactor.Initialize()
+        self.interactor.Start()
+
+        self.render.ResetCamera()
+        # self.render.GetActiveCamera().AddObserver('ModifiedEvent', CameraModifiedCallback)
+
+        # set position of camera to (5, 5, 5) and look at (0, 0, 0) and z-axis is looking up
+        self.render.GetActiveCamera().SetPosition(5, 5, 5)
+        self.render.GetActiveCamera().SetFocalPoint(0, 0, 0)
+        self.render.GetActiveCamera().SetViewUp(0, 0, 1)
+
+        self.customInteractor = InteractionAroundActivePlane(self.interactor, self.render)
+        self.interactor.AddObserver("MouseWheelBackwardEvent", self.customInteractor.middleBtnPress)
+        self.interactor.AddObserver("MouseWheelForwardEvent", self.customInteractor.middleBtnPress)
+        self.interactor.AddObserver("RightButtonPressEvent", self.customInteractor.rightBtnPress)
+        self.interactor.AddObserver("RightButtonReleaseEvent", self.customInteractor.rightBtnPress)
+        self.interactor.AddObserver("LeftButtonPressEvent", self.customInteractor.leftBtnPress)
+        self.interactor.AddObserver("LeftButtonReleaseEvent", self.customInteractor.leftBtnPress)
+        self.interactor.AddObserver("MouseMoveEvent", self.customInteractor.mouseMove)
 
         # self.actor_interactor_style = interactor_style.ActorInteractorStyle(self.updateTransform)
         # self.actor_interactor_style.SetDefaultRenderer(self.render)
@@ -88,8 +114,8 @@ class MainWindow(QMainWindow):
 
         self.splanes_actors = []
 
-        self.render.ResetCamera()
-        self.render.SetUseDepthPeeling(True)
+        # self.render.ResetCamera()
+        # self.render.SetUseDepthPeeling(True)
 
         widget3d.Initialize()
         widget3d.Start()
@@ -174,9 +200,8 @@ class MainWindow(QMainWindow):
 
         filling_type_label = QLabel(self.locale.FillingType)
         right_panel.addWidget(filling_type_label, get_next_row(), 1)
-        # todo fix displaying shifting (feature is below - line_width_value again to cut view of dropbox)
-        right_panel.addWidget(QLineEdit("0"), get_cur_row(), 2)
         filling_type_values_widget = QWidget()
+        filling_type_values_widget.setMinimumHeight(20)
         self.filling_type_values = QComboBox(filling_type_values_widget)
         self.filling_type_values.addItems(self.locale.FillingTypeValues)
         ind = locales.getLocaleByLang("en").FillingTypeValues.index(sett().slicing.filling_type)
@@ -293,8 +318,11 @@ class MainWindow(QMainWindow):
         self.slice_vip_button = QPushButton(self.locale.SliceVip)
         buttons_layout.addWidget(self.slice_vip_button, get_cur_row(), 2, 1, 1)
 
+        self.slice_cone_button = QPushButton("Slice cone")
+        buttons_layout.addWidget(self.slice_cone_button, get_next_row(), 1, 1, 1)
+
         self.save_gcode_button = QPushButton(self.locale.SaveGCode)
-        buttons_layout.addWidget(self.save_gcode_button, get_next_row(), 1, 1, 2)
+        buttons_layout.addWidget(self.save_gcode_button, get_cur_row(), 2, 1, 1)
 
         panel_widget = QWidget()
         panel_widget.setLayout(right_panel)
@@ -315,12 +343,13 @@ class MainWindow(QMainWindow):
         high_layout = QVBoxLayout()
         high_layout.addWidget(settings_group)
         high_layout.addWidget(buttons_group)
+        high_layout.addWidget(self.init_figure_panel())
         high_widget = QWidget()
         high_widget.setLayout(high_layout)
 
         return high_widget
 
-    def init_bottom_panel(self):
+    def init_figure_panel(self):
         bottom_layout = QGridLayout()
         bottom_layout.setSpacing(5)
         bottom_layout.setColumnStretch(7, 1)
@@ -337,65 +366,11 @@ class MainWindow(QMainWindow):
         self.add_plane_button = QPushButton(self.locale.AddPlane)
         bottom_layout.addWidget(self.add_plane_button, 2, 2)
 
+        self.add_cone_button = QPushButton("Add cone")
+        bottom_layout.addWidget(self.add_cone_button, 3, 2)
+
         self.remove_plane_button = QPushButton(self.locale.DeletePlane)
-        bottom_layout.addWidget(self.remove_plane_button, 3, 2)
-
-        x_label = QLabel("X:")
-        bottom_layout.addWidget(x_label, 0, 3)
-        self.x_value = QLineEdit("3.0951")
-        bottom_layout.addWidget(self.x_value, 0, 4)
-
-        y_label = QLabel("Y:")
-        bottom_layout.addWidget(y_label, 1, 3)
-        self.y_value = QLineEdit("5.5910")
-        bottom_layout.addWidget(self.y_value, 1, 4)
-
-        z_label = QLabel("Z:")
-        bottom_layout.addWidget(z_label, 2, 3)
-        self.z_value = QLineEdit("89.5414")
-        bottom_layout.addWidget(self.z_value, 2, 4)
-
-        rotated_label = QLabel(self.locale.Rotated)
-        bottom_layout.addWidget(rotated_label, 3, 3)
-        self.rotated_value = QLineEdit("31.0245")
-        bottom_layout.addWidget(self.rotated_value, 3, 4)
-
-        incline_label = QLabel(self.locale.Tilted)
-        bottom_layout.addWidget(incline_label, 4, 3)
-        self.incline_value = QLineEdit("0")
-        bottom_layout.addWidget(self.incline_value, 4, 4)
-
-        self.xSlider = QSlider()
-        self.xSlider.setOrientation(QtCore.Qt.Horizontal)
-        self.xSlider.setMinimum(-100)
-        self.xSlider.setMaximum(100)
-        self.xSlider.setValue(1)
-        bottom_layout.addWidget(self.xSlider, 0, 5, 1, 3)
-        self.ySlider = QSlider()
-        self.ySlider.setOrientation(QtCore.Qt.Horizontal)
-        self.ySlider.setMinimum(-100)
-        self.ySlider.setMaximum(100)
-        self.ySlider.setValue(1)
-        bottom_layout.addWidget(self.ySlider, 1, 5, 1, 3)
-        self.zSlider = QSlider()
-        self.zSlider.setOrientation(QtCore.Qt.Horizontal)
-        self.zSlider.setMinimum(0)
-        self.zSlider.setMaximum(200)
-        self.zSlider.setValue(1)
-        bottom_layout.addWidget(self.zSlider, 2, 5, 1, 3)
-        self.rotSlider = QSlider()
-        self.rotSlider.setOrientation(QtCore.Qt.Horizontal)
-        self.rotSlider.setMinimum(-180)
-        self.rotSlider.setMaximum(180)
-        self.rotSlider.setValue(0)
-        bottom_layout.addWidget(self.rotSlider, 3, 5, 1, 3)
-        self.incSlider = QSlider()
-        self.incSlider.setOrientation(QtCore.Qt.Horizontal)
-        self.incSlider.setMinimum(-60)
-        self.incSlider.setMaximum(0)
-        self.incSlider.setValue(0)
-        bottom_layout.addWidget(self.incSlider, 4, 5, 1, 3)
-
+        bottom_layout.addWidget(self.remove_plane_button, 4, 2)
         bottom_panel = QWidget()
         bottom_panel.setLayout(bottom_layout)
         bottom_panel.setEnabled(False)
@@ -561,7 +536,8 @@ class MainWindow(QMainWindow):
         self._recreate_splanes(splanes)
         self.splanes_list.clear()
         for i in range(len(splanes)):
-            self.splanes_list.addItem(self.locale.Plane + " " + str(i + 1))
+            self.splanes_list.addItem("Figure" + " " + str(i + 1))
+            # self.splanes_list.addItem(self.locale.Plane + " " + str(i + 1))
 
         if len(splanes) > 0:
             self.splanes_list.setCurrentRow(len(splanes) - 1)
@@ -572,7 +548,12 @@ class MainWindow(QMainWindow):
             self.render.RemoveActor(p)
         self.splanes_actors = []
         for p in splanes:
-            act = gui_utils.create_splane_actor([p.x, p.y, p.z], p.incline, p.rot)
+            if isinstance(p, Plane):
+                act = gui_utils.create_splane_actor([p.x, p.y, p.z], p.incline, p.rot)
+            else:  # isinstance(p, Cone):
+                act = gui_utils.create_cone_actor((p.x, p.y, p.z), p.cone_angle)
+
+            # act = gui_utils.create_cone_actor((p.x, p.y, p.z), p.cone_angle)
             self.splanes_actors.append(act)
             self.render.AddActor(act)
 
@@ -586,17 +567,17 @@ class MainWindow(QMainWindow):
             self.splanes_actors[sel].GetProperty().SetColor(get_color(sett().colors.last_layer))
         self.reload_scene()
 
+    def update_cone(self, cone: Cone, ind):
+        self.render.RemoveActor(self.splanes_actors[ind])
+        act = gui_utils.create_cone_actor((cone.x, cone.y, cone.z), cone.cone_angle)
+        self.splanes_actors[ind] = act
+        self.render.AddActor(act)
+        sel = self.splanes_list.currentRow()
+        if sel == ind:
+            self.splanes_actors[sel].GetProperty().SetColor(get_color(sett().colors.last_layer))
+        self.reload_scene()
+
     def change_combo_select(self, plane, ind):
-        self.rotated_value.setText(str(plane.rot))
-        self.incline_value.setText(str(plane.incline))
-        self.x_value.setText(str(plane.x))
-        self.y_value.setText(str(plane.y))
-        self.z_value.setText(str(plane.z))
-        self.xSlider.setValue(plane.x)
-        self.ySlider.setValue(plane.y)
-        self.zSlider.setValue(plane.z)
-        self.rotSlider.setValue(plane.rot)
-        self.incSlider.setValue(plane.incline)
         for p in self.splanes_actors:
             p.GetProperty().SetColor(get_color(sett().colors.splane))
         self.splanes_actors[ind].GetProperty().SetColor(get_color(sett().colors.last_layer))
@@ -608,7 +589,8 @@ class MainWindow(QMainWindow):
             self.stlActor.VisibilityOff()
             self.render.AddActor(self.stlActor)
 
-        self.rotate_plane(plane_tf)
+        if plane_tf:
+            self.rotate_plane(plane_tf)
 
         self.actors = actors
         for actor in self.actors:
