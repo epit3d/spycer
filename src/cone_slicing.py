@@ -91,7 +91,7 @@ def cone_cross(p_1, p_2, alpha_cone=10.0, p_cone=np.array([0.0, 0.0, 0.0])):
                         min(p_1[0], p_2[0]) <= x_2 <= max(p_1[0], p_2[0]),
                         min(p_1[1], p_2[1]) <= y_2 <= max(p_1[1], p_2[1]),
                         min(p_1[2], p_2[2]) <= z_2 <= max(p_1[2], p_2[2])]
-        if all(check_points) and z_2 <= p_cone[2]:
+        if all(check_points) and z_1 <= p_cone[2] and z_2 <= p_cone[2]:
             return [[x_1, y_1, z_1], [x_2, y_2, z_2]]  # two intersection points
         elif all(check_points[:3]) and z_1 <= p_cone[2]:
             return [x_1, y_1, z_1]  # one intersection point: [x_1, y_1, z_1]
