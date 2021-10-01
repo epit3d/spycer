@@ -25,6 +25,7 @@ class FigureEditor(QWidget):
         # self.layout.setColumnStretch(7, 1)
 
         self.params_widgets = []
+        # TODO add implementation of True/False parameters
         self.params_dict: Dict[str, float] = dict(
             (el, initial_params[el] if initial_params and initial_params[el] else 0) for el in params)
 
@@ -101,8 +102,8 @@ class PlaneEditor(FigureEditor):
 
 
 class ConeEditor(FigureEditor):
-    __params = ["Z", "A"]
-    __constrains = [(0, 200), (0, 89)]
+    __params = ["Z", "A", "H"]
+    __constrains = [(-100, 200), (-60, 60), (15, 150)]
 
     def __init__(self, on_change: Callable[[Dict[str, float]], None],
                  initial_params: Optional[Dict[str, float]] = None):

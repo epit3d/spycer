@@ -70,13 +70,21 @@ def create_splane_actor(center, x_rot, z_rot):
     return actor
 
 
-def create_cone_actor(vertex: Tuple[float, float, float], angle: float):
+def create_cone_actor(vertex: Tuple[float, float, float], angle: float, h: float):
+    # TODO maybe it is not good to pass cone object destructed (hard to add new parameters)
+    """
+    :param angle: angle between z-axis and generaxis
+    """
+    sign = lambda x: 0 if not x else int(x / abs(x))
     coneSource = vtkConeSource()
-    coneSource.SetCenter(*vertex)
-    coneSource.SetAngle(angle)
-    coneSource.SetResolution(60)
-    coneSource.SetHeight(150)
-    coneSource.SetDirection(0, 0, 1)
+    coneSource.SetHeight(h)
+    # coneSource.SetAngle(angle)
+    coneSource.SetResolution(120)
+    # coneSource.SetHeight(vertex[2])
+    import math
+    coneSource.SetRadius(h * math.tan(math.radians(math.fabs(angle))))
+    coneSource.SetCenter(vertex[0], vertex[1], (vertex[2] - (h / 2) if angle > 0 else vertex[2] + h / 2))
+    coneSource.SetDirection(0, 0, 1 * sign(angle))
     # update parameters
 
     mapper = vtkPolyDataMapper()
@@ -84,6 +92,9 @@ def create_cone_actor(vertex: Tuple[float, float, float], angle: float):
 
     actor = vtkActor()
     actor.SetMapper(mapper)
+
+    # create a checkbox for visualization
+    actor.GetProperty().SetRepresentationToWireframe();
     actor.GetProperty().SetColor(get_color(sett().colors.splane))
 
     return actor
@@ -338,9 +349,10 @@ class Plane:
 
 
 class Cone:
-    def __init__(self, cone_angle: float, point: Tuple[float, float, float]):
+    def __init__(self, cone_angle: float, point: Tuple[float, float, float], h: float = 15):
         self.cone_angle = cone_angle
         self.x, self.y, self.z = point
+        self.h = h
 
     def toFile(self) -> str:
         return "X{} Y{} Z{} A{}".format(self.x, self.y, self.z, self.cone_angle)
@@ -350,7 +362,8 @@ class Cone:
             "X": self.x,
             "Y": self.y,
             "Z": self.z,
-            "A": self.cone_angle
+            "A": self.cone_angle,
+            "H": self.h
         }
 
 

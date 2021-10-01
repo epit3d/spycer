@@ -371,6 +371,10 @@ class MainWindow(QMainWindow):
 
         self.remove_plane_button = QPushButton(self.locale.DeletePlane)
         bottom_layout.addWidget(self.remove_plane_button, 4, 2)
+
+        self.edit_figure_button = QPushButton("Edit figure")
+        bottom_layout.addWidget(self.edit_figure_button, 5, 2)
+
         bottom_panel = QWidget()
         bottom_panel.setLayout(bottom_layout)
         bottom_panel.setEnabled(False)
@@ -551,7 +555,7 @@ class MainWindow(QMainWindow):
             if isinstance(p, Plane):
                 act = gui_utils.create_splane_actor([p.x, p.y, p.z], p.incline, p.rot)
             else:  # isinstance(p, Cone):
-                act = gui_utils.create_cone_actor((p.x, p.y, p.z), p.cone_angle)
+                act = gui_utils.create_cone_actor((p.x, p.y, p.z), p.cone_angle, p.h)
 
             # act = gui_utils.create_cone_actor((p.x, p.y, p.z), p.cone_angle)
             self.splanes_actors.append(act)
@@ -559,6 +563,7 @@ class MainWindow(QMainWindow):
 
     def update_splane(self, sp, ind):
         self.render.RemoveActor(self.splanes_actors[ind])
+        # TODO update to pass values as self.splanes_actors[ind], and only then destruct object
         act = gui_utils.create_splane_actor([sp.x, sp.y, sp.z], sp.incline, sp.rot)
         self.splanes_actors[ind] = act
         self.render.AddActor(act)
@@ -569,7 +574,8 @@ class MainWindow(QMainWindow):
 
     def update_cone(self, cone: Cone, ind):
         self.render.RemoveActor(self.splanes_actors[ind])
-        act = gui_utils.create_cone_actor((cone.x, cone.y, cone.z), cone.cone_angle)
+        # TODO update to pass values as self.splanes_actors[ind], and only then destruct object
+        act = gui_utils.create_cone_actor((cone.x, cone.y, cone.z), cone.cone_angle, cone.h)
         self.splanes_actors[ind] = act
         self.render.AddActor(act)
         sel = self.splanes_list.currentRow()
