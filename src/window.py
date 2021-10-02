@@ -318,7 +318,7 @@ class MainWindow(QMainWindow):
         self.slice_vip_button = QPushButton(self.locale.SliceVip)
         buttons_layout.addWidget(self.slice_vip_button, get_cur_row(), 2, 1, 1)
 
-        self.slice_cone_button = QPushButton("Slice cone")
+        self.slice_cone_button = QPushButton(self.locale.SliceCone)
         buttons_layout.addWidget(self.slice_cone_button, get_next_row(), 1, 1, 1)
 
         self.save_gcode_button = QPushButton(self.locale.SaveGCode)
@@ -355,25 +355,25 @@ class MainWindow(QMainWindow):
         bottom_layout.setColumnStretch(7, 1)
 
         self.splanes_list = QListWidget()
-        bottom_layout.addWidget(self.splanes_list, 0, 0, 4, 1)
+        bottom_layout.addWidget(self.splanes_list, 0, 0, 5, 1)
 
         # self.tilted_checkbox = QCheckBox(self.locale.Tilted)
         # bottom_layout.addWidget(self.tilted_checkbox, 0, 2)
 
         self.hide_checkbox = QCheckBox(self.locale.Hide)
-        bottom_layout.addWidget(self.hide_checkbox, 1, 2)
+        bottom_layout.addWidget(self.hide_checkbox, 0, 2)
 
         self.add_plane_button = QPushButton(self.locale.AddPlane)
-        bottom_layout.addWidget(self.add_plane_button, 2, 2)
+        bottom_layout.addWidget(self.add_plane_button, 1, 2)
 
-        self.add_cone_button = QPushButton("Add cone")
-        bottom_layout.addWidget(self.add_cone_button, 3, 2)
+        self.add_cone_button = QPushButton(self.locale.AddCone)
+        bottom_layout.addWidget(self.add_cone_button, 2, 2)
 
         self.remove_plane_button = QPushButton(self.locale.DeletePlane)
-        bottom_layout.addWidget(self.remove_plane_button, 4, 2)
+        bottom_layout.addWidget(self.remove_plane_button, 3, 2)
 
-        self.edit_figure_button = QPushButton("Edit figure")
-        bottom_layout.addWidget(self.edit_figure_button, 5, 2)
+        self.edit_figure_button = QPushButton(self.locale.EditFigure)
+        bottom_layout.addWidget(self.edit_figure_button, 4, 2)
 
         bottom_panel = QWidget()
         bottom_panel.setLayout(bottom_layout)

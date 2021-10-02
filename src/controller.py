@@ -131,7 +131,7 @@ class MainController:
         # print(self.model.splanes)
         self.save_settings("cone")
         if len(self.model.splanes) == 0 or not isinstance(self.model.splanes[0], Cone):
-            showErrorDialog("Add a cone pls (Cone should be the first figure in the list) :(")
+            showErrorDialog(self.view.locale.AddOneConeError)
             return
 
         cone = self.model.splanes[0]

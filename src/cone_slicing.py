@@ -15,7 +15,7 @@ def load_mesh(filename: str) -> mesh:
 
     s = sett()
 
-    model.translate([-s.slicing.originx, -s.slicing.originy, -s.slicing.originz])
+    model.translate([s.slicing.originx, s.slicing.originy, s.slicing.originz])
     return model
 
 
