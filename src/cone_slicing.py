@@ -6,9 +6,20 @@ from typing import Tuple
 import numpy as np
 from stl import mesh
 
+from src.settings import sett
 
-def load_mesh(filename: str) -> mesh:
-    return mesh.Mesh.from_file(filename)
+
+def load_mesh(filename: str, origin: Tuple[float, float, float]) -> mesh:
+    # TODO: we should take already loaded mesh object, because it might be rotated or translated
+    model = mesh.Mesh.from_file(filename)
+
+    s = sett()
+
+    print(origin)
+    print(s.slicing.originx, s.slicing.originy, s.slicing.originz)
+
+    model.translate([-27.09, 0, 0])
+    return model
 
 
 def cross_stl(mesh_input: mesh.Mesh, cone: Tuple[float, Tuple[float, float, float]]):
@@ -31,17 +42,20 @@ def cross_stl(mesh_input: mesh.Mesh, cone: Tuple[float, Tuple[float, float, floa
 
     Function returns a List of paths for each layer
     """
+    s = sett()
     layers = []
+    vertex = [*cone[1]]
+    starting_height = vertex[2]
     # update function to return layers
-    for layer_idx in range(1):
+    for layer_idx in range(100):
         cross_p_list = []
-
+        vertex[2] = starting_height + s.slicing.layer_height * layer_idx
         for triangle in mesh_input:
             t = [triangle[:3], triangle[3:6], triangle[6:9]]
 
             points = []
             for x, y in ((t[0], t[1]), (t[0], t[2]), (t[1], t[2])):
-                cross_p = cone_cross(x, y, cone[0], np.array(cone[1]))  # find cross point(s) of line and cone
+                cross_p = cone_cross(x, y, cone[0], np.array(vertex))  # find cross point(s) of line and cone
                 if cross_p:
                     if len(cross_p) == 3:  # one intersection point of line and cone
                         if cross_p not in points:

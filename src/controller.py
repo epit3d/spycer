@@ -128,7 +128,8 @@ class MainController:
         # self.debugMe()
 
     def slice_cone(self):
-        print(self.model.splanes)
+        # print(self.model.splanes)
+        self.save_settings("cone")
         if len(self.model.splanes) == 0 or not isinstance(self.model.splanes[0], Cone):
             showErrorDialog("Add a cone pls (Cone should be the first figure in the list) :(")
             return
@@ -136,7 +137,8 @@ class MainController:
         cone = self.model.splanes[0]
         # slicing runs somewhere here
         # print(f"slicing is performed for model {self.model.opened_stl}")
-        result = cross_stl(load_mesh(self.model.opened_stl), (cone.cone_angle, (cone.x, cone.y, cone.z)))
+        result = cross_stl(load_mesh(self.model.opened_stl, gui_utils.findStlOrigin(self.view.stlActor)),
+                           (cone.cone_angle, (cone.x, cone.y, cone.z)))
         # print("result", result)
 
         new_res = []
