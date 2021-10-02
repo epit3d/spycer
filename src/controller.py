@@ -137,7 +137,7 @@ class MainController:
         cone = self.model.splanes[0]
         # slicing runs somewhere here
         # print(f"slicing is performed for model {self.model.opened_stl}")
-        result = cross_stl(load_mesh(self.model.opened_stl, gui_utils.findStlOrigin(self.view.stlActor)),
+        result = cross_stl(load_mesh(self.model.opened_stl),
                            (cone.cone_angle, (cone.x, cone.y, cone.z)))
         # print("result", result)
 

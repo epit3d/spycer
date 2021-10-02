@@ -9,16 +9,13 @@ from stl import mesh
 from src.settings import sett
 
 
-def load_mesh(filename: str, origin: Tuple[float, float, float]) -> mesh:
+def load_mesh(filename: str) -> mesh:
     # TODO: we should take already loaded mesh object, because it might be rotated or translated
     model = mesh.Mesh.from_file(filename)
 
     s = sett()
 
-    print(origin)
-    print(s.slicing.originx, s.slicing.originy, s.slicing.originz)
-
-    model.translate([-27.09, 0, 0])
+    model.translate([-s.slicing.originx, -s.slicing.originy, -s.slicing.originz])
     return model
 
 
