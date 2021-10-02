@@ -24,4 +24,4 @@ class MainModel:
             self.splanes.append(gui_utils.Plane(0, 0, path))
 
     def add_cone(self):
-        self.splanes.append(gui_utils.Cone(60, (10, 10, 10)))
+        self.splanes.append(gui_utils.Cone(60, (10, 10, 10), 15))

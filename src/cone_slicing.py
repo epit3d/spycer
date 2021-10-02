@@ -6,9 +6,17 @@ from typing import Tuple
 import numpy as np
 from stl import mesh
 
+from src.settings import sett
+
 
 def load_mesh(filename: str) -> mesh:
-    return mesh.Mesh.from_file(filename)
+    # TODO: we should take already loaded mesh object, because it might be rotated or translated
+    model = mesh.Mesh.from_file(filename)
+
+    s = sett()
+
+    model.translate([-s.slicing.originx, -s.slicing.originy, -s.slicing.originz])
+    return model
 
 
 def cross_stl(mesh_input: mesh.Mesh, cone: Tuple[float, Tuple[float, float, float]]):
@@ -31,17 +39,20 @@ def cross_stl(mesh_input: mesh.Mesh, cone: Tuple[float, Tuple[float, float, floa
 
     Function returns a List of paths for each layer
     """
+    s = sett()
     layers = []
+    vertex = [*cone[1]]
+    starting_height = vertex[2]
     # update function to return layers
-    for layer_idx in range(1):
+    for layer_idx in range(100):
         cross_p_list = []
-
+        vertex[2] = starting_height + s.slicing.layer_height * layer_idx
         for triangle in mesh_input:
             t = [triangle[:3], triangle[3:6], triangle[6:9]]
 
             points = []
             for x, y in ((t[0], t[1]), (t[0], t[2]), (t[1], t[2])):
-                cross_p = cone_cross(x, y, cone[0], np.array(cone[1]))  # find cross point(s) of line and cone
+                cross_p = cone_cross(x, y, cone[0], np.array(vertex))  # find cross point(s) of line and cone
                 if cross_p:
                     if len(cross_p) == 3:  # one intersection point of line and cone
                         if cross_p not in points:
@@ -91,7 +102,7 @@ def cone_cross(p_1, p_2, alpha_cone=10.0, p_cone=np.array([0.0, 0.0, 0.0])):
                         min(p_1[0], p_2[0]) <= x_2 <= max(p_1[0], p_2[0]),
                         min(p_1[1], p_2[1]) <= y_2 <= max(p_1[1], p_2[1]),
                         min(p_1[2], p_2[2]) <= z_2 <= max(p_1[2], p_2[2])]
-        if all(check_points) and z_2 <= p_cone[2]:
+        if all(check_points) and z_1 <= p_cone[2] and z_2 <= p_cone[2]:
             return [[x_1, y_1, z_1], [x_2, y_2, z_2]]  # two intersection points
         elif all(check_points[:3]) and z_1 <= p_cone[2]:
             return [x_1, y_1, z_1]  # one intersection point: [x_1, y_1, z_1]

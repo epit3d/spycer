@@ -7,3 +7,4 @@ out.gcode
 data/
 build/
 dist/
+venv
