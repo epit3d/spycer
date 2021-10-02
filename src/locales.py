@@ -20,6 +20,7 @@ class Locale:
     MoveModel = "Move model"
     Slice3Axes = "Standard 3a slicing"
     SliceVip = "Vip slicing"
+    SliceCone = "Slice cone"
     SaveGCode = "Save GCode"
     FanOffLayer1 = "Fan Off, Layer 1"
     Tilted = "Tilted"
@@ -30,8 +31,10 @@ class Locale:
     SupportsOn = "Add supports"
     EditPlanes = "Edit"
     Analyze = "Analyze"
-    AddPlane = "Add"
-    DeletePlane = "DeletePlane"
+    AddPlane = "Add Plane"
+    AddCone = "Add Cone"
+    DeletePlane = "Delete"
+    EditFigure = "Edit"
     Rotated = "Rotated"
     SupportOffset = "Support offset"
     FloatParsingError = "Error in float number"
@@ -39,6 +42,7 @@ class Locale:
     FanSpeed = "Fan Speed, %:"
     Plane = "Plane"
     AddOnePlaneError = "Add at least one plane"
+    AddOneConeError = "Add at least one cone (it should be first in the list)"
     SmoothSlice = "Non planar 5d (Beta)"
     SmoothFlatSlice = "Non planar (Beta)"
 
@@ -68,6 +72,7 @@ dicts = {
         Slice='Нарезать на слои',
         Slice3Axes="Стандартная нарезка(3d)",
         SliceVip="Нарезка vip",
+        SliceCone="Нарезка конусом",
         SaveGCode='Сохранить GCode',
         FanOffLayer1="Выключить вентилятор на первом слое",
         Retraction="Ретракция",
@@ -78,8 +83,10 @@ dicts = {
         SupportsOn='Добавить поддержки',
         EditPlanes='Редактировать',
         Analyze='Анализировать',
-        AddPlane='Добавить',
+        AddPlane="Добавить плоскость",
+        AddCone="Добавить конус",
         DeletePlane="Удалить",
+        EditFigure="Редактировать",
         Rotated="Повёрнута",
         SupportOffset="Отступ поддержки от детали",
         FloatParsingError="Ошибка в написании дробного числа",
@@ -87,6 +94,7 @@ dicts = {
         FanSpeed="Скорость вентилятора, %",
         Plane="Плоскость",
         AddOnePlaneError="Добавьте хотя бы одну плоскость",
+        AddOneConeError="Первой фигурой должен быть конус",
         SmoothSlice="Непланарная 5d (Beta)",
         SmoothFlatSlice="Непланарная (Beta)"
 
