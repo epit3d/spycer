@@ -4,7 +4,7 @@ import sys
 from functools import partial
 from pathlib import Path
 from shutil import copy2
-from typing import Dict
+from typing import Dict, List
 
 import vtk
 from PyQt5 import QtCore
@@ -48,6 +48,7 @@ class MainController:
         self.view.add_plane_button.clicked.connect(self.add_splane)
         self.view.add_cone_button.clicked.connect(self.add_cone)
         self.view.splanes_list.itemDoubleClicked.connect(self.change_figure_parameters)
+        self.view.edit_figure_button.clicked.connect(self.change_figure_parameters)
         self.view.splanes_list.currentItemChanged.connect(self.change_combo_select)
         self.view.remove_plane_button.clicked.connect(self.remove_splane)
 
@@ -55,6 +56,8 @@ class MainController:
 
     def change_figure_parameters(self):
         ind = self.view.splanes_list.currentRow()
+        if ind == -1:
+            return
 
         # allow to show only one tooling for all figures
         if self.view.parameters_tooling and not self.view.parameters_tooling.isHidden():
@@ -125,7 +128,8 @@ class MainController:
         # self.debugMe()
 
     def slice_cone(self):
-        print(self.model.splanes)
+        # print(self.model.splanes)
+        self.save_settings("cone")
         if len(self.model.splanes) == 0 or not isinstance(self.model.splanes[0], Cone):
             showErrorDialog("Add a cone pls (Cone should be the first figure in the list) :(")
             return
@@ -133,7 +137,8 @@ class MainController:
         cone = self.model.splanes[0]
         # slicing runs somewhere here
         # print(f"slicing is performed for model {self.model.opened_stl}")
-        result = cross_stl(load_mesh(self.model.opened_stl), (cone.cone_angle, (cone.x, cone.y, cone.z)))
+        result = cross_stl(load_mesh(self.model.opened_stl),
+                           (cone.cone_angle, (cone.x, cone.y, cone.z)))
         # print("result", result)
 
         new_res = []
@@ -253,11 +258,11 @@ class MainController:
         self.view.update_splane(self.model.splanes[ind], ind)
 
     def update_cone_common(self, values: Dict[str, float]):
-        center = [0, 0, values.get("Z", 0)]
+        center: List[float] = [0, 0, values.get("Z", 0)]
         ind = self.view.splanes_list.currentRow()
         if ind == -1:
             return
-        self.model.splanes[ind] = gui_utils.Cone(values.get("A", 0), tuple(center))
+        self.model.splanes[ind] = gui_utils.Cone(values.get("A", 0), tuple(center), values.get("H", 15))
         self.view.update_cone(self.model.splanes[ind], ind)
 
     # def debugMe(self):
