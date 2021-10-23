@@ -18,12 +18,12 @@ common:
 hardware: 
   bar_diameter: 1.75
   calibration_x:
-    0: 0
-    10: -0.13
-    20: -0.18
-    30: -0.3
-    40: -0.37
-    50: -0.42
+    a0: 0
+    a10: -0.13
+    a20: -0.18
+    a30: -0.3
+    a40: -0.37
+    a50: -0.42
   flow: 1.0
   plane_center_x: 0
   plane_center_y: 0
