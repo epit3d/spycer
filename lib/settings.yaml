@@ -17,6 +17,13 @@ common:
   splane_diameter: 150
 hardware: 
   bar_diameter: 1.75
+  calibration_x:
+    a0: 0
+    a10: -0.13
+    a20: -0.18
+    a30: -0.3
+    a40: -0.37
+    a50: -0.42
   flow: 1.0
   plane_center_x: 0
   plane_center_y: 0
