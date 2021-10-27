@@ -17,5 +17,9 @@ if __name__ == "__main__":
     #cntrl.load_stl("/home/l1va/Downloads/1_odn2.stl")  # TODO: removeme
     window.showMaximized()
     window.show()
-
-    sys.exit(app.exec_())
+    try:
+        sys.exit(app.exec_())
+    except:
+        print("Error:", sys.exc_info())
+        with open("err.txt", "a+") as file1:
+            file1.write(str(sys.exc_info()))
