@@ -1,3 +1,4 @@
+import logging
 import os
 import subprocess
 import sys
@@ -279,9 +280,11 @@ def call_command(cmd):
     except subprocess.CalledProcessError as er:
         print("Error:", sys.exc_info())
         print("Error2:", er.output)
+        logging.error(str(sys.exc_info()))
         gui_utils.showErrorDialog(repr(er.output))
     except:
         print("Error:", sys.exc_info())
+        logging.error(str(sys.exc_info()))
         # print("Error2:", er.output)
         gui_utils.showErrorDialog(str(sys.exc_info()))
 
