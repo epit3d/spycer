@@ -1,3 +1,4 @@
+import logging
 import sys
 import traceback
 from PyQt5 import QtWidgets
@@ -8,13 +9,14 @@ from src.window import MainWindow
 from src.model import MainModel
 from src.controller import MainController
 
+logging.basicConfig(filename='interface.log', filemode='a+', level=logging.INFO, format='%(asctime)s %(message)s')
+
 
 def excepthook(exc_type, exc_value, exc_tb):
     tb = "".join(traceback.format_exception(exc_type, exc_value, exc_tb))
     print("error catched!:")
     print("error message:\n", tb)
-    with open("err.txt", "a+") as file1:
-        file1.write(tb + "\n")
+    logging.error(tb)
     QtWidgets.QApplication.quit()
 
 
