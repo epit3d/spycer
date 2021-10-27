@@ -25,8 +25,8 @@ exe = EXE(pyz,
           a.zipfiles,
           a.datas,
           name='spycer',
-          debug=True,
+          debug=False,
           strip=False,
           upx=True,
           runtime_tmpdir=None,
-          console=True)
+          console=False)
