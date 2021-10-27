@@ -280,6 +280,10 @@ def call_command(cmd):
         print("Error:", sys.exc_info())
         print("Error2:", er.output)
         gui_utils.showErrorDialog(repr(er.output))
+    except:
+        print("Error:", sys.exc_info())
+        # print("Error2:", er.output)
+        gui_utils.showErrorDialog(sys.exc_info())
 
 
 def save_splanes_to_file(splanes, filename):
