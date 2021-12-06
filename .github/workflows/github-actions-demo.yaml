@@ -26,7 +26,7 @@ jobs:
         run: |
           pyinstaller main.spec
       - name: Copy additional files
-        run: mv -t dist lib settings.yaml
+        run: mv lib dist && mv settings.yaml dist/settings.yaml
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
