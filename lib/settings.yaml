@@ -1,8 +1,8 @@
 analyzer: 
-  cmd: ./goosli --cmd=analyze --settings=lib/settings.yaml
+  cmd: ./lib/goosli --cmd=analyze --settings=lib/settings.yaml
   result: analyze_triangles.txt
 colorizer: 
-  cmd: ./goosli --cmd=colorize --settings=lib/settings.yaml
+  cmd: ./lib/goosli --cmd=colorize --settings=lib/settings.yaml
   color: Red
   result: colorize_triangles.bin
 colors: 
@@ -13,11 +13,11 @@ colors:
   plane: Cyan
   splane: Gold
 common: 
-  lang: en
+  lang: ru
   splane_diameter: 150
 hardware: 
   bar_diameter: 1.75
-  calibration_x:
+  calibration_x: 
     a0: 0
     a10: -0.13
     a20: -0.18
@@ -37,7 +37,7 @@ slicing:
   bed_temperature: 60
   bottom_layers: 3
   bottom_of_cut_layers: 1
-  cmd: ./goosli --cmd=slice --settings=lib/settings.yaml
+  cmd: ./lib/goosli --cmd=slice --settings=lib/settings.yaml
   extruder_temperature: 200
   fan_off_layer1: false
   fan_speed: 95
