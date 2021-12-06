@@ -1,3 +1,4 @@
+import math
 from typing import List
 
 from src import gui_utils
@@ -57,6 +58,14 @@ def parseArgs(args, x, y, z, a, b, absolute=True):
             br = float(arg[1:])
         elif arg[0] == ";":
             break
+        elif arg[0] == "U":  # rotation around z of bed planer
+            # convert from cylindrical coordinates to xyz
+            u = float(arg[1:])
+            r = xr
+
+            xr = r * math.cos(u)
+            yr = r * math.sin(u)
+
     if absolute:
         return xr, yr, zr, ar, br
     return xr + x, yr + y, zr + z, ar + a, br + b
