@@ -71,12 +71,12 @@ def parseArgs(args, x, y, z, a, b, absolute=True):
     return xr + x, yr + y, zr + z, ar + a, br + b
 
 
-def parseRotation(args):
+def parseRotation(args: List[str]):
     e = 0
     for arg in args:
         if len(arg) == 0:
             continue
-        if arg[0] == "E":
+        if arg[0].lower() == "U".lower() or arg[0].lower() == "V".lower():
             e = float(arg[1:])
         elif arg[0] == ";":
             break
@@ -132,35 +132,25 @@ def parseGCode(lines):
         if line == "T2":
             t = 2
         else:
-            args = line.split(" ")
-            if args[0] == "G0":  # move to (or rotate)
+            line = line + ";" if len(line) == 0 or ";" not in line else line
+            args, comment = line.split(";")[:2]
+            args = args.split(" ")
+            if comment.lower() == "rotation":  # we have either rotation or incline
+                finishLayer()
+                # if any(a.lower().startswith('u') for a in args):  # rotation
+                rotations.append(Rotation(rotations[-1].x_rot, parseRotation(args[1:])))
+            elif comment.lower() == "incline":
+                finishLayer()
+                # if any(a.lower().startswith('v') for a in args):  # incline
+                rotations.append(Rotation(parseRotation(args[1:]), rotations[-1].z_rot))
+            elif args[0] == "G0":  # move to (or rotate)
                 if len(path) > 1:  # finish path and start new
                     layer.append(path)
                 x, y, z, a, b = parseArgs(args[1:], x, y, z, a, b, abs_pos)
                 path = [Point(x, y, z, a, b)]
             elif args[0] == "G1":  # draw to
-                if t == 0:
-                    x, y, z, a, b = parseArgs(args[1:], x, y, z, a, b, abs_pos)
-                    path.append(Point(x, y, z, a, b))
-                    # if len(layers)>4050:  #TODO REMOVEMe
-                    #     break
-                    # finishLayer()
-
-                elif t == 1:  # rotate
-                    finishLayer()  # rotation could not be inside the layer
-                    rotations.append(Rotation(rotations[-1].x_rot, parseRotation(args[1:])))
-                else:  # inclines
-                    finishLayer()  # rotation could not be inside the layer
-                    rotations.append(Rotation(parseRotation(args[1:]), rotations[-1].z_rot))
-            # elif args[0] == "G62":  # rotate plate
-            #     finishLayer()  # rotation could not be inside the layer
-            #     rotations.append(parseRotation(args[1:]))
-            # elif args[0] == "M43":  # incline X
-            #     finishLayer()  # rotation could not be inside the layer
-            #     rotations.append(Rotation(InclineXValue, rotations[-1].z_rot))
-            # elif args[0] == "M42":  # incline X BACK
-            #     finishLayer()  # rotation could not be inside the layer
-            #     rotations.append(Rotation(0, rotations[-1].z_rot))
+                x, y, z, a, b = parseArgs(args[1:], x, y, z, a, b, abs_pos)
+                path.append(Point(x, y, z, a, b))
             elif args[0] == "G90":  # absolute positioning
                 abs_pos = True
             elif args[0] == "G91":  # relative positioning
