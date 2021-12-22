@@ -61,7 +61,7 @@ def parseArgs(args, x, y, z, a, b, absolute=True):
         elif arg[0] == "U":  # rotation around z of bed planer
             # convert from cylindrical coordinates to xyz
             u = float(arg[1:])
-            r = xr
+            r = yr
 
             xr = r * math.cos(u)
             yr = r * math.sin(u)
