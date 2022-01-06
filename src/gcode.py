@@ -1,6 +1,7 @@
 import math
 from typing import List
 
+import src.settings
 from src import gui_utils
 import vtk
 
@@ -59,13 +60,36 @@ def parseArgs(args, x, y, z, a, b, absolute=True):
         elif arg[0] == ";":
             break
         elif arg[0] == "U":  # rotation around z of bed planer
+            import numpy as np
+            s = src.settings.sett()
+            rotationPoint = np.array(
+                [s.hardware.rotation_center_x, s.hardware.rotation_center_y, s.hardware.rotation_center_z])
+
             # convert from cylindrical coordinates to xyz
             u = float(arg[1:])
             r = yr
+            z = zr
 
-            xr = r * math.cos(u)
-            yr = r * math.sin(u)
+            def rotation_matrix(axis, theta):
+                import math
+                import numpy as np
+                """
+                Return the rotation matrix associated with counterclockwise rotation about
+                the given axis by theta radians.
+                """
+                axis = np.asarray(axis)
+                axis = axis / math.sqrt(np.dot(axis, axis))
+                a = math.cos(theta / 2.0)
+                b, c, d = -axis * math.sin(theta / 2.0)
+                aa, bb, cc, dd = a * a, b * b, c * c, d * d
+                bc, ad, ac, ab, bd, cd = b * c, a * d, a * c, a * b, b * d, c * d
+                return np.array([[aa + bb - cc - dd, 2 * (bc + ad), 2 * (bd - ac)],
+                                 [2 * (bc - ad), aa + cc - bb - dd, 2 * (cd + ab)],
+                                 [2 * (bd + ac), 2 * (cd - ab), aa + dd - bb - cc]])
 
+            import numpy as np
+            cone_axis = rotation_matrix([1, 0, 0], math.pi / 3).dot([0, 0, 1])
+            xr, yr, zr = rotation_matrix(cone_axis, -u).dot(np.array([0, r, z]) - rotationPoint) + rotationPoint
     if absolute:
         return xr, yr, zr, ar, br
     return xr + x, yr + y, zr + z, ar + a, br + b
