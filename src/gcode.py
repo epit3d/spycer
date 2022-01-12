@@ -66,7 +66,7 @@ def parseArgs(args, x, y, z, a, b, absolute=True):
                 [s.hardware.rotation_center_x, s.hardware.rotation_center_y, s.hardware.rotation_center_z])
 
             # convert from cylindrical coordinates to xyz
-            u = float(arg[1:])
+            u = math.radians(float(arg[1:]))
             r = yr
             z = zr
 
