@@ -39,7 +39,7 @@ class Point:
         return res
 
 
-def parseArgs(args, x, y, z, a, b, absolute=True):
+def parseArgs(args, x, y, z, a, b, x_rot, absolute=True):
     xr, yr, zr, ar, br = 0, 0, 0, 0, 0
     if absolute:
         xr, yr, zr, ar, br = x, y, z, a, b
@@ -88,7 +88,7 @@ def parseArgs(args, x, y, z, a, b, absolute=True):
                                  [2 * (bd + ac), 2 * (cd - ab), aa + dd - bb - cc]])
 
             import numpy as np
-            cone_axis = rotation_matrix([1, 0, 0], math.pi / 3).dot([0, 0, 1])
+            cone_axis = rotation_matrix([1, 0, 0], np.radians(x_rot)).dot([0, 0, 1])
             xr, yr, zr = rotation_matrix(cone_axis, -u).dot(np.array([0, r, z]) - rotationPoint) + rotationPoint
     if absolute:
         return xr, yr, zr, ar, br
@@ -170,10 +170,10 @@ def parseGCode(lines):
             elif args[0] == "G0":  # move to (or rotate)
                 if len(path) > 1:  # finish path and start new
                     layer.append(path)
-                x, y, z, a, b = parseArgs(args[1:], x, y, z, a, b, abs_pos)
+                x, y, z, a, b = parseArgs(args[1:], x, y, z, a, b, rotations[-1].x_rot, abs_pos)
                 path = [Point(x, y, z, a, b)]
             elif args[0] == "G1":  # draw to
-                x, y, z, a, b = parseArgs(args[1:], x, y, z, a, b, abs_pos)
+                x, y, z, a, b = parseArgs(args[1:], x, y, z, a, b, rotations[-1].x_rot, abs_pos)
                 path.append(Point(x, y, z, a, b))
             elif args[0] == "G90":  # absolute positioning
                 abs_pos = True
