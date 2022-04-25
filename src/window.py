@@ -66,7 +66,7 @@ class MainWindow(QMainWindow):
         ####################
 
     def init3d_widget(self):
-        widget3d = QVTKRenderWindowInteractor()
+        widget3d = QVTKRenderWindowInteractor(self)
 
         self.render = vtk.vtkRenderer()
         self.render.SetBackground(get_color(sett().colors.background))
