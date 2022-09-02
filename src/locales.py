@@ -45,6 +45,9 @@ class Locale:
     AddOneConeError = "Add at least one cone (it should be first in the list)"
     SmoothSlice = "Non planar 5d (Beta)"
     SmoothFlatSlice = "Non planar (Beta)"
+    StlMoveTranslate = "Translate"
+    StlMoveRotate = "Rotate"
+    StlMoveScale = "Scale"
 
     def __init__(self, **entries):
         self.__dict__.update(entries)
@@ -96,8 +99,10 @@ dicts = {
         AddOnePlaneError="Добавьте хотя бы одну плоскость",
         AddOneConeError="Первой фигурой должен быть конус",
         SmoothSlice="Непланарная 5d (Beta)",
-        SmoothFlatSlice="Непланарная (Beta)"
-
+        SmoothFlatSlice="Непланарная (Beta)",
+        StlMoveTranslate="Перемещение",
+        StlMoveRotate = "Вращение",
+        StlMoveScale = "Масштабирование",
     ),
 }
 

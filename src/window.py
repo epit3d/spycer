@@ -12,6 +12,7 @@ from src import locales, gui_utils, interactor_style
 from src.InteractorAroundActivePlane import InteractionAroundActivePlane
 from src.gui_utils import plane_tf, Plane, Cone
 from src.settings import sett, get_color
+from src.figure_editor import StlMovePanel
 
 NothingState = "nothing"
 GCodeState = "gcode"
@@ -50,7 +51,8 @@ class MainWindow(QMainWindow):
         central_widget = QWidget()
         main_grid = QGridLayout()
         main_grid.addWidget(self.init3d_widget(), 0, 0, 20, 5)
-        main_grid.addWidget(self.init_right_panel(), 0, 5, 20, 2)
+        main_grid.addWidget(self.init_right_panel(), 0, 5, 21, 2)
+        main_grid.addWidget(self.init_stl_move_panel(), 20, 0, 1, 5)
         central_widget.setLayout(main_grid)
         self.setCentralWidget(central_widget)
 
@@ -381,6 +383,47 @@ class MainWindow(QMainWindow):
         self.bottom_panel = bottom_panel
         return bottom_panel
 
+    def init_stl_move_panel(self):
+        stlRotator = gui_utils.StlRotator(self)
+        def rotate(x, y, z):
+            def rotatePos():
+                stlRotator.act(5, [x, y, z])
+            def rotateNeg():
+                stlRotator.act(-5, [x, y, z])
+            def rotateSet(text):
+                stlRotator.set(text, [x, y, z])
+            return rotatePos, rotateNeg, rotateSet
+        
+        stlTranslator = gui_utils.StlTranslator(self)
+        def translate(x, y, z):
+            def translatePos():
+                stlTranslator.act(5, [x, y, z])
+            def translateNeg():
+                stlTranslator.act(-5, [x, y, z])
+            def translateSet(text):
+                stlTranslator.set(text, [x, y, z])
+            return translatePos, translateNeg, translateSet
+
+        self.stl_move_panel = StlMovePanel(
+            {
+                (0, "X") : translate(1, 0, 0),
+                (0, "Y") : translate(0, 1, 0),
+                (0, "Z") : translate(0, 0, 1),
+                (1, "X") : rotate(1, 0, 0),
+                (1, "Y") : rotate(0, 1, 0),
+                (1, "Z") : rotate(0, 0, 1),
+                (2, "X") : None,
+                (2, "Y") : None,
+                (2, "Z") : None,
+            },
+            captions = [
+                self.locale.StlMoveTranslate,
+                self.locale.StlMoveRotate,
+                self.locale.StlMoveScale,
+            ]
+        )
+        return self.stl_move_panel
+        
     def switch_stl_gcode(self):
         if self.model_switch_box.isChecked():
             for actor in self.actors:
@@ -484,6 +527,8 @@ class MainWindow(QMainWindow):
             else:
                 self.boxWidget.SetEnabled(True)
             # self.interactor.GetInteractorStyle().SetCurrentStyleToTrackballActor()
+            
+            self.stl_move_panel.setEnabled(True)
         else:
             self.state_stl()  # TODO: might be not stl but both or gcode
             # self.interactor.SetInteractorStyle(self.camera_interactor_style)
@@ -497,6 +542,8 @@ class MainWindow(QMainWindow):
             self.boxWidget.SetTransform(tf)
             self.updateTransform()
             # self.interactor.GetInteractorStyle().SetCurrentStyleToTrackballCamera()
+            
+            self.stl_move_panel.setEnabled(False)
         self.reload_scene()
 
     def updateTransform(self):
@@ -519,6 +566,7 @@ class MainWindow(QMainWindow):
         self.clear_scene()
         self.boxWidget = None
         self.stlActor = stl_actor
+        self.stlActor.addUserTransformUpdateCallback(self.stl_move_panel.update)
         # self.actor_interactor_style.setStlActor(self.stlActor)
         self.updateTransform()
 

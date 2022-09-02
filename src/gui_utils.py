@@ -178,6 +178,7 @@ def createStlActorInOrigin(filename, colorize=False):
         actor = colorizeSTL(output)
 
     origin = findStlOrigin(output)
+    actor.findCenter()
     transform = vtk.vtkTransform()
     s = sett()
     transform.Translate(-origin[0] + s.hardware.plane_center_x, -origin[1] + s.hardware.plane_center_y,
@@ -321,10 +322,27 @@ def build_actor(source, as_is=False):
         mapper.SetInputData(source)
     else:
         mapper.SetInputData(source.GetOutput())
-    actor = vtk.vtkActor()
+    actor = StlActor()
     actor.SetMapper(mapper)
     return actor
 
+class StlActor(vtkActor):
+    def __init__(self):
+        super().__init__()
+        self.tfUpdateMethods = []
+    def findCenter(self):
+        bound = getBounds(self)
+        x_mid = (bound[0] + bound[1]) / 2
+        y_mid = (bound[2] + bound[3]) / 2
+        z_mid = (bound[4] + bound[5]) / 2
+        self.center =x_mid, y_mid, z_mid
+    def addUserTransformUpdateCallback(self, *methods):
+        self.tfUpdateMethods += methods
+    def SetUserTransform(self, *args, **kwargs):
+        tf = args[0]
+        for method in self.tfUpdateMethods:
+            method(tf.GetPosition(), tf.GetOrientation(), tf.GetScale())
+        super().SetUserTransform(*args, **kwargs)
 
 class Plane:
     def __init__(self, incl, rot, point):
@@ -437,3 +455,71 @@ def createLine(point1: tuple, point2: tuple, color: str = "Black") -> vtkActor:
     actor.GetProperty().SetColor(vtkNamedColors().GetColor3d(color))
 
     return actor
+
+class StlMover:
+    def __init__(self, view):
+        self.view = view
+        self.tf = vtk.vtkTransform()
+    def getTransform(self):
+        self.view.boxWidget.GetTransform(self.tf)
+    def setTransform(self):
+        self.view.boxWidget.SetTransform(self.tf)
+        self.view.stlActor.SetUserTransform(self.tf)
+        self.view.updateTransform()
+        self.view.reload_scene()
+    def set(self, text, axis):
+        try:
+            val = float(text)
+        except ValueError:
+            val = 0
+        self.getTransform()
+        self.setMethod(val, axis)
+        self.setTransform()
+    def setMethod(self, val, axis):
+        pass
+    def act(self, val, axis):
+        self.getTransform()
+        self.actMethod(val, axis)
+        self.setTransform()
+    def actMethod(self, val, axis):
+        pass
+        
+class StlTranslator(StlMover):
+    def __init__(self, view):
+        super().__init__(view)
+    def setMethod(self, val, axis):
+        x, y, z = axis
+        print(self.tf.GetMatrix())
+        self.tf.GetMatrix().SetElement((x * 1 + y * 2 + z * 3) - 1, 3, val)
+        print(self.tf.GetMatrix())
+    def actMethod(self, val, axis):
+        x, y, z = axis
+        print(x, y, z)
+        print(self.tf.GetPosition(), self.tf.GetOrientation())
+        self.tf.PostMultiply()
+        self.tf.Translate(x * val, y * val, z * val)
+        self.tf.PreMultiply()
+        
+class StlRotator(StlMover):
+    def __init__(self, view):
+        super().__init__(view)
+    def actMethod(self, val, axis):
+        x, y, z = axis
+        print(x, y, z)    
+        print(self.tf.GetPosition(), self.tf.GetOrientation())
+        m0 = self.tf.GetMatrix()
+        m1 = vtk.vtkMatrix4x4()
+        for i in range(3):
+            for j in range(3):
+                m1.SetElement(i, j , m0.GetElement(i,j))
+        m1.Transpose()
+        tf1 = vtk.vtkTransform()
+        tf1.SetMatrix(m1)
+        vx, vy, vz = tf1.TransformVector(x, y, z)
+        print(vx, vy, vz)
+        
+        ox, oy, oz = self.view.stlActor.center
+        self.tf.Translate(ox, oy, oz)
+        self.tf.RotateWXYZ(val, vx, vy, vz)
+        self.tf.Translate(-ox, -oy, -oz)
+
