@@ -3,6 +3,8 @@ from typing import Tuple, List, Dict
 import vtk
 from PyQt5.QtWidgets import QMessageBox
 from vtkmodules.vtkCommonColor import vtkNamedColors
+from vtkmodules.vtkCommonMath import vtkMatrix4x4
+from vtkmodules.vtkCommonTransforms import vtkTransform
 from vtkmodules.vtkFiltersSources import vtkLineSource, vtkConeSource
 from vtkmodules.vtkRenderingCore import vtkActor, vtkPolyDataMapper
 
@@ -459,7 +461,7 @@ def createLine(point1: tuple, point2: tuple, color: str = "Black") -> vtkActor:
 class StlMover:
     def __init__(self, view):
         self.view = view
-        self.tf = vtk.vtkTransform()
+        self.tf = vtkTransform()
     def getTransform(self):
         self.view.boxWidget.GetTransform(self.tf)
     def setTransform(self):
@@ -489,9 +491,10 @@ class StlTranslator(StlMover):
         super().__init__(view)
     def setMethod(self, val, axis):
         x, y, z = axis
-        print(self.tf.GetMatrix())
-        self.tf.GetMatrix().SetElement((x * 1 + y * 2 + z * 3) - 1, 3, val)
-        print(self.tf.GetMatrix())
+        m = vtkMatrix4x4()
+        self.tf.GetMatrix(m)
+        m.SetElement((x * 1 + y * 2 + z * 3) - 1, 3, val)
+        self.tf.SetMatrix(m)
     def actMethod(self, val, axis):
         x, y, z = axis
         print(x, y, z)
@@ -508,12 +511,12 @@ class StlRotator(StlMover):
         print(x, y, z)    
         print(self.tf.GetPosition(), self.tf.GetOrientation())
         m0 = self.tf.GetMatrix()
-        m1 = vtk.vtkMatrix4x4()
+        m1 = vtkMatrix4x4()
         for i in range(3):
             for j in range(3):
                 m1.SetElement(i, j , m0.GetElement(i,j))
         m1.Transpose()
-        tf1 = vtk.vtkTransform()
+        tf1 = vtkTransform()
         tf1.SetMatrix(m1)
         vx, vy, vz = tf1.TransformVector(x, y, z)
         print(vx, vy, vz)
