@@ -342,8 +342,14 @@ class StlActor(vtkActor):
         self.tfUpdateMethods += methods
     def SetUserTransform(self, *args, **kwargs):
         tf = args[0]
+        сenterTf = vtkTransform()
+        сenterTf.DeepCopy(tf)
+        сenterTf.Translate(self.center)
+        ox, oy, oz = сenterTf.GetPosition()
+        _, _, cz = self.center
+        center = ox, oy, oz - cz
         for method in self.tfUpdateMethods:
-            method(tf.GetPosition(), tf.GetOrientation(), tf.GetScale())
+            method(center, tf.GetOrientation(), tf.GetScale())
         super().SetUserTransform(*args, **kwargs)
 
 class Plane:
@@ -491,14 +497,15 @@ class StlTranslator(StlMover):
         super().__init__(view)
     def setMethod(self, val, axis):
         x, y, z = axis
+        cx, cy, cz = self.view.stlActor.center
+        self.tf.Translate(cx, cy, cz)
         m = vtkMatrix4x4()
         self.tf.GetMatrix(m)
-        m.SetElement((x * 1 + y * 2 + z * 3) - 1, 3, val)
+        m.SetElement((x * 1 + y * 2 + z * 3) - 1, 3, val + cz * z)
         self.tf.SetMatrix(m)
+        self.tf.Translate(-cx, -cy, -cz)
     def actMethod(self, val, axis):
         x, y, z = axis
-        print(x, y, z)
-        print(self.tf.GetPosition(), self.tf.GetOrientation())
         self.tf.PostMultiply()
         self.tf.Translate(x * val, y * val, z * val)
         self.tf.PreMultiply()
