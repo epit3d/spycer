@@ -6,7 +6,7 @@ from vtkmodules.vtkCommonColor import vtkNamedColors
 from vtkmodules.vtkCommonMath import vtkMatrix4x4
 from vtkmodules.vtkCommonTransforms import vtkTransform
 from vtkmodules.vtkFiltersSources import vtkLineSource, vtkConeSource
-from vtkmodules.vtkRenderingCore import vtkActor, vtkPolyDataMapper
+from vtkmodules.vtkRenderingCore import vtkActor, vtkPolyDataMapper, vtkAssembly
 
 from src.settings import sett, get_color
 
@@ -177,7 +177,9 @@ def createStlActorInOrigin(filename, colorize=False):
     output = reader.GetOutput()
 
     if colorize:
-        actor = colorizeSTL(output)
+        actor = ColorizedStlActor(output)
+    else:
+        actor = StlActor(output)
 
     origin = findStlOrigin(output)
     actor.findCenter()
@@ -268,67 +270,17 @@ def plane_tf(rotation):
     return tf
 
 
-def colorizeSTL(output):
-    polys = output.GetPolys()
-    allpoints = output.GetPoints()
-
-    tocolor = []
-    with open(sett().colorizer.result, "rb") as f:
-        content = f.read()
-        for b in content:
-            if b == 1:
-                tocolor.append(True)
-            else:
-                tocolor.append(False)
-
-    triangles = vtk.vtkCellArray()
-    triangles2 = vtk.vtkCellArray()
-    for i in range(polys.GetSize()):
-        idList = vtk.vtkIdList()
-        polys.GetNextCell(idList)
-        num = idList.GetNumberOfIds()
-        if num != 3:
-            break
-
-        triangle = vtk.vtkTriangle()
-        triangle.GetPointIds().SetId(0, idList.GetId(0))
-        triangle.GetPointIds().SetId(1, idList.GetId(1))
-        triangle.GetPointIds().SetId(2, idList.GetId(2))
-
-        if tocolor[i]:
-            triangles.InsertNextCell(triangle)
-        else:
-            triangles2.InsertNextCell(triangle)
-
-    trianglePolyData = vtk.vtkPolyData()
-    trianglePolyData.SetPoints(allpoints)
-    trianglePolyData.SetPolys(triangles)
-    trianglePolyData2 = vtk.vtkPolyData()
-    trianglePolyData2.SetPoints(allpoints)
-    trianglePolyData2.SetPolys(triangles2)
-
-    actor = build_actor(trianglePolyData, True)
-    actor.GetProperty().SetColor(get_color(sett().colorizer.color))
-    actor2 = build_actor(trianglePolyData2, True)
-
-    assembly = vtk.vtkAssembly()
-    assembly.AddPart(actor)
-    assembly.AddPart(actor2)
-
-    return assembly
-
-
 def build_actor(source, as_is=False):
     mapper = vtk.vtkPolyDataMapper()
     if as_is:
         mapper.SetInputData(source)
     else:
         mapper.SetInputData(source.GetOutput())
-    actor = StlActor()
+    actor = vtk.vtkActor()
     actor.SetMapper(mapper)
     return actor
 
-class StlActor(vtkActor):
+class StlActorMixin:
     def __init__(self):
         super().__init__()
         self.tfUpdateMethods = []
@@ -351,6 +303,61 @@ class StlActor(vtkActor):
         for method in self.tfUpdateMethods:
             method(center, tf.GetOrientation(), tf.GetScale())
         super().SetUserTransform(*args, **kwargs)
+
+class StlActor(StlActorMixin, vtkActor):
+    def __init__(self, output):
+        super().__init__()
+        mapper = vtk.vtkPolyDataMapper()
+        mapper.SetInputData(output)
+        self.SetMapper(mapper)
+
+class ColorizedStlActor(StlActorMixin, vtkAssembly):
+    def __init__(self, output):
+        super().__init__()
+        polys = output.GetPolys()
+        allpoints = output.GetPoints()
+    
+        tocolor = []
+        with open(sett().colorizer.result, "rb") as f:
+            content = f.read()
+            for b in content:
+                if b == 1:
+                    tocolor.append(True)
+                else:
+                    tocolor.append(False)
+    
+        triangles = vtk.vtkCellArray()
+        triangles2 = vtk.vtkCellArray()
+        for i in range(polys.GetSize()):
+            idList = vtk.vtkIdList()
+            polys.GetNextCell(idList)
+            num = idList.GetNumberOfIds()
+            if num != 3:
+                break
+    
+            triangle = vtk.vtkTriangle()
+            triangle.GetPointIds().SetId(0, idList.GetId(0))
+            triangle.GetPointIds().SetId(1, idList.GetId(1))
+            triangle.GetPointIds().SetId(2, idList.GetId(2))
+    
+            if tocolor[i]:
+                triangles.InsertNextCell(triangle)
+            else:
+                triangles2.InsertNextCell(triangle)
+    
+        trianglePolyData = vtk.vtkPolyData()
+        trianglePolyData.SetPoints(allpoints)
+        trianglePolyData.SetPolys(triangles)
+        trianglePolyData2 = vtk.vtkPolyData()
+        trianglePolyData2.SetPoints(allpoints)
+        trianglePolyData2.SetPolys(triangles2)
+    
+        actor = build_actor(trianglePolyData, True)
+        actor.GetProperty().SetColor(get_color(sett().colorizer.color))
+        actor2 = build_actor(trianglePolyData2, True)
+    
+        self.AddPart(actor)
+        self.AddPart(actor2)
 
 class Plane:
     def __init__(self, incl, rot, point):
