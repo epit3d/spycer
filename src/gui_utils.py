@@ -270,19 +270,22 @@ def plane_tf(rotation):
     return tf
 
 
+class ActorFromPolyData(vtkActor):
+    def __init__(self, output):
+        super().__init__()
+        mapper = vtkPolyDataMapper()
+        mapper.SetInputData(output)
+        self.SetMapper(mapper)
+
 def build_actor(source, as_is=False):
-    mapper = vtk.vtkPolyDataMapper()
     if as_is:
-        mapper.SetInputData(source)
+        return ActorFromPolyData(source)
     else:
-        mapper.SetInputData(source.GetOutput())
-    actor = vtk.vtkActor()
-    actor.SetMapper(mapper)
-    return actor
+        return ActorFromPolyData(source.GetOutput())
 
 class StlActorMixin:
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.tfUpdateMethods = []
     def findCenter(self):
         bound = getBounds(self)
@@ -304,12 +307,9 @@ class StlActorMixin:
             method(center, tf.GetOrientation(), tf.GetScale())
         super().SetUserTransform(*args, **kwargs)
 
-class StlActor(StlActorMixin, vtkActor):
+class StlActor(StlActorMixin, ActorFromPolyData):
     def __init__(self, output):
-        super().__init__()
-        mapper = vtk.vtkPolyDataMapper()
-        mapper.SetInputData(output)
-        self.SetMapper(mapper)
+        super().__init__(output)
 
 class ColorizedStlActor(StlActorMixin, vtkAssembly):
     def __init__(self, output):
@@ -352,9 +352,9 @@ class ColorizedStlActor(StlActorMixin, vtkAssembly):
         trianglePolyData2.SetPoints(allpoints)
         trianglePolyData2.SetPolys(triangles2)
     
-        actor = build_actor(trianglePolyData, True)
+        actor = ActorFromPolyData(trianglePolyData)
         actor.GetProperty().SetColor(get_color(sett().colorizer.color))
-        actor2 = build_actor(trianglePolyData2, True)
+        actor2 = ActorFromPolyData(trianglePolyData2)
     
         self.AddPart(actor)
         self.AddPart(actor2)
