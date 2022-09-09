@@ -298,8 +298,13 @@ class StlActorMixin:
         self.center =x_mid, y_mid, z_mid
     def addUserTransformUpdateCallback(self, *methods):
         self.tfUpdateMethods += methods
+        tf = self.GetUserTransform()
+        self._execUserTransformUpdateCallback(tf)
     def SetUserTransform(self, *args, **kwargs):
         tf = args[0]
+        self._execUserTransformUpdateCallback(tf)
+        super().SetUserTransform(*args, **kwargs)
+    def _execUserTransformUpdateCallback(self, tf):
         сenterTf = vtkTransform()
         сenterTf.DeepCopy(tf)
         сenterTf.Translate(self.center)
@@ -309,7 +314,6 @@ class StlActorMixin:
         center = ox, oy, oz - (cz - bnz)
         for method in self.tfUpdateMethods:
             method(center, tf.GetOrientation(), tf.GetScale())
-        super().SetUserTransform(*args, **kwargs)
 
 class ActorWithColor(vtkAssembly):
     def __init__(self, output):
