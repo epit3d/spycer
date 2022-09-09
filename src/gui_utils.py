@@ -182,7 +182,6 @@ def createStlActorInOrigin(filename, colorize=False):
         actor = StlActor(output)
 
     origin = findStlOrigin(output)
-    actor.findCenter()
     transform = vtk.vtkTransform()
     s = sett()
     transform.Translate(-origin[0] + s.hardware.plane_center_x, -origin[1] + s.hardware.plane_center_y,
@@ -287,11 +286,15 @@ class StlActorMixin:
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.tfUpdateMethods = []
+        
+        self.findBounds()
+        self.findCenter()
+    def findBounds(self):
+        self.bound = getBounds(self)
     def findCenter(self):
-        bound = getBounds(self)
-        x_mid = (bound[0] + bound[1]) / 2
-        y_mid = (bound[2] + bound[3]) / 2
-        z_mid = (bound[4] + bound[5]) / 2
+        x_mid = (self.bound[0] + self.bound[1]) / 2
+        y_mid = (self.bound[2] + self.bound[3]) / 2
+        z_mid = (self.bound[4] + self.bound[5]) / 2
         self.center =x_mid, y_mid, z_mid
     def addUserTransformUpdateCallback(self, *methods):
         self.tfUpdateMethods += methods
@@ -302,7 +305,8 @@ class StlActorMixin:
         сenterTf.Translate(self.center)
         ox, oy, oz = сenterTf.GetPosition()
         _, _, cz = self.center
-        center = ox, oy, oz - cz
+        _, _, _, _, bnz, _ = self.bound 
+        center = ox, oy, oz - (cz - bnz)
         for method in self.tfUpdateMethods:
             method(center, tf.GetOrientation(), tf.GetScale())
         super().SetUserTransform(*args, **kwargs)
@@ -505,10 +509,11 @@ class StlTranslator(StlMover):
     def setMethod(self, val, axis):
         x, y, z = axis
         cx, cy, cz = self.view.stlActor.center
+        _, _, _, _, bnz, _ = self.view.stlActor.bound
         self.tf.Translate(cx, cy, cz)
         m = vtkMatrix4x4()
         self.tf.GetMatrix(m)
-        m.SetElement((x * 1 + y * 2 + z * 3) - 1, 3, val + cz * z)
+        m.SetElement((x * 1 + y * 2 + z * 3) - 1, 3, val + (cz - bnz) * z)
         self.tf.SetMatrix(m)
         self.tf.Translate(-cx, -cy, -cz)
     def actMethod(self, val, axis):
