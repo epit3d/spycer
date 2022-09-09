@@ -528,6 +528,31 @@ class StlTranslator(StlMover):
 class StlRotator(StlMover):
     def __init__(self, view):
         super().__init__(view)
+    def setMethod(self, val, axis):
+        x, y, z = axis
+        cx, cy, cz = self.view.stlActor.center
+        self.tf.Translate(cx, cy, cz)
+        
+        rx, ry, rz = self.tf.GetOrientation()
+        rx = val if x else rx
+        ry = val if y else ry
+        rz = val if z else rz
+        
+        tf = vtkTransform()
+        tf.RotateZ(rz)
+        tf.RotateX(rx)
+        tf.RotateY(ry)
+        
+        m = vtkMatrix4x4()
+        self.tf.GetMatrix(m)
+
+        for i in range(3):
+            for j in range(3):
+                m.SetElement(i, j , tf.GetMatrix().GetElement(i,j))
+                
+        self.tf.SetMatrix(m)
+        self.tf.Translate(-cx, -cy, -cz)
+
     def actMethod(self, val, axis):
         x, y, z = axis
         print(x, y, z)    
