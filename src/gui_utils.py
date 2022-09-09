@@ -311,13 +311,8 @@ class StlActorMixin:
             method(center, tf.GetOrientation(), tf.GetScale())
         super().SetUserTransform(*args, **kwargs)
 
-class StlActor(StlActorMixin, ActorFromPolyData):
+class ActorWithColor(vtkAssembly):
     def __init__(self, output):
-        super().__init__(output)
-
-class ColorizedStlActor(StlActorMixin, vtkAssembly):
-    def __init__(self, output):
-        super().__init__()
         polys = output.GetPolys()
         allpoints = output.GetPoints()
     
@@ -362,6 +357,14 @@ class ColorizedStlActor(StlActorMixin, vtkAssembly):
     
         self.AddPart(actor)
         self.AddPart(actor2)
+
+class StlActor(StlActorMixin, ActorFromPolyData):
+    def __init__(self, output):
+        super().__init__(output)
+
+class ColorizedStlActor(StlActorMixin, ActorWithColor):
+    def __init__(self, output):
+        super().__init__(output)
 
 class Plane:
     def __init__(self, incl, rot, point):
