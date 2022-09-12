@@ -113,15 +113,9 @@ class ConeEditor(FigureEditor):
         return self.__params
     
 class StlMovePanel(QWidget):
-    def editCallback(self, baseCallback):
-        def callback(*args):
-            self.noNeedToUpdate = True
-            baseCallback(*args)
-        return callback
     def __init__(self, methods, captions):
         super().__init__()
         #intended to avoid panel updating when actor moved by inserting value in QlineEdit
-        self.noNeedToUpdate = False
         self.setEnabled(False)
         
         self.edits = {}
@@ -152,7 +146,7 @@ class StlMovePanel(QWidget):
                 act_pos, act_neg, act_set = methods[col, param]
                 btn_pos.clicked.connect(act_pos)
                 btn_neg.clicked.connect(act_neg)
-                edit.textChanged.connect(self.editCallback(act_set))
+                edit.textChanged.connect(act_set)
                 
             mainLayout.addLayout(gridLayout)
             
@@ -164,12 +158,12 @@ class StlMovePanel(QWidget):
         self.setLayout(mainLayout)
         
     def update(self, pos, orient, sacale):
-        if self.noNeedToUpdate:
-            self.noNeedToUpdate = False
-            return
         for col, data in enumerate([pos, orient, sacale]):
             for param, val in zip(["X", "Y", "Z"], data):
                 edit = self.edits[col, param]
+                if edit.hasFocus():
+                    continue
+                
                 edit.blockSignals(True)
                 edit.setText("{:.3f}".format(val))
                 edit.blockSignals(False)
