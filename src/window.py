@@ -546,6 +546,7 @@ class MainWindow(QMainWindow):
             tf = self.stlActor.GetUserTransform()
             tf.PostMultiply()
             tf.Translate(0, 0, -zmin)
+            tf.PreMultiply()
             self.stlActor.SetUserTransform(tf)
             self.boxWidget.SetTransform(tf)
             self.updateTransform()
@@ -558,11 +559,11 @@ class MainWindow(QMainWindow):
         # self.x_position_value.setText(str(x)[:10])
         # self.y_position_value.setText(str(y)[:10])
         # self.z_position_value.setText(str(z)[:10])
-        self.xyz_position_value.setText("Position: " + strF(x) + " " + strF(y) + " " + strF(z))
+        self.xyz_position_value.setText(f"Position: {x:.2f} {y:.2f} {z:.2f}")
         a, b, c = tf.GetScale()
-        self.xyz_scale_value.setText("Scale: " + strF(a) + " " + strF(b) + " " + strF(c))
+        self.xyz_scale_value.setText(f"Scale: {a:.2f} {b:.2f} {c:.2f}")
         i, j, k = tf.GetOrientation()
-        self.xyz_orient_value.setText("Orientation: " + strF(i) + " " + strF(j) + " " + strF(k))
+        self.xyz_orient_value.setText(f"Orientation: {i:.2f} {j:.2f} {k:.2f}")
 
     def open_dialog(self):
         return QFileDialog.getOpenFileName(None, self.locale.OpenModel, "/home/l1va/Downloads/5axes_3d_printer/test",
@@ -579,6 +580,7 @@ class MainWindow(QMainWindow):
         self.render.AddActor(self.stlActor)
         self.state_stl()
         self.render.ResetCamera()
+        self.render.GetActiveCamera().SetClippingRange(100, 10000)
         self.reload_scene()
 
     def hide_splanes(self):
