@@ -276,6 +276,53 @@ class ActorFromPolyData(vtkActor):
         mapper.SetInputData(output)
         self.SetMapper(mapper)
 
+class ActorWithColor(vtkAssembly):
+    def __init__(self, output):
+        polys = output.GetPolys()
+        allpoints = output.GetPoints()
+
+        tocolor = []
+        with open(sett().colorizer.result, "rb") as f:
+            content = f.read()
+            for b in content:
+                if b == 1:
+                    tocolor.append(True)
+                else:
+                    tocolor.append(False)
+
+        triangles = vtk.vtkCellArray()
+        triangles2 = vtk.vtkCellArray()
+        for i in range(polys.GetSize()):
+            idList = vtk.vtkIdList()
+            polys.GetNextCell(idList)
+            num = idList.GetNumberOfIds()
+            if num != 3:
+                break
+
+            triangle = vtk.vtkTriangle()
+            triangle.GetPointIds().SetId(0, idList.GetId(0))
+            triangle.GetPointIds().SetId(1, idList.GetId(1))
+            triangle.GetPointIds().SetId(2, idList.GetId(2))
+
+            if tocolor[i]:
+                triangles.InsertNextCell(triangle)
+            else:
+                triangles2.InsertNextCell(triangle)
+
+        trianglePolyData = vtk.vtkPolyData()
+        trianglePolyData.SetPoints(allpoints)
+        trianglePolyData.SetPolys(triangles)
+        trianglePolyData2 = vtk.vtkPolyData()
+        trianglePolyData2.SetPoints(allpoints)
+        trianglePolyData2.SetPolys(triangles2)
+
+        actor = ActorFromPolyData(trianglePolyData)
+        actor.GetProperty().SetColor(get_color(sett().colorizer.color))
+        actor2 = ActorFromPolyData(trianglePolyData2)
+
+        self.AddPart(actor)
+        self.AddPart(actor2)
+
 def build_actor(source, as_is=False):
     if as_is:
         return ActorFromPolyData(source)
@@ -314,53 +361,6 @@ class StlActorMixin:
         center = ox, oy, oz - (cz - bnz)
         for method in self.tfUpdateMethods:
             method(center, tf.GetOrientation(), tf.GetScale())
-
-class ActorWithColor(vtkAssembly):
-    def __init__(self, output):
-        polys = output.GetPolys()
-        allpoints = output.GetPoints()
-    
-        tocolor = []
-        with open(sett().colorizer.result, "rb") as f:
-            content = f.read()
-            for b in content:
-                if b == 1:
-                    tocolor.append(True)
-                else:
-                    tocolor.append(False)
-    
-        triangles = vtk.vtkCellArray()
-        triangles2 = vtk.vtkCellArray()
-        for i in range(polys.GetSize()):
-            idList = vtk.vtkIdList()
-            polys.GetNextCell(idList)
-            num = idList.GetNumberOfIds()
-            if num != 3:
-                break
-    
-            triangle = vtk.vtkTriangle()
-            triangle.GetPointIds().SetId(0, idList.GetId(0))
-            triangle.GetPointIds().SetId(1, idList.GetId(1))
-            triangle.GetPointIds().SetId(2, idList.GetId(2))
-    
-            if tocolor[i]:
-                triangles.InsertNextCell(triangle)
-            else:
-                triangles2.InsertNextCell(triangle)
-    
-        trianglePolyData = vtk.vtkPolyData()
-        trianglePolyData.SetPoints(allpoints)
-        trianglePolyData.SetPolys(triangles)
-        trianglePolyData2 = vtk.vtkPolyData()
-        trianglePolyData2.SetPoints(allpoints)
-        trianglePolyData2.SetPolys(triangles2)
-    
-        actor = ActorFromPolyData(trianglePolyData)
-        actor.GetProperty().SetColor(get_color(sett().colorizer.color))
-        actor2 = ActorFromPolyData(trianglePolyData2)
-    
-        self.AddPart(actor)
-        self.AddPart(actor2)
 
 class StlActor(StlActorMixin, ActorFromPolyData):
     def __init__(self, output):
