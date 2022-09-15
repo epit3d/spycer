@@ -5,7 +5,8 @@ import sys
 from typing import List, Callable, Dict, Tuple, Optional
 
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import QSlider, QLineEdit, QApplication, QGridLayout, QWidget, QLabel, QSizePolicy, QPushButton, QHBoxLayout
+from PyQt5.QtWidgets import (QSlider, QLineEdit, QApplication, QGridLayout, QWidget, QLabel, QSizePolicy,
+                             QPushButton, QHBoxLayout)
 
 
 class FigureEditor(QWidget):
@@ -111,35 +112,37 @@ class ConeEditor(FigureEditor):
 
     def params(self):
         return self.__params
-    
+
+
 class StlMovePanel(QWidget):
+
     def __init__(self, methods, captions):
         super().__init__()
-        #intended to avoid panel updating when actor moved by inserting value in QlineEdit
+
         self.setEnabled(False)
-        
+
         self.edits = {}
-        
+
         mainLayout = QHBoxLayout()
         for col, caption in enumerate(captions):
             gridLayout = QGridLayout()
             gridLayout.setSpacing(2)
-            
+
             label = QLabel(caption)
             label.setAlignment(QtCore.Qt.AlignCenter)
             gridLayout.addWidget(label, 0, 0, 1, 3)
             for row, param in enumerate(["X", "Y", "Z"], start=1):
                 btn_pos = QPushButton(str(param) + '+')
                 gridLayout.addWidget(btn_pos, row, 0)
-                
+
                 btn_neg = QPushButton(str(param) + '-')
                 gridLayout.addWidget(btn_neg, row, 1)
-                
+
                 edit = QLineEdit()
                 edit.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
                 edit.setMinimumWidth(20)
                 gridLayout.addWidget(edit, row, 2)
-                
+
                 self.edits[col, param] = edit
                 if methods[col, param] is None:
                     continue
@@ -147,23 +150,23 @@ class StlMovePanel(QWidget):
                 btn_pos.clicked.connect(act_pos)
                 btn_neg.clicked.connect(act_neg)
                 edit.textChanged.connect(act_set)
-                
+
             mainLayout.addLayout(gridLayout)
-            
+
         initial_pos = [0, 0, 0]
         initial_orient = [0, 0, 0]
         initial_sacle = [1, 1, 1]
 
         self.update(initial_pos, initial_orient, initial_sacle)
         self.setLayout(mainLayout)
-        
+
     def update(self, pos, orient, sacale):
         for col, data in enumerate([pos, orient, sacale]):
             for param, val in zip(["X", "Y", "Z"], data):
                 edit = self.edits[col, param]
                 if edit.hasFocus():
                     continue
-                
+
                 edit.blockSignals(True)
                 edit.setText("{:.3f}".format(val))
                 edit.blockSignals(False)

@@ -101,8 +101,8 @@ dicts = {
         SmoothSlice="Непланарная 5d (Beta)",
         SmoothFlatSlice="Непланарная (Beta)",
         StlMoveTranslate="Перемещение",
-        StlMoveRotate = "Вращение",
-        StlMoveScale = "Масштабирование",
+        StlMoveRotate="Вращение",
+        StlMoveScale="Масштабирование",
     ),
 }
 
