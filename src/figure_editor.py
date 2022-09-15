@@ -155,9 +155,9 @@ class StlMovePanel(QWidget):
 
         initial_pos = [0, 0, 0]
         initial_orient = [0, 0, 0]
-        initial_sacle = [1, 1, 1]
+        initial_scale = [1, 1, 1]
 
-        self.update(initial_pos, initial_orient, initial_sacle)
+        self.update(initial_pos, initial_orient, initial_scale)
         self.setLayout(mainLayout)
 
     def update(self, pos, orient, sacale):

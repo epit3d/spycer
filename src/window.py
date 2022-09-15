@@ -537,8 +537,6 @@ class MainWindow(QMainWindow):
             else:
                 self.boxWidget.SetEnabled(True)
             # self.interactor.GetInteractorStyle().SetCurrentStyleToTrackballActor()
-
-            self.stl_move_panel.setEnabled(True)
         else:
             self.state_stl()  # TODO: might be not stl but both or gcode
             # self.interactor.SetInteractorStyle(self.camera_interactor_style)
@@ -552,8 +550,6 @@ class MainWindow(QMainWindow):
             self.boxWidget.SetTransform(tf)
             self.updateTransform()
             # self.interactor.GetInteractorStyle().SetCurrentStyleToTrackballCamera()
-
-            self.stl_move_panel.setEnabled(False)
         self.reload_scene()
 
     def updateTransform(self):
@@ -729,6 +725,7 @@ class MainWindow(QMainWindow):
         self.save_gcode_button.setEnabled(False)
         self.hide_checkbox.setChecked(False)
         self.bottom_panel.setEnabled(False)
+        self.stl_move_panel.setEnabled(False)
         self.state = NothingState
 
     def state_gcode(self, layers_count):
@@ -752,6 +749,7 @@ class MainWindow(QMainWindow):
         self.save_gcode_button.setEnabled(True)
         self.hide_checkbox.setChecked(True)
         self.bottom_panel.setEnabled(False)
+        self.stl_move_panel.setEnabled(False)
         self.state = GCodeState
 
     def state_stl(self):
@@ -774,6 +772,7 @@ class MainWindow(QMainWindow):
         self.save_gcode_button.setEnabled(False)
         self.hide_checkbox.setChecked(False)
         self.bottom_panel.setEnabled(True)
+        self.stl_move_panel.setEnabled(False)
         self.state = StlState
 
     def state_moving(self):
@@ -796,6 +795,7 @@ class MainWindow(QMainWindow):
         self.save_gcode_button.setEnabled(False)
         # self.hide_checkbox.setChecked(False)
         self.bottom_panel.setEnabled(False)
+        self.stl_move_panel.setEnabled(True)
         self.state = MovingState
 
     def state_both(self, layers_count):
@@ -819,6 +819,7 @@ class MainWindow(QMainWindow):
         self.save_gcode_button.setEnabled(True)
         self.hide_checkbox.setChecked(True)
         self.bottom_panel.setEnabled(True)
+        self.stl_move_panel.setEnabled(False)
         self.state = BothState
 
 
