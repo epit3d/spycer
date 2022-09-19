@@ -3,8 +3,10 @@ from typing import Tuple, List, Dict
 import vtk
 from PyQt5.QtWidgets import QMessageBox
 from vtkmodules.vtkCommonColor import vtkNamedColors
+from vtkmodules.vtkCommonMath import vtkMatrix4x4
+from vtkmodules.vtkCommonTransforms import vtkTransform
 from vtkmodules.vtkFiltersSources import vtkLineSource, vtkConeSource
-from vtkmodules.vtkRenderingCore import vtkActor, vtkPolyDataMapper
+from vtkmodules.vtkRenderingCore import vtkActor, vtkPolyDataMapper, vtkAssembly
 
 from src.settings import sett, get_color
 
@@ -175,7 +177,9 @@ def createStlActorInOrigin(filename, colorize=False):
     output = reader.GetOutput()
 
     if colorize:
-        actor = colorizeSTL(output)
+        actor = ColorizedStlActor(output)
+    else:
+        actor = StlActor(output)
 
     origin = findStlOrigin(output)
     transform = vtk.vtkTransform()
@@ -265,65 +269,121 @@ def plane_tf(rotation):
     return tf
 
 
-def colorizeSTL(output):
-    polys = output.GetPolys()
-    allpoints = output.GetPoints()
+class ActorFromPolyData(vtkActor):
 
-    tocolor = []
-    with open(sett().colorizer.result, "rb") as f:
-        content = f.read()
-        for b in content:
-            if b == 1:
-                tocolor.append(True)
+    def __init__(self, output):
+        super().__init__()
+        mapper = vtkPolyDataMapper()
+        mapper.SetInputData(output)
+        self.SetMapper(mapper)
+
+
+class ActorWithColor(vtkAssembly):
+
+    def __init__(self, output):
+        polys = output.GetPolys()
+        allpoints = output.GetPoints()
+
+        tocolor = []
+        with open(sett().colorizer.result, "rb") as f:
+            content = f.read()
+            for b in content:
+                if b == 1:
+                    tocolor.append(True)
+                else:
+                    tocolor.append(False)
+
+        triangles = vtk.vtkCellArray()
+        triangles2 = vtk.vtkCellArray()
+        for i in range(polys.GetSize()):
+            idList = vtk.vtkIdList()
+            polys.GetNextCell(idList)
+            num = idList.GetNumberOfIds()
+            if num != 3:
+                break
+
+            triangle = vtk.vtkTriangle()
+            triangle.GetPointIds().SetId(0, idList.GetId(0))
+            triangle.GetPointIds().SetId(1, idList.GetId(1))
+            triangle.GetPointIds().SetId(2, idList.GetId(2))
+
+            if tocolor[i]:
+                triangles.InsertNextCell(triangle)
             else:
-                tocolor.append(False)
+                triangles2.InsertNextCell(triangle)
 
-    triangles = vtk.vtkCellArray()
-    triangles2 = vtk.vtkCellArray()
-    for i in range(polys.GetSize()):
-        idList = vtk.vtkIdList()
-        polys.GetNextCell(idList)
-        num = idList.GetNumberOfIds()
-        if num != 3:
-            break
+        trianglePolyData = vtk.vtkPolyData()
+        trianglePolyData.SetPoints(allpoints)
+        trianglePolyData.SetPolys(triangles)
+        trianglePolyData2 = vtk.vtkPolyData()
+        trianglePolyData2.SetPoints(allpoints)
+        trianglePolyData2.SetPolys(triangles2)
 
-        triangle = vtk.vtkTriangle()
-        triangle.GetPointIds().SetId(0, idList.GetId(0))
-        triangle.GetPointIds().SetId(1, idList.GetId(1))
-        triangle.GetPointIds().SetId(2, idList.GetId(2))
+        actor = ActorFromPolyData(trianglePolyData)
+        actor.GetProperty().SetColor(get_color(sett().colorizer.color))
+        actor2 = ActorFromPolyData(trianglePolyData2)
 
-        if tocolor[i]:
-            triangles.InsertNextCell(triangle)
-        else:
-            triangles2.InsertNextCell(triangle)
-
-    trianglePolyData = vtk.vtkPolyData()
-    trianglePolyData.SetPoints(allpoints)
-    trianglePolyData.SetPolys(triangles)
-    trianglePolyData2 = vtk.vtkPolyData()
-    trianglePolyData2.SetPoints(allpoints)
-    trianglePolyData2.SetPolys(triangles2)
-
-    actor = build_actor(trianglePolyData, True)
-    actor.GetProperty().SetColor(get_color(sett().colorizer.color))
-    actor2 = build_actor(trianglePolyData2, True)
-
-    assembly = vtk.vtkAssembly()
-    assembly.AddPart(actor)
-    assembly.AddPart(actor2)
-
-    return assembly
+        self.AddPart(actor)
+        self.AddPart(actor2)
 
 
 def build_actor(source, as_is=False):
-    mapper = vtk.vtkPolyDataMapper()
     if as_is:
-        mapper.SetInputData(source)
+        return ActorFromPolyData(source)
     else:
-        mapper.SetInputData(source.GetOutput())
-    actor = vtk.vtkActor()
-    actor.SetMapper(mapper)
-    return actor
+        return ActorFromPolyData(source.GetOutput())
+
+
+class StlActorMixin:
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.tfUpdateMethods = []
+
+        self.findBounds()
+        self.findCenter()
+
+    def findBounds(self):
+        self.bound = getBounds(self)
+
+    def findCenter(self):
+        x_mid = (self.bound[0] + self.bound[1]) / 2
+        y_mid = (self.bound[2] + self.bound[3]) / 2
+        z_mid = (self.bound[4] + self.bound[5]) / 2
+        self.center = x_mid, y_mid, z_mid
+
+    def addUserTransformUpdateCallback(self, *methods):
+        self.tfUpdateMethods += methods
+        tf = self.GetUserTransform()
+        self._execUserTransformUpdateCallback(tf)
+
+    def SetUserTransform(self, *args, **kwargs):
+        tf = args[0]
+        self._execUserTransformUpdateCallback(tf)
+        super().SetUserTransform(*args, **kwargs)
+
+    def _execUserTransformUpdateCallback(self, tf):
+        сenterTf = vtkTransform()
+        сenterTf.DeepCopy(tf)
+        сenterTf.Translate(self.center)
+        ox, oy, oz = сenterTf.GetPosition()
+        _, _, cz = self.center
+        _, _, _, _, bnz, _ = self.bound
+        center = ox, oy, oz - (cz - bnz)
+        for method in self.tfUpdateMethods:
+            method(center, tf.GetOrientation(), tf.GetScale())
+
+
+class StlActor(StlActorMixin, ActorFromPolyData):
+
+    def __init__(self, output):
+        super().__init__(output)
+
+
+class ColorizedStlActor(StlActorMixin, ActorWithColor):
+
+    def __init__(self, output):
+        super().__init__(output)
 
 
 class Plane:
@@ -437,3 +497,113 @@ def createLine(point1: tuple, point2: tuple, color: str = "Black") -> vtkActor:
     actor.GetProperty().SetColor(vtkNamedColors().GetColor3d(color))
 
     return actor
+
+
+class StlMover:
+
+    def __init__(self, view):
+        self.view = view
+        self.tf = vtkTransform()
+
+    def getTransform(self):
+        self.view.boxWidget.GetTransform(self.tf)
+
+    def setTransform(self):
+        self.view.boxWidget.SetTransform(self.tf)
+        self.view.stlActor.SetUserTransform(self.tf)
+        self.view.updateTransform()
+        self.view.reload_scene()
+
+    def set(self, text, axis):
+        try:
+            val = float(text)
+        except ValueError:
+            val = 0
+        self.getTransform()
+        self.setMethod(val, axis)
+        self.setTransform()
+
+    def setMethod(self, val, axis):
+        pass
+
+    def act(self, val, axis):
+        self.getTransform()
+        self.actMethod(val, axis)
+        self.setTransform()
+
+    def actMethod(self, val, axis):
+        pass
+
+
+class StlTranslator(StlMover):
+
+    def __init__(self, view):
+        super().__init__(view)
+
+    def setMethod(self, val, axis):
+        x, y, z = axis
+        cx, cy, cz = self.view.stlActor.center
+        _, _, _, _, bnz, _ = self.view.stlActor.bound
+        self.tf.Translate(cx, cy, cz)
+        m = vtkMatrix4x4()
+        self.tf.GetMatrix(m)
+        m.SetElement((x * 1 + y * 2 + z * 3) - 1, 3, val + (cz - bnz) * z)
+        self.tf.SetMatrix(m)
+        self.tf.Translate(-cx, -cy, -cz)
+
+    def actMethod(self, val, axis):
+        x, y, z = axis
+        self.tf.PostMultiply()
+        self.tf.Translate(x * val, y * val, z * val)
+        self.tf.PreMultiply()
+
+
+class StlRotator(StlMover):
+
+    def __init__(self, view):
+        super().__init__(view)
+
+    def setMethod(self, val, axis):
+        x, y, z = axis
+        cx, cy, cz = self.view.stlActor.center
+        self.tf.Translate(cx, cy, cz)
+
+        rx, ry, rz = self.tf.GetOrientation()
+        rx = val if x else rx
+        ry = val if y else ry
+        rz = val if z else rz
+
+        tf = vtkTransform()
+        tf.RotateZ(rz)
+        tf.RotateX(rx)
+        tf.RotateY(ry)
+
+        m = vtkMatrix4x4()
+        self.tf.GetMatrix(m)
+
+        for i in range(3):
+            for j in range(3):
+                m.SetElement(i, j, tf.GetMatrix().GetElement(i, j))
+
+        self.tf.SetMatrix(m)
+        self.tf.Translate(-cx, -cy, -cz)
+
+    def actMethod(self, val, axis):
+        x, y, z = axis
+        print(x, y, z)
+        print(self.tf.GetPosition(), self.tf.GetOrientation())
+        m0 = self.tf.GetMatrix()
+        m1 = vtkMatrix4x4()
+        for i in range(3):
+            for j in range(3):
+                m1.SetElement(i, j, m0.GetElement(i, j))
+        m1.Transpose()
+        tf1 = vtkTransform()
+        tf1.SetMatrix(m1)
+        vx, vy, vz = tf1.TransformVector(x, y, z)
+        print(vx, vy, vz)
+
+        ox, oy, oz = self.view.stlActor.center
+        self.tf.Translate(ox, oy, oz)
+        self.tf.RotateWXYZ(val, vx, vy, vz)
+        self.tf.Translate(-ox, -oy, -oz)
