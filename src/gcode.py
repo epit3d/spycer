@@ -1,9 +1,25 @@
 import math
+import numpy as np
 from typing import List
 
 import src.settings
 from src import gui_utils
 import vtk
+
+def rotation_matrix(axis, theta):
+    """
+    Return the rotation matrix associated with counterclockwise rotation about
+    the given axis by theta radians.
+    """
+    axis = np.asarray(axis)
+    axis = axis / np.sqrt(np.dot(axis, axis))
+    a = np.cos(theta / 2.0)
+    b, c, d = -axis * np.sin(theta / 2.0)
+    aa, bb, cc, dd = a * a, b * b, c * c, d * d
+    bc, ad, ac, ab, bd, cd = b * c, a * d, a * c, a * b, b * d, c * d
+    return np.array([[aa + bb - cc - dd, 2 * (bc + ad), 2 * (bd - ac)],
+                        [2 * (bc - ad), aa + cc - bb - dd, 2 * (cd + ab)],
+                        [2 * (bd + ac), 2 * (cd - ab), aa + dd - bb - cc]])
 
 
 class GCode:
@@ -70,24 +86,6 @@ def parseArgs(args, x, y, z, a, b, x_rot, absolute=True):
             r = yr
             z = zr
 
-            def rotation_matrix(axis, theta):
-                import math
-                import numpy as np
-                """
-                Return the rotation matrix associated with counterclockwise rotation about
-                the given axis by theta radians.
-                """
-                axis = np.asarray(axis)
-                axis = axis / math.sqrt(np.dot(axis, axis))
-                a = math.cos(theta / 2.0)
-                b, c, d = -axis * math.sin(theta / 2.0)
-                aa, bb, cc, dd = a * a, b * b, c * c, d * d
-                bc, ad, ac, ab, bd, cd = b * c, a * d, a * c, a * b, b * d, c * d
-                return np.array([[aa + bb - cc - dd, 2 * (bc + ad), 2 * (bd - ac)],
-                                 [2 * (bc - ad), aa + cc - bb - dd, 2 * (cd + ab)],
-                                 [2 * (bd + ac), 2 * (cd - ab), aa + dd - bb - cc]])
-
-            import numpy as np
             cone_axis = rotation_matrix([1, 0, 0], np.radians(x_rot)).dot([0, 0, 1])
             xr, yr, zr = rotation_matrix(cone_axis, -u).dot(np.array([0, r, z]) - rotationPoint) + rotationPoint
     if absolute:
