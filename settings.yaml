@@ -1,23 +1,24 @@
-analyzer: 
+analyzer:
   cmd: ./lib/goosli --cmd=analyze --settings=settings.yaml
   result: analyze_triangles.txt
-colorizer: 
+colorizer:
   cmd: ./lib/goosli --cmd=colorize --settings=settings.yaml
   color: Red
   result: colorize_triangles.bin
-colors: 
+colors:
   background: SlateGray
   blue: Blue
   last_layer: Red
   layer: White
   plane: Cyan
   splane: Gold
-common: 
+common:
   lang: ru
   splane_diameter: 150
-hardware: 
+hardware:
   bar_diameter: 1.75
-  calibration_x: 
+  calibration_file: data/calibration_data.csv
+  calibration_x:
     a0: 0
     a10: -0.13
     a20: -0.18
@@ -32,7 +33,7 @@ hardware:
   rotation_center_x: 0
   rotation_center_y: 0
   rotation_center_z: 63.5
-slicing: 
+slicing:
   angle: 30
   bed_temperature: 60
   bottom_layers: 3
@@ -49,9 +50,9 @@ slicing:
   layer_height: 0.2
   line_width: 0.4
   mesh_file: lib/goosli_middle.msh
-  originx: 0.25125885009765625
-  originy: -1.6277618408203125
-  originz: 1.627760410308838
+  originx: 0.0
+  originy: 0.0
+  originz: 0.0
   print_speed: 50
   print_speed_layer1: 50
   print_speed_wall: 50
@@ -68,7 +69,7 @@ slicing:
   slicing_type: vip
   smooth_cmd: ./FASP.exe
   splanes_file: lib/planes_file.txt
-  stl_file: D:\y.stl
+  stl_file: example.stl
   support_offset: 1.0
   supports_on: false
   t_geodesic: 0.0
