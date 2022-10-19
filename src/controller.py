@@ -224,6 +224,7 @@ class MainController:
         self.save_settings("vip")
 
         s = sett()
+        save_splanes_to_file(self.model.splanes, s.slicing.splanes_file)
         call_command(s.colorizer.cmd)
         self.load_stl(self.model.opened_stl, colorize=True)
 
