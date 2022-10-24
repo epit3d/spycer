@@ -8,6 +8,7 @@ from shutil import copy2
 from typing import Dict, List
 
 import vtk
+import shutil
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QDesktopWidget
 
@@ -92,6 +93,8 @@ class MainController:
                 file_ext = os.path.splitext(filename)[1].upper()
                 filename = str(Path(filename))
                 if file_ext == ".STL":
+                    s = sett()
+                    shutil.copyfile(filename, s.slicing.copy_stl_file)                    
                     self.load_stl(filename)
                 elif file_ext == ".GCODE":
                     self.load_gcode(filename, False)
@@ -103,7 +106,8 @@ class MainController:
     def load_stl(self, filename, colorize=False):
         if filename is None or filename == "":
             filename = self.model.opened_stl
-        stl_actor = gui_utils.createStlActorInOrigin(filename, colorize)
+        s = sett()
+        stl_actor = gui_utils.createStlActorInOrigin(s.slicing.copy_stl_file, colorize)
         self.model.opened_stl = filename
         self.view.load_stl(stl_actor)
 
