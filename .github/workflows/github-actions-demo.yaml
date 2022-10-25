@@ -1,15 +1,24 @@
 name: GitHub Actions Demo
 on:
   push:
-    branches: [ release_win_ru ]
+    branches: [release_win_ru]
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch to build"
+        required: true
+        default: "release_win_ru"
 jobs:
   build:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ windows-latest ]  #ubuntu-18.04, ubuntu-20.04,
+        os: [windows-latest] #ubuntu-18.04, ubuntu-20.04,
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.branch }}
       - name: Set up python 3.9
         uses: actions/setup-python@v2
         with:
@@ -30,6 +39,6 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
-          name: 'spycer-${{ matrix.os }}'
+          name: "spycer-${{ matrix.os }}"
           path: |
             dist/
