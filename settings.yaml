@@ -74,3 +74,4 @@ slicing:
   supports_on: false
   t_geodesic: 0.0
   wall_thickness: 0.8
+  lids_depth: 3
