@@ -48,7 +48,9 @@ slicing:
   ftetwild_cmd: ./lib/FloatTetwild_bin.exe -i sett.slicing.stl_file -o lib/goosli_middle.msh
   gcode_file: goosli_out.gcode
   layer_height: 0.2
+  lids_depth: 3
   line_width: 0.4
+  magic_epsilon: 40
   mesh_file: lib/goosli_middle.msh
   originx: 0.0
   originy: 0.0
