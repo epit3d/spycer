@@ -1,6 +1,7 @@
 import logging
 import sys
 import traceback
+import os
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QApplication
 
@@ -35,4 +36,9 @@ if __name__ == "__main__":
     sys.excepthook = excepthook
     ret = app.exec_()
     print("event loop exited")
+
+    s = sett()
+    if os.path.isfile(s.slicing.copy_stl_file):
+        os.remove(s.slicing.copy_stl_file)
+
     sys.exit(ret)

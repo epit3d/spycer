@@ -8,6 +8,7 @@ from shutil import copy2
 from typing import Dict, List
 
 import vtk
+import shutil
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QDesktopWidget
 
@@ -92,6 +93,9 @@ class MainController:
                 file_ext = os.path.splitext(filename)[1].upper()
                 filename = str(Path(filename))
                 if file_ext == ".STL":
+                    s = sett()
+                    if os.path.isfile(s.slicing.copy_stl_file):
+                        os.remove(s.slicing.copy_stl_file)
                     self.load_stl(filename)
                 elif file_ext == ".GCODE":
                     self.load_gcode(filename, False)
@@ -224,8 +228,11 @@ class MainController:
         self.save_settings("vip")
 
         s = sett()
+        shutil.copyfile(s.slicing.stl_file, s.slicing.copy_stl_file)
+        save_splanes_to_file(self.model.splanes, s.slicing.splanes_file)
         call_command(s.colorizer.cmd)
-        self.load_stl(self.model.opened_stl, colorize=True)
+        self.load_stl(s.slicing.copy_stl_file, colorize=True)
+        self.model.opened_stl = s.slicing.stl_file
 
     # ######################bottom panel
 
