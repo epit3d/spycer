@@ -94,8 +94,8 @@ class MainController:
                 filename = str(Path(filename))
                 if file_ext == ".STL":
                     s = sett()
-                    if os.path.isfile(s.slicing.copy_stl_file):
-                        os.remove(s.slicing.copy_stl_file)
+                    if os.path.isfile(s.colorizer.copy_stl_file):
+                        os.remove(s.colorizer.copy_stl_file)
                     self.load_stl(filename)
                 elif file_ext == ".GCODE":
                     self.load_gcode(filename, False)
@@ -225,14 +225,18 @@ class MainController:
         self.load_stl(self.model.opened_stl)
 
     def colorize_model(self):
-        self.save_settings("vip")
+        try:
+            self.save_settings("vip")
 
-        s = sett()
-        shutil.copyfile(s.slicing.stl_file, s.slicing.copy_stl_file)
-        save_splanes_to_file(self.model.splanes, s.slicing.splanes_file)
-        call_command(s.colorizer.cmd)
-        self.load_stl(s.slicing.copy_stl_file, colorize=True)
-        self.model.opened_stl = s.slicing.stl_file
+            s = sett()
+            shutil.copyfile(s.slicing.stl_file, s.colorizer.copy_stl_file)
+            save_splanes_to_file(self.model.splanes, s.slicing.splanes_file)
+            call_command(s.colorizer.cmd)
+            self.load_stl(s.colorizer.copy_stl_file, colorize=True)
+            self.model.opened_stl = s.slicing.stl_file
+        except IOError as e:
+            showErrorDialog("Error during colorize:" + str(e))
+
 
     # ######################bottom panel
 

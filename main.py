@@ -38,7 +38,7 @@ if __name__ == "__main__":
     print("event loop exited")
 
     s = sett()
-    if os.path.isfile(s.slicing.copy_stl_file):
-        os.remove(s.slicing.copy_stl_file)
+    if os.path.isfile(s.colorizer.copy_stl_file):
+        os.remove(s.colorizer.copy_stl_file)
 
     sys.exit(ret)
