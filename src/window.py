@@ -572,6 +572,12 @@ class MainWindow(QMainWindow):
         self.xyz_orient_value = QLabel("Orientation: 0 0 0")
         buttons_layout.addWidget(self.xyz_orient_value, get_next_row(), 1, 1, 3)
 
+        self.calibration_button = QPushButton('Calibration')
+        buttons_layout.addWidget(self.calibration_button, get_next_row(), 1, 1, 1)
+
+        self.service_button = QPushButton('Service')
+        buttons_layout.addWidget(self.service_button, get_cur_row(), 2, 1, 1)
+
         self.load_model_button = QPushButton(self.locale.OpenModel)
         buttons_layout.addWidget(self.load_model_button, get_next_row(), 1, 1, 2)
 
