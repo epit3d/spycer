@@ -4,6 +4,8 @@ import os
 import subprocess
 import time
 import sys
+import src.service as service
+import src.calibration as calibration
 from functools import partial
 from pathlib import Path
 import shutil
@@ -23,6 +25,23 @@ class MainController:
     def __init__(self, view, model):
         self.view = view
         self.model = model
+
+        # embed service tool
+        self.servicePanel = service.ServicePanel(view)
+        self.servicePanel.setModal(True)
+        self.serviceController = service.ServiceController(
+            self.servicePanel,
+            service.ServiceModel()
+        )
+
+        # embed calibration tool
+        self.calibrationPanel = calibration.CalibrationPanel(view)
+        self.calibrationPanel.setModal(True)
+        self.calibrationController = calibration.CalibrationController(
+            self.calibrationPanel,
+            calibration.CalibrationModel()
+        )
+
         self._connect_signals()
 
     def _connect_signals(self):
@@ -45,6 +64,12 @@ class MainController:
         self.view.slice_vip_button.clicked.connect(partial(self.slice_stl, "vip"))
         self.view.save_gcode_button.clicked.connect(self.save_gcode_file)
         self.view.color_model_button.clicked.connect(self.colorize_model)
+        self.view.service_button.clicked.connect(
+            self.servicePanel.show
+        )
+        self.view.calibration_button.clicked.connect(
+            self.calibrationPanel.show
+        )
 
         for var in vars(self.view).items():
             widget = var[1]
