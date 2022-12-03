@@ -80,7 +80,7 @@ class MainWindow(QMainWindow):
         self.interactor.Initialize()
         self.interactor.Start()
 
-        self.render.ResetCamera()
+        #self.render.ResetCamera()
         # self.render.GetActiveCamera().AddObserver('ModifiedEvent', CameraModifiedCallback)
 
         # set position of camera to (5, 5, 5) and look at (0, 0, 0) and z-axis is looking up
@@ -414,6 +414,21 @@ class MainWindow(QMainWindow):
 
             return translatePos, translateNeg, translateSet
 
+        stlScale = gui_utils.StlScale(self)
+
+        def scale(x, y, z):
+
+            def scalePos():
+                stlScale.act(5, [x, y, z])
+
+            def scaleNeg():
+                stlScale.act(-5, [x, y, z])
+
+            def scaleSet(text):
+                stlScale.set(text, [x, y, z])
+
+            return scalePos, scaleNeg, scaleSet
+
         self.stl_move_panel = StlMovePanel(
             {
                 (0, "X"): translate(1, 0, 0),
@@ -422,9 +437,9 @@ class MainWindow(QMainWindow):
                 (1, "X"): rotate(1, 0, 0),
                 (1, "Y"): rotate(0, 1, 0),
                 (1, "Z"): rotate(0, 0, 1),
-                (2, "X"): None,
-                (2, "Y"): None,
-                (2, "Z"): None,
+                (2, "X"): scale(1, 0, 0),
+                (2, "Y"): scale(0, 1, 0),
+                (2, "Z"): scale(0, 0, 1),
             },
             captions=[
                 self.locale.StlMoveTranslate,
@@ -514,7 +529,7 @@ class MainWindow(QMainWindow):
                 self.boxWidget.SetPlaceFactor(1.25)
                 self.boxWidget.SetHandleSize(0.005)
                 self.boxWidget.SetEnabled(True)
-                self.boxWidget.SetScalingEnabled(False)
+                self.boxWidget.SetScalingEnabled(True)
 
                 # hack for boxWidget - 1. reset actor transform
                 # 2. place boxWidget
@@ -667,7 +682,7 @@ class MainWindow(QMainWindow):
         else:
             self.state_gcode(len(self.actors))
 
-        self.render.ResetCamera()
+        #self.render.ResetCamera()
         self.reload_scene()
 
     def rotate_plane(self, tf):

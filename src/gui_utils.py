@@ -186,6 +186,16 @@ def createStlActorInOrigin(filename, colorize=False):
     s = sett()
     transform.Translate(-origin[0] + s.hardware.plane_center_x, -origin[1] + s.hardware.plane_center_y,
                         -origin[2] + s.hardware.plane_center_z)
+
+    if s.slicing.originx != 0 or s.slicing.originy != 0 or s.slicing.originz != 0 :
+        transform.Translate(origin[0] + s.slicing.originx, origin[1] + s.slicing.originy, origin[2] + s.slicing.originz)
+
+    transform.RotateZ(s.slicing.rotationz)
+    transform.RotateX(s.slicing.rotationx)
+    transform.RotateY(s.slicing.rotationy)
+
+    transform.Scale(s.slicing.scalex, s.slicing.scaley, s.slicing.scalez)
+
     actor.SetUserTransform(transform)
     return actor
 
@@ -534,6 +544,37 @@ class StlMover:
     def actMethod(self, val, axis):
         pass
 
+class StlScale(StlMover):
+
+    def __init__(self, view):
+        super().__init__(view)
+
+    def setMethod(self, val, axis):
+        x, y, z = axis
+        x1, y1, z1 = self.tf.GetScale()
+        val = val if val > 0 else 1
+        val = val / 100
+
+        sx = val / x1 if x else 1
+        sy = val / y1 if y else 1
+        sz = val / z1 if z else 1
+
+        self.tf.Scale(sx, sy, sz)
+
+    def actMethod(self, val, axis):
+        x, y, z = axis
+        x1, y1, z1 = self.tf.GetScale()
+        val = val / 100
+
+        sx = x1 + val * x
+        sy = y1 + val * y
+        sz = z1 + val * z
+
+        sx = sx / x1 if sx > 0 else 0.01 / x1
+        sy = sy / y1 if sy > 0 else 0.01 / y1
+        sz = sz / z1 if sz > 0 else 0.01 / z1
+
+        self.tf.Scale(sx, sy, sz)
 
 class StlTranslator(StlMover):
 
@@ -565,6 +606,10 @@ class StlRotator(StlMover):
 
     def setMethod(self, val, axis):
         x, y, z = axis
+
+        x1, y1, z1 = self.tf.GetScale()
+        self.tf.Scale(1 / x1, 1 / y1, 1 / z1)
+
         cx, cy, cz = self.view.stlActor.center
         self.tf.Translate(cx, cy, cz)
 
@@ -588,8 +633,14 @@ class StlRotator(StlMover):
         self.tf.SetMatrix(m)
         self.tf.Translate(-cx, -cy, -cz)
 
+        self.tf.Scale(x1, y1, z1)
+
     def actMethod(self, val, axis):
         x, y, z = axis
+
+        x1, y1, z1 = self.tf.GetScale()
+        self.tf.Scale(1 / x1, 1 / y1, 1 / z1)
+
         print(x, y, z)
         print(self.tf.GetPosition(), self.tf.GetOrientation())
         m0 = self.tf.GetMatrix()
@@ -607,3 +658,5 @@ class StlRotator(StlMover):
         self.tf.Translate(ox, oy, oz)
         self.tf.RotateWXYZ(val, vx, vy, vz)
         self.tf.Translate(-ox, -oy, -oz)
+
+        self.tf.Scale(x1, y1, z1)

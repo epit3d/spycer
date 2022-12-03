@@ -94,6 +94,11 @@ class MainController:
                 filename = str(Path(filename))
                 if file_ext == ".STL":
                     s = sett()
+                    s.slicing.originx, s.slicing.originy, s.slicing.originz = 0, 0, 0
+                    s.slicing.rotationx, s.slicing.rotationy, s.slicing.rotationz = 0, 0, 0
+                    s.slicing.scalex, s.slicing.scaley, s.slicing.scalez = 1, 1, 1
+                    save_settings()
+
                     if os.path.isfile(s.slicing.copy_stl_file):
                         os.remove(s.slicing.copy_stl_file)
                     self.load_stl(filename)
