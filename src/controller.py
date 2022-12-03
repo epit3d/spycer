@@ -227,13 +227,7 @@ class MainController:
     def colorize_model(self):
         self.save_settings("vip")
         s = sett()
-
-        try:
-            shutil.copyfile(s.slicing.stl_file, s.colorizer.copy_stl_file)
-        except:
-            showErrorDialog("Error during colorize: stl file copy error")
-            return
-
+        shutil.copyfile(s.slicing.stl_file, s.colorizer.copy_stl_file)
         save_splanes_to_file(self.model.splanes, s.slicing.splanes_file)
         call_command(s.colorizer.cmd)
         self.load_stl(s.colorizer.copy_stl_file, colorize=True)
