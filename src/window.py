@@ -383,6 +383,12 @@ class MainWindow(QMainWindow):
         self.edit_figure_button = QPushButton(self.locale.EditFigure)
         bottom_layout.addWidget(self.edit_figure_button, 4, 2)
 
+        self.save_planes_button = QPushButton(self.locale.SavePlanes)
+        bottom_layout.addWidget(self.save_planes_button, 1, 3)
+
+        self.download_planes_button = QPushButton(self.locale.DownloadPlanes)
+        bottom_layout.addWidget(self.download_planes_button, 2, 3)
+
         bottom_panel = QWidget()
         bottom_panel.setLayout(bottom_layout)
         bottom_panel.setEnabled(False)
@@ -460,13 +466,13 @@ class MainWindow(QMainWindow):
 
         transform = self.stlActor.GetUserTransform()
         transform.PostMultiply()
-        transform.Translate(-origin[0], -origin[1], 0)
+        transform.Translate(-origin[0], -origin[1], -origin[2])
 
         global LastMoveX, LastMoveY, LastMoveZ
         if s.slicing.model_centering:
             LastMoveX, LastMoveY, LastMoveZ = origin
         else:
-            transform.Translate(LastMoveX, LastMoveY, 0)
+            transform.Translate(LastMoveX, LastMoveY, LastMoveZ)
 
         transform.PreMultiply()
 
@@ -603,9 +609,13 @@ class MainWindow(QMainWindow):
         i, j, k = tf.GetOrientation()
         self.xyz_orient_value.setText(f"Orientation: {i:.2f} {j:.2f} {k:.2f}")
 
-    def open_dialog(self):
-        return QFileDialog.getOpenFileName(None, self.locale.OpenModel, "/home/l1va/Downloads/5axes_3d_printer/test",
-                                           "STL (*.stl *.STL);;Gcode (*.gcode)")[0]  # TODO: fix path
+    def save_dialog(self, caption, format = "STL (*.stl *.STL);;Gcode (*.gcode)"):
+        return QFileDialog.getSaveFileName(None, caption, "/home/l1va/Downloads/5axes_3d_printer/test",
+                                           format)[0]  # TODO: fix path
+
+    def open_dialog(self, caption, format = "STL (*.stl *.STL);;Gcode (*.gcode)"):
+        return QFileDialog.getOpenFileName(None, caption, "/home/l1va/Downloads/5axes_3d_printer/test",
+                                           format)[0]  # TODO: fix path
 
     def load_stl(self, stl_actor):
         self.clear_scene()

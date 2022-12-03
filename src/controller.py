@@ -15,7 +15,7 @@ from src import gui_utils, locales
 from src.cone_slicing import cross_stl, load_mesh
 from src.figure_editor import PlaneEditor, ConeEditor
 from src.gcode import GCode, Rotation, Point
-from src.gui_utils import showErrorDialog, plane_tf, isfloat, Plane, Cone
+from src.gui_utils import showErrorDialog, plane_tf, isfloat, read_planes, Plane, Cone
 from src.settings import sett, save_settings
 
 
@@ -51,6 +51,8 @@ class MainController:
         self.view.add_cone_button.clicked.connect(self.add_cone)
         self.view.splanes_list.itemDoubleClicked.connect(self.change_figure_parameters)
         self.view.edit_figure_button.clicked.connect(self.change_figure_parameters)
+        self.view.save_planes_button.clicked.connect(self.save_planes)
+        self.view.download_planes_button.clicked.connect(self.download_planes)
         self.view.splanes_list.currentItemChanged.connect(self.change_combo_select)
         self.view.remove_plane_button.clicked.connect(self.remove_splane)
 
@@ -80,6 +82,29 @@ class MainController:
 
         self.view.parameters_tooling.show()
 
+    def save_planes(self):
+        try:
+            filename = str(self.view.save_dialog(self.view.locale.SavePlanes, "TXT (*.txt *.TXT)"))
+            if filename != "":
+                save_splanes_to_file(self.model.splanes, filename)
+        except IOError as e:
+            showErrorDialog("Error during file saving:" + str(e))
+
+    def download_planes(self):
+        try:
+            filename = str(self.view.open_dialog(self.view.locale.DownloadPlanes,"TXT (*.txt *.TXT)"))
+            if filename != "":
+                file_ext = os.path.splitext(filename)[1].upper()
+                filename = str(Path(filename))
+                if file_ext == ".TXT":
+                    self.model.splanes = read_planes(filename)
+                    self.view.reload_splanes(self.model.splanes)
+                else:
+                    showErrorDialog(
+                        "This file format isn't supported:" + file_ext)
+        except IOError as e:
+            showErrorDialog("Error during file opening:" + str(e))
+
     def change_layer_view(self):
         self.model.current_slider_value = self.view.change_layer_view(self.model.current_slider_value, self.model.gcode)
 
@@ -88,7 +113,7 @@ class MainController:
 
     def open_file(self):
         try:
-            filename = str(self.view.open_dialog())
+            filename = str(self.view.open_dialog(self.view.locale.OpenModel))
             if filename != "":
                 file_ext = os.path.splitext(filename)[1].upper()
                 filename = str(Path(filename))
