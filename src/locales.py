@@ -48,6 +48,7 @@ class Locale:
     StlMoveTranslate = "Translate"
     StlMoveRotate = "Rotate"
     StlMoveScale = "Scale"
+    ModelCentering = "Center model"
 
     def __init__(self, **entries):
         self.__dict__.update(entries)
@@ -103,6 +104,7 @@ dicts = {
         StlMoveTranslate="Перемещение",
         StlMoveRotate="Вращение",
         StlMoveScale="Масштабирование",
+        ModelCentering = "Поместить модель в центр",
     ),
 }
 

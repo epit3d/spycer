@@ -32,6 +32,7 @@ class MainController:
 
         # right panel
         self.view.model_switch_box.stateChanged.connect(self.view.switch_stl_gcode)
+        self.view.model_centering_box.stateChanged.connect(self.view.model_centering)
         self.view.picture_slider.valueChanged.connect(self.change_layer_view)
         self.view.smoothSlice_button.clicked.connect(partial(self.slice_smooth, 0))
         self.view.smoothFlatSlice_button.clicked.connect(partial(self.slice_smooth, 1))
@@ -92,6 +93,15 @@ class MainController:
                 file_ext = os.path.splitext(filename)[1].upper()
                 filename = str(Path(filename))
                 if file_ext == ".STL":
+                    s = sett()
+                    s.slicing.originx, s.slicing.originy, s.slicing.originz = 0, 0, 0
+                    s.slicing.rotationx, s.slicing.rotationy, s.slicing.rotationz = 0, 0, 0
+                    s.slicing.scalex, s.slicing.scaley, s.slicing.scalez = 1, 1, 1
+                    s.slicing.model_centering = False
+                    save_settings()
+
+                    self.view.model_centering_box.setChecked(False)
+
                     self.load_stl(filename)
                 elif file_ext == ".GCODE":
                     self.load_gcode(filename, False)

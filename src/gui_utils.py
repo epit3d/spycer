@@ -182,10 +182,23 @@ def createStlActorInOrigin(filename, colorize=False):
         actor = StlActor(output)
 
     origin = findStlOrigin(output)
+    global LastMoveX, LastMoveY, LastMoveZ
+    LastMoveX, LastMoveY, LastMoveZ = origin
+
     transform = vtk.vtkTransform()
     s = sett()
-    transform.Translate(-origin[0] + s.hardware.plane_center_x, -origin[1] + s.hardware.plane_center_y,
-                        -origin[2] + s.hardware.plane_center_z)
+    transform.Translate(s.hardware.plane_center_x, s.hardware.plane_center_y, s.hardware.plane_center_z)
+
+    if s.slicing.model_centering:
+        if s.slicing.originx == s.slicing.originy == s.slicing.originz == 0:
+            transform.Translate(-origin[0], -origin[1], -origin[2])
+
+    transform.Translate(s.slicing.originx, s.slicing.originy, s.slicing.originz)
+
+    transform.RotateZ(s.slicing.rotationz)
+    transform.RotateX(s.slicing.rotationx)
+    transform.RotateY(s.slicing.rotationy)
+
     actor.SetUserTransform(transform)
     return actor
 

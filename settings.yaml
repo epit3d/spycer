@@ -52,6 +52,7 @@ slicing:
   line_width: 0.4
   magic_epsilon: 40
   mesh_file: lib/goosli_middle.msh
+  model_centering: false
   originx: 0.0
   originy: 0.0
   originz: 0.0
