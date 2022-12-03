@@ -108,7 +108,9 @@ class MainController:
         self.view.load_stl(stl_actor)
 
     def load_gcode(self, filename, is_from_stl):
+        print("start parsing gcode")
         gc = self.model.load_gcode(filename)
+        print('finish parsing gcode')
         blocks = gui_utils.makeBlocks(gc.layers, gc.rotations, gc.lays2rots)
         actors = gui_utils.wrapWithActors(blocks, gc.rotations, gc.lays2rots)
 
@@ -124,8 +126,10 @@ class MainController:
         self.save_settings(slicing_type)
 
         call_command(s.slicing.cmd)
+        print("finished command")
 
         self.load_gcode(s.slicing.gcode_file, True)
+        print("loaded gcode")
         # self.debugMe()
 
     def slice_cone(self):
