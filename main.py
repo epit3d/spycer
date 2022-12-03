@@ -38,7 +38,6 @@ if __name__ == "__main__":
     print("event loop exited")
 
     s = sett()
-
     if os.path.isfile(s.colorizer.copy_stl_file):
         os.remove(s.colorizer.copy_stl_file)
 

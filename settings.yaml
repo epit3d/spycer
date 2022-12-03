@@ -40,7 +40,6 @@ slicing:
   bottom_layers: 3
   bottom_of_cut_layers: 1
   cmd: ./lib/goosli --cmd=slice --settings=settings.yaml
-  copy_stl_file: ./copy_stl_file.stl
   extruder_temperature: 200
   fan_off_layer1: false
   fan_speed: 95

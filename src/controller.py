@@ -231,7 +231,6 @@ class MainController:
 
     def colorize_model(self):
         self.save_settings("vip")
-
         s = sett()
         shutil.copyfile(s.slicing.stl_file, s.colorizer.copy_stl_file)
         save_splanes_to_file(self.model.splanes, s.slicing.splanes_file)
