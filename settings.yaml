@@ -4,6 +4,7 @@ analyzer:
 colorizer:
   cmd: ./lib/goosli --cmd=colorize --settings=settings.yaml
   color: Red
+  copy_stl_file: ./copy_stl_file.stl
   result: colorize_triangles.bin
 colors:
   background: SlateGray
