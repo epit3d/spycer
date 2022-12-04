@@ -86,6 +86,8 @@ class MainController:
         try:
             filename = str(self.view.save_dialog(self.view.locale.SavePlanes, "TXT (*.txt *.TXT)"))
             if filename != "":
+                if not (filename.endswith(".txt") or filename.endswith(".TXT")):
+                    filename += ".txt"
                 save_splanes_to_file(self.model.splanes, filename)
         except IOError as e:
             showErrorDialog("Error during file saving:" + str(e))
