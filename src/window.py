@@ -1,6 +1,6 @@
 from typing import Type, Optional
 
-import vtk
+import vtk, src
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QLabel, QLineEdit, QComboBox, QGridLayout, QSlider,
@@ -586,6 +586,7 @@ class MainWindow(QMainWindow):
             tf.PostMultiply()
             tf.Translate(0, 0, -zmin)
             tf.PreMultiply()
+            self.hide_colorize()
             self.stlActor.SetUserTransform(tf)
             self.boxWidget.SetTransform(tf)
             self.updateTransform()
@@ -622,7 +623,7 @@ class MainWindow(QMainWindow):
 
         self.render.AddActor(self.stlActor)
         self.state_stl()
-        self.render.ResetCamera()
+        #self.render.ResetCamera()
         self.render.GetActiveCamera().SetClippingRange(100, 10000)
         self.reload_scene()
 
@@ -636,6 +637,7 @@ class MainWindow(QMainWindow):
         self.reload_scene()
 
     def reload_splanes(self, splanes):
+        self.hide_colorize()
         self._recreate_splanes(splanes)
         self.splanes_list.clear()
         for i in range(len(splanes)):
@@ -661,6 +663,7 @@ class MainWindow(QMainWindow):
             self.render.AddActor(act)
 
     def update_splane(self, sp, ind):
+        self.hide_colorize()
         self.render.RemoveActor(self.splanes_actors[ind])
         # TODO update to pass values as self.splanes_actors[ind], and only then destruct object
         act = gui_utils.create_splane_actor([sp.x, sp.y, sp.z], sp.incline, sp.rot)
@@ -689,6 +692,7 @@ class MainWindow(QMainWindow):
         self.reload_scene()
 
     def load_gcode(self, actors, is_from_stl, plane_tf):
+        self.hide_colorize()
         self.clear_scene()
         if is_from_stl:
             self.stlActor.VisibilityOff()
@@ -873,6 +877,16 @@ class MainWindow(QMainWindow):
         self.stl_move_panel.setEnabled(False)
         self.state = BothState
 
+    def hide_colorize(self):
+        if isinstance(self.stlActor, src.gui_utils.ColorizedStlActor):
+            s = sett()
+            stl_actor = gui_utils.createStlActorInOrigin(s.slicing.stl_file)
+            boxWidget = self.boxWidget
+            axesWidget = self.axesWidget
+
+            self.load_stl(stl_actor)
+            self.boxWidget = boxWidget
+            self.axesWidget = axesWidget
 
 def strF(v):  # cut 3 numbers after the point in float
     s = str(v)

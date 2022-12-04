@@ -8,6 +8,7 @@ from shutil import copy2
 from typing import Dict, List
 
 import vtk
+import shutil
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QDesktopWidget
 
@@ -131,6 +132,9 @@ class MainController:
                     save_settings()
 
                     self.view.model_centering_box.setChecked(False)
+
+                    if os.path.isfile(s.colorizer.copy_stl_file):
+                        os.remove(s.colorizer.copy_stl_file)
 
                     self.load_stl(filename)
                 elif file_ext == ".GCODE":
@@ -262,10 +266,13 @@ class MainController:
 
     def colorize_model(self):
         self.save_settings("vip")
-
         s = sett()
+        shutil.copyfile(s.slicing.stl_file, s.colorizer.copy_stl_file)
+        save_splanes_to_file(self.model.splanes, s.slicing.splanes_file)
         call_command(s.colorizer.cmd)
-        self.load_stl(self.model.opened_stl, colorize=True)
+        self.load_stl(s.colorizer.copy_stl_file, colorize=True)
+        self.model.opened_stl = s.slicing.stl_file
+
 
     # ######################bottom panel
 
