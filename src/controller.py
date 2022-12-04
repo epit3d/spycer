@@ -97,8 +97,11 @@ class MainController:
                 file_ext = os.path.splitext(filename)[1].upper()
                 filename = str(Path(filename))
                 if file_ext == ".TXT":
-                    self.model.splanes = read_planes(filename)
-                    self.view.reload_splanes(self.model.splanes)
+                    try:
+                        self.model.splanes = read_planes(filename)
+                        self.view.reload_splanes(self.model.splanes)
+                    except:
+                        showErrorDialog("Error during reading planes file")
                 else:
                     showErrorDialog(
                         "This file format isn't supported:" + file_ext)
