@@ -19,9 +19,6 @@ GCodeState = "gcode"
 StlState = "stl"
 BothState = "both"
 MovingState = "moving"
-LastMoveX = 0
-LastMoveY = 0
-LastMoveZ = 0
 
 
 class MainWindow(QMainWindow):
@@ -468,11 +465,10 @@ class MainWindow(QMainWindow):
         transform.PostMultiply()
         transform.Translate(-origin[0], -origin[1], -origin[2])
 
-        global LastMoveX, LastMoveY, LastMoveZ
         if s.slicing.model_centering:
-            LastMoveX, LastMoveY, LastMoveZ = origin
+            self.stlActor.lastMove = origin
         else:
-            transform.Translate(LastMoveX, LastMoveY, LastMoveZ)
+            transform.Translate(self.stlActor.lastMove)
 
         transform.PreMultiply()
 
@@ -573,8 +569,7 @@ class MainWindow(QMainWindow):
                     self.updateTransform()
                     origin = gui_utils.findStlOrigin(self.stlActor)
                     if origin != (0, 0, 0):
-                        global LastMoveX, LastMoveY, LastMoveZ
-                        LastMoveX, LastMoveY, LastMoveZ = origin
+                        self.stlActor.lastMove = origin
                         self.model_centering_box.setChecked(False)
 
                 self.boxWidget.AddObserver("InteractionEvent", TransformActor)
