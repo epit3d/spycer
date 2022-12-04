@@ -16,7 +16,7 @@ from src import gui_utils, locales
 from src.cone_slicing import cross_stl, load_mesh
 from src.figure_editor import PlaneEditor, ConeEditor
 from src.gcode import GCode, Rotation, Point
-from src.gui_utils import showErrorDialog, plane_tf, isfloat, Plane, Cone
+from src.gui_utils import showErrorDialog, plane_tf, isfloat, read_planes, Plane, Cone
 from src.settings import sett, save_settings
 
 
@@ -33,6 +33,7 @@ class MainController:
 
         # right panel
         self.view.model_switch_box.stateChanged.connect(self.view.switch_stl_gcode)
+        self.view.model_centering_box.stateChanged.connect(self.view.model_centering)
         self.view.picture_slider.valueChanged.connect(self.change_layer_view)
         self.view.smoothSlice_button.clicked.connect(partial(self.slice_smooth, 0))
         self.view.smoothFlatSlice_button.clicked.connect(partial(self.slice_smooth, 1))
@@ -51,6 +52,8 @@ class MainController:
         self.view.add_cone_button.clicked.connect(self.add_cone)
         self.view.splanes_list.itemDoubleClicked.connect(self.change_figure_parameters)
         self.view.edit_figure_button.clicked.connect(self.change_figure_parameters)
+        self.view.save_planes_button.clicked.connect(self.save_planes)
+        self.view.download_planes_button.clicked.connect(self.download_planes)
         self.view.splanes_list.currentItemChanged.connect(self.change_combo_select)
         self.view.remove_plane_button.clicked.connect(self.remove_splane)
 
@@ -80,6 +83,34 @@ class MainController:
 
         self.view.parameters_tooling.show()
 
+    def save_planes(self):
+        try:
+            filename = str(self.view.save_dialog(self.view.locale.SavePlanes, "TXT (*.txt *.TXT)"))
+            if filename != "":
+                if not (filename.endswith(".txt") or filename.endswith(".TXT")):
+                    filename += ".txt"
+                save_splanes_to_file(self.model.splanes, filename)
+        except IOError as e:
+            showErrorDialog("Error during file saving:" + str(e))
+
+    def download_planes(self):
+        try:
+            filename = str(self.view.open_dialog(self.view.locale.DownloadPlanes,"TXT (*.txt *.TXT)"))
+            if filename != "":
+                file_ext = os.path.splitext(filename)[1].upper()
+                filename = str(Path(filename))
+                if file_ext == ".TXT":
+                    try:
+                        self.model.splanes = read_planes(filename)
+                        self.view.reload_splanes(self.model.splanes)
+                    except:
+                        showErrorDialog("Error during reading planes file")
+                else:
+                    showErrorDialog(
+                        "This file format isn't supported:" + file_ext)
+        except IOError as e:
+            showErrorDialog("Error during file opening:" + str(e))
+
     def change_layer_view(self):
         self.model.current_slider_value = self.view.change_layer_view(self.model.current_slider_value, self.model.gcode)
 
@@ -88,14 +119,23 @@ class MainController:
 
     def open_file(self):
         try:
-            filename = str(self.view.open_dialog())
+            filename = str(self.view.open_dialog(self.view.locale.OpenModel))
             if filename != "":
                 file_ext = os.path.splitext(filename)[1].upper()
                 filename = str(Path(filename))
                 if file_ext == ".STL":
                     s = sett()
+                    s.slicing.originx, s.slicing.originy, s.slicing.originz = 0, 0, 0
+                    s.slicing.rotationx, s.slicing.rotationy, s.slicing.rotationz = 0, 0, 0
+                    s.slicing.scalex, s.slicing.scaley, s.slicing.scalez = 1, 1, 1
+                    s.slicing.model_centering = False
+                    save_settings()
+
+                    self.view.model_centering_box.setChecked(False)
+
                     if os.path.isfile(s.colorizer.copy_stl_file):
                         os.remove(s.colorizer.copy_stl_file)
+
                     self.load_stl(filename)
                 elif file_ext == ".GCODE":
                     self.load_gcode(filename, False)

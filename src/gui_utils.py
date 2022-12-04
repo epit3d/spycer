@@ -181,11 +181,15 @@ def createStlActorInOrigin(filename, colorize=False):
     else:
         actor = StlActor(output)
 
-    origin = findStlOrigin(output)
-    transform = vtk.vtkTransform()
     s = sett()
-    transform.Translate(-origin[0] + s.hardware.plane_center_x, -origin[1] + s.hardware.plane_center_y,
-                        -origin[2] + s.hardware.plane_center_z)
+    transform = vtk.vtkTransform()
+    transform.Translate(s.hardware.plane_center_x, s.hardware.plane_center_y, s.hardware.plane_center_z)
+    transform.Translate(s.slicing.originx, s.slicing.originy, s.slicing.originz)
+
+    transform.RotateZ(s.slicing.rotationz)
+    transform.RotateX(s.slicing.rotationx)
+    transform.RotateY(s.slicing.rotationy)
+
     actor.SetUserTransform(transform)
     return actor
 
@@ -335,6 +339,7 @@ def build_actor(source, as_is=False):
 
 
 class StlActorMixin:
+    lastMove = (0, 0, 0)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -409,7 +414,7 @@ class Plane:
 
 
 class Cone:
-    def __init__(self, cone_angle: float, point: Tuple[float, float, float], h: float = 15):
+    def __init__(self, cone_angle: float, point: Tuple[float, float, float], h: float = 100):
         self.cone_angle = cone_angle
         self.x, self.y, self.z = point
         self.h = h
@@ -432,8 +437,13 @@ def read_planes(filename):
     with open(filename) as fp:
         for line in fp:
             v = line.strip().split(' ')
-            planes.append(Plane(float(v[3][1:]), float(v[4][1:]),
-                                (float(v[0][1:]), float(v[1][1:]), float(v[2][1:]))))
+            #X0 Y0 Z10 A60 - Cone string format
+            if len(v) == 4:
+                planes.append(Cone(float(v[3][1:]), (float(v[0][1:]), float(v[1][1:]), float(v[2][1:]))))
+            #X10 Y10 Z10 T-60 R0 - Plane string format
+            else:
+                planes.append(Plane(float(v[3][1:]), float(v[4][1:]),
+                                    (float(v[0][1:]), float(v[1][1:]), float(v[2][1:]))))
     return planes
 
 
