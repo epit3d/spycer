@@ -422,7 +422,7 @@ class Plane:
 
 
 class Cone:
-    def __init__(self, cone_angle: float, point: Tuple[float, float, float], h: float = 15):
+    def __init__(self, cone_angle: float, point: Tuple[float, float, float], h: float = 100):
         self.cone_angle = cone_angle
         self.x, self.y, self.z = point
         self.h = h
@@ -445,8 +445,11 @@ def read_planes(filename):
     with open(filename) as fp:
         for line in fp:
             v = line.strip().split(' ')
-            planes.append(Plane(float(v[3][1:]), float(v[4][1:]),
-                                (float(v[0][1:]), float(v[1][1:]), float(v[2][1:]))))
+            if v[3].find("A") == 0:
+                planes.append(Cone(float(v[3][1:]), (float(v[0][1:]), float(v[1][1:]), float(v[2][1:]))))
+            else:
+                planes.append(Plane(float(v[3][1:]), float(v[4][1:]),
+                                    (float(v[0][1:]), float(v[1][1:]), float(v[2][1:]))))
     return planes
 
 
