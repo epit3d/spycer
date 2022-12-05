@@ -896,6 +896,7 @@ class MainWindow(QMainWindow):
         if isinstance(self.stlActor, src.gui_utils.ColorizedStlActor):
             s = sett()
             stl_actor = gui_utils.createStlActorInOrigin(s.slicing.stl_file)
+            stl_actor.lastMove = self.stlActor.lastMove
             boxWidget = self.boxWidget
             axesWidget = self.axesWidget
 
