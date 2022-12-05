@@ -473,6 +473,7 @@ class MainWindow(QMainWindow):
         s = sett()
         s.slicing.model_centering = self.model_centering_box.isChecked()
         save_settings()
+        self.hide_colorize()
 
         origin = gui_utils.findStlOrigin(self.stlActor)
 
