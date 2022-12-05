@@ -1,10 +1,11 @@
 import math
 import numpy as np
-from typing import List
+from typing import List, Optional
 
 import src.settings
 from src import gui_utils
 import vtk
+
 
 def rotation_matrix(axis, theta):
     """
@@ -17,12 +18,13 @@ def rotation_matrix(axis, theta):
     b, c, d = -axis * np.sin(theta / 2.0)
     aa, bb, cc, dd = a * a, b * b, c * c, d * d
     bc, ad, ac, ab, bd, cd = b * c, a * d, a * c, a * b, b * d, c * d
-    return np.array([[aa + bb - cc - dd, 2 * (bc + ad), 2 * (bd - ac)],
-                        [2 * (bc - ad), aa + cc - bb - dd, 2 * (cd + ab)],
-                        [2 * (bd + ac), 2 * (cd - ab), aa + dd - bb - cc]])
+    return np.array([[aa + bb - cc - dd, 2 * (bc + ad),
+                      2 * (bd - ac)], [2 * (bc - ad), aa + cc - bb - dd, 2 * (cd + ab)],
+                     [2 * (bd + ac), 2 * (cd - ab), aa + dd - bb - cc]])
 
 
 class GCode:
+
     def __init__(self, layers, rotations, lays2rots):
         self.layers: List[List[Point]] = layers
         self.rotations: List[Rotation] = rotations
@@ -30,6 +32,7 @@ class GCode:
 
 
 class Rotation:
+
     def __init__(self, x, z):
         self.x_rot = x
         self.z_rot = z
@@ -39,6 +42,7 @@ class Rotation:
 
 
 class Point:
+
     def __init__(self, x, y, z, a, b):
         self.x = x
         self.y = y
@@ -55,7 +59,7 @@ class Point:
         return res
 
 
-def parseArgs(args, x, y, z, a, b, x_rot, absolute=True):
+def parseArgs(args, x, y, z, a, b, cone_axis, rotationPoint, absolute=True):
     xr, yr, zr, ar, br = 0, 0, 0, 0, 0
     if absolute:
         xr, yr, zr, ar, br = x, y, z, a, b
@@ -77,16 +81,12 @@ def parseArgs(args, x, y, z, a, b, x_rot, absolute=True):
             break
         elif arg[0] == "U":  # rotation around z of bed planer
             import numpy as np
-            s = src.settings.sett()
-            rotationPoint = np.array(
-                [s.hardware.rotation_center_x, s.hardware.rotation_center_y, s.hardware.rotation_center_z])
 
             # convert from cylindrical coordinates to xyz
             u = math.radians(float(arg[1:]))
             r = yr
             z = zr
 
-            cone_axis = rotation_matrix([1, 0, 0], np.radians(x_rot)).dot([0, 0, 1])
             xr, yr, zr = rotation_matrix(cone_axis, -u).dot(np.array([0, r, z]) - rotationPoint) + rotationPoint
     if absolute:
         return xr, yr, zr, ar, br
@@ -123,6 +123,13 @@ def parseGCode(lines):
     x, y, z, a, b = 0, 0, 0, 0, 0
     abs_pos = True  # absolute positioning
 
+    s = src.settings.sett()
+    rotationPoint = np.array([s.hardware.rotation_center_x, s.hardware.rotation_center_y, s.hardware.rotation_center_z])
+
+    cone_axis = rotation_matrix([1, 0, 0], 0).dot([0, 0, 1])
+
+    current_layer = 0
+
     def finishLayer():
         nonlocal path, layer
         if len(path) > 1:
@@ -144,6 +151,7 @@ def parseGCode(lines):
             continue
         if line[0] == ';':  # comment
             if line.startswith(";LAYER:"):
+                current_layer = int(line[7:])
                 finishLayer()
             elif line.startswith(";End"):
                 break
@@ -165,13 +173,15 @@ def parseGCode(lines):
                 finishLayer()
                 # if any(a.lower().startswith('v') for a in args):  # incline
                 rotations.append(Rotation(parseRotation(args[1:]), rotations[-1].z_rot))
+
+                cone_axis = rotation_matrix([1, 0, 0], np.radians(rotations[-1].x_rot)).dot([0, 0, 1])
             elif args[0] == "G0":  # move to (or rotate)
                 if len(path) > 1:  # finish path and start new
                     layer.append(path)
-                x, y, z, a, b = parseArgs(args[1:], x, y, z, a, b, rotations[-1].x_rot, abs_pos)
+                x, y, z, a, b = parseArgs(args[1:], x, y, z, a, b, cone_axis, rotationPoint, abs_pos)
                 path = [Point(x, y, z, a, b)]
             elif args[0] == "G1":  # draw to
-                x, y, z, a, b = parseArgs(args[1:], x, y, z, a, b, rotations[-1].x_rot, abs_pos)
+                x, y, z, a, b = parseArgs(args[1:], x, y, z, a, b, cone_axis, rotationPoint, abs_pos)
                 path.append(Point(x, y, z, a, b))
             elif args[0] == "G90":  # absolute positioning
                 abs_pos = True

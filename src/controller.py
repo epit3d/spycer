@@ -1,6 +1,7 @@
 import logging
 import os
 import subprocess
+import time
 import sys
 from functools import partial
 from pathlib import Path
@@ -152,7 +153,12 @@ class MainController:
         self.view.load_stl(stl_actor)
 
     def load_gcode(self, filename, is_from_stl):
+        print("start parsing gcode")
+        start_time = time.time()
         gc = self.model.load_gcode(filename)
+        print('finish parsing gcode')
+        end_time = time.time()
+        print('spent time for gcode loading: ', end_time - start_time, 's')
         blocks = gui_utils.makeBlocks(gc.layers, gc.rotations, gc.lays2rots)
         actors = gui_utils.wrapWithActors(blocks, gc.rotations, gc.lays2rots)
 
@@ -167,9 +173,15 @@ class MainController:
         save_splanes_to_file(self.model.splanes, s.slicing.splanes_file)
         self.save_settings(slicing_type)
 
+        start_time = time.time()
+        print("start slicing")
         call_command(s.slicing.cmd)
+        print("finished command")
+        end_time = time.time()
+        print('spent time for slicing: ', end_time - start_time, 's')
 
         self.load_gcode(s.slicing.gcode_file, True)
+        print("loaded gcode")
         # self.debugMe()
 
     def slice_cone(self):
