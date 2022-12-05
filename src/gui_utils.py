@@ -72,21 +72,32 @@ def create_splane_actor(center, x_rot, z_rot):
     return actor
 
 
-def create_cone_actor(vertex: Tuple[float, float, float], angle: float, h: float):
+def create_cone_actor(vertex: Tuple[float, float, float], bending_angle: float, h: float):
     # TODO maybe it is not good to pass cone object destructed (hard to add new parameters)
     """
-    :param angle: angle between z-axis and generaxis
+    :param bending_angle: angle of triangles relative Z axis we want to compensate (in degrees)
     """
+
+    if bending_angle == 0:
+        actor = create_splane_actor(vertex, 0, 0)
+        actor.GetProperty().SetRepresentationToWireframe()
+        return actor
+
     sign = lambda x: 0 if not x else int(x / abs(x))
+
+    # cone angle is complementary to bending angle
+    # such that during print we would get a parallel surface to the XY base frame
+    cone_angle = sign(bending_angle) * (90 - sign(bending_angle) * bending_angle)
+
     coneSource = vtkConeSource()
     coneSource.SetHeight(h)
     # coneSource.SetAngle(angle)
     coneSource.SetResolution(120)
     # coneSource.SetHeight(vertex[2])
     import math
-    coneSource.SetRadius(h * math.tan(math.radians(math.fabs(angle))))
-    coneSource.SetCenter(vertex[0], vertex[1], (vertex[2] - (h / 2) if angle > 0 else vertex[2] + h / 2))
-    coneSource.SetDirection(0, 0, 1 * sign(angle))
+    coneSource.SetRadius(h * math.tan(math.radians(math.fabs(cone_angle))))
+    coneSource.SetCenter(vertex[0], vertex[1], vertex[2] - sign(cone_angle) * h / 2)
+    coneSource.SetDirection(0, 0, 1 * sign(cone_angle))
     # update parameters
 
     mapper = vtkPolyDataMapper()
