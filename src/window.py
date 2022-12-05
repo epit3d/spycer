@@ -11,7 +11,7 @@ from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 from src import locales, gui_utils, interactor_style
 from src.InteractorAroundActivePlane import InteractionAroundActivePlane
 from src.gui_utils import plane_tf, Plane, Cone
-from src.settings import sett, get_color
+from src.settings import sett, get_color, save_settings
 from src.figure_editor import StlMovePanel
 
 NothingState = "nothing"
@@ -264,6 +264,9 @@ class MainWindow(QMainWindow):
         self.model_switch_box = QCheckBox(self.locale.ShowStl)
         buttons_layout.addWidget(self.model_switch_box, get_next_row(), 1)
 
+        self.model_centering_box = QCheckBox(self.locale.ModelCentering)
+        buttons_layout.addWidget(self.model_centering_box, get_next_row(), 1)
+
         self.slider_label = QLabel(self.locale.LayersCount)
         self.layers_number_label = QLabel()
         buttons_layout.addWidget(self.slider_label, get_next_row(), 1)
@@ -377,6 +380,12 @@ class MainWindow(QMainWindow):
         self.edit_figure_button = QPushButton(self.locale.EditFigure)
         bottom_layout.addWidget(self.edit_figure_button, 4, 2)
 
+        self.save_planes_button = QPushButton(self.locale.SavePlanes)
+        bottom_layout.addWidget(self.save_planes_button, 1, 3)
+
+        self.download_planes_button = QPushButton(self.locale.DownloadPlanes)
+        bottom_layout.addWidget(self.download_planes_button, 2, 3)
+
         bottom_panel = QWidget()
         bottom_panel.setLayout(bottom_layout)
         bottom_panel.setEnabled(False)
@@ -458,6 +467,32 @@ class MainWindow(QMainWindow):
             for layer in range(self.picture_slider.value()):
                 self.actors[layer].VisibilityOn()
             self.stlActor.VisibilityOff()
+        self.reload_scene()
+
+    def model_centering(self):
+        s = sett()
+        s.slicing.model_centering = self.model_centering_box.isChecked()
+        save_settings()
+
+        origin = gui_utils.findStlOrigin(self.stlActor)
+
+        transform = self.stlActor.GetUserTransform()
+        transform.PostMultiply()
+        transform.Translate(-origin[0], -origin[1], -origin[2])
+
+        if s.slicing.model_centering:
+            self.stlActor.lastMove = origin
+        else:
+            transform.Translate(self.stlActor.lastMove)
+
+        transform.PreMultiply()
+
+        self.stlActor.SetUserTransform(transform)
+
+        if not self.boxWidget is None:
+            self.boxWidget.SetTransform(transform)
+
+        self.updateTransform()
         self.reload_scene()
 
     def clear_scene(self):
@@ -547,6 +582,10 @@ class MainWindow(QMainWindow):
                     # print(tf.GetScale())
                     self.stlActor.SetUserTransform(tf)
                     self.updateTransform()
+                    origin = gui_utils.findStlOrigin(self.stlActor)
+                    if origin != (0, 0, 0):
+                        self.stlActor.lastMove = origin
+                        self.model_centering_box.setChecked(False)
 
                 self.boxWidget.AddObserver("InteractionEvent", TransformActor)
             else:
@@ -581,9 +620,13 @@ class MainWindow(QMainWindow):
         i, j, k = tf.GetOrientation()
         self.xyz_orient_value.setText(f"Orientation: {i:.2f} {j:.2f} {k:.2f}")
 
-    def open_dialog(self):
-        return QFileDialog.getOpenFileName(None, self.locale.OpenModel, "/home/l1va/Downloads/5axes_3d_printer/test",
-                                           "STL (*.stl *.STL);;Gcode (*.gcode)")[0]  # TODO: fix path
+    def save_dialog(self, caption, format = "STL (*.stl *.STL);;Gcode (*.gcode)"):
+        return QFileDialog.getSaveFileName(None, caption, "/home/l1va/Downloads/5axes_3d_printer/test",
+                                           format)[0]  # TODO: fix path
+
+    def open_dialog(self, caption, format = "STL (*.stl *.STL);;Gcode (*.gcode)"):
+        return QFileDialog.getOpenFileName(None, caption, "/home/l1va/Downloads/5axes_3d_printer/test",
+                                           format)[0]  # TODO: fix path
 
     def load_stl(self, stl_actor):
         self.clear_scene()
@@ -729,6 +772,8 @@ class MainWindow(QMainWindow):
     def state_nothing(self):
         self.model_switch_box.setEnabled(False)
         self.model_switch_box.setChecked(False)
+        self.model_centering_box.setEnabled(False)
+        self.model_centering_box.setChecked(False)
         self.slider_label.setEnabled(False)
         self.layers_number_label.setEnabled(False)
         self.layers_number_label.setText(" ")
@@ -752,6 +797,7 @@ class MainWindow(QMainWindow):
     def state_gcode(self, layers_count):
         self.model_switch_box.setEnabled(False)
         self.model_switch_box.setChecked(False)
+        self.model_centering_box.setEnabled(False)
         self.slider_label.setEnabled(True)
         self.layers_number_label.setEnabled(True)
         self.layers_number_label.setText(str(layers_count))
@@ -776,6 +822,7 @@ class MainWindow(QMainWindow):
     def state_stl(self):
         self.model_switch_box.setEnabled(False)
         self.model_switch_box.setChecked(True)
+        self.model_centering_box.setEnabled(True)
         self.slider_label.setEnabled(False)
         self.layers_number_label.setEnabled(False)
         self.layers_number_label.setText(" ")
@@ -799,6 +846,7 @@ class MainWindow(QMainWindow):
     def state_moving(self):
         self.model_switch_box.setEnabled(False)
         self.model_switch_box.setChecked(True)
+        self.model_centering_box.setEnabled(True)
         self.slider_label.setEnabled(False)
         self.layers_number_label.setEnabled(False)
         self.layers_number_label.setText(" ")
@@ -822,6 +870,7 @@ class MainWindow(QMainWindow):
     def state_both(self, layers_count):
         self.model_switch_box.setEnabled(True)
         self.model_switch_box.setChecked(False)
+        self.model_centering_box.setEnabled(False)
         self.slider_label.setEnabled(True)
         self.layers_number_label.setEnabled(True)
         self.layers_number_label.setText(str(layers_count))
