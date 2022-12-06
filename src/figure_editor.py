@@ -48,11 +48,15 @@ class FigureEditor(QWidget):
                         if str(param) == param_name:
                             break
 
-                    if value < constrains[param_idx][0]:
-                        value = constrains[param_idx][0]
+                    minimumValue = constrains[param_idx][0]
+                    maximumValue = constrains[param_idx][1]
+
+                    if value < minimumValue:
+                        value = minimumValue
                         qlineedit.setText(str(int(value)))
-                    elif value > constrains[param_idx][1]:
-                        value = constrains[param_idx][1]
+
+                    elif value > maximumValue:
+                        value = maximumValue
                         qlineedit.setText(str(int(value)))
 
                     self.params_dict[param_name] = float(value)
