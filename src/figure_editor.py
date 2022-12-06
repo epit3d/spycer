@@ -36,13 +36,25 @@ class FigureEditor(QWidget):
             self.params_widgets.append(label)
             self.layout.addWidget(label, param_idx, 0)
 
-            def pass_updated_value_edit(param_name: str, qslider: QSlider):
+            def pass_updated_value_edit(param_name: str, qslider: QSlider, qlineedit: QLineEdit):
                 # return a function to be called from QLineEdit callback
                 def emmit_value(state: str):
                     try:
                         value = float(state)
                     except ValueError:
                         value = 0
+
+                    for param_idx, param in enumerate(params):
+                        if str(param) == param_name:
+                            break
+
+                    if value < constrains[param_idx][0]:
+                        value = constrains[param_idx][0]
+                        qlineedit.setText(str(int(value)))
+                    elif value > constrains[param_idx][1]:
+                        value = constrains[param_idx][1]
+                        qlineedit.setText(str(int(value)))
+
                     self.params_dict[param_name] = float(value)
 
                     # pass to function accepting parameters, if exists
@@ -86,7 +98,7 @@ class FigureEditor(QWidget):
             self.layout.addWidget(slider, param_idx, 2)
 
             slider.valueChanged.connect(pass_updated_value_slider(param, edit))
-            edit.textChanged.connect(pass_updated_value_edit(param, slider))
+            edit.textChanged.connect(pass_updated_value_edit(param, slider, edit))
             self.setLayout(self.layout)
 
 
