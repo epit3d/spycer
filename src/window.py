@@ -5,7 +5,7 @@ from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QLabel, QLineEdit, QComboBox, QGridLayout, QSlider,
                              QCheckBox, QVBoxLayout,
-                             QPushButton, QFileDialog, QScrollArea, QGroupBox, QAction, QDialog, QListWidget)
+                             QPushButton, QFileDialog, QScrollArea, QGroupBox, QAction, QDialog, QListWidget, QAbstractItemView)
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
 from src import locales, gui_utils, interactor_style
@@ -360,6 +360,13 @@ class MainWindow(QMainWindow):
         bottom_layout.setColumnStretch(7, 1)
 
         self.splanes_list = QListWidget()
+        self.splanes_list.installEventFilter(self.splanes_list)
+        self.splanes_list.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.splanes_list.setDragEnabled(True)
+        self.splanes_list.setDragDropMode(QAbstractItemView.InternalMove)
+        self.splanes_list.viewport().setAcceptDrops(True)
+        self.splanes_list.setDropIndicatorShown(True)
+
         bottom_layout.addWidget(self.splanes_list, 0, 0, 5, 1)
 
         # self.tilted_checkbox = QCheckBox(self.locale.Tilted)
@@ -636,13 +643,14 @@ class MainWindow(QMainWindow):
                 s.VisibilityOn()
         self.reload_scene()
 
-    def reload_splanes(self, splanes):
+    def reload_splanes(self, splanes, resetTitles = False):
         self.hide_colorize()
         self._recreate_splanes(splanes)
-        self.splanes_list.clear()
-        for i in range(len(splanes)):
-            self.splanes_list.addItem("Figure" + " " + str(i + 1))
-            # self.splanes_list.addItem(self.locale.Plane + " " + str(i + 1))
+        if resetTitles:
+            self.splanes_list.clear()
+            for i in range(len(splanes)):
+                self.splanes_list.addItem("Figure" + " " + str(i + 1))
+                # self.splanes_list.addItem(self.locale.Plane + " " + str(i + 1))
 
         if len(splanes) > 0:
             self.splanes_list.setCurrentRow(len(splanes) - 1)

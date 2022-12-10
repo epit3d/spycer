@@ -52,6 +52,7 @@ class MainController:
         self.view.add_plane_button.clicked.connect(self.add_splane)
         self.view.add_cone_button.clicked.connect(self.add_cone)
         self.view.splanes_list.itemDoubleClicked.connect(self.change_figure_parameters)
+        self.view.splanes_list.model().rowsMoved.connect(self.moving_figure)
         self.view.edit_figure_button.clicked.connect(self.change_figure_parameters)
         self.view.save_planes_button.clicked.connect(self.save_planes)
         self.view.download_planes_button.clicked.connect(self.download_planes)
@@ -59,6 +60,15 @@ class MainController:
         self.view.remove_plane_button.clicked.connect(self.remove_splane)
 
         self.view.hide_checkbox.stateChanged.connect(self.view.hide_splanes)
+
+    def moving_figure(self, sourceParent, previousRow):
+        currentRow = self.view.splanes_list.currentRow()
+        if previousRow != currentRow:
+            currentsplane = self.model.splanes[previousRow]
+            previoussplane = self.model.splanes[currentRow]
+            self.model.splanes[previousRow] = previoussplane
+            self.model.splanes[currentRow] = currentsplane
+            self.view.reload_splanes(self.model.splanes)
 
     def change_figure_parameters(self):
         ind = self.view.splanes_list.currentRow()
@@ -103,7 +113,7 @@ class MainController:
                 if file_ext == ".TXT":
                     try:
                         self.model.splanes = read_planes(filename)
-                        self.view.reload_splanes(self.model.splanes)
+                        self.view.reload_splanes(self.model.splanes, True)
                     except:
                         showErrorDialog("Error during reading planes file")
                 else:
@@ -290,10 +300,12 @@ class MainController:
 
     def add_splane(self):
         self.model.add_splane()
+        self.view.splanes_list.addItem("Figure" + " " + str((self.view.splanes_list.count() + 1)))
         self.view.reload_splanes(self.model.splanes)
 
     def add_cone(self):
         self.model.add_cone()
+        self.view.splanes_list.addItem("Figure" + " " + str((self.view.splanes_list.count() + 1)))
         self.view.reload_splanes(self.model.splanes)
 
     def remove_splane(self):
@@ -301,13 +313,15 @@ class MainController:
         if ind == -1:
             return
         del self.model.splanes[ind]
+        self.view.splanes_list.removeItemWidget(self.view.splanes_list.takeItem(ind))
         self.view.reload_splanes(self.model.splanes)
 
     def change_combo_select(self):
         ind = self.view.splanes_list.currentRow()
         if ind == -1:
             return
-        self.view.change_combo_select(self.model.splanes[ind], ind)
+        if len(self.model.splanes) > ind:
+            self.view.change_combo_select(self.model.splanes[ind], ind)
 
     def update_plane_common(self, values: Dict[str, float]):
         center = [values.get("X", 0), values.get("Y", 0), values.get("Z", 0)]
