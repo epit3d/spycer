@@ -282,7 +282,9 @@ class MainController:
         shutil.copyfile(s.slicing.stl_file, s.colorizer.copy_stl_file)
         save_splanes_to_file(self.model.splanes, s.slicing.splanes_file)
         call_command(s.colorizer.cmd)
+        lastMove = self.view.stlActor.lastMove
         self.load_stl(s.colorizer.copy_stl_file, colorize=True)
+        self.view.stlActor.lastMove = lastMove
         self.model.opened_stl = s.slicing.stl_file
 
 

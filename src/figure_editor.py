@@ -176,9 +176,11 @@ class StlMovePanel(QWidget):
         self.update(initial_pos, initial_orient, initial_scale)
         self.setLayout(mainLayout)
 
-    def update(self, pos, orient, sacale):
-        for col, data in enumerate([pos, orient, sacale]):
+    def update(self, pos, orient, scale):
+        for col, data in enumerate([pos, orient, scale]):
             for param, val in zip(["X", "Y", "Z"], data):
+                if col == 2:
+                    val = val * 100
                 edit = self.edits[col, param]
                 if edit.hasFocus():
                     continue
