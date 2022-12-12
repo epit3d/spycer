@@ -327,6 +327,7 @@ class MainController:
             return
         self.model.splanes[ind] = gui_utils.Plane(values.get("Tilt", 0), values.get("Rotation", 0), center)
         self.view.update_splane(self.model.splanes[ind], ind)
+        self.view.reload_splanes(self.model.splanes)
 
     def update_cone_common(self, values: Dict[str, float]):
         center: List[float] = [0, 0, values.get("Z", 0)]
@@ -335,6 +336,7 @@ class MainController:
             return
         self.model.splanes[ind] = gui_utils.Cone(values.get("A", 0), tuple(center), values.get("H", 15))
         self.view.update_cone(self.model.splanes[ind], ind)
+        self.view.reload_splanes(self.model.splanes)
 
     # def debugMe(self):
     #     debug.readFile(self.render, "/home/l1va/debug.txt", 4)
