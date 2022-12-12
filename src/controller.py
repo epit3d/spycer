@@ -113,7 +113,7 @@ class MainController:
                 if file_ext == ".TXT":
                     try:
                         self.model.splanes = read_planes(filename)
-                        self.view.reload_splanes(self.model.splanes, True)
+                        self.view.reload_splanes(self.model.splanes)
                     except:
                         showErrorDialog("Error during reading planes file")
                 else:
@@ -300,12 +300,10 @@ class MainController:
 
     def add_splane(self):
         self.model.add_splane()
-        self.view.splanes_list.addItem("Figure" + " " + str((self.view.splanes_list.count() + 1)))
         self.view.reload_splanes(self.model.splanes)
 
     def add_cone(self):
         self.model.add_cone()
-        self.view.splanes_list.addItem("Figure" + " " + str((self.view.splanes_list.count() + 1)))
         self.view.reload_splanes(self.model.splanes)
 
     def remove_splane(self):
@@ -313,7 +311,6 @@ class MainController:
         if ind == -1:
             return
         del self.model.splanes[ind]
-        self.view.splanes_list.removeItemWidget(self.view.splanes_list.takeItem(ind))
         self.view.reload_splanes(self.model.splanes)
 
     def change_combo_select(self):

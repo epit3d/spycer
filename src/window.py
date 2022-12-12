@@ -643,14 +643,13 @@ class MainWindow(QMainWindow):
                 s.VisibilityOn()
         self.reload_scene()
 
-    def reload_splanes(self, splanes, resetTitles = False):
+    def reload_splanes(self, splanes):
         self.hide_colorize()
         self._recreate_splanes(splanes)
-        if resetTitles:
-            self.splanes_list.clear()
-            for i in range(len(splanes)):
-                self.splanes_list.addItem("Figure" + " " + str(i + 1))
-                # self.splanes_list.addItem(self.locale.Plane + " " + str(i + 1))
+        self.splanes_list.clear()
+        for i in range(len(splanes)):
+            self.splanes_list.addItem(str(i + 1) + " - " + splanes[i].toFile())
+            # self.splanes_list.addItem(self.locale.Plane + " " + str(i + 1))
 
         if len(splanes) > 0:
             self.splanes_list.setCurrentRow(len(splanes) - 1)
