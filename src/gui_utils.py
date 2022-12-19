@@ -72,7 +72,7 @@ def create_splane_actor(center, x_rot, z_rot):
     return actor
 
 
-def create_cone_actor(vertex: Tuple[float, float, float], bending_angle: float, h: float):
+def create_cone_actor(vertex: Tuple[float, float, float], bending_angle: float, h1: float, h2: float):
     # TODO maybe it is not good to pass cone object destructed (hard to add new parameters)
     """
     :param bending_angle: angle of triangles relative Z axis we want to compensate (in degrees)
@@ -90,18 +90,44 @@ def create_cone_actor(vertex: Tuple[float, float, float], bending_angle: float, 
     cone_angle = sign(bending_angle) * (90 - sign(bending_angle) * bending_angle)
 
     coneSource = vtkConeSource()
-    coneSource.SetHeight(h)
+    coneSource.SetHeight(h2)
     # coneSource.SetAngle(angle)
     coneSource.SetResolution(120)
     # coneSource.SetHeight(vertex[2])
     import math
-    coneSource.SetRadius(h * math.tan(math.radians(math.fabs(cone_angle))))
-    coneSource.SetCenter(vertex[0], vertex[1], vertex[2] - sign(cone_angle) * h / 2)
+    coneSource.SetRadius(h2 * math.tan(math.radians(math.fabs(cone_angle))))
+    coneSource.SetCenter(vertex[0], vertex[1], vertex[2] - sign(cone_angle) * h2 / 2)
     coneSource.SetDirection(0, 0, 1 * sign(cone_angle))
+    coneSource.Update()
     # update parameters
 
+
+    # plane to cut from h1
+    clipPlane = vtk.vtkPlane()
+    clipPlane.SetOrigin(vertex[0], vertex[1], vertex[2] - h1 * sign(cone_angle))
+    clipPlane.SetNormal(0, 0, -1 * sign(cone_angle))
+
+    clipper = vtk.vtkClipPolyData()
+    clipper.SetInputConnection(coneSource.GetOutputPort())
+    clipper.SetClipFunction(clipPlane)
+    clipper.GenerateClipScalarsOff()
+    clipper.GenerateClippedOutputOff()
+    clipper.Update()
+
+    # plane to cut to h2
+    clipPlane2 = vtk.vtkPlane()
+    clipPlane2.SetOrigin(vertex[0], vertex[1], vertex[2] - h2 * sign(cone_angle))
+    clipPlane2.SetNormal(0, 0, 1 * sign(cone_angle))
+
+    clipper2 = vtk.vtkClipPolyData()
+    clipper2.SetInputConnection(clipper.GetOutputPort())
+    clipper2.SetClipFunction(clipPlane2)
+    clipper2.GenerateClipScalarsOff()
+    clipper2.GenerateClippedOutputOff()
+    clipper2.Update()
+
     mapper = vtkPolyDataMapper()
-    mapper.SetInputConnection(coneSource.GetOutputPort())
+    mapper.SetInputConnection(clipper2.GetOutputPort())
 
     actor = vtkActor()
     actor.SetMapper(mapper)
@@ -413,8 +439,7 @@ class Plane:
         self.rot = rot
 
     def toFile(self):
-        return "X" + str(self.x) + " Y" + str(self.y) + " Z" + str(self.z) + \
-               " T" + str(self.incline) + " R" + str(self.rot)
+        return f"plane X{self.x} Y{self.y} Z{self.z} T{self.incline} R{self.rot}"
 
     def params(self) -> Dict[str, float]:
         return {
@@ -427,22 +452,17 @@ class Plane:
 
 
 class Cone:
-    def __init__(self, cone_angle: float, point: Tuple[float, float, float], h: float = 100):
+    def __init__(self, cone_angle: float, point: Tuple[float, float, float], h1: float = 0, h2: float = 100):
         self.cone_angle = cone_angle
         self.x, self.y, self.z = point
-        self.h = h
+        self.h1 = h1
+        self.h2 = h2
 
     def toFile(self) -> str:
-        return "X{} Y{} Z{} A{}".format(self.x, self.y, self.z, self.cone_angle)
+        return f"cone X{self.x} Y{self.y} Z{self.z} A{self.cone_angle} H{self.h1} H{self.h2}"
 
     def params(self) -> Dict[str, float]:
-        return {
-            "X": self.x,
-            "Y": self.y,
-            "Z": self.z,
-            "A": self.cone_angle,
-            "H": self.h
-        }
+        return {"X": self.x, "Y": self.y, "Z": self.z, "A": self.cone_angle, "H1": self.h1, "H2": self.h2}
 
 
 def read_planes(filename):
@@ -450,13 +470,15 @@ def read_planes(filename):
     with open(filename) as fp:
         for line in fp:
             v = line.strip().split(' ')
-            #X0 Y0 Z10 A60 - Cone string format
-            if len(v) == 4:
-                planes.append(Cone(float(v[3][1:]), (float(v[0][1:]), float(v[1][1:]), float(v[2][1:]))))
-            #X10 Y10 Z10 T-60 R0 - Plane string format
+
+            if v[0] == 'plane':
+                #plane X10 Y10 Z10 T-60 R0 - Plane string format
+                planes.append(
+                    Plane(float(v[4][1:]), float(v[5][1:]), (float(v[1][1:]), float(v[2][1:]), float(v[3][1:]))))
             else:
-                planes.append(Plane(float(v[3][1:]), float(v[4][1:]),
-                                    (float(v[0][1:]), float(v[1][1:]), float(v[2][1:]))))
+                #cone X0 Y0 Z10 A60 H10 H50 - Cone string format
+                planes.append(Cone(float(v[4][1:]), (float(v[1][1:]), float(v[2][1:]), float(v[3][1:])), float(v[5][1:]), float(v[6][1:])))
+
     return planes
 
 

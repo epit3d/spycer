@@ -2,6 +2,7 @@ from src import gui_utils, gcode
 
 
 class MainModel:
+
     def __init__(self):
         self.current_slider_value = None
         self.opened_stl = ""
@@ -24,4 +25,4 @@ class MainModel:
             self.splanes.append(gui_utils.Plane(0, 0, path))
 
     def add_cone(self):
-        self.splanes.append(gui_utils.Cone(60, (0, 0, 10), 100))
+        self.splanes.append(gui_utils.Cone(60, (0, 0, 10), 0, 100))
