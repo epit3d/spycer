@@ -51,27 +51,82 @@ class MainController:
         # bottom panel
         self.view.add_plane_button.clicked.connect(self.add_splane)
         self.view.add_cone_button.clicked.connect(self.add_cone)
-        self.view.splanes_list.itemDoubleClicked.connect(self.change_figure_parameters)
-        self.view.splanes_list.model().rowsMoved.connect(self.moving_figure)
+        self.view.splanes_tree.itemDoubleClicked.connect(self.change_splanes_tree)
+        self.view.splanes_tree.model().rowsInserted.connect(self.moving_figure)
+        self.view.splanes_tree.itemChanged.connect(self.change_figure_check_state)
         self.view.edit_figure_button.clicked.connect(self.change_figure_parameters)
         self.view.save_planes_button.clicked.connect(self.save_planes)
         self.view.download_planes_button.clicked.connect(self.download_planes)
-        self.view.splanes_list.currentItemChanged.connect(self.change_combo_select)
+        self.view.splanes_tree.currentItemChanged.connect(self.change_combo_select)
         self.view.remove_plane_button.clicked.connect(self.remove_splane)
 
         self.view.hide_checkbox.stateChanged.connect(self.view.hide_splanes)
 
     def moving_figure(self, sourceParent, previousRow):
-        currentRow = self.view.splanes_list.currentRow()
-        if previousRow != currentRow:
-            currentsplane = self.model.splanes[previousRow]
-            previoussplane = self.model.splanes[currentRow]
-            self.model.splanes[previousRow] = previoussplane
-            self.model.splanes[currentRow] = currentsplane
-            self.view.reload_splanes(self.model.splanes)
+        if sourceParent.row() != -1:
+            child = self.view.splanes_tree.topLevelItem(sourceParent.row()).child(0)
+            self.view.splanes_tree.topLevelItem(sourceParent.row()).removeChild(child)
+
+            self.view.splanes_tree.insertTopLevelItem(sourceParent.row() + 1, child)
+            self.view.splanes_tree.setCurrentItem(child)
+
+            return
+
+        currentRow = self.view.splanes_tree.currentIndex().row()
+
+        if currentRow != -1:
+            previousItem = self.view.splanes_tree.topLevelItem(previousRow)
+            previousItemNumber = int(previousItem.text(1))
+
+            if previousItemNumber > 0:
+                currentRow = previousItemNumber - 1
+
+            self.view.splanes_tree.setCurrentItem(self.view.splanes_tree.topLevelItem(previousRow))
+
+            if previousRow != currentRow:
+                if previousRow > currentRow: #Down
+                    self.model.splanes.insert(previousRow + 1, self.model.splanes[currentRow])
+                    del self.model.splanes[currentRow]
+
+                if previousRow < currentRow: #Up
+                    self.model.splanes.insert(previousRow, self.model.splanes[currentRow])
+                    del self.model.splanes[currentRow + 1]
+
+                for i in range(len(self.model.splanes)):
+                    self.view.splanes_tree.topLevelItem(i).setText(1, str(i + 1))
+                    self.view.splanes_tree.topLevelItem(i).setText(2, self.model.splanes[i].toFile())
+
+                self.view._recreate_splanes(self.model.splanes)
+                self.view.change_combo_select(self.model.splanes[previousRow], previousRow)
+
+    def change_figure_check_state(self, item, column):
+        ind = self.view.splanes_tree.indexFromItem(item).row()
+        if ind == -1:
+            return
+
+        if not self.view.hide_checkbox.isChecked():
+            #if item.checkState(0) == QtCore.Qt.CheckState.Checked:
+            #    settableVisibility = False
+            #else:
+            #    settableVisibility = True
+
+            settableVisibility = not item.checkState(0) == QtCore.Qt.CheckState.Checked
+            currentVisibility = self.view.splanes_actors[ind].GetVisibility()
+
+            if settableVisibility != currentVisibility:
+                if settableVisibility:
+                    self.view.splanes_actors[ind].VisibilityOn()
+                else:
+                    self.view.splanes_actors[ind].VisibilityOff()
+                self.view.reload_scene()
+
+    def change_splanes_tree(self, item, column):
+        if column == 0:
+            return
+        self.change_figure_parameters()
 
     def change_figure_parameters(self):
-        ind = self.view.splanes_list.currentRow()
+        ind = self.view.splanes_tree.currentIndex().row()
         if ind == -1:
             return
 
@@ -307,36 +362,46 @@ class MainController:
         self.view.reload_splanes(self.model.splanes)
 
     def remove_splane(self):
-        ind = self.view.splanes_list.currentRow()
+        ind = self.view.splanes_tree.currentIndex().row()
         if ind == -1:
             return
         del self.model.splanes[ind]
         self.view.reload_splanes(self.model.splanes)
 
-    def change_combo_select(self):
-        ind = self.view.splanes_list.currentRow()
+    def change_combo_select(self, current, previous):
+        ind = self.view.splanes_tree.currentIndex().row()
         if ind == -1:
             return
+
+        if self.view.parameters_tooling and not self.view.parameters_tooling.isHidden():
+            self.change_figure_parameters()
+
         if len(self.model.splanes) > ind:
-            self.view.change_combo_select(self.model.splanes[ind], ind)
+                self.view.change_combo_select(self.model.splanes[ind], ind)
 
     def update_plane_common(self, values: Dict[str, float]):
         center = [values.get("X", 0), values.get("Y", 0), values.get("Z", 0)]
-        ind = self.view.splanes_list.currentRow()
+        ind = self.view.splanes_tree.currentIndex().row()
         if ind == -1:
             return
         self.model.splanes[ind] = gui_utils.Plane(values.get("Tilt", 0), values.get("Rotation", 0), center)
         self.view.update_splane(self.model.splanes[ind], ind)
-        self.view.reload_splanes(self.model.splanes)
+
+        for i in range(len(self.model.splanes)):
+            self.view.splanes_tree.topLevelItem(i).setText(1, str(i + 1))
+            self.view.splanes_tree.topLevelItem(i).setText(2, self.model.splanes[i].toFile())
 
     def update_cone_common(self, values: Dict[str, float]):
         center: List[float] = [0, 0, values.get("Z", 0)]
-        ind = self.view.splanes_list.currentRow()
+        ind = self.view.splanes_tree.currentIndex().row()
         if ind == -1:
             return
         self.model.splanes[ind] = gui_utils.Cone(values.get("A", 0), tuple(center), values.get("H", 15))
         self.view.update_cone(self.model.splanes[ind], ind)
-        self.view.reload_splanes(self.model.splanes)
+
+        for i in range(len(self.model.splanes)):
+            self.view.splanes_tree.topLevelItem(i).setText(1, str(i + 1))
+            self.view.splanes_tree.topLevelItem(i).setText(2, self.model.splanes[i].toFile())
 
     # def debugMe(self):
     #     debug.readFile(self.render, "/home/l1va/debug.txt", 4)
