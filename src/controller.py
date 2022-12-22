@@ -51,14 +51,14 @@ class MainController:
         # bottom panel
         self.view.add_plane_button.clicked.connect(self.add_splane)
         self.view.add_cone_button.clicked.connect(self.add_cone)
-        self.view.splanes_tree.itemDoubleClicked.connect(self.change_splanes_tree)
-        self.view.splanes_tree.model().rowsInserted.connect(self.moving_figure)
-        self.view.splanes_tree.itemChanged.connect(self.change_figure_check_state)
         self.view.edit_figure_button.clicked.connect(self.change_figure_parameters)
         self.view.save_planes_button.clicked.connect(self.save_planes)
         self.view.download_planes_button.clicked.connect(self.download_planes)
-        self.view.splanes_tree.currentItemChanged.connect(self.change_combo_select)
         self.view.remove_plane_button.clicked.connect(self.remove_splane)
+        self.view.splanes_tree.itemDoubleClicked.connect(self.change_splanes_tree)
+        self.view.splanes_tree.itemChanged.connect(self.change_figure_check_state)
+        self.view.splanes_tree.currentItemChanged.connect(self.change_combo_select)
+        self.view.splanes_tree.model().rowsInserted.connect(self.moving_figure)
 
         self.view.hide_checkbox.stateChanged.connect(self.view.hide_splanes)
 
@@ -68,6 +68,7 @@ class MainController:
             self.view.splanes_tree.topLevelItem(sourceParent.row()).removeChild(child)
 
             self.view.splanes_tree.insertTopLevelItem(sourceParent.row() + 1, child)
+            self.view.splanes_tree.itemIsMoving = False
             self.view.splanes_tree.setCurrentItem(child)
 
             return
@@ -97,6 +98,7 @@ class MainController:
                     self.view.splanes_tree.topLevelItem(i).setText(2, self.model.splanes[i].toFile())
 
                 self.view._recreate_splanes(self.model.splanes)
+                self.view.splanes_tree.itemIsMoving = False
                 self.view.change_combo_select(self.model.splanes[previousRow], previousRow)
 
     def change_figure_check_state(self, item, column):
@@ -104,21 +106,12 @@ class MainController:
         if ind == -1:
             return
 
-        if not self.view.hide_checkbox.isChecked():
-            #if item.checkState(0) == QtCore.Qt.CheckState.Checked:
-            #    settableVisibility = False
-            #else:
-            #    settableVisibility = True
-
-            settableVisibility = not item.checkState(0) == QtCore.Qt.CheckState.Checked
-            currentVisibility = self.view.splanes_actors[ind].GetVisibility()
-
-            if settableVisibility != currentVisibility:
-                if settableVisibility:
-                    self.view.splanes_actors[ind].VisibilityOn()
-                else:
-                    self.view.splanes_actors[ind].VisibilityOff()
-                self.view.reload_scene()
+        if column == 0:
+            if item.checkState(0) == QtCore.Qt.CheckState.Checked:
+                self.view.splanes_actors[ind].VisibilityOff()
+            else:
+                self.view.splanes_actors[ind].VisibilityOn()
+            self.view.reload_scene()
 
     def change_splanes_tree(self, item, column):
         if column == 0:
@@ -371,18 +364,23 @@ class MainController:
         if ind == -1:
             return
         del self.model.splanes[ind]
+        self.view.splanes_tree.takeTopLevelItem(ind)
         self.view.reload_splanes(self.model.splanes)
+        if len(self.model.splanes) == 0:
+            if self.view.parameters_tooling and not self.view.parameters_tooling.isHidden():
+                self.view.parameters_tooling.close()
 
-    def change_combo_select(self, current, previous):
+    def change_combo_select(self):
         ind = self.view.splanes_tree.currentIndex().row()
         if ind == -1:
             return
 
-        if self.view.parameters_tooling and not self.view.parameters_tooling.isHidden():
-            self.change_figure_parameters()
+        if not self.view.splanes_tree.itemIsMoving:
+            if self.view.parameters_tooling and not self.view.parameters_tooling.isHidden():
+                self.change_figure_parameters()
 
-        if len(self.model.splanes) > ind:
-                self.view.change_combo_select(self.model.splanes[ind], ind)
+            if len(self.model.splanes) > ind:
+                    self.view.change_combo_select(self.model.splanes[ind], ind)
 
     def update_plane_common(self, values: Dict[str, float]):
         center = [values.get("X", 0), values.get("Y", 0), values.get("Z", 0)]

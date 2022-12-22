@@ -5,8 +5,8 @@ from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QLabel, QLineEdit, QComboBox, QGridLayout, QSlider,
                              QCheckBox, QVBoxLayout,
-                             QPushButton, QFileDialog, QScrollArea, QGroupBox, QAction, QDialog, QAbstractItemView, 
-                             QTreeWidget, QTreeWidgetItem)
+                             QPushButton, QFileDialog, QScrollArea, QGroupBox, QAction, QDialog,
+                             QTreeWidget, QTreeWidgetItem, QAbstractItemView)
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
 from src import locales, gui_utils, interactor_style
@@ -21,6 +21,26 @@ StlState = "stl"
 BothState = "both"
 MovingState = "moving"
 
+class TreeWidget(QTreeWidget):
+    itemIsMoving = False
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.setHeaderLabels(["Скрыть", "№", "Название"])
+        self.resizeColumnToContents(0)
+        self.resizeColumnToContents(1)
+        self.setMinimumWidth(400)
+
+        self.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.setDragDropMode(QAbstractItemView.InternalMove)
+        self.setDragEnabled(True)
+        self.setDropIndicatorShown(True)
+        self.setAcceptDrops(True)
+
+    def dragMoveEvent(self, event):
+        self.itemIsMoving = True
+        super().dragMoveEvent(event)
 
 class MainWindow(QMainWindow):
     from src.figure_editor import FigureEditor
@@ -360,16 +380,7 @@ class MainWindow(QMainWindow):
         bottom_layout.setSpacing(5)
         bottom_layout.setColumnStretch(7, 1)
 
-        self.splanes_tree = QTreeWidget()
-        self.splanes_tree.setHeaderLabels(["Скрыть", "№", "Название"])
-        self.splanes_tree.resizeColumnToContents(0)
-        self.splanes_tree.resizeColumnToContents(1)
-        self.splanes_tree.setMinimumWidth(400)
-
-        self.splanes_tree.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.splanes_tree.setDragDropMode(QAbstractItemView.InternalMove)
-        self.splanes_tree.setDragEnabled(True)
-        self.splanes_tree.setDropIndicatorShown(True)
+        self.splanes_tree = TreeWidget()
 
         bottom_layout.addWidget(self.splanes_tree, 0, 1, 5, 1)
 
@@ -669,14 +680,15 @@ class MainWindow(QMainWindow):
         self._recreate_splanes(splanes)
         self.splanes_tree.clear()
         for i in range(len(splanes)):
-            ptwgItem = QTreeWidgetItem(self.splanes_tree)
-            ptwgItem.setText(1, str(i + 1))
-            ptwgItem.setText(2, splanes[i].toFile())
+            row = QTreeWidgetItem(self.splanes_tree)
 
             if self.splanes_actors[i].GetVisibility():
-                ptwgItem.setCheckState(0, Qt.CheckState.Unchecked)
+                row.setCheckState(0, Qt.CheckState.Unchecked)
             else:
-                ptwgItem.setCheckState(0, Qt.CheckState.Checked)
+                row.setCheckState(0, Qt.CheckState.Checked)
+
+            row.setText(1, str(i + 1))
+            row.setText(2, splanes[i].toFile())
             # self.splanes_list.addItem(self.locale.Plane + " " + str(i + 1))
 
         if len(splanes) > 0:
@@ -687,12 +699,17 @@ class MainWindow(QMainWindow):
         for p in self.splanes_actors:
             self.render.RemoveActor(p)
         self.splanes_actors = []
-        for p in splanes:
+        for i in range(len(splanes)):
+            p = splanes[i]
             if isinstance(p, Plane):
                 act = gui_utils.create_splane_actor([p.x, p.y, p.z], p.incline, p.rot)
             else:  # isinstance(p, Cone):
                 act = gui_utils.create_cone_actor((p.x, p.y, p.z), p.cone_angle, p.h1, p.h2)
 
+            row = self.splanes_tree.topLevelItem(i)
+            if row != None:
+                if row.checkState(0) == QtCore.Qt.CheckState.Checked:
+                    act.VisibilityOff()
             # act = gui_utils.create_cone_actor((p.x, p.y, p.z), p.cone_angle)
             self.splanes_actors.append(act)
             self.render.AddActor(act)
