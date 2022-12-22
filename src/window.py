@@ -81,7 +81,7 @@ class MainWindow(QMainWindow):
         self.interactor.Initialize()
         self.interactor.Start()
 
-        self.render.ResetCamera()
+        #self.render.ResetCamera()
         # self.render.GetActiveCamera().AddObserver('ModifiedEvent', CameraModifiedCallback)
 
         # set position of camera to (5, 5, 5) and look at (0, 0, 0) and z-axis is looking up
@@ -434,6 +434,21 @@ class MainWindow(QMainWindow):
 
             return translatePos, translateNeg, translateSet
 
+        stlScale = gui_utils.StlScale(self)
+
+        def scale(x, y, z):
+
+            def scalePos():
+                stlScale.act(5, [x, y, z])
+
+            def scaleNeg():
+                stlScale.act(-5, [x, y, z])
+
+            def scaleSet(text):
+                stlScale.set(text, [x, y, z])
+
+            return scalePos, scaleNeg, scaleSet
+
         self.stl_move_panel = StlMovePanel(
             {
                 (0, "X"): translate(1, 0, 0),
@@ -442,9 +457,9 @@ class MainWindow(QMainWindow):
                 (1, "X"): rotate(1, 0, 0),
                 (1, "Y"): rotate(0, 1, 0),
                 (1, "Z"): rotate(0, 0, 1),
-                (2, "X"): None,
-                (2, "Y"): None,
-                (2, "Z"): None,
+                (2, "X"): scale(1, 0, 0),
+                (2, "Y"): scale(0, 1, 0),
+                (2, "Z"): scale(0, 0, 1),
             },
             captions=[
                 self.locale.StlMoveTranslate,
@@ -469,6 +484,7 @@ class MainWindow(QMainWindow):
         s = sett()
         s.slicing.model_centering = self.model_centering_box.isChecked()
         save_settings()
+        self.hide_colorize()
 
         origin = gui_utils.findStlOrigin(self.stlActor)
 
@@ -560,7 +576,7 @@ class MainWindow(QMainWindow):
                 self.boxWidget.SetPlaceFactor(1.25)
                 self.boxWidget.SetHandleSize(0.005)
                 self.boxWidget.SetEnabled(True)
-                self.boxWidget.SetScalingEnabled(False)
+                self.boxWidget.SetScalingEnabled(True)
 
                 # hack for boxWidget - 1. reset actor transform
                 # 2. place boxWidget
@@ -675,7 +691,7 @@ class MainWindow(QMainWindow):
             if isinstance(p, Plane):
                 act = gui_utils.create_splane_actor([p.x, p.y, p.z], p.incline, p.rot)
             else:  # isinstance(p, Cone):
-                act = gui_utils.create_cone_actor((p.x, p.y, p.z), p.cone_angle, p.h)
+                act = gui_utils.create_cone_actor((p.x, p.y, p.z), p.cone_angle, p.h1, p.h2)
 
             # act = gui_utils.create_cone_actor((p.x, p.y, p.z), p.cone_angle)
             self.splanes_actors.append(act)
@@ -703,7 +719,7 @@ class MainWindow(QMainWindow):
     def update_cone(self, cone: Cone, ind):
         self.render.RemoveActor(self.splanes_actors[ind])
         # TODO update to pass values as self.splanes_actors[ind], and only then destruct object
-        act = gui_utils.create_cone_actor((cone.x, cone.y, cone.z), cone.cone_angle, cone.h)
+        act = gui_utils.create_cone_actor((cone.x, cone.y, cone.z), cone.cone_angle, cone.h1, cone.h2)
         self.splanes_actors[ind] = act
         self.render.AddActor(act)
         sel = self.splanes_tree.currentIndex().row()
@@ -736,7 +752,7 @@ class MainWindow(QMainWindow):
         else:
             self.state_gcode(len(self.actors))
 
-        self.render.ResetCamera()
+        #self.render.ResetCamera()
         self.reload_scene()
 
     def rotate_plane(self, tf):
@@ -907,6 +923,7 @@ class MainWindow(QMainWindow):
         if isinstance(self.stlActor, src.gui_utils.ColorizedStlActor):
             s = sett()
             stl_actor = gui_utils.createStlActorInOrigin(s.slicing.stl_file)
+            stl_actor.lastMove = self.stlActor.lastMove
             boxWidget = self.boxWidget
             axesWidget = self.axesWidget
 

@@ -240,10 +240,13 @@ class MainController:
 
         start_time = time.time()
         print("start slicing")
-        call_command(s.slicing.cmd)
+        res = call_command(s.slicing.cmd)
         print("finished command")
         end_time = time.time()
         print('spent time for slicing: ', end_time - start_time, 's')
+
+        if not res:
+            return
 
         self.load_gcode(s.slicing.gcode_file, True)
         print("loaded gcode")
@@ -347,7 +350,9 @@ class MainController:
         shutil.copyfile(s.slicing.stl_file, s.colorizer.copy_stl_file)
         save_splanes_to_file(self.model.splanes, s.slicing.splanes_file)
         call_command(s.colorizer.cmd)
+        lastMove = self.view.stlActor.lastMove
         self.load_stl(s.colorizer.copy_stl_file, colorize=True)
+        self.view.stlActor.lastMove = lastMove
         self.model.opened_stl = s.slicing.stl_file
 
 
@@ -396,7 +401,7 @@ class MainController:
         ind = self.view.splanes_tree.currentIndex().row()
         if ind == -1:
             return
-        self.model.splanes[ind] = gui_utils.Cone(values.get("A", 0), tuple(center), values.get("H", 15))
+        self.model.splanes[ind] = gui_utils.Cone(values.get("A", 0), tuple(center), values.get("H1", 0), values.get("H2", 15))
         self.view.update_cone(self.model.splanes[ind], ind)
 
         for i in range(len(self.model.splanes)):
@@ -409,7 +414,7 @@ class MainController:
     #     self.reloadScene()
 
 
-def call_command(cmd):
+def call_command(cmd) -> bool:
     try:
         cmds = cmd.split(" ")
         # print(cmds)
@@ -419,11 +424,16 @@ def call_command(cmd):
         print("Error2:", er.output)
         logging.error(str(sys.exc_info()))
         gui_utils.showErrorDialog(repr(er.output))
+        return False
     except:
         print("Error:", sys.exc_info())
         logging.error(str(sys.exc_info()))
         # print("Error2:", er.output)
         gui_utils.showErrorDialog(str(sys.exc_info()))
+        return False
+    
+    # return positive that we can load new gcode from file and it for sure will be new
+    return True
 
 
 def save_splanes_to_file(splanes, filename):
