@@ -5,7 +5,8 @@ from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QLabel, QLineEdit, QComboBox, QGridLayout, QSlider,
                              QCheckBox, QVBoxLayout,
-                             QPushButton, QFileDialog, QScrollArea, QGroupBox, QAction, QDialog, QListWidget)
+                             QPushButton, QFileDialog, QScrollArea, QGroupBox, QAction, QDialog,
+                             QTreeWidget, QTreeWidgetItem, QAbstractItemView)
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
 from src import locales, gui_utils, interactor_style
@@ -20,6 +21,26 @@ StlState = "stl"
 BothState = "both"
 MovingState = "moving"
 
+class TreeWidget(QTreeWidget):
+    itemIsMoving = False
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.setHeaderLabels([locales.getLocale().Hide, "№", locales.getLocale().NamePlanes])
+        self.resizeColumnToContents(0)
+        self.resizeColumnToContents(1)
+        self.setMinimumWidth(400)
+
+        self.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.setDragDropMode(QAbstractItemView.InternalMove)
+        self.setDragEnabled(True)
+        self.setDropIndicatorShown(True)
+        self.setAcceptDrops(True)
+
+    def dragMoveEvent(self, event):
+        self.itemIsMoving = True
+        super().dragMoveEvent(event)
 
 class MainWindow(QMainWindow):
     from src.figure_editor import FigureEditor
@@ -359,8 +380,8 @@ class MainWindow(QMainWindow):
         bottom_layout.setSpacing(5)
         bottom_layout.setColumnStretch(7, 1)
 
-        self.splanes_list = QListWidget()
-        bottom_layout.addWidget(self.splanes_list, 0, 0, 5, 1)
+        self.splanes_tree = TreeWidget()
+        bottom_layout.addWidget(self.splanes_tree, 0, 0, 5, 1)
 
         # self.tilted_checkbox = QCheckBox(self.locale.Tilted)
         # bottom_layout.addWidget(self.tilted_checkbox, 0, 2)
@@ -648,44 +669,64 @@ class MainWindow(QMainWindow):
             for s in self.splanes_actors:
                 s.VisibilityOff()
         else:
-            for s in self.splanes_actors:
-                s.VisibilityOn()
+            for i, s in enumerate(self.splanes_actors):
+                if not self.splanes_tree.topLevelItem(i).checkState(0) == Qt.CheckState.Checked:
+                    s.VisibilityOn()
         self.reload_scene()
 
     def reload_splanes(self, splanes):
         self.hide_colorize()
         self._recreate_splanes(splanes)
-        self.splanes_list.clear()
+        self.splanes_tree.clear()
         for i in range(len(splanes)):
-            self.splanes_list.addItem("Figure" + " " + str(i + 1))
+            row = QTreeWidgetItem(self.splanes_tree)
+
+            if self.splanes_actors[i].GetVisibility():
+                row.setCheckState(0, Qt.CheckState.Unchecked)
+            else:
+                row.setCheckState(0, Qt.CheckState.Checked)
+
+            row.setText(1, str(i + 1))
+            row.setText(2, splanes[i].toFile())
             # self.splanes_list.addItem(self.locale.Plane + " " + str(i + 1))
 
         if len(splanes) > 0:
-            self.splanes_list.setCurrentRow(len(splanes) - 1)
+            self.splanes_tree.setCurrentItem(self.splanes_tree.topLevelItem(len(splanes) - 1))
         self.reload_scene()
 
     def _recreate_splanes(self, splanes):
         for p in self.splanes_actors:
             self.render.RemoveActor(p)
         self.splanes_actors = []
-        for p in splanes:
+        for i, p in enumerate(splanes):
             if isinstance(p, Plane):
                 act = gui_utils.create_splane_actor([p.x, p.y, p.z], p.incline, p.rot)
             else:  # isinstance(p, Cone):
                 act = gui_utils.create_cone_actor((p.x, p.y, p.z), p.cone_angle, p.h1, p.h2)
 
+            row = self.splanes_tree.topLevelItem(i)
+            if row != None:
+                if (row.checkState(0) == QtCore.Qt.CheckState.Checked) or self.hide_checkbox.isChecked():
+                    act.VisibilityOff()
             # act = gui_utils.create_cone_actor((p.x, p.y, p.z), p.cone_angle)
             self.splanes_actors.append(act)
             self.render.AddActor(act)
 
     def update_splane(self, sp, ind):
         self.hide_colorize()
+        settableVisibility = self.splanes_actors[ind].GetVisibility() and not self.hide_checkbox.isChecked()
         self.render.RemoveActor(self.splanes_actors[ind])
         # TODO update to pass values as self.splanes_actors[ind], and only then destruct object
         act = gui_utils.create_splane_actor([sp.x, sp.y, sp.z], sp.incline, sp.rot)
+
+        if settableVisibility:
+            act.VisibilityOn()
+        else:
+            act.VisibilityOff()
+
         self.splanes_actors[ind] = act
         self.render.AddActor(act)
-        sel = self.splanes_list.currentRow()
+        sel = self.splanes_tree.currentIndex().row()
         if sel == ind:
             self.splanes_actors[sel].GetProperty().SetColor(get_color(sett().colors.last_layer))
         self.reload_scene()
@@ -696,7 +737,7 @@ class MainWindow(QMainWindow):
         act = gui_utils.create_cone_actor((cone.x, cone.y, cone.z), cone.cone_angle, cone.h1, cone.h2)
         self.splanes_actors[ind] = act
         self.render.AddActor(act)
-        sel = self.splanes_list.currentRow()
+        sel = self.splanes_tree.currentIndex().row()
         if sel == ind:
             self.splanes_actors[sel].GetProperty().SetColor(get_color(sett().colors.last_layer))
         self.reload_scene()

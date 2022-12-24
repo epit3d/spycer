@@ -51,6 +51,7 @@ class Locale:
     ModelCentering = "Center model"
     SavePlanes = "Save planes"
     DownloadPlanes = "Download planes"
+    NamePlanes = "Name"
 
     def __init__(self, **entries):
         self.__dict__.update(entries)
@@ -109,6 +110,7 @@ dicts = {
         ModelCentering = "Поместить модель в центр",
         SavePlanes = "Сохранить плоскости",
         DownloadPlanes = "Загрузить плоскости",
+        NamePlanes = "Название",
     ),
 }
 
