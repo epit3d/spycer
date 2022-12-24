@@ -27,7 +27,7 @@ class TreeWidget(QTreeWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.setHeaderLabels(["Скрыть", "№", "Название"])
+        self.setHeaderLabels([locales.getLocale().Hide, "№", locales.getLocale().NamePlanes])
         self.resizeColumnToContents(0)
         self.resizeColumnToContents(1)
         self.setMinimumWidth(400)
@@ -381,8 +381,7 @@ class MainWindow(QMainWindow):
         bottom_layout.setColumnStretch(7, 1)
 
         self.splanes_tree = TreeWidget()
-
-        bottom_layout.addWidget(self.splanes_tree, 0, 1, 5, 1)
+        bottom_layout.addWidget(self.splanes_tree, 0, 0, 5, 1)
 
         # self.tilted_checkbox = QCheckBox(self.locale.Tilted)
         # bottom_layout.addWidget(self.tilted_checkbox, 0, 2)
@@ -670,9 +669,9 @@ class MainWindow(QMainWindow):
             for s in self.splanes_actors:
                 s.VisibilityOff()
         else:
-            for i in range(len(self.splanes_actors)):
+            for i, s in enumerate(self.splanes_actors):
                 if not self.splanes_tree.topLevelItem(i).checkState(0) == Qt.CheckState.Checked:
-                    self.splanes_actors[i].VisibilityOn()
+                    s.VisibilityOn()
         self.reload_scene()
 
     def reload_splanes(self, splanes):
@@ -699,8 +698,7 @@ class MainWindow(QMainWindow):
         for p in self.splanes_actors:
             self.render.RemoveActor(p)
         self.splanes_actors = []
-        for i in range(len(splanes)):
-            p = splanes[i]
+        for i, p in enumerate(splanes):
             if isinstance(p, Plane):
                 act = gui_utils.create_splane_actor([p.x, p.y, p.z], p.incline, p.rot)
             else:  # isinstance(p, Cone):
@@ -708,7 +706,7 @@ class MainWindow(QMainWindow):
 
             row = self.splanes_tree.topLevelItem(i)
             if row != None:
-                if row.checkState(0) == QtCore.Qt.CheckState.Checked:
+                if (row.checkState(0) == QtCore.Qt.CheckState.Checked) or self.hide_checkbox.isChecked():
                     act.VisibilityOff()
             # act = gui_utils.create_cone_actor((p.x, p.y, p.z), p.cone_angle)
             self.splanes_actors.append(act)
@@ -716,7 +714,7 @@ class MainWindow(QMainWindow):
 
     def update_splane(self, sp, ind):
         self.hide_colorize()
-        settableVisibility = self.splanes_actors[ind].GetVisibility()
+        settableVisibility = self.splanes_actors[ind].GetVisibility() and not self.hide_checkbox.isChecked()
         self.render.RemoveActor(self.splanes_actors[ind])
         # TODO update to pass values as self.splanes_actors[ind], and only then destruct object
         act = gui_utils.create_splane_actor([sp.x, sp.y, sp.z], sp.incline, sp.rot)
