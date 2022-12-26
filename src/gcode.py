@@ -153,6 +153,12 @@ def parseGCode(lines):
             if line.startswith(";LAYER:"):
                 current_layer = int(line[7:])
                 finishLayer()
+            elif line.startswith(";Print time:"):
+                print_time = float(line[13:])
+                s.slicing.print_time = print_time
+            elif line.startswith(";Consumption material:"):
+                consumption_material = float(line[23:])
+                s.slicing.consumption_material = consumption_material
             elif line.startswith(";End"):
                 break
         if line == "T0":
@@ -191,6 +197,7 @@ def parseGCode(lines):
                 pass  # skip
 
     finishLayer()  # not forget about last layer
+    src.settings.save_settings()
 
     layers.append(layer)  # add dummy layer for back rotations
     lays2rots.append(len(rotations) - 1)

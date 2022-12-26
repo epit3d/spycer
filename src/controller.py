@@ -188,7 +188,10 @@ class MainController:
                     s.slicing.rotationx, s.slicing.rotationy, s.slicing.rotationz = 0, 0, 0
                     s.slicing.scalex, s.slicing.scaley, s.slicing.scalez = 1, 1, 1
                     s.slicing.model_centering = False
+                    s.slicing.print_time = 0
+                    s.slicing.consumption_material = 0
                     save_settings()
+                    self.update_print_value()
 
                     self.view.model_centering_box.setChecked(False)
 
@@ -198,6 +201,7 @@ class MainController:
                     self.load_stl(filename)
                 elif file_ext == ".GCODE":
                     self.load_gcode(filename, False)
+                    self.update_print_value()
                 else:
                     showErrorDialog("This file format isn't supported:" + file_ext)
         except IOError as e:
@@ -244,6 +248,7 @@ class MainController:
         self.load_gcode(s.slicing.gcode_file, True)
         print("loaded gcode")
         # self.debugMe()
+        self.update_print_value()
 
     def slice_cone(self):
         # print(self.model.splanes)
@@ -411,6 +416,9 @@ class MainController:
     #     # debug.readFile(self.render, "/home/l1va/debug_simplified.txt", "Red", 3)
     #     self.reloadScene()
 
+    def update_print_value(self):
+        self.view.print_time_value.setText(self.view.locale.PrintTime + str(sett().slicing.print_time))
+        self.view.consumption_material_value.setText(self.view.locale.ConsumptionMaterial + str(sett().slicing.consumption_material))
 
 def call_command(cmd) -> bool:
     try:

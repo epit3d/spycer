@@ -60,6 +60,8 @@ slicing:
   print_speed: 50
   print_speed_layer1: 50
   print_speed_wall: 50
+  print_time: 0.0
+  consumption_material: 0.0
   retraction_distance: 0.3
   retraction_on: true
   retraction_speed: 50
