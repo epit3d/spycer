@@ -34,8 +34,8 @@ hardware:
   rotation_center_x: 0
   rotation_center_y: 0
   rotation_center_z: 63.5
-  # speed in mm/min for linear exes, in deg/min for rotational
-  speed:
+  # maximum speed in mm/min for linear exes, in deg/min for rotational
+  max_speed:
     X: 800
     Y: 800
     Z: 800
