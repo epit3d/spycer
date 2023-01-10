@@ -36,28 +36,28 @@ hardware:
   rotation_center_z: 63.5
   # maximum speed in mm/min for linear exes, in deg/min for rotational
   max_speed:
-    X: 800
-    Y: 800
-    Z: 800
-    E: 1000
-    U: 300
-    V: 300
-  # acceleration in mm/s^2 for linear exes, in deg/s^2 for rotational
-  acceleration:
     X: 2000
     Y: 2000
     Z: 2000
-    E: 2000
     U: 500
     V: 500
-  # jerk in mm/min for linear exes, in deg/min for rotational
-  jerk:
+    E: 2000
+  # acceleration in mm/s^2 for linear exes, in deg/s^2 for rotational
+  acceleration:
+    X: 800
+    Y: 800
+    Z: 800
+    U: 300
+    V: 300
+    E: 1000
+  # maximum jerk in mm/min for linear exes, in deg/min for rotational
+  max_jerk:
     X: 200
     Y: 200
     Z: 200
-    E: 200
     U: 200
     V: 200
+    E: 120
 slicing:
   angle: 30
   bed_temperature: 60
