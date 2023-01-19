@@ -1,4 +1,5 @@
 import logging
+import math
 import os
 import subprocess
 import time
@@ -417,8 +418,30 @@ class MainController:
     #     self.reloadScene()
 
     def update_print_value(self):
-        self.view.print_time_value.setText(self.view.locale.PrintTime + str(sett().slicing.print_time))
-        self.view.consumption_material_value.setText(self.view.locale.ConsumptionMaterial + str(sett().slicing.consumption_material))
+        s = sett()
+        string_print_time = ""
+
+        if s.slicing.print_time > 3600:
+            hours = s.slicing.print_time / 3600
+            string_print_time += str(math.floor(hours)) + " " + self.view.locale.Hour + ", "
+
+        if s.slicing.print_time > 60:
+            minutes = (s.slicing.print_time % 3600) / 60
+            string_print_time += str(math.floor(minutes)) + " " + self.view.locale.Minute + ", "
+
+        if s.slicing.print_time > 0:
+            seconds = (s.slicing.print_time % 3600) % 60
+            string_print_time += str(math.floor(seconds)) + " " + self.view.locale.Second
+
+        self.view.print_time_value.setText(self.view.locale.PrintTime + string_print_time)
+
+        string_consumption_material = ""
+        if s.slicing.consumption_material > 0:
+            material_weight = (s.slicing.consumption_material * math.pow(s.hardware.bar_diameter/2, 2) * math.pi) * s.hardware.density / 1000
+            string_consumption_material += str(math.ceil(material_weight)) + " " + self.view.locale.Gram + ", "
+            string_consumption_material += str(float("{:.2f}".format(s.slicing.consumption_material/1000))) + " " + self.view.locale.Meter
+
+        self.view.consumption_material_value.setText(self.view.locale.ConsumptionMaterial + string_consumption_material)
 
 def call_command(cmd) -> bool:
     try:
