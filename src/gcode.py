@@ -87,7 +87,7 @@ def parseArgs(args, x, y, z, a, b, cone_axis, rotationPoint, absolute=True):
             r = yr
             z = zr
 
-            xr, yr, zr = rotation_matrix(cone_axis, -u).dot(np.array([0, r, z]) - rotationPoint) + rotationPoint
+            xr, yr, zr = rotation_matrix(cone_axis, -u).dot(np.array([xr, r, z]) - rotationPoint) + rotationPoint
     if absolute:
         return xr, yr, zr, ar, br
     return xr + x, yr + y, zr + z, ar + a, br + b

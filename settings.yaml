@@ -31,6 +31,7 @@ hardware:
   plane_center_y: 0
   plane_center_z: 0
   plane_diameter: 250
+  maximum_height: 240
   rotation_center_x: 0
   rotation_center_y: 0
   rotation_center_z: 63.5
