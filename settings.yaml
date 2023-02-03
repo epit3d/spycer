@@ -26,6 +26,7 @@ hardware:
     a30: -0.3
     a40: -0.37
     a50: -0.42
+  density: 1.23
   flow: 1.0
   plane_center_x: 0
   plane_center_y: 0

@@ -231,6 +231,11 @@ class MainWindow(QMainWindow):
         self.filling_type_values.setCurrentIndex(ind)
         right_panel.addWidget(filling_type_values_widget, get_cur_row(), 2)
 
+        self.print_time_value = QLabel(self.locale.PrintTime)
+        right_panel.addWidget(self.print_time_value, get_next_row(), 1)
+        self.consumption_material_value = QLabel(self.locale.ConsumptionMaterial)
+        right_panel.addWidget(self.consumption_material_value, get_next_row(), 1)
+
         retraction_on_label = QLabel(self.locale.Retraction)
         self.retraction_on_box = QCheckBox()
         if sett().slicing.retraction_on:
