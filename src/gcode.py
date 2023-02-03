@@ -159,6 +159,9 @@ def parseGCode(lines):
             elif line.startswith(";Estimated consumption material:"):
                 consumption_material = float(line[33:])
                 s.slicing.consumption_material = consumption_material
+            elif line.startswith(";Planes contact with nozzle:"):
+                planes_contact_with_nozzle = line[29:]
+                s.slicing.planes_contact_with_nozzle = planes_contact_with_nozzle
             elif line.startswith(";End"):
                 break
         if line == "T0":
