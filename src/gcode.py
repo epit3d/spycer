@@ -153,11 +153,11 @@ def parseGCode(lines):
             if line.startswith(";LAYER:"):
                 current_layer = int(line[7:])
                 finishLayer()
-            elif line.startswith(";Print time:"):
-                print_time = float(line[13:])
+            elif line.startswith(";Estimated print time:"):
+                print_time = float(line[23:])
                 s.slicing.print_time = print_time
-            elif line.startswith(";Consumption material:"):
-                consumption_material = float(line[23:])
+            elif line.startswith(";Estimated consumption material:"):
+                consumption_material = float(line[33:])
                 s.slicing.consumption_material = consumption_material
             elif line.startswith(";End"):
                 break
