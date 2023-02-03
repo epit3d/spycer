@@ -52,6 +52,13 @@ class Locale:
     SavePlanes = "Save planes"
     DownloadPlanes = "Download planes"
     NamePlanes = "Name"
+    PrintTime = "Approximate print time: "
+    ConsumptionMaterial = "Approximate consumption of material: "
+    Hour = "hr."
+    Minute = "min."
+    Second = "sec."
+    Gram = "g."
+    Meter = "m."
 
     def __init__(self, **entries):
         self.__dict__.update(entries)
@@ -111,6 +118,13 @@ dicts = {
         SavePlanes = "Сохранить плоскости",
         DownloadPlanes = "Загрузить плоскости",
         NamePlanes = "Название",
+        PrintTime = "Примерное время печати: ",
+        ConsumptionMaterial = "Примерный расход материала: ",
+        Hour = "час.",
+        Minute = "мин.",
+        Second = "сек.",
+        Gram = "г.",
+        Meter = "м.",
     ),
 }
 
