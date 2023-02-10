@@ -60,6 +60,7 @@ class Locale:
     Second = "sec."
     Gram = "g."
     Meter = "m."
+    OverlappingInfillPercentage = "Overlapping infill, %:"
 
     def __init__(self, **entries):
         self.__dict__.update(entries)
@@ -127,6 +128,7 @@ dicts = {
         Second = "сек.",
         Gram = "г.",
         Meter = "м.",
+        OverlappingInfillPercentage = "Перекрытие заполнения, %:"
     ),
 }
 

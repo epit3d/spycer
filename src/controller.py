@@ -322,6 +322,8 @@ class MainController:
         s.slicing.supports_on = self.view.supports_on_box.isChecked()
         s.slicing.angle = int(self.view.colorize_angle_value.text())
 
+        s.slicing.overlapping_infill_percentage = float(self.view.overlapping_infill_value.text())
+
         s.slicing.slicing_type = slicing_type
 
         save_settings()

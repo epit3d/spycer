@@ -282,6 +282,11 @@ class MainWindow(QMainWindow):
         right_panel.addWidget(supports_on_label, get_next_row(), 1)
         right_panel.addWidget(self.supports_on_box, get_cur_row(), 2)
 
+        overlapping_infill = QLabel(self.locale.OverlappingInfillPercentage)
+        self.overlapping_infill_value = QLineEdit(str(sett().slicing.overlapping_infill_percentage))
+        right_panel.addWidget(overlapping_infill, get_next_row(), 1)
+        right_panel.addWidget(self.overlapping_infill_value, get_cur_row(), 2)
+
         self.WarningNozzleAndTableCollision = QLabel("")
         self.WarningNozzleAndTableCollision.setStyleSheet("QLabel {color : red;}")
         self.WarningNozzleAndTableCollision.setWordWrap(True)
