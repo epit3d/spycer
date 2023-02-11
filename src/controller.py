@@ -191,6 +191,7 @@ class MainController:
                     s.slicing.model_centering = False
                     s.slicing.print_time = 0
                     s.slicing.consumption_material = 0
+                    s.slicing.planes_contact_with_nozzle = ""
                     save_settings()
                     self.update_interface_by_gcode()
 
@@ -444,6 +445,11 @@ class MainController:
             string_consumption_material += str(float("{:.2f}".format(s.slicing.consumption_material/1000))) + " " + self.view.locale.Meter
 
         self.view.consumption_material_value.setText(self.view.locale.ConsumptionMaterial + string_consumption_material)
+
+        if s.slicing.planes_contact_with_nozzle == "":
+            self.view.WarningNozzleAndTableCollision.setText("")
+        else:
+            self.view.WarningNozzleAndTableCollision.setText(self.view.locale.WarningNozzleAndTableCollision + s.slicing.planes_contact_with_nozzle)
 
 def call_command(cmd) -> bool:
     try:
