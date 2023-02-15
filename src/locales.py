@@ -55,6 +55,7 @@ class Locale:
     NamePlanes = "Name"
     PrintTime = "Approximate print time: "
     ConsumptionMaterial = "Approximate consumption of material: "
+    WarningNozzleAndTableCollision = "Attention! Threatening of the print head nozzle colliding with the table surface. Change the print settings. Critical planes: "
     Hour = "hr."
     Minute = "min."
     Second = "sec."
@@ -123,6 +124,7 @@ dicts = {
         NamePlanes = "Название",
         PrintTime = "Примерное время печати: ",
         ConsumptionMaterial = "Примерный расход материала: ",
+        WarningNozzleAndTableCollision = "Внимание! Угроза столкновения сопла печатающей головки с поверхностью стола. Измените настройки печати. Критические плоскости: ",
         Hour = "час.",
         Minute = "мин.",
         Second = "сек.",

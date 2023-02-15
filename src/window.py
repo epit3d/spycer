@@ -287,6 +287,10 @@ class MainWindow(QMainWindow):
         right_panel.addWidget(overlapping_infill, get_next_row(), 1)
         right_panel.addWidget(self.overlapping_infill_value, get_cur_row(), 2)
 
+        self.WarningNozzleAndTableCollision = QLabel("")
+        self.WarningNozzleAndTableCollision.setStyleSheet("QLabel {color : red;}")
+        self.WarningNozzleAndTableCollision.setWordWrap(True)
+
         # BUTTONS
         buttons_layout = QGridLayout()
         buttons_layout.setSpacing(5)
@@ -382,6 +386,7 @@ class MainWindow(QMainWindow):
 
         high_layout = QVBoxLayout()
         high_layout.addWidget(settings_group)
+        high_layout.addWidget(self.WarningNozzleAndTableCollision)
         high_layout.addWidget(buttons_group)
         high_layout.addWidget(self.init_figure_panel())
         high_widget = QWidget()
