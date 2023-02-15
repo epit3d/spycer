@@ -525,8 +525,8 @@ class MainWindow(QMainWindow):
             transform.Translate(self.stlActor.lastMove)
 
         if self.model_align_height.isChecked():
-            origin = gui_utils.findStlOrigin(self.stlActor)
-            transform.Translate(0, 0, -origin[2])
+            xc, yc, zmin = gui_utils.findStlOrigin(self.stlActor)
+            transform.Translate(0, 0, -zmin)
 
         transform.PreMultiply()
 
