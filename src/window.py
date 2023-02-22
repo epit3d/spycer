@@ -302,6 +302,10 @@ class MainWindow(QMainWindow):
         self.model_centering_box = QCheckBox(self.locale.ModelCentering)
         buttons_layout.addWidget(self.model_centering_box, get_next_row(), 1)
 
+        self.model_align_height = QCheckBox(self.locale.AlignModelHeight)
+        self.model_align_height.setChecked(True)
+        buttons_layout.addWidget(self.model_align_height, get_next_row(), 1)
+
         self.slider_label = QLabel(self.locale.LayersCount)
         self.layers_number_label = QLabel()
         buttons_layout.addWidget(self.slider_label, get_next_row(), 1)
@@ -512,6 +516,9 @@ class MainWindow(QMainWindow):
         self.hide_colorize()
 
         origin = gui_utils.findStlOrigin(self.stlActor)
+        bound = gui_utils.getBounds(self.stlActor)
+        z_mid = (bound[4] + bound[5]) / 2
+        origin = origin[0], origin[1], z_mid
 
         transform = self.stlActor.GetUserTransform()
         transform.PostMultiply()
@@ -521,6 +528,10 @@ class MainWindow(QMainWindow):
             self.stlActor.lastMove = origin
         else:
             transform.Translate(self.stlActor.lastMove)
+
+        if self.model_align_height.isChecked():
+            xc, yc, zmin = gui_utils.findStlOrigin(self.stlActor)
+            transform.Translate(0, 0, -zmin)
 
         transform.PreMultiply()
 
@@ -636,7 +647,8 @@ class MainWindow(QMainWindow):
             xc, yc, zmin = gui_utils.findStlOrigin(self.stlActor)
             tf = self.stlActor.GetUserTransform()
             tf.PostMultiply()
-            tf.Translate(0, 0, -zmin)
+            if self.model_align_height.isChecked():
+                tf.Translate(0, 0, -zmin)
             tf.PreMultiply()
             self.hide_colorize()
             self.stlActor.SetUserTransform(tf)
@@ -831,6 +843,7 @@ class MainWindow(QMainWindow):
         self.model_switch_box.setChecked(False)
         self.model_centering_box.setEnabled(False)
         self.model_centering_box.setChecked(False)
+        self.model_align_height.setEnabled(False)
         self.slider_label.setEnabled(False)
         self.layers_number_label.setEnabled(False)
         self.layers_number_label.setText(" ")
@@ -855,6 +868,7 @@ class MainWindow(QMainWindow):
         self.model_switch_box.setEnabled(False)
         self.model_switch_box.setChecked(False)
         self.model_centering_box.setEnabled(False)
+        self.model_align_height.setEnabled(False)
         self.slider_label.setEnabled(True)
         self.layers_number_label.setEnabled(True)
         self.layers_number_label.setText(str(layers_count))
@@ -880,6 +894,7 @@ class MainWindow(QMainWindow):
         self.model_switch_box.setEnabled(False)
         self.model_switch_box.setChecked(True)
         self.model_centering_box.setEnabled(True)
+        self.model_align_height.setEnabled(True)
         self.slider_label.setEnabled(False)
         self.layers_number_label.setEnabled(False)
         self.layers_number_label.setText(" ")
@@ -904,6 +919,7 @@ class MainWindow(QMainWindow):
         self.model_switch_box.setEnabled(False)
         self.model_switch_box.setChecked(True)
         self.model_centering_box.setEnabled(True)
+        self.model_align_height.setEnabled(True)
         self.slider_label.setEnabled(False)
         self.layers_number_label.setEnabled(False)
         self.layers_number_label.setText(" ")
@@ -928,6 +944,7 @@ class MainWindow(QMainWindow):
         self.model_switch_box.setEnabled(True)
         self.model_switch_box.setChecked(False)
         self.model_centering_box.setEnabled(False)
+        self.model_align_height.setEnabled(False)
         self.slider_label.setEnabled(True)
         self.layers_number_label.setEnabled(True)
         self.layers_number_label.setText(str(layers_count))
