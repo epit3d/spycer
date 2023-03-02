@@ -87,6 +87,7 @@ slicing:
   print_speed: 50
   print_speed_layer1: 50
   print_speed_wall: 50
+  retract_compensation_amount: 0.0
   retraction_distance: 0.3
   retraction_on: true
   retraction_speed: 50
@@ -98,9 +99,10 @@ slicing:
   scalez: 1.0
   skirt_line_count: 3
   slicing_type: vip
-  smooth_cmd: ./FASP.exe
+  smooth_cmd: ./smooth_FASP.exe
   splanes_file: lib/planes_file.txt
   stl_file: example.stl
+  support_density: 0.0
   support_offset: 1.0
   supports_on: false
   t_geodesic: 0.0

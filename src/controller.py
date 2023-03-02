@@ -12,13 +12,10 @@ from typing import Dict, List
 import vtk
 import shutil
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import QDesktopWidget
 
 from src import gui_utils, locales
-from src.cone_slicing import cross_stl, load_mesh
 from src.figure_editor import PlaneEditor, ConeEditor
-from src.gcode import GCode, Rotation, Point
-from src.gui_utils import showErrorDialog, plane_tf, isfloat, read_planes, Plane, Cone
+from src.gui_utils import showErrorDialog, plane_tf, read_planes, Plane, Cone
 from src.settings import sett, save_settings
 
 
@@ -30,23 +27,23 @@ class MainController:
 
     def _connect_signals(self):
         self.view.open_action.triggered.connect(self.open_file)
+        self.view.save_gcode_action.triggered.connect(partial(self.save_gcode_file))
         self.view.save_sett_action.triggered.connect(partial(self.save_settings, "vip"))
-        self.view.contacts_about_action.triggered.connect(self.view.about_dialog)
 
         # right panel
+        self.view.number_wall_lines_value.textChanged.connect(self.update_wall_thickness)
+        self.view.line_width_value.textChanged.connect(self.update_wall_thickness)
+        self.view.layer_height_value.textChanged.connect(self.change_layer_height)
+        self.view.number_of_bottom_layers_value.textChanged.connect(self.update_bottom_thickness)
+        self.view.number_of_lid_layers_value.textChanged.connect(self.update_lid_thickness)
         self.view.model_switch_box.stateChanged.connect(self.view.switch_stl_gcode)
         self.view.model_centering_box.stateChanged.connect(self.view.model_centering)
         self.view.picture_slider.valueChanged.connect(self.change_layer_view)
-        self.view.smoothSlice_button.clicked.connect(partial(self.slice_smooth, 0))
-        self.view.smoothFlatSlice_button.clicked.connect(partial(self.slice_smooth, 1))
         self.view.move_button.clicked.connect(self.move_model)
         self.view.load_model_button.clicked.connect(self.open_file)
-        self.view.edit_planes_button.clicked.connect(partial(self.load_stl, None))
         self.view.slice3a_button.clicked.connect(partial(self.slice_stl, "3axes"))
         self.view.slice_vip_button.clicked.connect(partial(self.slice_stl, "vip"))
-        self.view.slice_cone_button.clicked.connect(self.slice_cone)
         self.view.save_gcode_button.clicked.connect(self.save_gcode_file)
-        self.view.analyze_model_button.clicked.connect(self.analyze_model)
         self.view.color_model_button.clicked.connect(self.colorize_model)
 
         # bottom panel
@@ -56,7 +53,7 @@ class MainController:
         self.view.save_planes_button.clicked.connect(self.save_planes)
         self.view.download_planes_button.clicked.connect(self.download_planes)
         self.view.remove_plane_button.clicked.connect(self.remove_splane)
-        self.view.splanes_tree.itemDoubleClicked.connect(self.change_splanes_tree)
+        self.view.splanes_tree.itemClicked.connect(self.change_splanes_tree)
         self.view.splanes_tree.itemChanged.connect(self.change_figure_check_state)
         self.view.splanes_tree.currentItemChanged.connect(self.change_combo_select)
         self.view.splanes_tree.model().rowsInserted.connect(self.moving_figure)
@@ -122,30 +119,22 @@ class MainController:
     def change_figure_parameters(self):
         ind = self.view.splanes_tree.currentIndex().row()
         if ind == -1:
+            self.view.tabs.setCurrentWidget(self.view.tabs.widget(0))
+            self.view.tabs.setTabEnabled(1, False)
             return
 
-        # allow to show only one tooling for all figures
-        if self.view.parameters_tooling and not self.view.parameters_tooling.isHidden():
-            self.view.parameters_tooling.close()
+        self.view.tabs.setCurrentWidget(self.view.tabs.widget(1))
+        self.view.tabs.setTabEnabled(1, True)
 
         if isinstance(self.model.splanes[ind], Plane):
-            self.view.parameters_tooling = PlaneEditor(self.update_plane_common, self.model.splanes[ind].params())
+            self.view.parameters_tooling = PlaneEditor(self.view.tabs, self.update_plane_common, self.model.splanes[ind].params())
         elif isinstance(self.model.splanes[ind], Cone):
-            self.view.parameters_tooling = ConeEditor(self.update_cone_common, self.model.splanes[ind].params())
-
-        try:
-            main_window_left_pos = self.view.mapToGlobal(QtCore.QPoint(0, 0)).x()
-            self.view.parameters_tooling.move(main_window_left_pos,
-                                              self.view.height() - self.view.parameters_tooling.height() / 3)
-        except:
-            # everything could happen, but nothing should be broken
-            ...
-
-        self.view.parameters_tooling.show()
+            self.view.parameters_tooling = ConeEditor(self.view.tabs, self.update_cone_common, self.model.splanes[ind].params())
 
     def save_planes(self):
         try:
-            filename = str(self.view.save_dialog(self.view.locale.SavePlanes, "TXT (*.txt *.TXT)"))
+            directory = "Planes_" + sett().slicing.name_stl_file
+            filename = str(self.view.save_dialog(self.view.locale.SavePlanes, "TXT (*.txt *.TXT)", directory))
             if filename != "":
                 if not (filename.endswith(".txt") or filename.endswith(".TXT")):
                     filename += ".txt"
@@ -174,6 +163,28 @@ class MainController:
     def change_layer_view(self):
         self.model.current_slider_value = self.view.change_layer_view(self.model.current_slider_value, self.model.gcode)
 
+    def update_wall_thickness(self):
+        if self.view.number_wall_lines_value.text() == "" or self.view.line_width_value.text() == "":
+            self.view.wall_thickness_value.setText("0")
+        else:
+            self.view.wall_thickness_value.setText(str(round(float(self.view.number_wall_lines_value.text()) * float(self.view.line_width_value.text()), 2)))
+
+    def change_layer_height(self):
+        self.update_bottom_thickness()
+        self.update_lid_thickness()
+
+    def update_bottom_thickness(self):
+        if self.view.number_of_bottom_layers_value.text() == "" or self.view.layer_height_value.text() == "":
+            self.view.bottom_thickness_value.setText("0")
+        else:
+            self.view.bottom_thickness_value.setText(str(round(float(self.view.number_of_bottom_layers_value.text()) * float(self.view.layer_height_value.text()), 2)))
+
+    def update_lid_thickness(self):
+        if self.view.number_of_lid_layers_value.text() == "" or self.view.layer_height_value.text() == "":
+            self.view.lid_thickness_value.setText("0")
+        else:
+            self.view.lid_thickness_value.setText(str(round(float(self.view.number_of_lid_layers_value.text()) * float(self.view.layer_height_value.text()), 2)))
+
     def move_model(self):
         self.view.move_stl2()
 
@@ -193,7 +204,7 @@ class MainController:
                     s.slicing.consumption_material = 0
                     s.slicing.planes_contact_with_nozzle = ""
                     save_settings()
-                    self.update_interface_by_gcode()
+                    self.update_interface(filename)
 
                     self.view.model_centering_box.setChecked(False)
 
@@ -203,7 +214,7 @@ class MainController:
                     self.load_stl(filename)
                 elif file_ext == ".GCODE":
                     self.load_gcode(filename, False)
-                    self.update_interface_by_gcode()
+                    self.update_interface(filename)
                 else:
                     showErrorDialog("This file format isn't supported:" + file_ext)
         except IOError as e:
@@ -250,47 +261,7 @@ class MainController:
         self.load_gcode(s.slicing.gcode_file, True)
         print("loaded gcode")
         # self.debugMe()
-        self.update_interface_by_gcode()
-
-    def slice_cone(self):
-        # print(self.model.splanes)
-        self.save_settings("cone")
-        if len(self.model.splanes) == 0 or not isinstance(self.model.splanes[0], Cone):
-            showErrorDialog(self.view.locale.AddOneConeError)
-            return
-
-        cone = self.model.splanes[0]
-        # slicing runs somewhere here
-        # print(f"slicing is performed for model {self.model.opened_stl}")
-        result = cross_stl(load_mesh(self.model.opened_stl),
-                           (cone.cone_angle, (cone.x, cone.y, cone.z)))
-        # print("result", result)
-
-        new_res = []
-
-        for layer in result:
-            new_layer = []
-            for [point1, point2] in layer:
-                new_layer.append([Point(*point1, 0, 0), Point(*point2, 0, 0)])
-            new_res.append(new_layer)
-
-        # result is layer-separated list of segments
-        gcode = GCode(new_res, [Rotation(0, 0)], [0] * len(new_res))
-        self.model.gcode = gcode
-        blocks = gui_utils.makeBlocks(gcode.layers, gcode.rotations, gcode.lays2rots)
-        actors = gui_utils.wrapWithActors(blocks, gcode.rotations, gcode.lays2rots)
-
-        self.view.load_gcode(actors, True, 0)
-
-    def slice_smooth(self, flat5d):
-        s = sett()
-        s.slicing.flat_5d = flat5d
-        self.save_settings("smooth")
-
-        ft_cmd = s.slicing.ftetwild_cmd.replace("sett.slicing.stl_file", s.slicing.stl_file)
-        call_command(ft_cmd)
-        call_command(s.slicing.smooth_cmd)
-        self.load_gcode(s.slicing.gcode_file, True)
+        self.update_interface()
 
     def save_settings(self, slicing_type):
         s = sett()
@@ -302,25 +273,27 @@ class MainController:
         s.slicing.rotationx, s.slicing.rotationy, s.slicing.rotationz = tf.GetOrientation()
         s.slicing.scalex, s.slicing.scaley, s.slicing.scalez = tf.GetScale()
         s.slicing.layer_height = float(self.view.layer_height_value.text())
-        s.slicing.print_speed = int(self.view.print_speed_value.text())
-        s.slicing.print_speed_layer1 = int(self.view.print_speed_layer1_value.text())
-        s.slicing.print_speed_wall = int(self.view.print_speed_wall_value.text())
-        s.slicing.extruder_temperature = int(self.view.extruder_temp_value.text())
-        s.slicing.bed_temperature = int(self.view.bed_temp_value.text())
-        s.slicing.fill_density = int(self.view.fill_density_value.text())
+        s.slicing.print_speed = float(self.view.print_speed_value.text())
+        s.slicing.print_speed_layer1 = float(self.view.print_speed_layer1_value.text())
+        s.slicing.print_speed_wall = float(self.view.print_speed_wall_value.text())
+        s.slicing.extruder_temperature = float(self.view.extruder_temp_value.text())
+        s.slicing.bed_temperature = float(self.view.bed_temp_value.text())
+        s.slicing.fill_density = float(self.view.fill_density_value.text())
         s.slicing.wall_thickness = float(self.view.wall_thickness_value.text())
         s.slicing.line_width = float(self.view.line_width_value.text())
         s.slicing.filling_type = locales.getLocaleByLang("en").FillingTypeValues[
             self.view.filling_type_values.currentIndex()]
         s.slicing.retraction_on = self.view.retraction_on_box.isChecked()
         s.slicing.retraction_distance = float(self.view.retraction_distance_value.text())
-        s.slicing.retraction_speed = int(self.view.retraction_speed_value.text())
+        s.slicing.retraction_speed = float(self.view.retraction_speed_value.text())
+        s.slicing.retract_compensation_amount = float(self.view.retract_compensation_amount_value.text())
         s.slicing.support_offset = float(self.view.support_offset_value.text())
+        s.slicing.support_density = float(self.view.support_density_value.text())
         s.slicing.skirt_line_count = int(self.view.skirt_line_count_value.text())
         s.slicing.fan_off_layer1 = self.view.fan_off_layer1_box.isChecked()
-        s.slicing.fan_speed = int(self.view.fan_speed_value.text())
+        s.slicing.fan_speed = float(self.view.fan_speed_value.text())
         s.slicing.supports_on = self.view.supports_on_box.isChecked()
-        s.slicing.angle = int(self.view.colorize_angle_value.text())
+        s.slicing.angle = float(self.view.colorize_angle_value.text())
 
         s.slicing.overlapping_infill_percentage = float(self.view.overlapping_infill_value.text())
 
@@ -337,14 +310,6 @@ class MainController:
                 copy2(self.model.opened_gcode, name)
         except IOError as e:
             showErrorDialog("Error during file saving:" + str(e))
-
-    def analyze_model(self):
-        self.save_settings("vip")
-
-        s = sett()
-        call_command(s.analyzer.cmd)
-        self.model.planes = gui_utils.read_planes(s.analyzer.result)
-        self.load_stl(self.model.opened_stl)
 
     def colorize_model(self):
         self.save_settings("vip")
@@ -363,10 +328,12 @@ class MainController:
     def add_splane(self):
         self.model.add_splane()
         self.view.reload_splanes(self.model.splanes)
+        self.change_figure_parameters()
 
     def add_cone(self):
         self.model.add_cone()
         self.view.reload_splanes(self.model.splanes)
+        self.change_figure_parameters()
 
     def remove_splane(self):
         ind = self.view.splanes_tree.currentIndex().row()
@@ -378,6 +345,8 @@ class MainController:
         if len(self.model.splanes) == 0:
             if self.view.parameters_tooling and not self.view.parameters_tooling.isHidden():
                 self.view.parameters_tooling.close()
+
+        self.change_figure_parameters()
 
     def change_combo_select(self):
         ind = self.view.splanes_tree.currentIndex().row()
@@ -420,8 +389,19 @@ class MainController:
     #     # debug.readFile(self.render, "/home/l1va/debug_simplified.txt", "Red", 3)
     #     self.reloadScene()
 
-    def update_interface_by_gcode(self):
+    def update_interface(self, filename = ""):
         s = sett()
+
+        if filename == "":
+            self.view.name_stl_file.setText("")
+            self.view.setWindowTitle("FASP")
+        else:
+            name_stl_file = os.path.basename(filename).split('.')[0]
+            file_ext = os.path.splitext(filename)[1].upper()
+
+            self.view.setWindowTitle(name_stl_file + " - FASP")
+            self.view.name_stl_file.setText(self.view.locale.FileName + name_stl_file + file_ext)
+
         string_print_time = ""
 
         if s.slicing.print_time > 3600:
@@ -436,7 +416,7 @@ class MainController:
             seconds = (s.slicing.print_time % 3600) % 60
             string_print_time += str(math.floor(seconds)) + " " + self.view.locale.Second
 
-        self.view.print_time_value.setText(self.view.locale.PrintTime + string_print_time)
+        self.view.print_time_value.setText(string_print_time)
 
         string_consumption_material = ""
         if s.slicing.consumption_material > 0:
@@ -444,12 +424,12 @@ class MainController:
             string_consumption_material += str(math.ceil(material_weight)) + " " + self.view.locale.Gram + ", "
             string_consumption_material += str(float("{:.2f}".format(s.slicing.consumption_material/1000))) + " " + self.view.locale.Meter
 
-        self.view.consumption_material_value.setText(self.view.locale.ConsumptionMaterial + string_consumption_material)
+        self.view.consumption_material_value.setText(string_consumption_material)
 
         if s.slicing.planes_contact_with_nozzle == "":
-            self.view.WarningNozzleAndTableCollision.setText("")
+            self.view.warning_nozzle_and_table_collision.setText("")
         else:
-            self.view.WarningNozzleAndTableCollision.setText(self.view.locale.WarningNozzleAndTableCollision + s.slicing.planes_contact_with_nozzle)
+            self.view.warning_nozzle_and_table_collision.setText(self.view.locale.WarningNozzleAndTableCollision + s.slicing.planes_contact_with_nozzle)
 
 def call_command(cmd) -> bool:
     try:

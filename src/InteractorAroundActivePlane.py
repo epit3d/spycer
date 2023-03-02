@@ -75,10 +75,6 @@ class InteractionAroundActivePlane:
 
         self.axes = []
 
-        for actor in createCustomXYaxis((0.0, 0.0, 0.0), [(1, 0, 0), (0, 1, 0), (-1, 0, 0), (0, -1, 0)]):
-            self.axes.append(actor)
-            self.render.AddActor(actor)
-
             # real ability
             # actor.SetOrigin(1, 0, 1)
             # actor.SetOrientation(0, 0, 90)

@@ -106,7 +106,7 @@ def parseRotation(args: List[str]):
 
 
 def readGCode(filename):
-    with open(filename) as f:
+    with open(filename, 'r', encoding="utf-8") as f:
         lines = [line.strip() for line in f]
     return parseGCode(lines)
 

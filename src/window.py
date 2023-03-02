@@ -1,12 +1,13 @@
-from typing import Type, Optional
+from typing import Optional
 
 import vtk, src
 from PyQt5 import QtCore
+from PyQt5 import QtGui
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QLabel, QLineEdit, QComboBox, QGridLayout, QSlider,
                              QCheckBox, QVBoxLayout,
                              QPushButton, QFileDialog, QScrollArea, QGroupBox, QAction, QDialog,
-                             QTreeWidget, QTreeWidgetItem, QAbstractItemView)
+                             QTreeWidget, QTreeWidgetItem, QAbstractItemView, QTabWidget)
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
 from src import locales, gui_utils, interactor_style
@@ -49,31 +50,66 @@ class MainWindow(QMainWindow):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle('Spycer')
+        self.setWindowTitle('FASP')
+        self.setWindowIcon(QtGui.QIcon("icon.png"))
         # self.statusBar().showMessage('Ready')
 
         self.locale = locales.getLocale()
 
         # Menu
         bar = self.menuBar()
-        file_menu = bar.addMenu('File')
-        self.open_action = QAction('Open', self)
+        file_menu = bar.addMenu(self.locale.File)
+        self.open_action = QAction(self.locale.Open, self)
         # close_action = QAction('Close', self)
         file_menu.addAction(self.open_action)
         # file_menu.addAction(close_action)
-        settings_menu = bar.addMenu('Settings')
-        self.save_sett_action = QAction('Save', self)
-        settings_menu.addAction(self.save_sett_action)
-        contacts_menu = bar.addMenu('Contacts')
-        self.contacts_about_action = QAction('About', self)
-        contacts_menu.addAction(self.contacts_about_action)
+
+        self.save_gcode_action = QAction(self.locale.SaveGCode, self)
+        file_menu.addAction(self.save_gcode_action)
+        self.save_sett_action = QAction(self.locale.SaveSettings, self)
+        file_menu.addAction(self.save_sett_action)
+
+        self.load_sett_action = QAction(self.locale.LoadSettings, self)
+        file_menu.addAction(self.load_sett_action)
 
         # main parts
         central_widget = QWidget()
         main_grid = QGridLayout()
         main_grid.addWidget(self.init3d_widget(), 0, 0, 20, 5)
         main_grid.addWidget(self.init_right_panel(), 0, 5, 21, 2)
-        main_grid.addWidget(self.init_stl_move_panel(), 20, 0, 1, 5)
+
+        # Tabs
+        tabs = QTabWidget()
+        page_model_coordinates = QWidget(tabs)
+        page_layout = QGridLayout()
+        page_layout.setColumnMinimumWidth(0, 5)
+        page_layout.setRowMinimumHeight(0, 10)
+
+        self.move_button = QPushButton(self.locale.MoveModel)
+        self.move_button.setCheckable(True)
+        self.move_button.setFixedWidth(190)
+        page_layout.addWidget(self.move_button, 1, 1)
+
+        page_layout.addWidget(self.init_stl_move_panel(), 2, 0, 1, 5)
+        page_layout.setColumnStretch(0, 0)
+        page_layout.setRowStretch(0, 0)
+
+        page_model_coordinates.setLayout(page_layout)
+        tabs.addTab(page_model_coordinates, locales.getLocale().ModelCoordinates)
+
+        main_grid.addWidget(tabs, 20, 0, 1, 5)
+        main_grid.setRowMinimumHeight(20, 200)
+
+        # Making all rows stretchable, except for the row with tabs
+        main_grid.setRowStretch(0, 1)
+        main_grid.setRowStretch(20, 0)
+
+        page_figure_settings = QWidget(tabs)
+        tabs.addTab(page_figure_settings, locales.getLocale().FigureSettings)
+        tabs.setTabEnabled(1, False)
+
+        self.tabs = tabs
+
         central_widget.setLayout(main_grid)
         self.setCentralWidget(central_widget)
 
@@ -129,9 +165,6 @@ class MainWindow(QMainWindow):
         self.planeActor = gui_utils.createPlaneActorCircle()
         self.planeTransform = vtk.vtkTransform()
         self.render.AddActor(self.planeActor)
-        self.boxActors = gui_utils.createBoxActors()
-        for b in self.boxActors:
-            self.render.AddActor(b)
 
         self.add_legend()
 
@@ -164,7 +197,11 @@ class MainWindow(QMainWindow):
     def init_right_panel(self):
         right_panel = QGridLayout()
         right_panel.setSpacing(5)
-        # right_panel.setColumnStretch(0, 2)
+        right_panel.setColumnStretch(1, 1)
+        right_panel.setColumnStretch(3, 1)
+        right_panel.setColumnStretch(4, 1)
+
+        сolumn2_number_of_cells = 4
 
         # Front-end development at its best
         self.cur_row = 1
@@ -176,131 +213,187 @@ class MainWindow(QMainWindow):
         def get_cur_row():
             return self.cur_row
 
+        line_width_label = QLabel(self.locale.LineWidth)
+        self.line_width_value = QLineEdit(str(sett().slicing.line_width))
+        right_panel.addWidget(line_width_label, get_next_row(), 1)
+        right_panel.addWidget(self.line_width_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
+
         layer_height_label = QLabel(self.locale.LayerHeight)
         self.layer_height_value = QLineEdit(str(sett().slicing.layer_height))
         right_panel.addWidget(layer_height_label, get_next_row(), 1)
-        right_panel.addWidget(self.layer_height_value, get_cur_row(), 2)
+        right_panel.addWidget(self.layer_height_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
 
-        print_speed_label = QLabel(self.locale.PrintSpeed)
-        self.print_speed_value = QLineEdit(str(sett().slicing.print_speed))
-        right_panel.addWidget(print_speed_label, get_next_row(), 1)
-        right_panel.addWidget(self.print_speed_value, get_cur_row(), 2)
+        number_wall_lines_label = QLabel(self.locale.NumberWallLines)
+        if sett().slicing.line_width > 0:
+            number_wall_lines = int(sett().slicing.wall_thickness/sett().slicing.line_width)
+        else:
+            number_wall_lines = 0
+        self.number_wall_lines_value = QLineEdit(str(number_wall_lines))
+        self.number_wall_lines_value.setValidator(QtGui.QIntValidator(0, 100))
+        right_panel.addWidget(number_wall_lines_label, get_next_row(), 1)
+        right_panel.addWidget(self.number_wall_lines_value, get_cur_row(), 2)
+        wall_thickness_label = QLabel(self.locale.WallThickness)
+        self.wall_thickness_value = QLineEdit(str(sett().slicing.wall_thickness))
+        self.wall_thickness_value.setReadOnly(True)
+        millimeter_label = QLabel(self.locale.Millimeter)
+        right_panel.addWidget(wall_thickness_label, get_cur_row(), 3)
+        right_panel.addWidget(self.wall_thickness_value, get_cur_row(), 4)
+        right_panel.addWidget(millimeter_label, get_cur_row(), 5)
 
-        print_speed_layer1_label = QLabel(self.locale.PrintSpeedLayer1)
-        self.print_speed_layer1_value = QLineEdit(str(sett().slicing.print_speed_layer1))
-        right_panel.addWidget(print_speed_layer1_label, get_next_row(), 1)
-        right_panel.addWidget(self.print_speed_layer1_value, get_cur_row(), 2)
+        number_of_bottom_layers_label = QLabel(self.locale.NumberOfBottomLayers)
+        self.number_of_bottom_layers_value = QLineEdit(str(sett().slicing.bottom_layers))
+        self.number_of_bottom_layers_value.setValidator(QtGui.QIntValidator(0, 100))
+        right_panel.addWidget(number_of_bottom_layers_label, get_next_row(), 1)
+        right_panel.addWidget(self.number_of_bottom_layers_value, get_cur_row(), 2)
+        bottom_thickness_label = QLabel(self.locale.BottomThickness)
+        self.bottom_thickness_value = QLineEdit(str(round(sett().slicing.layer_height*sett().slicing.bottom_layers,2)))
+        self.bottom_thickness_value.setReadOnly(True)
+        millimeter_label = QLabel(self.locale.Millimeter)
+        right_panel.addWidget(bottom_thickness_label, get_cur_row(), 3)
+        right_panel.addWidget(self.bottom_thickness_value, get_cur_row(), 4)
+        right_panel.addWidget(millimeter_label, get_cur_row(), 5)
 
-        print_speed_wall_label = QLabel(self.locale.PrintSpeedWall)
-        self.print_speed_wall_value = QLineEdit(str(sett().slicing.print_speed_wall))
-        right_panel.addWidget(print_speed_wall_label, get_next_row(), 1)
-        right_panel.addWidget(self.print_speed_wall_value, get_cur_row(), 2)
+        number_of_lid_layers_label = QLabel(self.locale.NumberOfLidLayers)
+        self.number_of_lid_layers_value = QLineEdit(str(int(sett().slicing.lids_depth)))
+        self.number_of_lid_layers_value.setValidator(QtGui.QIntValidator(0, 100))
+        right_panel.addWidget(number_of_lid_layers_label, get_next_row(), 1)
+        right_panel.addWidget(self.number_of_lid_layers_value, get_cur_row(), 2)
+        lid_thickness_label = QLabel(self.locale.LidThickness)
+        self.lid_thickness_value = QLineEdit(str(round(sett().slicing.layer_height*sett().slicing.lids_depth,2)))
+        self.lid_thickness_value.setReadOnly(True)
+        millimeter_label = QLabel(self.locale.Millimeter)
+        right_panel.addWidget(lid_thickness_label, get_cur_row(), 3)
+        right_panel.addWidget(self.lid_thickness_value, get_cur_row(), 4)
+        right_panel.addWidget(millimeter_label, get_cur_row(), 5)
 
         extruder_temp_label = QLabel(self.locale.ExtruderTemp)
         self.extruder_temp_value = QLineEdit(str(sett().slicing.extruder_temperature))
         right_panel.addWidget(extruder_temp_label, get_next_row(), 1)
-        right_panel.addWidget(self.extruder_temp_value, get_cur_row(), 2)
+        right_panel.addWidget(self.extruder_temp_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
 
         bed_temp_label = QLabel(self.locale.BedTemp)
         self.bed_temp_value = QLineEdit(str(sett().slicing.bed_temperature))
         right_panel.addWidget(bed_temp_label, get_next_row(), 1)
-        right_panel.addWidget(self.bed_temp_value, get_cur_row(), 2)
-
-        fill_density_label = QLabel(self.locale.FillDensity)
-        self.fill_density_value = QLineEdit(str(sett().slicing.fill_density))
-        right_panel.addWidget(fill_density_label, get_next_row(), 1)
-        right_panel.addWidget(self.fill_density_value, get_cur_row(), 2)
-
-        wall_thickness_label = QLabel(self.locale.WallThickness)
-        self.wall_thickness_value = QLineEdit(str(sett().slicing.wall_thickness))
-        right_panel.addWidget(wall_thickness_label, get_next_row(), 1)
-        right_panel.addWidget(self.wall_thickness_value, get_cur_row(), 2)
-
-        line_width_label = QLabel(self.locale.LineWidth)
-        self.line_width_value = QLineEdit(str(sett().slicing.line_width))
-        right_panel.addWidget(line_width_label, get_next_row(), 1)
-        right_panel.addWidget(self.line_width_value, get_cur_row(), 2)
-
-        filling_type_label = QLabel(self.locale.FillingType)
-        right_panel.addWidget(filling_type_label, get_next_row(), 1)
-        filling_type_values_widget = QWidget()
-        filling_type_values_widget.setMinimumHeight(20)
-        self.filling_type_values = QComboBox(filling_type_values_widget)
-        self.filling_type_values.addItems(self.locale.FillingTypeValues)
-        ind = locales.getLocaleByLang("en").FillingTypeValues.index(sett().slicing.filling_type)
-        self.filling_type_values.setCurrentIndex(ind)
-        right_panel.addWidget(filling_type_values_widget, get_cur_row(), 2)
-
-        self.print_time_value = QLabel(self.locale.PrintTime)
-        right_panel.addWidget(self.print_time_value, get_next_row(), 1)
-        self.consumption_material_value = QLabel(self.locale.ConsumptionMaterial)
-        right_panel.addWidget(self.consumption_material_value, get_next_row(), 1)
-
-        retraction_on_label = QLabel(self.locale.Retraction)
-        self.retraction_on_box = QCheckBox()
-        if sett().slicing.retraction_on:
-            self.retraction_on_box.setCheckState(QtCore.Qt.Checked)
-        right_panel.addWidget(retraction_on_label, get_next_row(), 1)
-        right_panel.addWidget(self.retraction_on_box, get_cur_row(), 2)
-
-        retraction_distance_label = QLabel(self.locale.RetractionDistance)
-        self.retraction_distance_value = QLineEdit(str(sett().slicing.retraction_distance))
-        right_panel.addWidget(retraction_distance_label, get_next_row(), 1)
-        right_panel.addWidget(self.retraction_distance_value, get_cur_row(), 2)
-
-        retraction_speed_label = QLabel(self.locale.RetractionSpeed)
-        self.retraction_speed_value = QLineEdit(str(sett().slicing.retraction_speed))
-        right_panel.addWidget(retraction_speed_label, get_next_row(), 1)
-        right_panel.addWidget(self.retraction_speed_value, get_cur_row(), 2)
-
-        support_offset_label = QLabel(self.locale.SupportOffset)
-        self.support_offset_value = QLineEdit(str(sett().slicing.support_offset))
-        right_panel.addWidget(support_offset_label, get_next_row(), 1)
-        right_panel.addWidget(self.support_offset_value, get_cur_row(), 2)
+        right_panel.addWidget(self.bed_temp_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
 
         skirt_line_count_label = QLabel(self.locale.SkirtLineCount)
         self.skirt_line_count_value = QLineEdit(str(sett().slicing.skirt_line_count))
+
+        self.skirt_line_count_value.setValidator(QtGui.QIntValidator(0, 100))
         right_panel.addWidget(skirt_line_count_label, get_next_row(), 1)
-        right_panel.addWidget(self.skirt_line_count_value, get_cur_row(), 2)
+        right_panel.addWidget(self.skirt_line_count_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
 
         fan_speed_label = QLabel(self.locale.FanSpeed)
         self.fan_speed_value = QLineEdit(str(sett().slicing.fan_speed))
         right_panel.addWidget(fan_speed_label, get_next_row(), 1)
-        right_panel.addWidget(self.fan_speed_value, get_cur_row(), 2)
+        right_panel.addWidget(self.fan_speed_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
 
         fan_off_layer1_label = QLabel(self.locale.FanOffLayer1)
         self.fan_off_layer1_box = QCheckBox()
         if sett().slicing.fan_off_layer1:
             self.fan_off_layer1_box.setCheckState(QtCore.Qt.Checked)
         right_panel.addWidget(fan_off_layer1_label, get_next_row(), 1)
-        right_panel.addWidget(self.fan_off_layer1_box, get_cur_row(), 2)
+        right_panel.addWidget(self.fan_off_layer1_box, get_cur_row(), 2, 1, сolumn2_number_of_cells)
+
+        print_speed_label = QLabel(self.locale.PrintSpeed)
+        self.print_speed_value = QLineEdit(str(sett().slicing.print_speed))
+        right_panel.addWidget(print_speed_label, get_next_row(), 1)
+        right_panel.addWidget(self.print_speed_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
+
+        print_speed_layer1_label = QLabel(self.locale.PrintSpeedLayer1)
+        self.print_speed_layer1_value = QLineEdit(str(sett().slicing.print_speed_layer1))
+        right_panel.addWidget(print_speed_layer1_label, get_next_row(), 1)
+        right_panel.addWidget(self.print_speed_layer1_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
+
+        print_speed_wall_label = QLabel(self.locale.PrintSpeedWall)
+        self.print_speed_wall_value = QLineEdit(str(sett().slicing.print_speed_wall))
+        right_panel.addWidget(print_speed_wall_label, get_next_row(), 1)
+        right_panel.addWidget(self.print_speed_wall_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
+
+        filling_type_label = QLabel(self.locale.FillingType)
+        right_panel.addWidget(filling_type_label, get_next_row(), 1)
+        filling_type_values_widget = QWidget()
+        filling_type_values_widget.setFixedHeight(23)
+        self.filling_type_values = QComboBox(filling_type_values_widget)
+        self.filling_type_values.addItems(self.locale.FillingTypeValues)
+        ind = locales.getLocaleByLang("en").FillingTypeValues.index(sett().slicing.filling_type)
+        self.filling_type_values.setCurrentIndex(ind)
+        right_panel.addWidget(filling_type_values_widget, get_cur_row(), 2, 1, сolumn2_number_of_cells)
+
+        fill_density_label = QLabel(self.locale.FillDensity)
+        self.fill_density_value = QLineEdit(str(sett().slicing.fill_density))
+        right_panel.addWidget(fill_density_label, get_next_row(), 1)
+        right_panel.addWidget(self.fill_density_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
+
+        overlapping_infill = QLabel(self.locale.OverlappingInfillPercentage)
+        self.overlapping_infill_value = QLineEdit(str(sett().slicing.overlapping_infill_percentage))
+        right_panel.addWidget(overlapping_infill, get_next_row(), 1)
+        right_panel.addWidget(self.overlapping_infill_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
+
+        retraction_on_label = QLabel(self.locale.Retraction)
+        self.retraction_on_box = QCheckBox()
+        if sett().slicing.retraction_on:
+            self.retraction_on_box.setCheckState(QtCore.Qt.Checked)
+        right_panel.addWidget(retraction_on_label, get_next_row(), 1)
+        right_panel.addWidget(self.retraction_on_box, get_cur_row(), 2, 1, сolumn2_number_of_cells)
+
+        retraction_distance_label = QLabel(self.locale.RetractionDistance)
+        self.retraction_distance_value = QLineEdit(str(sett().slicing.retraction_distance))
+        right_panel.addWidget(retraction_distance_label, get_next_row(), 1)
+        right_panel.addWidget(self.retraction_distance_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
+
+        retraction_speed_label = QLabel(self.locale.RetractionSpeed)
+        self.retraction_speed_value = QLineEdit(str(sett().slicing.retraction_speed))
+        right_panel.addWidget(retraction_speed_label, get_next_row(), 1)
+        right_panel.addWidget(self.retraction_speed_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
+
+        retract_compensation_amount_label = QLabel(self.locale.RetractCompensationAmount)
+        self.retract_compensation_amount_value = QLineEdit(str(sett().slicing.retract_compensation_amount))
+        right_panel.addWidget(retract_compensation_amount_label, get_next_row(), 1)
+        right_panel.addWidget(self.retract_compensation_amount_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
 
         supports_on_label = QLabel(self.locale.SupportsOn)
         self.supports_on_box = QCheckBox()
         if sett().slicing.supports_on:
             self.supports_on_box.setCheckState(QtCore.Qt.Checked)
         right_panel.addWidget(supports_on_label, get_next_row(), 1)
-        right_panel.addWidget(self.supports_on_box, get_cur_row(), 2)
+        right_panel.addWidget(self.supports_on_box, get_cur_row(), 2, 1, сolumn2_number_of_cells)
 
-        overlapping_infill = QLabel(self.locale.OverlappingInfillPercentage)
-        self.overlapping_infill_value = QLineEdit(str(sett().slicing.overlapping_infill_percentage))
-        right_panel.addWidget(overlapping_infill, get_next_row(), 1)
-        right_panel.addWidget(self.overlapping_infill_value, get_cur_row(), 2)
+        support_density_label = QLabel(self.locale.SupportDensity)
+        self.support_density_value = QLineEdit(str(sett().slicing.support_density))
+        right_panel.addWidget(support_density_label, get_next_row(), 1)
+        right_panel.addWidget(self.support_density_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
 
-        self.WarningNozzleAndTableCollision = QLabel("")
-        self.WarningNozzleAndTableCollision.setStyleSheet("QLabel {color : red;}")
-        self.WarningNozzleAndTableCollision.setWordWrap(True)
+        support_offset_label = QLabel(self.locale.SupportOffset)
+        self.support_offset_value = QLineEdit(str(sett().slicing.support_offset))
+        right_panel.addWidget(support_offset_label, get_next_row(), 1)
+        right_panel.addWidget(self.support_offset_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
+
+        self.name_stl_file = QLabel("")
+
+        self.warning_nozzle_and_table_collision = QLabel("")
+        self.warning_nozzle_and_table_collision.setStyleSheet("QLabel {color : red;}")
+        self.warning_nozzle_and_table_collision.setWordWrap(True)
 
         # BUTTONS
         buttons_layout = QGridLayout()
         buttons_layout.setSpacing(5)
+        buttons_layout.setColumnMinimumWidth(3, 250)
         # buttons_layout.setColumnStretch(0, 2)
 
         self.model_switch_box = QCheckBox(self.locale.ShowStl)
         buttons_layout.addWidget(self.model_switch_box, get_next_row(), 1)
+        self.print_time_label = QLabel(self.locale.PrintTime)
+        self.print_time_value = QLabel("")
+        buttons_layout.addWidget(self.print_time_label, get_cur_row(), 2, Qt.AlignmentFlag(3))
+        buttons_layout.addWidget(self.print_time_value, get_cur_row(), 3)
 
         self.model_centering_box = QCheckBox(self.locale.ModelCentering)
         buttons_layout.addWidget(self.model_centering_box, get_next_row(), 1)
+        self.consumption_material_label = QLabel(self.locale.ConsumptionMaterial)
+        self.consumption_material_value = QLabel("")
+        buttons_layout.addWidget(self.consumption_material_label, get_cur_row(), 2, Qt.AlignmentFlag(3))
+        buttons_layout.addWidget(self.consumption_material_value, get_cur_row(), 3)
 
         self.slider_label = QLabel(self.locale.LayersCount)
         self.layers_number_label = QLabel()
@@ -311,7 +404,7 @@ class MainWindow(QMainWindow):
         self.picture_slider.setOrientation(QtCore.Qt.Horizontal)
         self.picture_slider.setMinimum(0)
         self.picture_slider.setValue(0)
-        buttons_layout.addWidget(self.picture_slider, get_next_row(), 1, 1, 2)
+        buttons_layout.addWidget(self.picture_slider, get_next_row(), 1, 1, 3)
 
         # self.x_position_value = QLineEdit("0")
         # buttons_layout.addWidget(self.x_position_value, get_next_row(), 1)
@@ -321,48 +414,31 @@ class MainWindow(QMainWindow):
         # buttons_layout.addWidget(self.z_position_value, get_next_row(), 1)
 
         self.xyz_position_value = QLabel("Position: 0 0 0")
-        buttons_layout.addWidget(self.xyz_position_value, get_next_row(), 1, 1, 2)
+        buttons_layout.addWidget(self.xyz_position_value, get_next_row(), 1, 1, 3)
         self.xyz_scale_value = QLabel("Scale: 1 1 1")
-        buttons_layout.addWidget(self.xyz_scale_value, get_next_row(), 1, 1, 2)
+        buttons_layout.addWidget(self.xyz_scale_value, get_next_row(), 1, 1, 3)
         self.xyz_orient_value = QLabel("Orientation: 0 0 0")
-        buttons_layout.addWidget(self.xyz_orient_value, get_next_row(), 1, 1, 2)
+        buttons_layout.addWidget(self.xyz_orient_value, get_next_row(), 1, 1, 3)
 
         self.load_model_button = QPushButton(self.locale.OpenModel)
-        buttons_layout.addWidget(self.load_model_button, get_next_row(), 1, 1, 1)
-
-        self.move_button = QPushButton(self.locale.MoveModel)
-        self.move_button.setCheckable(True)
-        buttons_layout.addWidget(self.move_button, get_cur_row(), 2, 1, 1)
-
-        self.colorize_angle_value = QLineEdit(str(sett().slicing.angle))
-        buttons_layout.addWidget(self.colorize_angle_value, get_next_row(), 1)
-
-        self.color_model_button = QPushButton(self.locale.ColorModel)
-        buttons_layout.addWidget(self.color_model_button, get_cur_row(), 2, 1, 1)
-
-        self.analyze_model_button = QPushButton(self.locale.Analyze)
-        buttons_layout.addWidget(self.analyze_model_button, get_next_row(), 1, 1, 1)
-
-        self.edit_planes_button = QPushButton(self.locale.EditPlanes)
-        buttons_layout.addWidget(self.edit_planes_button, get_cur_row(), 2, 1, 1)
-
-        self.smoothFlatSlice_button = QPushButton(self.locale.SmoothFlatSlice)
-        buttons_layout.addWidget(self.smoothFlatSlice_button, get_next_row(), 1, 1, 1)
-
-        self.smoothSlice_button = QPushButton(self.locale.SmoothSlice)
-        buttons_layout.addWidget(self.smoothSlice_button, get_cur_row(), 2, 1, 1)
-
-        self.slice3a_button = QPushButton(self.locale.Slice3Axes)
-        buttons_layout.addWidget(self.slice3a_button, get_next_row(), 1, 1, 1)
-
-        self.slice_vip_button = QPushButton(self.locale.SliceVip)
-        buttons_layout.addWidget(self.slice_vip_button, get_cur_row(), 2, 1, 1)
-
-        self.slice_cone_button = QPushButton(self.locale.SliceCone)
-        buttons_layout.addWidget(self.slice_cone_button, get_next_row(), 1, 1, 1)
+        buttons_layout.addWidget(self.load_model_button, get_next_row(), 1, 1, 2)
 
         self.save_gcode_button = QPushButton(self.locale.SaveGCode)
-        buttons_layout.addWidget(self.save_gcode_button, get_cur_row(), 2, 1, 1)
+        buttons_layout.addWidget(self.save_gcode_button, get_cur_row(), 3)
+
+        self.critical_wall_overhang_angle_label = QLabel(self.locale.CriticalWallOverhangAngle)
+        buttons_layout.addWidget(self.critical_wall_overhang_angle_label, get_next_row(), 1, 1, 2)
+        self.colorize_angle_value = QLineEdit(str(sett().slicing.angle))
+        buttons_layout.addWidget(self.colorize_angle_value, get_cur_row(), 2, 1, 1)
+
+        self.color_model_button = QPushButton(self.locale.ColorModel)
+        buttons_layout.addWidget(self.color_model_button, get_cur_row(), 3)
+
+        self.slice_vip_button = QPushButton(self.locale.SliceVip)
+        buttons_layout.addWidget(self.slice_vip_button, get_next_row(), 1, 1, 2)
+
+        self.slice3a_button = QPushButton(self.locale.Slice3Axes)
+        buttons_layout.addWidget(self.slice3a_button, get_cur_row(), 3)
 
         panel_widget = QWidget()
         panel_widget.setLayout(right_panel)
@@ -382,7 +458,8 @@ class MainWindow(QMainWindow):
 
         high_layout = QVBoxLayout()
         high_layout.addWidget(settings_group)
-        high_layout.addWidget(self.WarningNozzleAndTableCollision)
+        high_layout.addWidget(self.name_stl_file)
+        high_layout.addWidget(self.warning_nozzle_and_table_collision)
         high_layout.addWidget(buttons_group)
         high_layout.addWidget(self.init_figure_panel())
         high_widget = QWidget()
@@ -492,6 +569,7 @@ class MainWindow(QMainWindow):
                 self.locale.StlMoveScale,
             ]
         )
+        self.stl_move_panel.setFixedHeight = 100
         return self.stl_move_panel
 
     def switch_stl_gcode(self):
@@ -537,10 +615,6 @@ class MainWindow(QMainWindow):
         self.render.AddActor(self.planeActor)
         self.render.AddActor(self.legend)
         self.rotate_plane(vtk.vtkTransform())
-        for b in self.boxActors:
-            self.render.AddActor(b)
-        for s in self.splanes_actors:
-            self.render.AddActor(s)
 
     def reload_scene(self):
         self.render.Modified()
@@ -657,13 +731,11 @@ class MainWindow(QMainWindow):
         i, j, k = tf.GetOrientation()
         self.xyz_orient_value.setText(f"Orientation: {i:.2f} {j:.2f} {k:.2f}")
 
-    def save_dialog(self, caption, format = "STL (*.stl *.STL);;Gcode (*.gcode)"):
-        return QFileDialog.getSaveFileName(None, caption, "/home/l1va/Downloads/5axes_3d_printer/test",
-                                           format)[0]  # TODO: fix path
+    def save_dialog(self, caption, format = "STL (*.stl *.STL);;Gcode (*.gcode)", directory="/home/l1va/Downloads/5axes_3d_printer/test"): # TODO: fix path
+        return QFileDialog.getSaveFileName(None, caption, directory, format)[0]
 
-    def open_dialog(self, caption, format = "STL (*.stl *.STL);;Gcode (*.gcode)"):
-        return QFileDialog.getOpenFileName(None, caption, "/home/l1va/Downloads/5axes_3d_printer/test",
-                                           format)[0]  # TODO: fix path
+    def open_dialog(self, caption, format = "STL (*.stl *.STL);;Gcode (*.gcode)", directory="/home/l1va/Downloads/5axes_3d_printer/test"): # TODO: fix path
+        return QFileDialog.getOpenFileName(None, caption, directory, format)[0]
 
     def load_stl(self, stl_actor):
         self.clear_scene()
@@ -836,14 +908,10 @@ class MainWindow(QMainWindow):
         self.layers_number_label.setText(" ")
         self.picture_slider.setEnabled(False)
         self.picture_slider.setSliderPosition(0)
-        self.smoothSlice_button.setEnabled(False)
-        self.smoothFlatSlice_button.setEnabled(False)
         self.move_button.setEnabled(False)
         self.load_model_button.setEnabled(True)
         self.slice3a_button.setEnabled(False)
         self.color_model_button.setEnabled(False)
-        self.analyze_model_button.setEnabled(False)
-        self.edit_planes_button.setEnabled(False)
         self.slice_vip_button.setEnabled(False)
         self.save_gcode_button.setEnabled(False)
         self.hide_checkbox.setChecked(False)
@@ -861,14 +929,10 @@ class MainWindow(QMainWindow):
         self.picture_slider.setEnabled(True)
         self.picture_slider.setMaximum(layers_count)
         self.picture_slider.setSliderPosition(layers_count)
-        self.smoothSlice_button.setEnabled(False)
-        self.smoothFlatSlice_button.setEnabled(False)
         self.move_button.setEnabled(False)
         self.load_model_button.setEnabled(True)
         self.slice3a_button.setEnabled(False)
         self.color_model_button.setEnabled(False)
-        self.analyze_model_button.setEnabled(False)
-        self.edit_planes_button.setEnabled(True)
         self.slice_vip_button.setEnabled(False)
         self.save_gcode_button.setEnabled(True)
         self.hide_checkbox.setChecked(True)
@@ -885,14 +949,10 @@ class MainWindow(QMainWindow):
         self.layers_number_label.setText(" ")
         self.picture_slider.setEnabled(False)
         self.picture_slider.setSliderPosition(0)
-        self.smoothSlice_button.setEnabled(True)
-        self.smoothFlatSlice_button.setEnabled(True)
         self.move_button.setEnabled(True)
         self.load_model_button.setEnabled(True)
         self.slice3a_button.setEnabled(True)
         self.color_model_button.setEnabled(True)
-        self.analyze_model_button.setEnabled(False)
-        self.edit_planes_button.setEnabled(False)
         self.slice_vip_button.setEnabled(True)
         self.save_gcode_button.setEnabled(False)
         self.hide_checkbox.setChecked(False)
@@ -909,14 +969,10 @@ class MainWindow(QMainWindow):
         self.layers_number_label.setText(" ")
         self.picture_slider.setEnabled(False)
         self.picture_slider.setSliderPosition(0)
-        self.smoothSlice_button.setEnabled(False)
-        self.smoothFlatSlice_button.setEnabled(False)
         self.move_button.setEnabled(True)
         self.load_model_button.setEnabled(False)
         self.slice3a_button.setEnabled(False)
         self.color_model_button.setEnabled(False)
-        self.analyze_model_button.setEnabled(False)
-        self.edit_planes_button.setEnabled(False)
         self.slice_vip_button.setEnabled(False)
         self.save_gcode_button.setEnabled(False)
         # self.hide_checkbox.setChecked(False)
@@ -934,14 +990,10 @@ class MainWindow(QMainWindow):
         self.picture_slider.setEnabled(True)
         self.picture_slider.setMaximum(layers_count)
         self.picture_slider.setSliderPosition(layers_count)
-        self.smoothSlice_button.setEnabled(True)
-        self.smoothFlatSlice_button.setEnabled(True)
         self.move_button.setEnabled(True)
         self.load_model_button.setEnabled(True)
         self.slice3a_button.setEnabled(True)
         self.color_model_button.setEnabled(True)
-        self.analyze_model_button.setEnabled(False)
-        self.edit_planes_button.setEnabled(True)
         self.slice_vip_button.setEnabled(True)
         self.save_gcode_button.setEnabled(True)
         self.hide_checkbox.setChecked(True)
