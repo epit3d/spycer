@@ -11,7 +11,7 @@ from typing import Dict, List
 
 import vtk
 import shutil
-from PyQt5 import QtCore
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 from src import gui_utils, locales
 from src.figure_editor import PlaneEditor, ConeEditor
@@ -45,6 +45,13 @@ class MainController:
         self.view.slice_vip_button.clicked.connect(partial(self.slice_stl, "vip"))
         self.view.save_gcode_button.clicked.connect(self.save_gcode_file)
         self.view.color_model_button.clicked.connect(self.colorize_model)
+
+        for var in vars(self.view).items():
+            widget = var[1]
+
+            if isinstance(widget, QtWidgets.QLineEdit):
+                widget.editingFinished.connect(partial(self.input_validation, widget))
+                widget.returnPressed.connect(partial(self.input_validation, widget))
 
         # bottom panel
         self.view.add_plane_button.clicked.connect(self.add_splane)
@@ -164,26 +171,32 @@ class MainController:
         self.model.current_slider_value = self.view.change_layer_view(self.model.current_slider_value, self.model.gcode)
 
     def update_wall_thickness(self):
-        if self.view.number_wall_lines_value.text() == "" or self.view.line_width_value.text() == "":
-            self.view.wall_thickness_value.setText("0")
-        else:
-            self.view.wall_thickness_value.setText(str(round(float(self.view.number_wall_lines_value.text()) * float(self.view.line_width_value.text()), 2)))
+        self.update_dependent_fields(self.view.number_wall_lines_value, self.view.line_width_value, self.view.wall_thickness_value)
 
     def change_layer_height(self):
         self.update_bottom_thickness()
         self.update_lid_thickness()
 
     def update_bottom_thickness(self):
-        if self.view.number_of_bottom_layers_value.text() == "" or self.view.layer_height_value.text() == "":
-            self.view.bottom_thickness_value.setText("0")
-        else:
-            self.view.bottom_thickness_value.setText(str(round(float(self.view.number_of_bottom_layers_value.text()) * float(self.view.layer_height_value.text()), 2)))
+        self.update_dependent_fields(self.view.number_of_bottom_layers_value, self.view.layer_height_value, self.view.bottom_thickness_value)
 
     def update_lid_thickness(self):
-        if self.view.number_of_lid_layers_value.text() == "" or self.view.layer_height_value.text() == "":
-            self.view.lid_thickness_value.setText("0")
+        self.update_dependent_fields(self.view.number_of_lid_layers_value, self.view.layer_height_value, self.view.lid_thickness_value)
+
+    def update_dependent_fields(self, entry_field_1, entry_field_2, output_field):
+        entry_field_1_text = entry_field_1.text().replace(',', '.')
+        entry_field_2_text = entry_field_2.text().replace(',', '.')
+
+        if entry_field_1_text == "" or entry_field_2_text == "":
+            output_field.setText("0.0")
         else:
-            self.view.lid_thickness_value.setText(str(round(float(self.view.number_of_lid_layers_value.text()) * float(self.view.layer_height_value.text()), 2)))
+            output_field.setText(str(round(float(entry_field_1_text) * float(entry_field_2_text), 2)))
+
+    def input_validation(self, widget):
+        if isinstance(widget.validator(), QtGui.QIntValidator):
+            widget.setText(str(int(widget.text())))
+        if isinstance(widget.validator(), QtGui.QDoubleValidator):
+            widget.setText(str(float(widget.text())))
 
     def move_model(self):
         self.view.move_stl2()

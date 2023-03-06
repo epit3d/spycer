@@ -2,6 +2,7 @@ import logging
 import sys
 import traceback
 import os
+import qdarkstyle
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QApplication
 
@@ -25,6 +26,8 @@ if __name__ == "__main__":
     load_settings()
 
     app = QApplication(sys.argv)
+    darkstyle = qdarkstyle.load_stylesheet_pyside2()
+    app.setStyleSheet(darkstyle)
     window = MainWindow()
     model = MainModel()
     cntrl = MainController(window, model)

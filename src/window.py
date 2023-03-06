@@ -43,6 +43,25 @@ class TreeWidget(QTreeWidget):
         self.itemIsMoving = True
         super().dragMoveEvent(event)
 
+class LineEdit(QLineEdit):
+    def focusOutEvent(self, event):
+        self.fillEmpty(self)
+        super().focusOutEvent(event)
+
+    def fillEmpty(self, widget):
+        widget.replace_delimiter()
+        if widget.text() == "":
+            widget.setText("0")
+
+    def replace_delimiter(self):
+        text = self.text()
+        self.setText(text.replace(',', '.'))
+
+class pushButton(QPushButton):
+    def __init__(self, text):
+        super().__init__(text)
+        self.setFixedHeight(25)
+
 class MainWindow(QMainWindow):
     from src.figure_editor import FigureEditor
     # by default it is None, because there is nothing to edit, will be updated by derived from FigureEditor
@@ -85,7 +104,7 @@ class MainWindow(QMainWindow):
         page_layout.setColumnMinimumWidth(0, 5)
         page_layout.setRowMinimumHeight(0, 10)
 
-        self.move_button = QPushButton(self.locale.MoveModel)
+        self.move_button = pushButton(self.locale.MoveModel)
         self.move_button.setCheckable(True)
         self.move_button.setFixedWidth(190)
         page_layout.addWidget(self.move_button, 1, 1)
@@ -203,6 +222,16 @@ class MainWindow(QMainWindow):
 
         сolumn2_number_of_cells = 4
 
+        validatorLocale = QtCore.QLocale("Englishs")
+        intValidator = QtGui.QIntValidator(0, 500)
+        intValidator.setLocale(validatorLocale)
+
+        doubleValidator = QtGui.QDoubleValidator(0.00, 500.00, 2)
+        doubleValidator.setLocale(validatorLocale)
+
+        doublePercentValidator = QtGui.QDoubleValidator(0.00, 100.00, 2)
+        doublePercentValidator.setLocale(validatorLocale)
+
         # Front-end development at its best
         self.cur_row = 1
 
@@ -214,12 +243,14 @@ class MainWindow(QMainWindow):
             return self.cur_row
 
         line_width_label = QLabel(self.locale.LineWidth)
-        self.line_width_value = QLineEdit(str(sett().slicing.line_width))
+        self.line_width_value = LineEdit(str(sett().slicing.line_width))
+        self.line_width_value.setValidator(doubleValidator)
         right_panel.addWidget(line_width_label, get_next_row(), 1)
         right_panel.addWidget(self.line_width_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
 
         layer_height_label = QLabel(self.locale.LayerHeight)
-        self.layer_height_value = QLineEdit(str(sett().slicing.layer_height))
+        self.layer_height_value = LineEdit(str(sett().slicing.layer_height))
+        self.layer_height_value.setValidator(doubleValidator)
         right_panel.addWidget(layer_height_label, get_next_row(), 1)
         right_panel.addWidget(self.layer_height_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
 
@@ -228,63 +259,70 @@ class MainWindow(QMainWindow):
             number_wall_lines = int(sett().slicing.wall_thickness/sett().slicing.line_width)
         else:
             number_wall_lines = 0
-        self.number_wall_lines_value = QLineEdit(str(number_wall_lines))
-        self.number_wall_lines_value.setValidator(QtGui.QIntValidator(0, 100))
+        self.number_wall_lines_value = LineEdit(str(number_wall_lines))
+        self.number_wall_lines_value.setValidator(intValidator)
         right_panel.addWidget(number_wall_lines_label, get_next_row(), 1)
         right_panel.addWidget(self.number_wall_lines_value, get_cur_row(), 2)
         wall_thickness_label = QLabel(self.locale.WallThickness)
-        self.wall_thickness_value = QLineEdit(str(sett().slicing.wall_thickness))
+        self.wall_thickness_value = LineEdit(str(sett().slicing.wall_thickness))
         self.wall_thickness_value.setReadOnly(True)
+        self.wall_thickness_value.setValidator(doubleValidator)
         millimeter_label = QLabel(self.locale.Millimeter)
         right_panel.addWidget(wall_thickness_label, get_cur_row(), 3)
         right_panel.addWidget(self.wall_thickness_value, get_cur_row(), 4)
         right_panel.addWidget(millimeter_label, get_cur_row(), 5)
 
         number_of_bottom_layers_label = QLabel(self.locale.NumberOfBottomLayers)
-        self.number_of_bottom_layers_value = QLineEdit(str(sett().slicing.bottom_layers))
-        self.number_of_bottom_layers_value.setValidator(QtGui.QIntValidator(0, 100))
+        self.number_of_bottom_layers_value = LineEdit(str(sett().slicing.bottom_layers))
+        self.number_of_bottom_layers_value.setValidator(intValidator)
         right_panel.addWidget(number_of_bottom_layers_label, get_next_row(), 1)
         right_panel.addWidget(self.number_of_bottom_layers_value, get_cur_row(), 2)
         bottom_thickness_label = QLabel(self.locale.BottomThickness)
-        self.bottom_thickness_value = QLineEdit(str(round(sett().slicing.layer_height*sett().slicing.bottom_layers,2)))
+        self.bottom_thickness_value = LineEdit(str(round(sett().slicing.layer_height*sett().slicing.bottom_layers,2)))
         self.bottom_thickness_value.setReadOnly(True)
+        self.bottom_thickness_value.setValidator(doubleValidator)
         millimeter_label = QLabel(self.locale.Millimeter)
         right_panel.addWidget(bottom_thickness_label, get_cur_row(), 3)
         right_panel.addWidget(self.bottom_thickness_value, get_cur_row(), 4)
         right_panel.addWidget(millimeter_label, get_cur_row(), 5)
 
         number_of_lid_layers_label = QLabel(self.locale.NumberOfLidLayers)
-        self.number_of_lid_layers_value = QLineEdit(str(int(sett().slicing.lids_depth)))
-        self.number_of_lid_layers_value.setValidator(QtGui.QIntValidator(0, 100))
+        self.number_of_lid_layers_value = LineEdit(str(int(sett().slicing.lids_depth)))
+        # self.number_of_lid_layers_value.setValidator(QtGui.QIntValidator(0, 100))
+        self.number_of_lid_layers_value.setValidator(intValidator)
         right_panel.addWidget(number_of_lid_layers_label, get_next_row(), 1)
         right_panel.addWidget(self.number_of_lid_layers_value, get_cur_row(), 2)
         lid_thickness_label = QLabel(self.locale.LidThickness)
-        self.lid_thickness_value = QLineEdit(str(round(sett().slicing.layer_height*sett().slicing.lids_depth,2)))
+        self.lid_thickness_value = LineEdit(str(round(sett().slicing.layer_height*sett().slicing.lids_depth,2)))
         self.lid_thickness_value.setReadOnly(True)
+        self.lid_thickness_value.setValidator(doubleValidator)
         millimeter_label = QLabel(self.locale.Millimeter)
         right_panel.addWidget(lid_thickness_label, get_cur_row(), 3)
         right_panel.addWidget(self.lid_thickness_value, get_cur_row(), 4)
         right_panel.addWidget(millimeter_label, get_cur_row(), 5)
 
         extruder_temp_label = QLabel(self.locale.ExtruderTemp)
-        self.extruder_temp_value = QLineEdit(str(sett().slicing.extruder_temperature))
+        self.extruder_temp_value = LineEdit(str(sett().slicing.extruder_temperature))
+        self.extruder_temp_value.setValidator(doubleValidator)
         right_panel.addWidget(extruder_temp_label, get_next_row(), 1)
         right_panel.addWidget(self.extruder_temp_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
 
         bed_temp_label = QLabel(self.locale.BedTemp)
-        self.bed_temp_value = QLineEdit(str(sett().slicing.bed_temperature))
+        self.bed_temp_value = LineEdit(str(sett().slicing.bed_temperature))
+        self.bed_temp_value.setValidator(doubleValidator)
         right_panel.addWidget(bed_temp_label, get_next_row(), 1)
         right_panel.addWidget(self.bed_temp_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
 
         skirt_line_count_label = QLabel(self.locale.SkirtLineCount)
-        self.skirt_line_count_value = QLineEdit(str(sett().slicing.skirt_line_count))
+        self.skirt_line_count_value = LineEdit(str(sett().slicing.skirt_line_count))
+        self.skirt_line_count_value.setValidator(intValidator)
 
-        self.skirt_line_count_value.setValidator(QtGui.QIntValidator(0, 100))
         right_panel.addWidget(skirt_line_count_label, get_next_row(), 1)
         right_panel.addWidget(self.skirt_line_count_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
 
         fan_speed_label = QLabel(self.locale.FanSpeed)
-        self.fan_speed_value = QLineEdit(str(sett().slicing.fan_speed))
+        self.fan_speed_value = LineEdit(str(sett().slicing.fan_speed))
+        self.fan_speed_value.setValidator(doublePercentValidator)
         right_panel.addWidget(fan_speed_label, get_next_row(), 1)
         right_panel.addWidget(self.fan_speed_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
 
@@ -296,24 +334,27 @@ class MainWindow(QMainWindow):
         right_panel.addWidget(self.fan_off_layer1_box, get_cur_row(), 2, 1, сolumn2_number_of_cells)
 
         print_speed_label = QLabel(self.locale.PrintSpeed)
-        self.print_speed_value = QLineEdit(str(sett().slicing.print_speed))
+        self.print_speed_value = LineEdit(str(sett().slicing.print_speed))
+        self.print_speed_value.setValidator(doubleValidator)
         right_panel.addWidget(print_speed_label, get_next_row(), 1)
         right_panel.addWidget(self.print_speed_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
 
         print_speed_layer1_label = QLabel(self.locale.PrintSpeedLayer1)
-        self.print_speed_layer1_value = QLineEdit(str(sett().slicing.print_speed_layer1))
+        self.print_speed_layer1_value = LineEdit(str(sett().slicing.print_speed_layer1))
+        self.print_speed_layer1_value.setValidator(doubleValidator)
         right_panel.addWidget(print_speed_layer1_label, get_next_row(), 1)
         right_panel.addWidget(self.print_speed_layer1_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
 
         print_speed_wall_label = QLabel(self.locale.PrintSpeedWall)
-        self.print_speed_wall_value = QLineEdit(str(sett().slicing.print_speed_wall))
+        self.print_speed_wall_value = LineEdit(str(sett().slicing.print_speed_wall))
+        self.print_speed_wall_value.setValidator(doubleValidator)
         right_panel.addWidget(print_speed_wall_label, get_next_row(), 1)
         right_panel.addWidget(self.print_speed_wall_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
 
         filling_type_label = QLabel(self.locale.FillingType)
         right_panel.addWidget(filling_type_label, get_next_row(), 1)
         filling_type_values_widget = QWidget()
-        filling_type_values_widget.setFixedHeight(23)
+        filling_type_values_widget.setFixedHeight(27)
         self.filling_type_values = QComboBox(filling_type_values_widget)
         self.filling_type_values.addItems(self.locale.FillingTypeValues)
         ind = locales.getLocaleByLang("en").FillingTypeValues.index(sett().slicing.filling_type)
@@ -321,12 +362,14 @@ class MainWindow(QMainWindow):
         right_panel.addWidget(filling_type_values_widget, get_cur_row(), 2, 1, сolumn2_number_of_cells)
 
         fill_density_label = QLabel(self.locale.FillDensity)
-        self.fill_density_value = QLineEdit(str(sett().slicing.fill_density))
+        self.fill_density_value = LineEdit(str(sett().slicing.fill_density))
+        self.fill_density_value.setValidator(doublePercentValidator)
         right_panel.addWidget(fill_density_label, get_next_row(), 1)
         right_panel.addWidget(self.fill_density_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
 
         overlapping_infill = QLabel(self.locale.OverlappingInfillPercentage)
-        self.overlapping_infill_value = QLineEdit(str(sett().slicing.overlapping_infill_percentage))
+        self.overlapping_infill_value = LineEdit(str(sett().slicing.overlapping_infill_percentage))
+        self.overlapping_infill_value.setValidator(doublePercentValidator)
         right_panel.addWidget(overlapping_infill, get_next_row(), 1)
         right_panel.addWidget(self.overlapping_infill_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
 
@@ -338,17 +381,20 @@ class MainWindow(QMainWindow):
         right_panel.addWidget(self.retraction_on_box, get_cur_row(), 2, 1, сolumn2_number_of_cells)
 
         retraction_distance_label = QLabel(self.locale.RetractionDistance)
-        self.retraction_distance_value = QLineEdit(str(sett().slicing.retraction_distance))
+        self.retraction_distance_value = LineEdit(str(sett().slicing.retraction_distance))
+        self.retraction_distance_value.setValidator(doubleValidator)
         right_panel.addWidget(retraction_distance_label, get_next_row(), 1)
         right_panel.addWidget(self.retraction_distance_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
 
         retraction_speed_label = QLabel(self.locale.RetractionSpeed)
-        self.retraction_speed_value = QLineEdit(str(sett().slicing.retraction_speed))
+        self.retraction_speed_value = LineEdit(str(sett().slicing.retraction_speed))
+        self.retraction_speed_value.setValidator(doubleValidator)
         right_panel.addWidget(retraction_speed_label, get_next_row(), 1)
         right_panel.addWidget(self.retraction_speed_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
 
         retract_compensation_amount_label = QLabel(self.locale.RetractCompensationAmount)
-        self.retract_compensation_amount_value = QLineEdit(str(sett().slicing.retract_compensation_amount))
+        self.retract_compensation_amount_value = LineEdit(str(sett().slicing.retract_compensation_amount))
+        self.retract_compensation_amount_value.setValidator(doubleValidator)
         right_panel.addWidget(retract_compensation_amount_label, get_next_row(), 1)
         right_panel.addWidget(self.retract_compensation_amount_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
 
@@ -360,12 +406,14 @@ class MainWindow(QMainWindow):
         right_panel.addWidget(self.supports_on_box, get_cur_row(), 2, 1, сolumn2_number_of_cells)
 
         support_density_label = QLabel(self.locale.SupportDensity)
-        self.support_density_value = QLineEdit(str(sett().slicing.support_density))
+        self.support_density_value = LineEdit(str(sett().slicing.support_density))
+        self.support_density_value.setValidator(doublePercentValidator)
         right_panel.addWidget(support_density_label, get_next_row(), 1)
         right_panel.addWidget(self.support_density_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
 
         support_offset_label = QLabel(self.locale.SupportOffset)
-        self.support_offset_value = QLineEdit(str(sett().slicing.support_offset))
+        self.support_offset_value = LineEdit(str(sett().slicing.support_offset))
+        self.support_offset_value.setValidator(doubleValidator)
         right_panel.addWidget(support_offset_label, get_next_row(), 1)
         right_panel.addWidget(self.support_offset_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
 
@@ -420,24 +468,26 @@ class MainWindow(QMainWindow):
         self.xyz_orient_value = QLabel("Orientation: 0 0 0")
         buttons_layout.addWidget(self.xyz_orient_value, get_next_row(), 1, 1, 3)
 
-        self.load_model_button = QPushButton(self.locale.OpenModel)
+        self.load_model_button = pushButton(self.locale.OpenModel)
         buttons_layout.addWidget(self.load_model_button, get_next_row(), 1, 1, 2)
 
-        self.save_gcode_button = QPushButton(self.locale.SaveGCode)
+        self.save_gcode_button = pushButton(self.locale.SaveGCode)
         buttons_layout.addWidget(self.save_gcode_button, get_cur_row(), 3)
 
         self.critical_wall_overhang_angle_label = QLabel(self.locale.CriticalWallOverhangAngle)
         buttons_layout.addWidget(self.critical_wall_overhang_angle_label, get_next_row(), 1, 1, 2)
-        self.colorize_angle_value = QLineEdit(str(sett().slicing.angle))
+        buttons_layout.setColumnMinimumWidth(1, 200)
+        self.colorize_angle_value = LineEdit(str(sett().slicing.angle))
+        self.colorize_angle_value.setValidator(doubleValidator)
         buttons_layout.addWidget(self.colorize_angle_value, get_cur_row(), 2, 1, 1)
 
-        self.color_model_button = QPushButton(self.locale.ColorModel)
+        self.color_model_button = pushButton(self.locale.ColorModel)
         buttons_layout.addWidget(self.color_model_button, get_cur_row(), 3)
 
-        self.slice_vip_button = QPushButton(self.locale.SliceVip)
+        self.slice_vip_button = pushButton(self.locale.SliceVip)
         buttons_layout.addWidget(self.slice_vip_button, get_next_row(), 1, 1, 2)
 
-        self.slice3a_button = QPushButton(self.locale.Slice3Axes)
+        self.slice3a_button = pushButton(self.locale.Slice3Axes)
         buttons_layout.addWidget(self.slice3a_button, get_cur_row(), 3)
 
         panel_widget = QWidget()
@@ -450,7 +500,7 @@ class MainWindow(QMainWindow):
 
         v_layout = QVBoxLayout()
         v_layout.addWidget(scroll)
-        settings_group = QGroupBox('Settings')  # TODO: locale
+        settings_group = QGroupBox(self.locale.Settings)
         settings_group.setLayout(v_layout)
 
         buttons_group = QWidget()
@@ -481,22 +531,22 @@ class MainWindow(QMainWindow):
         self.hide_checkbox = QCheckBox(self.locale.Hide)
         bottom_layout.addWidget(self.hide_checkbox, 0, 2)
 
-        self.add_plane_button = QPushButton(self.locale.AddPlane)
+        self.add_plane_button = pushButton(self.locale.AddPlane)
         bottom_layout.addWidget(self.add_plane_button, 1, 2)
 
-        self.add_cone_button = QPushButton(self.locale.AddCone)
+        self.add_cone_button = pushButton(self.locale.AddCone)
         bottom_layout.addWidget(self.add_cone_button, 2, 2)
 
-        self.remove_plane_button = QPushButton(self.locale.DeletePlane)
+        self.remove_plane_button = pushButton(self.locale.DeletePlane)
         bottom_layout.addWidget(self.remove_plane_button, 3, 2)
 
-        self.edit_figure_button = QPushButton(self.locale.EditFigure)
+        self.edit_figure_button = pushButton(self.locale.EditFigure)
         bottom_layout.addWidget(self.edit_figure_button, 4, 2)
 
-        self.save_planes_button = QPushButton(self.locale.SavePlanes)
+        self.save_planes_button = pushButton(self.locale.SavePlanes)
         bottom_layout.addWidget(self.save_planes_button, 1, 3)
 
-        self.download_planes_button = QPushButton(self.locale.DownloadPlanes)
+        self.download_planes_button = pushButton(self.locale.DownloadPlanes)
         bottom_layout.addWidget(self.download_planes_button, 2, 3)
 
         bottom_panel = QWidget()
@@ -891,7 +941,7 @@ class MainWindow(QMainWindow):
         site_label.setOpenExternalLinks(True)
         v_layout.addWidget(email_label)
 
-        ok = QPushButton("ok")
+        ok = pushButton("ok")
         ok.clicked.connect(d.close)
         v_layout.addWidget(ok)
 
