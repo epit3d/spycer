@@ -11,7 +11,7 @@ from typing import Dict, List
 
 import vtk
 import shutil
-from PyQt5 import QtCore
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 from src import gui_utils, locales
 from src.figure_editor import PlaneEditor, ConeEditor
@@ -45,6 +45,13 @@ class MainController:
         self.view.slice_vip_button.clicked.connect(partial(self.slice_stl, "vip"))
         self.view.save_gcode_button.clicked.connect(self.save_gcode_file)
         self.view.color_model_button.clicked.connect(self.colorize_model)
+
+        for var in vars(self.view).items():
+            widget = var[1]
+
+            if isinstance(widget, QtWidgets.QLineEdit):
+                widget.editingFinished.connect(partial(self.input_validation, widget))
+                widget.returnPressed.connect(partial(self.input_validation, widget))
 
         # bottom panel
         self.view.add_plane_button.clicked.connect(self.add_splane)
@@ -177,10 +184,19 @@ class MainController:
         self.update_dependent_fields(self.view.number_of_lid_layers_value, self.view.layer_height_value, self.view.lid_thickness_value)
 
     def update_dependent_fields(self, entry_field_1, entry_field_2, output_field):
-        if entry_field_1.text() == "" or entry_field_2.text() == "":
+        entry_field_1_text = entry_field_1.text().replace(',', '.')
+        entry_field_2_text = entry_field_2.text().replace(',', '.')
+
+        if entry_field_1_text == "" or entry_field_2_text == "":
             output_field.setText("0.0")
         else:
-            output_field.setText(str(round(float(entry_field_1.text()) * float(entry_field_2.text()), 2)))
+            output_field.setText(str(round(float(entry_field_1_text) * float(entry_field_2_text), 2)))
+
+    def input_validation(self, widget):
+        if isinstance(widget.validator(), QtGui.QIntValidator):
+            widget.setText(str(int(widget.text())))
+        if isinstance(widget.validator(), QtGui.QDoubleValidator):
+            widget.setText(str(float(widget.text())))
 
     def move_model(self):
         self.view.move_stl2()

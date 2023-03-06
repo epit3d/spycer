@@ -25,6 +25,7 @@ class Locale:
     MoveModel = "Move model"
     Slice3Axes = "3D slicing"
     SliceVip = "5D slicing"
+    Settings = "Settings"
     # SliceCone = "Slice cone"
     SaveGCode = "Save GCode"
     FanOffLayer1 = "Turn off airflow on the first layer"
@@ -110,6 +111,7 @@ dicts = {
         Slice='Нарезать на слои',
         Slice3Axes="3D слайсинг",
         SliceVip="5D слайсинг",
+        Settings = "Настройки",
         # SliceCone="Конический слайсинг",
         SaveGCode='Сохранить GCode',
         FanOffLayer1="Выключить обдув на первом слое",
