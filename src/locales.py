@@ -55,6 +55,7 @@ class Locale:
     StlMoveRotate = "Rotate"
     StlMoveScale = "Scale"
     ModelCentering = "Center model"
+    AlignModelHeight = "Align model height"
     SavePlanes = "Save planes"
     DownloadPlanes = "Download planes"
     NamePlanes = "Name"
@@ -140,6 +141,7 @@ dicts = {
         StlMoveRotate="Вращение",
         StlMoveScale="Масштабирование",
         ModelCentering = "Поместить модель в центр",
+        AlignModelHeight = "Выровнять модель по высоте",
         SavePlanes = "Сохранить плоскости",
         DownloadPlanes = "Загрузить плоскости",
         NamePlanes = "Название",
