@@ -24,9 +24,9 @@ exe = EXE(pyz,
           a.binaries,
           a.zipfiles,
           a.datas,
-          name='spycer',
+          name='FASP',
           debug=True,
           strip=False,
           upx=True,
           runtime_tmpdir=None,
-          console=True)
+          console=False)
