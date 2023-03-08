@@ -443,6 +443,10 @@ class MainWindow(QMainWindow):
         buttons_layout.addWidget(self.consumption_material_label, get_cur_row(), 2, Qt.AlignmentFlag(3))
         buttons_layout.addWidget(self.consumption_material_value, get_cur_row(), 3)
 
+        self.model_align_height = QCheckBox(self.locale.AlignModelHeight)
+        self.model_align_height.setChecked(True)
+        buttons_layout.addWidget(self.model_align_height, get_next_row(), 1)
+
         self.slider_label = QLabel(self.locale.LayersCount)
         self.layers_number_label = QLabel()
         buttons_layout.addWidget(self.slider_label, get_next_row(), 1)
