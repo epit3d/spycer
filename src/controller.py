@@ -241,9 +241,6 @@ class MainController:
         self.view.load_stl(stl_actor)
 
     def load_gcode(self, filename, is_from_stl):
-
-        gc = None
-
         def work():
             print("start parsing gcode")
             start_time = time.time()
@@ -252,8 +249,13 @@ class MainController:
             end_time = time.time()
             print('spent time for gcode loading: ', end_time - start_time, 's')
 
-        qt_utils.progress_dialog('Gcode loading', 'Gcode is loading, please wait...', work)  # TODO: localization
+            return gc
 
+        gc = qt_utils.progress_dialog(
+            locales.getLocale().GCodeLoadingTitle, 
+            locales.getLocale().GCodeLoadingProgress, 
+            work,
+        )
         blocks = gui_utils.makeBlocks(gc.layers, gc.rotations, gc.lays2rots)
         actors = gui_utils.wrapWithActors(blocks, gc.rotations, gc.lays2rots)
 
@@ -268,8 +270,6 @@ class MainController:
         save_splanes_to_file(self.model.splanes, s.slicing.splanes_file)
         self.save_settings(slicing_type)
 
-        res = False
-
         def work():
             start_time = time.time()
             print("start slicing")
@@ -278,7 +278,13 @@ class MainController:
             end_time = time.time()
             print('spent time for slicing: ', end_time - start_time, 's')
 
-        qt_utils.progress_dialog('Slicing', 'Slicing is in progress..', work)  # TODO: localization
+            return res
+
+        res = qt_utils.progress_dialog(
+            locales.getLocale().SlicingTitle, 
+            locales.getLocale().SlicingProgress, 
+            work,
+        )
 
         if not res:
             return
