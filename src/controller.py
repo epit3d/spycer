@@ -6,18 +6,18 @@ import time
 import sys
 from functools import partial
 from pathlib import Path
+import shutil
 from shutil import copy2
 from typing import Dict, List
 
 import vtk
-import shutil
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 from src import gui_utils, locales
 from src.figure_editor import PlaneEditor, ConeEditor
 from src.gui_utils import showErrorDialog, plane_tf, read_planes, Plane, Cone
 from src.settings import sett, save_settings
-
+import src.qt_utils as qt_utils
 
 class MainController:
     def __init__(self, view, model):
@@ -241,12 +241,21 @@ class MainController:
         self.view.load_stl(stl_actor)
 
     def load_gcode(self, filename, is_from_stl):
-        print("start parsing gcode")
-        start_time = time.time()
-        gc = self.model.load_gcode(filename)
-        print('finish parsing gcode')
-        end_time = time.time()
-        print('spent time for gcode loading: ', end_time - start_time, 's')
+        def work():
+            print("start parsing gcode")
+            start_time = time.time()
+            gc = self.model.load_gcode(filename)
+            print('finish parsing gcode')
+            end_time = time.time()
+            print('spent time for gcode loading: ', end_time - start_time, 's')
+
+            return gc
+
+        gc = qt_utils.progress_dialog(
+            locales.getLocale().GCodeLoadingTitle, 
+            locales.getLocale().GCodeLoadingProgress, 
+            work,
+        )
         blocks = gui_utils.makeBlocks(gc.layers, gc.rotations, gc.lays2rots)
         actors = gui_utils.wrapWithActors(blocks, gc.rotations, gc.lays2rots)
 
@@ -261,12 +270,21 @@ class MainController:
         save_splanes_to_file(self.model.splanes, s.slicing.splanes_file)
         self.save_settings(slicing_type)
 
-        start_time = time.time()
-        print("start slicing")
-        res = call_command(s.slicing.cmd)
-        print("finished command")
-        end_time = time.time()
-        print('spent time for slicing: ', end_time - start_time, 's')
+        def work():
+            start_time = time.time()
+            print("start slicing")
+            res = call_command(s.slicing.cmd)
+            print("finished command")
+            end_time = time.time()
+            print('spent time for slicing: ', end_time - start_time, 's')
+
+            return res
+
+        res = qt_utils.progress_dialog(
+            locales.getLocale().SlicingTitle, 
+            locales.getLocale().SlicingProgress, 
+            work,
+        )
 
         if not res:
             return

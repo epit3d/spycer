@@ -79,6 +79,10 @@ class Locale:
     Open = "Open"
     SaveSettings = "Save settings"
     LoadSettings = "Load settings"
+    SlicingTitle = "Slicing"
+    SlicingProgress = "Slicing is in progress..."
+    GCodeLoadingTitle = "GCode loading"
+    GCodeLoadingProgress = "GCode loading is in progress..."
 
     def __init__(self, **entries):
         self.__dict__.update(entries)
@@ -165,6 +169,10 @@ dicts = {
         Open = "Открыть",
         SaveSettings = "Сохранить настройки",
         LoadSettings = "Загрузить настройки",
+        SlicingTitle = "Слайсинг",
+        SlicingProgress = "Слайсинг в прогрессе...",
+        GCodeLoadingTitle = "Загрузка GCode",
+        GCodeLoadingProgress = "Загрузка GCode в прогрессе...",
     ),
 }
 
