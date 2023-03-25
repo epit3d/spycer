@@ -14,7 +14,7 @@ class Locale:
     BottomThickness='Bottom thickness:'
     NumberOfBottomLayers='Number of bottom layers:'
     LidsThickness='Lid thickness:'
-    NumberOfLidsLayers='Number of lid layers:'
+    NumberOfLidLayers='Number of lid layers:'
     LineWidth = 'Extruder diameter, mm:'
     FillingType = 'Filling type:'
     FillingTypeValues = ["Lines", "Squares", "Triangles"]
