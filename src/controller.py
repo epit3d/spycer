@@ -326,7 +326,7 @@ class MainController:
         s.slicing.supports_on = self.view.supports_on_box.isChecked()
         s.slicing.angle = float(self.view.colorize_angle_value.text())
         s.slicing.lids_depth = int(self.view.number_of_lid_layers_value.text())
-        s.slicing.bottom_layers = int(self.view.number_of_bottom_layers_value.text())
+        s.slicing.bottoms_depth = int(self.view.number_of_bottom_layers_value.text())
 
         s.slicing.overlapping_infill_percentage = float(self.view.overlapping_infill_value.text())
 
