@@ -1,8 +1,7 @@
 import concurrent.futures
-import threading
 from PyQt5 import QtCore
-from PyQt5.QtCore import QThread
-from PyQt5.QtWidgets import QProgressDialog, QApplication
+from PyQt5.QtCore import QEventLoop
+from PyQt5.QtWidgets import QProgressDialog
 
 
 def progress_dialog(title, msg, work_fn, parent=None):
@@ -32,16 +31,11 @@ def _exec_dialog(dg, closer=None):
     See: https://doc.qt.io/qt-6/qdialog.html#exec
     @param closer function accepting one QDialog param and connecting it via signals-slots with close action
     """
-    app = QApplication.instance()
-    if QThread.currentThread() != app.thread():
-        raise Exception('attempting to exec a QDialog from non-gui thread')
-
-    event = threading.Event()
-    dg.finished.connect(lambda: event.set())
+    event_loop = QEventLoop()
+    dg.finished.connect(event_loop.quit)
     dg.setModal(True)
     dg.show()
     if closer:
         closer(dg)
-    while not event.is_set():
-        app.processEvents()
+    event_loop.exec_()
     return dg.result()
