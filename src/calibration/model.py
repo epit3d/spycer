@@ -1,6 +1,5 @@
-from printer import EpitPrinter
+from .steps import steps
 
 
-class CalibrationModel(EpitPrinter):
-    def __init__(self):
-        super().__init__()
+def CalibrationModel():
+    return steps

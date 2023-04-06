@@ -3,23 +3,32 @@ import requests
 import time
 
 host = None
+session = None
+
+
+def startSession():
+    global session
+    session = requests.Session()
 
 
 def sendRequest(request):
     # print('request: ' + host + request)
-    global host
+    global host, session
     if host is None:
         ip = socket.gethostbyname('3d.local')
         # ip = socket.gethostbyname('EPIT3D')
         print('printer ip:', ip)
         host = 'http://' + ip
 
+    if session is None:
+        startSession()
+
     response = None
     i = 0
     while True:
         try:
             i += 1
-            response = requests.get(
+            response = session.get(
                 host + request,
                 timeout=1,
             )
