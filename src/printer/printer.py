@@ -1,6 +1,11 @@
 from math import sin, cos, radians
 from .http import getPos, getHomed, getObjectModel, execGcode
 
+from .delta import DeltaParams
+from .scale import ScaleParams
+from .skew import SkewParams
+
+
 writeGcode = False
 useDwell = True
 # writeGcode = True
@@ -232,6 +237,11 @@ def probeNegY():
 
 
 class EpitPrinter:
+    def __init__(self):
+        self.deltaParams = DeltaParams()
+        self.scaleParams = ScaleParams()
+        self.skewParams = SkewParams()
+
     def __del__(self):
         print('printer deleted')
 
