@@ -17,9 +17,30 @@ class ServicePanel(QDialog):
 
         mainLayout = QVBoxLayout()
 
+        button = QPushButton('Z probe')
+        mainLayout.addWidget(button)
+        self.zProbeButton = button
+
         button = QPushButton('Start Calibration')
         mainLayout.addWidget(button)
         self.startCalibrationButton = button
+
+        def subWidget():
+            widget = QWidget()
+            layout = QHBoxLayout(widget)
+            layout.setContentsMargins(0, 0, 0, 0)
+
+            label = QLabel('Z initial height')
+            layout.addWidget(label)
+
+            lineEdit = QLineEdit('10')
+            layout.addWidget(lineEdit)
+            widget.zLevelSource = lineEdit
+
+            self.bedZLevelWidget = widget
+            return widget
+
+        mainLayout.addWidget(subWidget())
 
         button = QPushButton('Delta Calibration')
         mainLayout.addWidget(button)

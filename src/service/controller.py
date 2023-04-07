@@ -97,18 +97,35 @@ class ServiceController(QObject):
         self.workSignal[object].connect(worker.doWork)
         self.workSignal[object, list].connect(worker.doWorkWithArgs)
 
+        view.zProbeButton.clicked.connect(
+            partial(self.workSignal.emit, printer.zProbe)
+        )
+
         view.startCalibrationButton.clicked.connect(
             partial(self.workSignal.emit, printer.startCalibration)
         )
+
+        def runHandler(textSource):
+            posZ = float(textSource.text().strip())
+            self.workSignal[object, list].emit(printer.defDelta, [posZ])
         view.defDeltaButton.clicked.connect(
-            partial(self.workSignal.emit, printer.defDelta)
+            partial(runHandler, view.bedZLevelWidget.zLevelSource)
         )
+
+        def runHandler(textSource):
+            posZ = float(textSource.text().strip())
+            self.workSignal[object, list].emit(printer.defAxisU, [posZ])
         view.defAxisUButton.clicked.connect(
-            partial(self.workSignal.emit, printer.defAxisU)
+            partial(runHandler, view.bedZLevelWidget.zLevelSource)
         )
+
+        def runHandler(textSource):
+            posZ = float(textSource.text().strip())
+            self.workSignal[object, list].emit(printer.defAxisV, [posZ])
         view.defAxisVButton.clicked.connect(
-            partial(self.workSignal.emit, printer.defAxisV)
+            partial(runHandler, view.bedZLevelWidget.zLevelSource)
         )
+
         view.defOriginButton.clicked.connect(
             partial(self.workSignal.emit, printer.defOrigin)
         )
