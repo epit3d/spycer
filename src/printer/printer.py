@@ -1,5 +1,6 @@
 from math import sin, cos, radians
 from .http import getPos, getHomed, getObjectModel, execGcode
+import time
 
 from .delta import DeltaParams
 from .scale import ScaleParams
@@ -140,6 +141,9 @@ def probeZ():
         if len(reply) > 0 and reply[:4] == 'Error':
             raise Exception(reply)
 
+        # needed here to let printer update Z position
+        time.sleep(0.5)
+
         results.append(getPos(axisZ))
 
         for gcode in gcodes:
@@ -242,6 +246,10 @@ class EpitPrinter:
         self.scaleParams = ScaleParams()
         self.skewParams = SkewParams()
 
+    def zProbe(self):
+        zA, probes = probeZ()
+        self._appendOutput(f'Z:{zA:6.3f} mm' + ' ' + str(probes))
+
     def __del__(self):
         print('printer deleted')
 
@@ -261,54 +269,54 @@ class EpitPrinter:
             global fileGcode
             fileGcode = open('output.g', 'w')
 
-    def defAxisU(self):
+    def defAxisU(self, posZ):
         doHoming()
 
-        moveTo(Z=100, F=1000)
+        moveTo(Z=100)
         moveTo(X=0, Y=0)
         rotateBed(U=0)
 
         points1 = (
-            (0, 90, 10),
-            (-78, -45, 10),
-            (78, -45, 10),
+            (0, 90),
+            (-78, -45),
+            (78, -45),
         )
 
         points2 = (
-            (0, -90, 10),
-            (78, 45, 10),
-            (-78, 45, 10),
+            (0, -90),
+            (78, 45),
+            (-78, 45),
         )
 
         for num, point in enumerate(points1):
-            X, Y, Z = point
-            moveTo(X, Y, Z)
+            X, Y = point
+            moveTo(X, Y, posZ)
 
             zA, probes = probeZ()
             print(zA)
 
-            moveTo(X, Y, Z)
+            moveTo(X, Y, posZ)
 
             self._appendOutput(f'{num:d}: Z:{zA:6.3f} mm' + ' ' + str(probes))
 
         rotateBed(U=-180)
 
         for num, point in enumerate(points2):
-            X, Y, Z = point
-            moveTo(X, Y, Z)
+            X, Y = point
+            moveTo(X, Y, posZ)
 
             zA, probes = probeZ()
             print(zA)
 
-            moveTo(X, Y, Z)
+            moveTo(X, Y, posZ)
 
             self._appendOutput(f'{num:d}: Z:{zA:6.3f} mm' + ' ' + str(probes))
 
-        moveTo(Z=100, F=1000)
+        moveTo(Z=100)
         moveTo(X=0, Y=0)
         rotateBed(U=0)
 
-    def defAxisV(self, *args, **kwargs):
+    def defAxisV(self, posZ, *args, **kwargs):
         print(args, kwargs)
 
         doHoming()
@@ -355,52 +363,52 @@ class EpitPrinter:
             ( 35, 65,  50), # noqa
         )
 
-        moveTo(Z=100, F=1000)
+        moveTo(Z=100)
         tiltBed(V=0)
 
         self._appendOutput('Area 1')
         for num, point in enumerate(points1):
             X, Y, Z = point
-            moveTo(X, Y, Z, F=500)
+            moveTo(X, Y, Z)
 
             zA, probes = probeZ()
             print(zA)
 
-            moveTo(X, Y, Z, F=50)
+            moveTo(X, Y, Z)
 
             self._appendOutput(f'{num:d}: Z:{zA:6.3f} mm' + ' ' + str(probes))
 
-        moveTo(Z=100, F=1000)
+        moveTo(Z=100)
         tiltBed(V=25)
 
         self._appendOutput('Area 2')
         for num, point in enumerate(points2):
             X, Y, Z = point
-            moveTo(X, Y, Z, F=500)
+            moveTo(X, Y, Z)
 
             zA, probes = probeZ()
             print(zA)
 
-            moveTo(X, Y, Z, F=50)
+            moveTo(X, Y, Z)
 
             self._appendOutput(f'{num:d}: Z:{zA:6.3f} mm' + ' ' + str(probes))
 
-        moveTo(Z=100, F=1000)
+        moveTo(Z=100)
         tiltBed(V=50)
 
         self._appendOutput('Area 3')
         for num, point in enumerate(points3):
             X, Y, Z = point
-            moveTo(X, Y, Z, F=500)
+            moveTo(X, Y, Z)
 
             zA, probes = probeZ()
             print(zA)
 
-            moveTo(X, Y, Z, F=50)
+            moveTo(X, Y, Z)
 
             self._appendOutput(f'{num:d}: Z:{zA:6.3f} mm' + ' ' + str(probes))
 
-        moveTo(Z=100, F=1000)
+        moveTo(Z=100)
         moveTo(X=0, Y=0)
         tiltBed(V=0)
 
@@ -449,28 +457,28 @@ class EpitPrinter:
         moveTo(X=0, Y=0)
         tiltBed(V=0)
 
-    def defDelta(self, *args, **kwargs):
+    def defDelta(self, posZ, *args, **kwargs):
         print(args, kwargs)
 
         doHoming()
 
         points = (
-            (0, 100, 10),
-            (87, 50, 10),
-            (87, -50, 10),
-            (0, -100, 10),
-            (-87, -50, 10),
-            (-87, 50, 10),
-            (0, 15, 10),
-            (13, -7.5, 10),
-            (-13, -7.5, 10)
+            (0, 100),
+            (87, 50),
+            (87, -50),
+            (0, -100),
+            (-87, -50),
+            (-87, 50),
+            (0, 15),
+            (13, -7.5),
+            (-13, -7.5)
         )
 
         result = []
 
         for num, point in enumerate(points):
-            X, Y, Z = point
-            moveTo(X, Y, Z)
+            X, Y = point
+            moveTo(X, Y, posZ)
 
             zA, probes = probeZ()
             # we multiply to -1 in order to get the correct values
@@ -480,7 +488,7 @@ class EpitPrinter:
             print(zA)
             result += [(X, Y, zA)]
 
-            moveTo(X, Y, Z)
+            moveTo(X, Y, posZ)
 
         return result
 
@@ -522,44 +530,44 @@ class EpitPrinter:
 
         doHoming()
 
-        moveTo(Z=100, F=1000)
-        moveTo(X=-20, Y=0, F=500)
-        moveTo(Z=24, F=1000)
+        moveTo(Z=100)
+        moveTo(X=-20, Y=0)
+        moveTo(Z=24)
 
         aX, probes = probePosX()
         print(aX)
         self._appendOutput(f'0: X:{aX:6.3f} mm' + ' ' + str(probes))
 
-        moveTo(X=-20, F=50)
-        moveTo(Y=20, F=500)
-        moveTo(X=0, F=500)
+        moveTo(X=-20)
+        moveTo(Y=20)
+        moveTo(X=0)
 
         aY, probes = probeNegY()
         print(aY)
         self._appendOutput(f'0: Y:{aY:6.3f} mm' + ' ' + str(probes))
 
-        moveTo(Y=20, F=50)
-        moveTo(Z=100, F=1000)
+        moveTo(Y=20)
+        moveTo(Z=100)
 
         rotateBed(U=-180)
 
         moveTo(X=20, Y=0)
-        moveTo(Z=24, F=1000)
+        moveTo(Z=24)
 
         aX, probes = probeNegX()
         print(aX)
         self._appendOutput(f'0: X:{aX:6.3f} mm' + ' ' + str(probes))
 
-        moveTo(X=20, F=50)
-        moveTo(Y=-20, F=500)
-        moveTo(X=0, F=500)
+        moveTo(X=20)
+        moveTo(Y=-20)
+        moveTo(X=0)
 
         aY, probes = probePosY()
         print(aY)
         self._appendOutput(f'0: Y:{aY:6.3f} mm' + ' ' + str(probes))
 
-        moveTo(Y=-20, F=50)
-        moveTo(Z=100, F=1000)
+        moveTo(Y=-20)
+        moveTo(Z=100)
 
         rotateBed(U=0)
 
