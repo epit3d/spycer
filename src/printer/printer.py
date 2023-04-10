@@ -98,16 +98,21 @@ def doHoming():
 
     if not homed:
         callGcode('G28 Z')
+    else:
+        moveTo(Z=200)
+        moveTo(X=0, Y=0)
 
     homedU = getHomed(axisU) and getPos(axisU) < 360
-    homedV = getHomed(axisV)
+    if not homedU:
+        callGcode('G28 U')
+    else:
+        rotateBed(U=0)
 
-    if not homedU or not homedV:
-        moveTo(X=0, Y=0, Z=200)
-        if not homedU:
-            callGcode('G28 U')
-        if not homedV:
-            callGcode('G28 V')
+    homedV = getHomed(axisV)
+    if not homedV:
+        callGcode('G28 V')
+    else:
+        tiltBed(V=0)
 
 
 def rotateBed(U):
@@ -272,10 +277,6 @@ class EpitPrinter:
     def defAxisU(self, posZ):
         doHoming()
 
-        moveTo(Z=100)
-        moveTo(X=0, Y=0)
-        rotateBed(U=0)
-
         points1 = (
             (0, 90),
             (-78, -45),
@@ -312,9 +313,7 @@ class EpitPrinter:
 
             self._appendOutput(f'{num:d}: Z:{zA:6.3f} mm' + ' ' + str(probes))
 
-        moveTo(Z=100)
-        moveTo(X=0, Y=0)
-        rotateBed(U=0)
+        doHoming()
 
     def defAxisV(self, posZ, *args, **kwargs):
         print(args, kwargs)
@@ -408,9 +407,7 @@ class EpitPrinter:
 
             self._appendOutput(f'{num:d}: Z:{zA:6.3f} mm' + ' ' + str(probes))
 
-        moveTo(Z=100)
-        moveTo(X=0, Y=0)
-        tiltBed(V=0)
+        doHoming()
 
     def probeLine(self, *args, **kwargs):
         print(args, kwargs)
@@ -463,15 +460,15 @@ class EpitPrinter:
         doHoming()
 
         points = (
-            (0, 100),
-            (87, 50),
-            (87, -50),
-            (0, -100),
-            (-87, -50),
-            (-87, 50),
-            (0, 15),
-            (13, -7.5),
-            (-13, -7.5)
+            (  0,  100), # noqa
+            ( 87,   50), # noqa
+            ( 87,  -50), # noqa
+            (  0, -100), # noqa
+            (-87,  -50), # noqa
+            (-87,   50), # noqa
+            (  0,   15), # noqa
+            ( 13, -7.5), # noqa
+            (-13, -7.5), # noqa
         )
 
         result = []
@@ -490,6 +487,7 @@ class EpitPrinter:
 
             moveTo(X, Y, posZ)
 
+        doHoming()
         return result
 
     def startCalibration(self, *args, **kwargs):
@@ -530,7 +528,6 @@ class EpitPrinter:
 
         doHoming()
 
-        moveTo(Z=100)
         moveTo(X=-20, Y=0)
         moveTo(Z=24)
 
@@ -567,11 +564,8 @@ class EpitPrinter:
         self._appendOutput(f'0: Y:{aY:6.3f} mm' + ' ' + str(probes))
 
         moveTo(Y=-20)
-        moveTo(Z=100)
 
-        rotateBed(U=0)
-
-        moveTo(X=0, Y=0)
+        doHoming()
 
     def testCalibration(self, *args, **kwargs):
         print(args, kwargs)
