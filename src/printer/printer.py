@@ -1,4 +1,5 @@
 from math import sin, cos, radians
+from .utils import polar2cart, tiltPoint
 from .http import getPos, getHomed, getObjectModel, execGcode
 import time
 
@@ -341,7 +342,7 @@ class EpitPrinter:
             (50, 70, 50),
         )"""
 
-        points1 = (
+        """points1 = (
             (-35, -80, 10), # noqa
             (-35,  12, 10), # noqa
             ( 35, -80, 10), # noqa
@@ -360,29 +361,52 @@ class EpitPrinter:
             (-35, 65,  50), # noqa
             ( 35, -5, -35), # noqa
             ( 35, 65,  50), # noqa
+        )"""
+
+        radius = 60
+
+        points1 = (
+            polar2cart(-135, radius),  # noqa
+            polar2cart( 135, radius),  # noqa
+            polar2cart( -45, radius),  # noqa
+            polar2cart(  45, radius),  # noqa
         )
+
+        basePoints = []
+        rotVector = (0, 0, 63.5)
+        ballRadius = 4.965
 
         moveTo(Z=100)
         tiltBed(V=0)
 
         self._appendOutput('Area 1')
         for num, point in enumerate(points1):
-            X, Y, Z = point
-            moveTo(X, Y, Z)
+            X, Y = point
+            moveTo(X, Y, posZ)
 
             zA, probes = probeZ()
             print(zA)
 
-            moveTo(X, Y, Z)
+            moveTo(X, Y, posZ)
 
-            self._appendOutput(f'{num:d}: Z:{zA:6.3f} mm' + ' ' + str(probes))
+            basePoints.append((X, Y, zA))
+
+            self._appendOutput(f'{num:d}: X:{X:6.3f} Y:{Y:6.3f} Z:{zA:6.3f} mm' + ' ' + str(probes))
 
         moveTo(Z=100)
-        tiltBed(V=25)
+        posV = 25
+        tiltBed(V=posV)
+
+        points2 = [tiltPoint(point, posV, rotVector) for point in basePoints]
 
         self._appendOutput('Area 2')
         for num, point in enumerate(points2):
             X, Y, Z = point
+            # incremnet Z position to approach higher
+            Z += 5
+            # increment Z position more since the ball touches inclined plane earlier
+            Z += -ballRadius + ballRadius / cos(radians(posV))
+
             moveTo(X, Y, Z)
 
             zA, probes = probeZ()
@@ -390,14 +414,21 @@ class EpitPrinter:
 
             moveTo(X, Y, Z)
 
-            self._appendOutput(f'{num:d}: Z:{zA:6.3f} mm' + ' ' + str(probes))
+            self._appendOutput(f'{num:d}: X:{X:6.3f} Y:{Y:6.3f} Z:{zA:6.3f} mm' + ' ' + str(probes))
 
         moveTo(Z=100)
-        tiltBed(V=50)
+        posV = 50
+        tiltBed(V=posV)
+
+        points3 = [tiltPoint(point, posV, rotVector) for point in basePoints]
 
         self._appendOutput('Area 3')
         for num, point in enumerate(points3):
             X, Y, Z = point
+            # incremnet Z position to approach higher
+            Z += 5
+            # increment Z position more since the ball touches inclined plane earlier
+            Z += -ballRadius + ballRadius / cos(radians(posV))
             moveTo(X, Y, Z)
 
             zA, probes = probeZ()
@@ -405,7 +436,7 @@ class EpitPrinter:
 
             moveTo(X, Y, Z)
 
-            self._appendOutput(f'{num:d}: Z:{zA:6.3f} mm' + ' ' + str(probes))
+            self._appendOutput(f'{num:d}: X:{X:6.3f} Y:{Y:6.3f} Z:{zA:6.3f} mm' + ' ' + str(probes))
 
         doHoming()
 
