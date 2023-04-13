@@ -278,17 +278,19 @@ class EpitPrinter:
     def defAxisU(self, posZ):
         doHoming()
 
+        radius = 90
+
         points1 = (
-            (0, 90),
-            (-78, -45),
-            (78, -45),
+            polar2cart(135, radius), # noqa
+            polar2cart(-45, radius), # noqa
+            polar2cart( 45, radius), # noqa
         )
 
-        points2 = (
+        """points2 = (
             (0, -90),
             (78, 45),
             (-78, 45),
-        )
+        )"""
 
         for num, point in enumerate(points1):
             X, Y = point
@@ -299,11 +301,11 @@ class EpitPrinter:
 
             moveTo(X, Y, posZ)
 
-            self._appendOutput(f'{num:d}: Z:{zA:6.3f} mm' + ' ' + str(probes))
+            self._appendOutput(f'{num:d}: X:{X:6.3f} Y:{Y:6.3f} Z:{zA:6.3f} mm' + ' ' + str(probes))
 
         rotateBed(U=-180)
 
-        for num, point in enumerate(points2):
+        for num, point in enumerate(points1):
             X, Y = point
             moveTo(X, Y, posZ)
 
@@ -312,7 +314,7 @@ class EpitPrinter:
 
             moveTo(X, Y, posZ)
 
-            self._appendOutput(f'{num:d}: Z:{zA:6.3f} mm' + ' ' + str(probes))
+            self._appendOutput(f'{num:d}: X:{X:6.3f} Y:{Y:6.3f} Z:{zA:6.3f} mm' + ' ' + str(probes))
 
         doHoming()
 
