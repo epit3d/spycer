@@ -1,5 +1,5 @@
 from math import sin, cos, radians
-from .utils import polar2cart, tiltPoint
+from .utils import polar2cart, tiltPoint, getPhi
 from .http import getPos, getHomed, getObjectModel, execGcode
 import time
 
@@ -118,7 +118,7 @@ def doHoming():
 
 def rotateBed(U):
     gcodes = [
-        f'G0 U{U:d} F1000',
+        f'G0 U{U:.3f} F1000',
     ]
     for gcode in gcodes:
         callGcode(gcode)
@@ -504,10 +504,14 @@ class EpitPrinter:
             (-13, -7.5), # noqa
         )
 
+        uOffset = -135
+
         result = []
 
         for num, point in enumerate(points):
             X, Y = point
+            U = uOffset + getPhi(X, Y)
+            rotateBed(U=U)
             moveTo(X, Y, posZ)
 
             zA, probes = probeZ()
@@ -559,10 +563,12 @@ class EpitPrinter:
     def defOrigin(self, *args, **kwargs):
         print(args, kwargs)
 
+        levelZ = 17
+
         doHoming()
 
         moveTo(X=-20, Y=0)
-        moveTo(Z=24)
+        moveTo(Z=levelZ)
 
         aX, probes = probePosX()
         print(aX)
@@ -582,7 +588,7 @@ class EpitPrinter:
         rotateBed(U=-180)
 
         moveTo(X=20, Y=0)
-        moveTo(Z=24)
+        moveTo(Z=levelZ)
 
         aX, probes = probeNegX()
         print(aX)
