@@ -1,5 +1,10 @@
 import numpy as np
-from math import sin, cos, radians
+from math import sin, cos, radians, degrees, atan2
+
+
+def getPhi(X, Y):
+    # atan2 fisrt argument is Y, second - X
+    return degrees(atan2(Y, X))
 
 
 def polar2cart(angle, radius):
