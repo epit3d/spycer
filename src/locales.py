@@ -14,7 +14,7 @@ class Locale:
     BottomThickness='Bottom thickness:'
     NumberOfBottomLayers='Number of bottom layers:'
     LidsThickness='Lid thickness:'
-    NumberOfLidsLayers='Number of lid layers:'
+    NumberOfLidLayers='Number of lid layers:'
     LineWidth = 'Extruder diameter, mm:'
     FillingType = 'Filling type:'
     FillingTypeValues = ["Lines", "Squares", "Triangles"]
@@ -79,6 +79,10 @@ class Locale:
     Open = "Open"
     SaveSettings = "Save settings"
     LoadSettings = "Load settings"
+    SlicingTitle = "Slicing"
+    SlicingProgress = "Slicing is in progress..."
+    GCodeLoadingTitle = "GCode loading"
+    GCodeLoadingProgress = "GCode loading is in progress..."
 
     def __init__(self, **entries):
         self.__dict__.update(entries)
@@ -165,6 +169,10 @@ dicts = {
         Open = "Открыть",
         SaveSettings = "Сохранить настройки",
         LoadSettings = "Загрузить настройки",
+        SlicingTitle = "Слайсинг",
+        SlicingProgress = "Слайсинг в прогрессе...",
+        GCodeLoadingTitle = "Загрузка GCode",
+        GCodeLoadingProgress = "Загрузка GCode в прогрессе...",
     ),
 }
 
