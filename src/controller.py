@@ -17,6 +17,7 @@ from src import gui_utils, locales
 from src.figure_editor import PlaneEditor, ConeEditor
 from src.gui_utils import showErrorDialog, plane_tf, read_planes, Plane, Cone
 from src.settings import sett, save_settings
+from src.process import Process
 import src.qt_utils as qt_utils
 
 class MainController:
@@ -466,18 +467,12 @@ class MainController:
 
 def call_command(cmd) -> bool:
     try:
-        cmds = cmd.split(" ")
-        # print(cmds)
-        subprocess.check_output(cmds, stderr=subprocess.STDOUT)
-    except subprocess.CalledProcessError as er:
-        print("Error:", sys.exc_info())
-        print("Error2:", er.output)
-        logging.error(str(sys.exc_info()))
-        gui_utils.showErrorDialog(repr(er.output))
-        return False
+        p = Process(cmd)
+        p.wait()
     except:
         print("Error:", sys.exc_info())
         logging.error(str(sys.exc_info()))
+        p.kill()
         # print("Error2:", er.output)
         gui_utils.showErrorDialog(str(sys.exc_info()))
         return False
