@@ -16,8 +16,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from src import gui_utils, locales
 from src.figure_editor import PlaneEditor, ConeEditor
 from src.gui_utils import showErrorDialog, plane_tf, read_planes, Plane, Cone
-from src.settings import sett, save_settings
-import src.qt_utils as qt_utils
+from src.settings import sett, save_settings, load_settings
 
 class MainController:
     def __init__(self, view, model):
@@ -28,7 +27,8 @@ class MainController:
     def _connect_signals(self):
         self.view.open_action.triggered.connect(self.open_file)
         self.view.save_gcode_action.triggered.connect(partial(self.save_gcode_file))
-        self.view.save_sett_action.triggered.connect(partial(self.save_settings, "vip"))
+        self.view.save_sett_action.triggered.connect(self.save_settings_file)
+        self.view.load_sett_action.triggered.connect(self.load_settings_file)
 
         # right panel
         self.view.number_wall_lines_value.textChanged.connect(self.update_wall_thickness)
@@ -45,13 +45,6 @@ class MainController:
         self.view.slice_vip_button.clicked.connect(partial(self.slice_stl, "vip"))
         self.view.save_gcode_button.clicked.connect(self.save_gcode_file)
         self.view.color_model_button.clicked.connect(self.colorize_model)
-
-        for var in vars(self.view).items():
-            widget = var[1]
-
-            if isinstance(widget, QtWidgets.QLineEdit):
-                widget.editingFinished.connect(partial(self.input_validation, widget))
-                widget.returnPressed.connect(partial(self.input_validation, widget))
 
         # bottom panel
         self.view.add_plane_button.clicked.connect(self.add_splane)
@@ -140,7 +133,7 @@ class MainController:
 
     def save_planes(self):
         try:
-            directory = "Planes_" + sett().slicing.name_stl_file
+            directory = "Planes_" + os.path.basename(sett().slicing.stl_file).split('.')[0]
             filename = str(self.view.save_dialog(self.view.locale.SavePlanes, "TXT (*.txt *.TXT)", directory))
             if filename != "":
                 if not (filename.endswith(".txt") or filename.endswith(".TXT")):
@@ -187,16 +180,10 @@ class MainController:
         entry_field_1_text = entry_field_1.text().replace(',', '.')
         entry_field_2_text = entry_field_2.text().replace(',', '.')
 
-        if entry_field_1_text == "" or entry_field_2_text == "":
+        if ((not entry_field_1_text) or entry_field_1_text == "." ) or ((not entry_field_2_text) or entry_field_2_text == "."):
             output_field.setText("0.0")
         else:
             output_field.setText(str(round(float(entry_field_1_text) * float(entry_field_2_text), 2)))
-
-    def input_validation(self, widget):
-        if isinstance(widget.validator(), QtGui.QIntValidator):
-            widget.setText(str(int(widget.text())))
-        if isinstance(widget.validator(), QtGui.QDoubleValidator):
-            widget.setText(str(float(widget.text())))
 
     def move_model(self):
         self.view.move_stl2()
@@ -216,6 +203,7 @@ class MainController:
                     s.slicing.print_time = 0
                     s.slicing.consumption_material = 0
                     s.slicing.planes_contact_with_nozzle = ""
+                    s.slicing.stl_file = filename
                     save_settings()
                     self.update_interface(filename)
 
@@ -226,6 +214,9 @@ class MainController:
 
                     self.load_stl(filename)
                 elif file_ext == ".GCODE":
+                    s = sett()
+                    s.slicing.stl_file = filename # TODO optimize
+                    save_settings()
                     self.load_gcode(filename, False)
                     self.update_interface(filename)
                 else:
@@ -294,7 +285,7 @@ class MainController:
         # self.debugMe()
         self.update_interface()
 
-    def save_settings(self, slicing_type):
+    def save_settings(self, slicing_type, filename = ""):
         s = sett()
         s.slicing.stl_file = self.model.opened_stl
         tf = vtk.vtkTransform()
@@ -332,7 +323,7 @@ class MainController:
 
         s.slicing.slicing_type = slicing_type
 
-        save_settings()
+        save_settings(filename)
 
     def save_gcode_file(self):
         try:
@@ -343,6 +334,72 @@ class MainController:
                 copy2(self.model.opened_gcode, name)
         except IOError as e:
             showErrorDialog("Error during file saving:" + str(e))
+
+    def save_settings_file(self):
+        try:
+            directory = "Settings_" + os.path.basename(sett().slicing.stl_file).split('.')[0]
+            filename = str(self.view.save_dialog(self.view.locale.SaveSettings, "YAML (*.yaml *.YAML)", directory))
+            if filename != "":
+                if not (filename.endswith(".yaml") or filename.endswith(".YAML")):
+                    filename += ".yaml"
+                self.save_settings("vip", filename)
+        except IOError as e:
+            showErrorDialog("Error during file saving:" + str(e))
+
+    def load_settings_file(self):
+        try:
+            filename = str(self.view.open_dialog(self.view.locale.LoadSettings,"YAML (*.yaml *.YAML)"))
+            if filename != "":
+                file_ext = os.path.splitext(filename)[1].upper()
+                filename = str(Path(filename))
+                if file_ext == ".YAML":
+                    try:
+                        load_settings(filename)
+                        self.display_settings()
+                    except:
+                        showErrorDialog("Error during reading planes file")
+                else:
+                    showErrorDialog(
+                        "This file format isn't supported:" + file_ext)
+        except IOError as e:
+            showErrorDialog("Error during file opening:" + str(e))
+
+    def display_settings(self):
+        s = sett()
+        self.view.line_width_value.setText(str(s.slicing.line_width))
+        self.view.layer_height_value.setText(str(s.slicing.layer_height))
+        self.view.wall_thickness_value.setText(str(s.slicing.wall_thickness))
+        self.view.number_of_bottom_layers_value.setText(str(s.slicing.bottom_layers))
+        self.view.number_of_lid_layers_value.setText(str(s.slicing.lids_depth))
+        self.view.extruder_temp_value.setText(str(s.slicing.extruder_temperature))
+        self.view.bed_temp_value.setText(str(s.slicing.bed_temperature))
+        self.view.skirt_line_count_value.setText(str(s.slicing.skirt_line_count))
+        self.view.fan_speed_value.setText(str(s.slicing.fan_speed))
+        if s.slicing.fan_off_layer1:
+            self.view.fan_off_layer1_box.setCheckState(QtCore.Qt.Checked)
+        else:
+            self.view.fan_off_layer1_box.setCheckState(QtCore.Qt.Unchecked)
+        self.view.print_speed_value.setText(str(s.slicing.print_speed))
+        self.view.print_speed_layer1_value.setText(str(s.slicing.print_speed_layer1))
+        self.view.print_speed_wall_value.setText(str(s.slicing.print_speed_wall))
+        ind = locales.getLocaleByLang("en").FillingTypeValues.index(s.slicing.filling_type)
+        self.view.filling_type_values.setCurrentIndex(ind)
+        self.view.fill_density_value.setText(str(s.slicing.fill_density))
+        self.view.overlapping_infill_value.setText(str(s.slicing.overlapping_infill_percentage))
+        if s.slicing.retraction_on:
+            self.view.retraction_on_box.setCheckState(QtCore.Qt.Checked)
+        else:
+            self.view.retraction_on_box.setCheckState(QtCore.Qt.Unchecked)
+        self.view.retraction_distance_value.setText(str(s.slicing.retraction_distance))
+        self.view.retraction_speed_value.setText(str(s.slicing.retraction_speed))
+        self.view.retract_compensation_amount_value.setText(str(s.slicing.retract_compensation_amount))
+        if s.slicing.supports_on:
+            self.view.supports_on_box.setCheckState(QtCore.Qt.Checked)
+        else:
+            self.view.supports_on_box.setCheckState(QtCore.Qt.Unchecked)
+        self.view.support_density_value.setText(str(s.slicing.support_density))
+        self.view.support_offset_value.setText(str(s.slicing.support_offset))
+        self.view.colorize_angle_value.setText(str(s.slicing.angle))
 
     def colorize_model(self):
         self.save_settings("vip")
@@ -425,7 +482,7 @@ class MainController:
     def update_interface(self, filename = ""):
         s = sett()
 
-        if filename == "":
+        if not filename:
             self.view.name_stl_file.setText("")
             self.view.setWindowTitle("FASP")
         else:
@@ -459,10 +516,10 @@ class MainController:
 
         self.view.consumption_material_value.setText(string_consumption_material)
 
-        if s.slicing.planes_contact_with_nozzle == "":
-            self.view.warning_nozzle_and_table_collision.setText("")
-        else:
+        if s.slicing.planes_contact_with_nozzle:
             self.view.warning_nozzle_and_table_collision.setText(self.view.locale.WarningNozzleAndTableCollision + s.slicing.planes_contact_with_nozzle)
+        else:
+            self.view.warning_nozzle_and_table_collision.setText("")
 
 def call_command(cmd) -> bool:
     try:
@@ -484,7 +541,6 @@ def call_command(cmd) -> bool:
     
     # return positive that we can load new gcode from file and it for sure will be new
     return True
-
 
 def save_splanes_to_file(splanes, filename):
     with open(filename, 'w') as out:

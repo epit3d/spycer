@@ -53,11 +53,11 @@ class FigureEditor(QWidget):
 
                     if value < minimumValue:
                         value = minimumValue
-                        qlineedit.setText(str(int(value)))
+                        qlineedit.setText(str(int(value))) # TODO: use validator
 
                     elif value > maximumValue:
                         value = maximumValue
-                        qlineedit.setText(str(int(value)))
+                        qlineedit.setText(str(int(value))) # TODO: use validator
 
                     self.params_dict[param_name] = float(value)
 
@@ -157,7 +157,7 @@ class StlMovePanel(QWidget):
         mainLayout = QHBoxLayout()
         for col, caption in enumerate(captions):
             gridLayout = QGridLayout()
-            gridLayout.setSpacing(2)
+            gridLayout.setSpacing(5)
 
             label = QLabel(caption)
             label.setAlignment(QtCore.Qt.AlignCenter)

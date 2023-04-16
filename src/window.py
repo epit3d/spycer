@@ -44,23 +44,55 @@ class TreeWidget(QTreeWidget):
         super().dragMoveEvent(event)
 
 class LineEdit(QLineEdit):
+    colorize_invalid_value = False
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.returnPressed.connect(self.value_formatting)
+        self.textChanged.connect(self.input_validation)
+        self.textChanged.connect(self.coloryze_field)
+
+    def setValidator(self, validator, colorize_invalid_value = False):
+        self.colorize_invalid_value = colorize_invalid_value
+        super().setValidator(validator)
+
     def focusOutEvent(self, event):
-        self.fillEmpty(self)
+        self.value_formatting()
+        self.coloryze_field()
         super().focusOutEvent(event)
 
-    def fillEmpty(self, widget):
-        widget.replace_delimiter()
-        if widget.text() == "":
-            widget.setText("0")
+    def fill_empty(self):
+        if (not self.text()) or (self.text() == "."):
+            self.setText("0")
 
-    def replace_delimiter(self):
-        text = self.text()
-        self.setText(text.replace(',', '.'))
+    def value_formatting(self):
+        self.fill_empty()
+        if isinstance(self.validator(), QtGui.QDoubleValidator):
+            self.setText(str(float(self.text())))
 
-class pushButton(QPushButton):
-    def __init__(self, text):
-        super().__init__(text)
-        self.setFixedHeight(25)
+    def input_validation(self):
+        self.setText(self.text().replace(',', '.'))
+
+        if (not self.colorize_invalid_value) and self.validator():
+            value = float(self.text()) if self.text() else 0
+
+            max_value = self.validator().top()
+            min_value = self.validator().bottom()
+
+            if value > max_value:
+                self.setText(str(max_value))
+            if value < min_value:
+                self.setText(str(min_value))
+
+    def coloryze_field(self):
+        default_background_color = "#0e1621"
+        invalid_value_background_color = "#ff6e00"
+
+        if self.colorize_invalid_value:
+            if self.hasAcceptableInput() or (not self.text()):
+                self.setStyleSheet(f'background-color: {default_background_color}')
+            else:
+                self.setStyleSheet(f'background-color: {invalid_value_background_color}')
 
 class MainWindow(QMainWindow):
     from src.figure_editor import FigureEditor
@@ -71,6 +103,7 @@ class MainWindow(QMainWindow):
         super().__init__(parent)
         self.setWindowTitle('FASP')
         self.setWindowIcon(QtGui.QIcon("icon.png"))
+        self.setMinimumWidth(1600)
         # self.statusBar().showMessage('Ready')
 
         self.locale = locales.getLocale()
@@ -87,7 +120,6 @@ class MainWindow(QMainWindow):
         file_menu.addAction(self.save_gcode_action)
         self.save_sett_action = QAction(self.locale.SaveSettings, self)
         file_menu.addAction(self.save_sett_action)
-
         self.load_sett_action = QAction(self.locale.LoadSettings, self)
         file_menu.addAction(self.load_sett_action)
 
@@ -99,12 +131,13 @@ class MainWindow(QMainWindow):
 
         # Tabs
         tabs = QTabWidget()
+        tabs.setFixedHeight(230)
         page_model_coordinates = QWidget(tabs)
         page_layout = QGridLayout()
         page_layout.setColumnMinimumWidth(0, 5)
         page_layout.setRowMinimumHeight(0, 10)
 
-        self.move_button = pushButton(self.locale.MoveModel)
+        self.move_button = QPushButton(self.locale.MoveModel)
         self.move_button.setCheckable(True)
         self.move_button.setFixedWidth(190)
         page_layout.addWidget(self.move_button, 1, 1)
@@ -147,7 +180,7 @@ class MainWindow(QMainWindow):
         widget3d = QVTKRenderWindowInteractor(self)
 
         self.render = vtk.vtkRenderer()
-        self.render.SetBackground(get_color(sett().colors.background))
+        self.render.SetBackground(get_color("white"))
 
         widget3d.GetRenderWindow().AddRenderer(self.render)
         self.interactor = widget3d.GetRenderWindow().GetInteractor()
@@ -223,10 +256,10 @@ class MainWindow(QMainWindow):
         сolumn2_number_of_cells = 4
 
         validatorLocale = QtCore.QLocale("Englishs")
-        intValidator = QtGui.QIntValidator(0, 500)
+        intValidator = QtGui.QIntValidator(0, 100)
         intValidator.setLocale(validatorLocale)
 
-        doubleValidator = QtGui.QDoubleValidator(0.00, 500.00, 2)
+        doubleValidator = QtGui.QDoubleValidator(0.00, 100.00, 2)
         doubleValidator.setLocale(validatorLocale)
 
         doublePercentValidator = QtGui.QDoubleValidator(0.00, 100.00, 2)
@@ -244,7 +277,7 @@ class MainWindow(QMainWindow):
 
         line_width_label = QLabel(self.locale.LineWidth)
         self.line_width_value = LineEdit(str(sett().slicing.line_width))
-        self.line_width_value.setValidator(doubleValidator)
+        self.line_width_value.setValidator(doubleValidator, True)
         right_panel.addWidget(line_width_label, get_next_row(), 1)
         right_panel.addWidget(self.line_width_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
 
@@ -266,7 +299,6 @@ class MainWindow(QMainWindow):
         wall_thickness_label = QLabel(self.locale.WallThickness)
         self.wall_thickness_value = LineEdit(str(sett().slicing.wall_thickness))
         self.wall_thickness_value.setReadOnly(True)
-        self.wall_thickness_value.setValidator(doubleValidator)
         millimeter_label = QLabel(self.locale.Millimeter)
         right_panel.addWidget(wall_thickness_label, get_cur_row(), 3)
         right_panel.addWidget(self.wall_thickness_value, get_cur_row(), 4)
@@ -280,7 +312,6 @@ class MainWindow(QMainWindow):
         bottom_thickness_label = QLabel(self.locale.BottomThickness)
         self.bottom_thickness_value = LineEdit(str(round(sett().slicing.layer_height*sett().slicing.bottom_layers,2)))
         self.bottom_thickness_value.setReadOnly(True)
-        self.bottom_thickness_value.setValidator(doubleValidator)
         millimeter_label = QLabel(self.locale.Millimeter)
         right_panel.addWidget(bottom_thickness_label, get_cur_row(), 3)
         right_panel.addWidget(self.bottom_thickness_value, get_cur_row(), 4)
@@ -295,7 +326,6 @@ class MainWindow(QMainWindow):
         lid_thickness_label = QLabel(self.locale.LidThickness)
         self.lid_thickness_value = LineEdit(str(round(sett().slicing.layer_height*sett().slicing.lids_depth,2)))
         self.lid_thickness_value.setReadOnly(True)
-        self.lid_thickness_value.setValidator(doubleValidator)
         millimeter_label = QLabel(self.locale.Millimeter)
         right_panel.addWidget(lid_thickness_label, get_cur_row(), 3)
         right_panel.addWidget(self.lid_thickness_value, get_cur_row(), 4)
@@ -354,7 +384,7 @@ class MainWindow(QMainWindow):
         filling_type_label = QLabel(self.locale.FillingType)
         right_panel.addWidget(filling_type_label, get_next_row(), 1)
         filling_type_values_widget = QWidget()
-        filling_type_values_widget.setFixedHeight(27)
+        filling_type_values_widget.setFixedHeight(26)
         self.filling_type_values = QComboBox(filling_type_values_widget)
         self.filling_type_values.addItems(self.locale.FillingTypeValues)
         ind = locales.getLocaleByLang("en").FillingTypeValues.index(sett().slicing.filling_type)
@@ -472,26 +502,26 @@ class MainWindow(QMainWindow):
         self.xyz_orient_value = QLabel("Orientation: 0 0 0")
         buttons_layout.addWidget(self.xyz_orient_value, get_next_row(), 1, 1, 3)
 
-        self.load_model_button = pushButton(self.locale.OpenModel)
+        self.load_model_button = QPushButton(self.locale.OpenModel)
         buttons_layout.addWidget(self.load_model_button, get_next_row(), 1, 1, 2)
 
-        self.save_gcode_button = pushButton(self.locale.SaveGCode)
+        self.save_gcode_button = QPushButton(self.locale.SaveGCode)
         buttons_layout.addWidget(self.save_gcode_button, get_cur_row(), 3)
 
         self.critical_wall_overhang_angle_label = QLabel(self.locale.CriticalWallOverhangAngle)
         buttons_layout.addWidget(self.critical_wall_overhang_angle_label, get_next_row(), 1, 1, 2)
-        buttons_layout.setColumnMinimumWidth(1, 200)
+        buttons_layout.setColumnMinimumWidth(1, 230)
         self.colorize_angle_value = LineEdit(str(sett().slicing.angle))
         self.colorize_angle_value.setValidator(doubleValidator)
         buttons_layout.addWidget(self.colorize_angle_value, get_cur_row(), 2, 1, 1)
 
-        self.color_model_button = pushButton(self.locale.ColorModel)
+        self.color_model_button = QPushButton(self.locale.ColorModel)
         buttons_layout.addWidget(self.color_model_button, get_cur_row(), 3)
 
-        self.slice_vip_button = pushButton(self.locale.SliceVip)
+        self.slice_vip_button = QPushButton(self.locale.SliceVip)
         buttons_layout.addWidget(self.slice_vip_button, get_next_row(), 1, 1, 2)
 
-        self.slice3a_button = pushButton(self.locale.Slice3Axes)
+        self.slice3a_button = QPushButton(self.locale.Slice3Axes)
         buttons_layout.addWidget(self.slice3a_button, get_cur_row(), 3)
 
         panel_widget = QWidget()
@@ -535,22 +565,22 @@ class MainWindow(QMainWindow):
         self.hide_checkbox = QCheckBox(self.locale.Hide)
         bottom_layout.addWidget(self.hide_checkbox, 0, 2)
 
-        self.add_plane_button = pushButton(self.locale.AddPlane)
+        self.add_plane_button = QPushButton(self.locale.AddPlane)
         bottom_layout.addWidget(self.add_plane_button, 1, 2)
 
-        self.add_cone_button = pushButton(self.locale.AddCone)
+        self.add_cone_button = QPushButton(self.locale.AddCone)
         bottom_layout.addWidget(self.add_cone_button, 2, 2)
 
-        self.remove_plane_button = pushButton(self.locale.DeletePlane)
+        self.remove_plane_button = QPushButton(self.locale.DeletePlane)
         bottom_layout.addWidget(self.remove_plane_button, 3, 2)
 
-        self.edit_figure_button = pushButton(self.locale.EditFigure)
+        self.edit_figure_button = QPushButton(self.locale.EditFigure)
         bottom_layout.addWidget(self.edit_figure_button, 4, 2)
 
-        self.save_planes_button = pushButton(self.locale.SavePlanes)
+        self.save_planes_button = QPushButton(self.locale.SavePlanes)
         bottom_layout.addWidget(self.save_planes_button, 1, 3)
 
-        self.download_planes_button = pushButton(self.locale.DownloadPlanes)
+        self.download_planes_button = QPushButton(self.locale.DownloadPlanes)
         bottom_layout.addWidget(self.download_planes_button, 2, 3)
 
         bottom_panel = QWidget()
@@ -953,7 +983,7 @@ class MainWindow(QMainWindow):
         site_label.setOpenExternalLinks(True)
         v_layout.addWidget(email_label)
 
-        ok = pushButton("ok")
+        ok = QPushButton("ok")
         ok.clicked.connect(d.close)
         v_layout.addWidget(ok)
 
