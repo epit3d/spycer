@@ -24,7 +24,7 @@ class Process:
         self.cmd = cmd
         self._rc = None
         self._files = {}
-        kw = dict(preexec_fn=os.setsid, shell=shell, close_fds=True)
+        kw = dict(shell=shell, close_fds=True)
         if not shell:
             cmd = shlex.split(cmd)
         if env:
