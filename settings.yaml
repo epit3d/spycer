@@ -85,6 +85,7 @@ slicing:
   originy: 0.0
   originz: 0.0
   overlapping_infill_percentage: 100.0
+  overlapping_infill_lid_percentage: 60.0
   print_speed: 50
   print_speed_layer1: 50
   print_speed_wall: 50

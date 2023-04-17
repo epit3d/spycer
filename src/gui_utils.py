@@ -32,7 +32,7 @@ def createPlaneActorCircle():
 
 def createPlaneActorCircleByCenter(center):
     cylinder = vtk.vtkCylinderSource()
-    cylinder.SetResolution(50)
+    cylinder.SetResolution(200)
     cylinder.SetRadius(sett().hardware.plane_diameter / 2)
     cylinder.SetHeight(0.1)
     cylinder.SetCenter(center[0], center[2] - 0.1, center[1])  # WHAT? vtk :(
@@ -40,6 +40,7 @@ def createPlaneActorCircleByCenter(center):
     mapper.SetInputConnection(cylinder.GetOutputPort())
     actor = vtk.vtkActor()
     actor.SetMapper(mapper)
+    actor.GetProperty().SetOpacity(0.3)
     actor.GetProperty().SetColor(get_color(sett().colors.plane))
     actor.RotateX(90)
     return actor
@@ -56,7 +57,7 @@ def create_splane_actor(center, x_rot, z_rot):
     actor = vtk.vtkActor()
     actor.SetMapper(mapper)
     actor.GetProperty().SetColor(get_color(sett().colors.splane))
-    # actor.GetProperty().SetOpacity(0.3)
+    actor.GetProperty().SetOpacity(0.5)
     actor.RotateX(90)
     # actor.RotateX(x_rot)
     # actor.SetPosition(center[0], center[1],center[2] - 0.1)

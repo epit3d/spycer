@@ -10,6 +10,7 @@ from src.settings import load_settings, sett, get_color
 from src.window import MainWindow
 from src.model import MainModel
 from src.controller import MainController
+from src.interface_style_sheet import getStyleSheet
 
 logging.basicConfig(filename='interface.log', filemode='a+', level=logging.INFO, format='%(asctime)s %(message)s')
 
@@ -21,13 +22,14 @@ def excepthook(exc_type, exc_value, exc_tb):
     logging.error(tb)
     QtWidgets.QApplication.quit()
 
-
 if __name__ == "__main__":
     load_settings()
 
     app = QApplication(sys.argv)
-    darkstyle = qdarkstyle.load_stylesheet_pyside2()
-    app.setStyleSheet(darkstyle)
+
+    lineedit_style_sheet = getStyleSheet()
+    app.setStyleSheet(lineedit_style_sheet)
+
     window = MainWindow()
     model = MainModel()
     cntrl = MainController(window, model)
