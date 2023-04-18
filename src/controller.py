@@ -13,7 +13,7 @@ from typing import Dict, List
 import vtk
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-from src import gui_utils, locales
+from src import gui_utils, locales, qt_utils
 from src.figure_editor import PlaneEditor, ConeEditor
 from src.gui_utils import showErrorDialog, plane_tf, read_planes, Plane, Cone
 from src.settings import sett, save_settings, load_settings
