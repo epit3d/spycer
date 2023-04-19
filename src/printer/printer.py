@@ -13,6 +13,8 @@ useDwell = True
 # writeGcode = True
 # useDwell = False
 
+DEFAULT_Z = 5
+
 
 def callGcode(gcode):
     print(f'G-code: {gcode}')
@@ -275,7 +277,7 @@ class EpitPrinter:
             global fileGcode
             fileGcode = open('output.g', 'w')
 
-    def defAxisU(self, posZ):
+    def defAxisU(self, posZ=DEFAULT_Z):
         doHoming()
 
         radius = 90
@@ -292,6 +294,8 @@ class EpitPrinter:
             (-78, 45),
         )"""
 
+        res = []
+
         for num, point in enumerate(points1):
             X, Y = point
             moveTo(X, Y, posZ)
@@ -302,6 +306,8 @@ class EpitPrinter:
             moveTo(X, Y, posZ)
 
             self._appendOutput(f'{num:d}: X:{X:6.3f} Y:{Y:6.3f} Z:{zA:6.3f} mm' + ' ' + str(probes))
+
+            res.append((X, Y, zA))
 
         rotateBed(U=-180)
 
@@ -316,9 +322,13 @@ class EpitPrinter:
 
             self._appendOutput(f'{num:d}: X:{X:6.3f} Y:{Y:6.3f} Z:{zA:6.3f} mm' + ' ' + str(probes))
 
+            res.append((X, Y, zA))
+
         doHoming()
 
-    def defAxisV(self, posZ, *args, **kwargs):
+        return res
+
+    def defAxisV(self, posZ=DEFAULT_Z, *args, **kwargs):
         print(args, kwargs)
 
         doHoming()
@@ -381,6 +391,8 @@ class EpitPrinter:
         moveTo(Z=100)
         tiltBed(V=0)
 
+        res = []
+
         self._appendOutput('Area 1')
         for num, point in enumerate(points1):
             X, Y = point
@@ -394,6 +406,8 @@ class EpitPrinter:
             basePoints.append((X, Y, zA))
 
             self._appendOutput(f'{num:d}: X:{X:6.3f} Y:{Y:6.3f} Z:{zA:6.3f} mm' + ' ' + str(probes))
+
+            res.append((X, Y, zA))
 
         moveTo(Z=100)
         posV = 25
@@ -418,6 +432,8 @@ class EpitPrinter:
 
             self._appendOutput(f'{num:d}: X:{X:6.3f} Y:{Y:6.3f} Z:{zA:6.3f} mm' + ' ' + str(probes))
 
+            res.append((X, Y, zA))
+
         moveTo(Z=100)
         posV = 50
         tiltBed(V=posV)
@@ -440,7 +456,11 @@ class EpitPrinter:
 
             self._appendOutput(f'{num:d}: X:{X:6.3f} Y:{Y:6.3f} Z:{zA:6.3f} mm' + ' ' + str(probes))
 
+            res.append((X, Y, zA))
+
         doHoming()
+
+        return res
 
     def probeLine(self, *args, **kwargs):
         print(args, kwargs)
@@ -567,12 +587,16 @@ class EpitPrinter:
 
         doHoming()
 
+        res = []
+
         moveTo(X=-20, Y=0)
         moveTo(Z=levelZ)
 
         aX, probes = probePosX()
         print(aX)
         self._appendOutput(f'0: X:{aX:6.3f} mm' + ' ' + str(probes))
+
+        res.append((aX, 0, levelZ))
 
         moveTo(X=-20)
         moveTo(Y=20)
@@ -581,6 +605,8 @@ class EpitPrinter:
         aY, probes = probeNegY()
         print(aY)
         self._appendOutput(f'0: Y:{aY:6.3f} mm' + ' ' + str(probes))
+
+        res.append((0, aY, levelZ))
 
         moveTo(Y=20)
         moveTo(Z=100)
@@ -594,6 +620,8 @@ class EpitPrinter:
         print(aX)
         self._appendOutput(f'0: X:{aX:6.3f} mm' + ' ' + str(probes))
 
+        res.append((aX, 0, levelZ))
+
         moveTo(X=20)
         moveTo(Y=-20)
         moveTo(X=0)
@@ -602,9 +630,13 @@ class EpitPrinter:
         print(aY)
         self._appendOutput(f'0: Y:{aY:6.3f} mm' + ' ' + str(probes))
 
+        res.append((0, aY, levelZ))
+
         moveTo(Y=-20)
 
         doHoming()
+
+        return res
 
     def testCalibration(self, *args, **kwargs):
         print(args, kwargs)

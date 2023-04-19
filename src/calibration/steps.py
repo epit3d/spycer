@@ -100,8 +100,9 @@ class Step3(Step):
     )
 
     def action_template(self):
-        res = []
-        calibrationData.points.append(*res)
+        res = printer.defAxisU()
+        res += printer.defAxisV()
+        calibrationData.points.extend(res)
 
 
 class Step4(Step):
@@ -119,6 +120,10 @@ class Step4(Step):
         '(Origin definition)'
         '</p>'
     )
+
+    def action_template(self):
+        res = printer.defOrigin()
+        calibrationData.points.extend(res)
 
 
 class Step5(Step):
