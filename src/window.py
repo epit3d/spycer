@@ -68,9 +68,12 @@ class LineEdit(QLineEdit):
     def value_formatting(self):
         self.fill_empty()
         if isinstance(self.validator(), QtGui.QDoubleValidator):
+            cursor_position = self.cursorPosition()
             self.setText(str(float(self.text())))
+            self.setCursorPosition(cursor_position)
 
     def input_validation(self):
+        cursor_position = self.cursorPosition()
         self.setText(self.text().replace(',', '.'))
 
         if (not self.colorize_invalid_value) and self.validator():
@@ -83,6 +86,7 @@ class LineEdit(QLineEdit):
                 self.setText(str(max_value))
             if value < min_value:
                 self.setText(str(min_value))
+        self.setCursorPosition(cursor_position)
 
     def coloryze_field(self):
         default_background_color = "#0e1621"
@@ -723,9 +727,11 @@ class MainWindow(QMainWindow):
         if not last:
             self.actors[new_slider_value].GetProperty().SetColor(get_color(sett().colors.last_layer))
             self.actors[new_slider_value].GetProperty().SetLineWidth(4)
+            self.actors[new_slider_value].GetProperty().SetOpacity(1.0)
         if not prev_last:
             self.actors[prev_value].GetProperty().SetColor(get_color(sett().colors.layer))
             self.actors[prev_value].GetProperty().SetLineWidth(1)
+            self.actors[prev_value].GetProperty().SetOpacity(0.8)
 
         self.layers_number_label.setText(str(new_slider_value))
 
@@ -908,6 +914,7 @@ class MainWindow(QMainWindow):
         sel = self.splanes_tree.currentIndex().row()
         if sel == ind:
             self.splanes_actors[sel].GetProperty().SetColor(get_color(sett().colors.last_layer))
+            self.splanes_actors[sel].GetProperty().SetOpacity(0.8)
         self.reload_scene()
 
     def update_cone(self, cone: Cone, ind):
@@ -919,12 +926,15 @@ class MainWindow(QMainWindow):
         sel = self.splanes_tree.currentIndex().row()
         if sel == ind:
             self.splanes_actors[sel].GetProperty().SetColor(get_color(sett().colors.last_layer))
+            self.splanes_actors[sel].GetProperty().SetOpacity(0.8)
         self.reload_scene()
 
     def change_combo_select(self, plane, ind):
         for p in self.splanes_actors:
             p.GetProperty().SetColor(get_color(sett().colors.splane))
+            p.GetProperty().SetOpacity(0.3)
         self.splanes_actors[ind].GetProperty().SetColor(get_color(sett().colors.last_layer))
+        self.splanes_actors[ind].GetProperty().SetOpacity(0.8)
         self.reload_scene()
 
     def load_gcode(self, actors, is_from_stl, plane_tf):

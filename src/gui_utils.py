@@ -40,8 +40,8 @@ def createPlaneActorCircleByCenter(center):
     mapper.SetInputConnection(cylinder.GetOutputPort())
     actor = vtk.vtkActor()
     actor.SetMapper(mapper)
-    actor.GetProperty().SetOpacity(0.3)
     actor.GetProperty().SetColor(get_color(sett().colors.plane))
+    actor.GetProperty().SetOpacity(0.3)
     actor.RotateX(90)
     return actor
 
@@ -57,7 +57,7 @@ def create_splane_actor(center, x_rot, z_rot):
     actor = vtk.vtkActor()
     actor.SetMapper(mapper)
     actor.GetProperty().SetColor(get_color(sett().colors.splane))
-    actor.GetProperty().SetOpacity(0.5)
+    actor.GetProperty().SetOpacity(0.3)
     actor.RotateX(90)
     # actor.RotateX(x_rot)
     # actor.SetPosition(center[0], center[1],center[2] - 0.1)
@@ -134,8 +134,9 @@ def create_cone_actor(vertex: Tuple[float, float, float], bending_angle: float, 
     actor.SetMapper(mapper)
 
     # create a checkbox for visualization
-    actor.GetProperty().SetRepresentationToWireframe();
+    actor.GetProperty().SetRepresentationToWireframe()
     actor.GetProperty().SetColor(get_color(sett().colors.splane))
+    actor.GetProperty().SetOpacity(0.3)
 
     return actor
 
@@ -170,6 +171,7 @@ def createBoxActors():
     actor = vtk.vtkActor()
     actor.SetMapper(mapper)
     actor.GetProperty().SetColor(get_color(s.colors.plane))
+    actor.GetProperty().SetOpacity(0.3)
     actor.RotateY(90)
     res.append(actor)
 
@@ -184,6 +186,7 @@ def createBoxActors():
     actor = vtk.vtkActor()
     actor.SetMapper(mapper)
     actor.GetProperty().SetColor(get_color(s.colors.last_layer))
+    actor.GetProperty().SetOpacity(0.8)
     actor.RotateZ(90)
     res.append(actor)
 
@@ -267,9 +270,11 @@ def wrapWithActors(blocks, rotations, lays2rots):
         actor.SetUserTransform(tnf)
 
         actor.GetProperty().SetColor(get_color(s.colors.layer))
+        actor.GetProperty().SetOpacity(0.8)
         actors.append(actor)
 
     actors[-1].GetProperty().SetColor(get_color(s.colors.last_layer))
+    actors[-1].GetProperty().SetOpacity(1.0)
     return actors
 
 

@@ -13,10 +13,10 @@ from typing import Dict, List
 import vtk
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-from src import gui_utils, locales
+from src import gui_utils, locales, qt_utils
 from src.figure_editor import PlaneEditor, ConeEditor
 from src.gui_utils import showErrorDialog, plane_tf, read_planes, Plane, Cone
-from src.settings import sett, save_settings, load_settings
+from src.settings import sett, save_settings, load_settings, get_color
 
 class MainController:
     def __init__(self, view, model):
@@ -151,6 +151,7 @@ class MainController:
                 if file_ext == ".TXT":
                     try:
                         self.model.splanes = read_planes(filename)
+                        self.view.hide_checkbox.setChecked(False)
                         self.view.reload_splanes(self.model.splanes)
                     except:
                         showErrorDialog("Error during reading planes file")
@@ -250,7 +251,17 @@ class MainController:
         blocks = gui_utils.makeBlocks(gc.layers, gc.rotations, gc.lays2rots)
         actors = gui_utils.wrapWithActors(blocks, gc.rotations, gc.lays2rots)
 
+        if len(self.model.splanes) > 0:
+            currentItem = int(self.view.splanes_tree.currentItem().text(1)) - 1
+        else:
+            currentItem = 0
+
         self.view.load_gcode(actors, is_from_stl, plane_tf(gc.rotations[0]))
+
+        if len(self.model.splanes) > 0:
+            self.view._recreate_splanes(self.model.splanes)
+            self.view.splanes_actors[currentItem].GetProperty().SetColor(get_color(sett().colors.last_layer))
+            self.view.splanes_actors[currentItem].GetProperty().SetOpacity(0.8)
 
     def slice_stl(self, slicing_type):
         if slicing_type == "vip" and len(self.model.splanes) == 0:
@@ -357,7 +368,7 @@ class MainController:
                         load_settings(filename)
                         self.display_settings()
                     except:
-                        showErrorDialog("Error during reading planes file")
+                        showErrorDialog("Error during reading settings file")
                 else:
                     showErrorDialog(
                         "This file format isn't supported:" + file_ext)
@@ -412,20 +423,22 @@ class MainController:
         self.view.stlActor.lastMove = lastMove
         self.model.opened_stl = s.slicing.stl_file
 
-
     # ######################bottom panel
 
     def add_splane(self):
+        self.view.hide_checkbox.setChecked(False)
         self.model.add_splane()
         self.view.reload_splanes(self.model.splanes)
         self.change_figure_parameters()
 
     def add_cone(self):
+        self.view.hide_checkbox.setChecked(False)
         self.model.add_cone()
         self.view.reload_splanes(self.model.splanes)
         self.change_figure_parameters()
 
     def remove_splane(self):
+        self.view.hide_checkbox.setChecked(False)
         ind = self.view.splanes_tree.currentIndex().row()
         if ind == -1:
             return
@@ -507,6 +520,10 @@ class MainController:
             string_print_time += str(math.floor(seconds)) + " " + self.view.locale.Second
 
         self.view.print_time_value.setText(string_print_time)
+
+        # !Temporary shutdown of the counter at too large values
+        if s.slicing.print_time > 250000:
+            self.view.print_time_value.setText("")
 
         string_consumption_material = ""
         if s.slicing.consumption_material > 0:

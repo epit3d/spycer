@@ -27,8 +27,8 @@ if __name__ == "__main__":
 
     app = QApplication(sys.argv)
 
-    lineedit_style_sheet = getStyleSheet()
-    app.setStyleSheet(lineedit_style_sheet)
+    style_sheet = getStyleSheet()
+    app.setStyleSheet(style_sheet)
 
     window = MainWindow()
     model = MainModel()

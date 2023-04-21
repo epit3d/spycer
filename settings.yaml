@@ -10,9 +10,9 @@ colors:
   background: SlateGray
   blue: Blue
   last_layer: Red
-  layer: White
+  layer: DarkSlateGray
   plane: Cyan
-  splane: Gold
+  splane: Cyan
 common:
   lang: ru
   splane_diameter: 150
