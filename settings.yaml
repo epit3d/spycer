@@ -10,11 +10,16 @@ colors:
   background: SlateGray
   blue: Blue
   last_layer: Red
-  layer: White
+  layer: DarkSlateGray
   plane: Cyan
-  splane: Gold
+  splane: Cyan
 common:
   lang: ru
+  opacity_current_plane: 0.8
+  opacity_last_layer: 1.0
+  opacity_layer: 0.8
+  opacity_plane: 0.3
+  opacity_table: 0.3
   splane_diameter: 150
 hardware:
   bar_diameter: 1.75
