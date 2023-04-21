@@ -261,7 +261,7 @@ class MainController:
         if len(self.model.splanes) > 0:
             self.view._recreate_splanes(self.model.splanes)
             self.view.splanes_actors[currentItem].GetProperty().SetColor(get_color(sett().colors.last_layer))
-            self.view.splanes_actors[currentItem].GetProperty().SetOpacity(0.8)
+            self.view.splanes_actors[currentItem].GetProperty().SetOpacity(sett().common.opacity_last_layer) 
 
     def slice_stl(self, slicing_type):
         if slicing_type == "vip" and len(self.model.splanes) == 0:

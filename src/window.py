@@ -727,11 +727,11 @@ class MainWindow(QMainWindow):
         if not last:
             self.actors[new_slider_value].GetProperty().SetColor(get_color(sett().colors.last_layer))
             self.actors[new_slider_value].GetProperty().SetLineWidth(4)
-            self.actors[new_slider_value].GetProperty().SetOpacity(1.0)
+            self.actors[new_slider_value].GetProperty().SetOpacity(sett().common.opacity_last_layer)
         if not prev_last:
             self.actors[prev_value].GetProperty().SetColor(get_color(sett().colors.layer))
             self.actors[prev_value].GetProperty().SetLineWidth(1)
-            self.actors[prev_value].GetProperty().SetOpacity(0.8)
+            self.actors[prev_value].GetProperty().SetOpacity(sett().common.opacity_layer)
 
         self.layers_number_label.setText(str(new_slider_value))
 
@@ -926,15 +926,15 @@ class MainWindow(QMainWindow):
         sel = self.splanes_tree.currentIndex().row()
         if sel == ind:
             self.splanes_actors[sel].GetProperty().SetColor(get_color(sett().colors.last_layer))
-            self.splanes_actors[sel].GetProperty().SetOpacity(0.8)
+            self.splanes_actors[sel].GetProperty().SetOpacity(sett().common.opacity_current_plane)
         self.reload_scene()
 
     def change_combo_select(self, plane, ind):
         for p in self.splanes_actors:
             p.GetProperty().SetColor(get_color(sett().colors.splane))
-            p.GetProperty().SetOpacity(0.3)
+            p.GetProperty().SetOpacity(sett().common.opacity_plane)
         self.splanes_actors[ind].GetProperty().SetColor(get_color(sett().colors.last_layer))
-        self.splanes_actors[ind].GetProperty().SetOpacity(0.8)
+        self.splanes_actors[ind].GetProperty().SetOpacity(sett().common.opacity_current_plane)
         self.reload_scene()
 
     def load_gcode(self, actors, is_from_stl, plane_tf):
