@@ -109,8 +109,12 @@ slicing:
   smooth_cmd: ./smooth_FASP.exe
   splanes_file: lib/planes_file.txt
   stl_file: example.stl
-  support_density: 0.0
-  support_offset: 1.0
-  supports_on: false
   t_geodesic: 0.0
   wall_thickness: 0.8
+supports:
+  enabled: true
+  xy_offset: 1.0
+  z_offset_layers: 1
+  priority_z_offset: true
+  fill_type: Lines
+  fill_density: 5
