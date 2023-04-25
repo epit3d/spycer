@@ -320,8 +320,6 @@ class MainController:
         s.slicing.retraction_distance = float(self.view.retraction_distance_value.text())
         s.slicing.retraction_speed = float(self.view.retraction_speed_value.text())
         s.slicing.retract_compensation_amount = float(self.view.retract_compensation_amount_value.text())
-        s.slicing.support_offset = float(self.view.support_offset_value.text())
-        s.slicing.support_density = float(self.view.support_density_value.text())
         s.slicing.skirt_line_count = int(self.view.skirt_line_count_value.text())
         s.slicing.fan_off_layer1 = self.view.fan_off_layer1_box.isChecked()
         s.slicing.fan_speed = float(self.view.fan_speed_value.text())
@@ -329,6 +327,13 @@ class MainController:
         s.slicing.angle = float(self.view.colorize_angle_value.text())
         s.slicing.lids_depth = int(self.view.number_of_lid_layers_value.text())
         s.slicing.bottoms_depth = int(self.view.number_of_bottom_layers_value.text())
+        
+        s.supports.xy_offset = float(self.view.support_xy_offset_value.text())
+        s.supports.z_offset_layers = int(self.view.support_z_offset_layers_value.text())
+        s.supports.fill_density = float(self.view.support_density_value.text())
+        s.supports.fill_type = locales.getLocaleByLang("en").FillingTypeValues[
+            self.view.support_fill_type_values.currentIndex()]
+        s.supports.priority_z_offset = bool(self.view.support_priority_z_offset_box.isChecked())
 
         s.slicing.overlapping_infill_percentage = float(self.view.overlapping_infill_value.text())
 

@@ -434,22 +434,45 @@ class MainWindow(QMainWindow):
 
         supports_on_label = QLabel(self.locale.SupportsOn)
         self.supports_on_box = QCheckBox()
-        if sett().slicing.supports_on:
+        if sett().supports.enabled:
             self.supports_on_box.setCheckState(QtCore.Qt.Checked)
         right_panel.addWidget(supports_on_label, get_next_row(), 1)
         right_panel.addWidget(self.supports_on_box, get_cur_row(), 2, 1, сolumn2_number_of_cells)
 
         support_density_label = QLabel(self.locale.SupportDensity)
-        self.support_density_value = LineEdit(str(sett().slicing.support_density))
+        self.support_density_value = LineEdit(str(sett().supports.fill_density))
         self.support_density_value.setValidator(doublePercentValidator)
         right_panel.addWidget(support_density_label, get_next_row(), 1)
         right_panel.addWidget(self.support_density_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
 
-        support_offset_label = QLabel(self.locale.SupportOffset)
-        self.support_offset_value = LineEdit(str(sett().slicing.support_offset))
-        self.support_offset_value.setValidator(doubleValidator)
-        right_panel.addWidget(support_offset_label, get_next_row(), 1)
-        right_panel.addWidget(self.support_offset_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
+        support_fill_type_label = QLabel(self.locale.FillingType)
+        right_panel.addWidget(support_fill_type_label, get_next_row(), 1)
+        support_fill_type_values_widget = QWidget()
+        support_fill_type_values_widget.setFixedHeight(26)
+        self.support_fill_type_values = QComboBox(support_fill_type_values_widget)
+        self.support_fill_type_values.addItems(self.locale.FillingTypeValues)
+        ind = locales.getLocaleByLang("en").FillingTypeValues.index(sett().supports.fill_type)
+        self.support_fill_type_values.setCurrentIndex(ind)
+        right_panel.addWidget(support_fill_type_values_widget, get_cur_row(), 2, 1, сolumn2_number_of_cells)
+
+        support_xy_offset_label = QLabel(self.locale.SupportXYOffset)
+        self.support_xy_offset_value = LineEdit(str(sett().supports.xy_offset))
+        self.support_xy_offset_value.setValidator(doubleValidator)
+        right_panel.addWidget(support_xy_offset_label, get_next_row(), 1)
+        right_panel.addWidget(self.support_xy_offset_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
+        
+        support_z_offset_layers_label = QLabel(self.locale.SupportZOffsetLayers)
+        self.support_z_offset_layers_value = LineEdit(str(sett().supports.z_offset_layers))
+        self.support_z_offset_layers_value.setValidator(doubleValidator)
+        right_panel.addWidget(support_z_offset_layers_label, get_next_row(), 1)
+        right_panel.addWidget(self.support_z_offset_layers_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
+
+        support_priorityZoffset_label = QLabel(self.locale.SupportPriorityZOffset)
+        self.support_priority_z_offset_box = QCheckBox()
+        if sett().supports.priority_z_offset:
+            self.support_priority_z_offset_box.setCheckState(QtCore.Qt.Checked)
+        right_panel.addWidget(support_priorityZoffset_label, get_next_row(), 1)
+        right_panel.addWidget(self.support_priority_z_offset_box, get_cur_row(), 2, 1, сolumn2_number_of_cells)
 
         self.name_stl_file = QLabel("")
 
