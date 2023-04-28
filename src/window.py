@@ -309,12 +309,12 @@ class MainWindow(QMainWindow):
         right_panel.addWidget(millimeter_label, get_cur_row(), 5)
 
         number_of_bottom_layers_label = QLabel(self.locale.NumberOfBottomLayers)
-        self.number_of_bottom_layers_value = LineEdit(str(sett().slicing.bottom_layers))
+        self.number_of_bottom_layers_value = LineEdit(str(sett().slicing.bottoms_depth))
         self.number_of_bottom_layers_value.setValidator(intValidator)
         right_panel.addWidget(number_of_bottom_layers_label, get_next_row(), 1)
         right_panel.addWidget(self.number_of_bottom_layers_value, get_cur_row(), 2)
         bottom_thickness_label = QLabel(self.locale.BottomThickness)
-        self.bottom_thickness_value = LineEdit(str(round(sett().slicing.layer_height*sett().slicing.bottom_layers,2)))
+        self.bottom_thickness_value = LineEdit(str(round(sett().slicing.layer_height*sett().slicing.bottoms_depth,2)))
         self.bottom_thickness_value.setReadOnly(True)
         millimeter_label = QLabel(self.locale.Millimeter)
         right_panel.addWidget(bottom_thickness_label, get_cur_row(), 3)
@@ -432,6 +432,9 @@ class MainWindow(QMainWindow):
         right_panel.addWidget(retract_compensation_amount_label, get_next_row(), 1)
         right_panel.addWidget(self.retract_compensation_amount_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
 
+        # supports related stuff section
+        right_panel.addWidget(QLabel(self.locale.SupportsSettings), get_next_row(), 1, Qt.AlignCenter)
+
         supports_on_label = QLabel(self.locale.SupportsOn)
         self.supports_on_box = QCheckBox()
         if sett().supports.enabled:
@@ -473,6 +476,33 @@ class MainWindow(QMainWindow):
             self.support_priority_z_offset_box.setCheckState(QtCore.Qt.Checked)
         right_panel.addWidget(support_priorityZoffset_label, get_next_row(), 1)
         right_panel.addWidget(self.support_priority_z_offset_box, get_cur_row(), 2, 1, сolumn2_number_of_cells)
+
+        supports_number_of_bottom_layers_label = QLabel(self.locale.NumberOfBottomLayers)
+        self.supports_number_of_bottom_layers_value = LineEdit(str(sett().supports.bottoms_depth))
+        self.supports_number_of_bottom_layers_value.setValidator(intValidator)
+        right_panel.addWidget(supports_number_of_bottom_layers_label, get_next_row(), 1)
+        right_panel.addWidget(self.supports_number_of_bottom_layers_value, get_cur_row(), 2)
+        supports_bottom_thickness_label = QLabel(self.locale.BottomThickness)
+        self.supports_bottom_thickness_value = LineEdit(str(round(sett().slicing.layer_height*sett().supports.bottoms_depth,2)))
+        self.supports_bottom_thickness_value.setReadOnly(True)
+        millimeter_label = QLabel(self.locale.Millimeter)
+        right_panel.addWidget(supports_bottom_thickness_label, get_cur_row(), 3)
+        right_panel.addWidget(self.supports_bottom_thickness_value, get_cur_row(), 4)
+        right_panel.addWidget(millimeter_label, get_cur_row(), 5)
+
+        supports_number_of_lid_layers_label = QLabel(self.locale.NumberOfLidLayers)
+        self.supports_number_of_lid_layers_value = LineEdit(str(int(sett().supports.lids_depth)))
+        # self.number_of_lid_layers_value.setValidator(QtGui.QIntValidator(0, 100))
+        self.supports_number_of_lid_layers_value.setValidator(intValidator)
+        right_panel.addWidget(supports_number_of_lid_layers_label, get_next_row(), 1)
+        right_panel.addWidget(self.supports_number_of_lid_layers_value, get_cur_row(), 2)
+        supports_lid_thickness_label = QLabel(self.locale.LidThickness)
+        self.supports_lid_thickness_value = LineEdit(str(round(sett().slicing.layer_height*sett().supports.lids_depth,2)))
+        self.supports_lid_thickness_value.setReadOnly(True)
+        millimeter_label = QLabel(self.locale.Millimeter)
+        right_panel.addWidget(supports_lid_thickness_label, get_cur_row(), 3)
+        right_panel.addWidget(self.supports_lid_thickness_value, get_cur_row(), 4)
+        right_panel.addWidget(millimeter_label, get_cur_row(), 5)
 
         self.name_stl_file = QLabel("")
 

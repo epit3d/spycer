@@ -85,6 +85,7 @@ class Locale:
     SlicingProgress = "Slicing is in progress..."
     GCodeLoadingTitle = "GCode loading"
     GCodeLoadingProgress = "GCode loading is in progress..."
+    SupportsSettings = "Supports settings"
 
     def __init__(self, **entries):
         self.__dict__.update(entries)
@@ -177,6 +178,7 @@ dicts = {
         SlicingProgress = "Слайсинг в прогрессе...",
         GCodeLoadingTitle = "Загрузка GCode",
         GCodeLoadingProgress = "Загрузка GCode в прогрессе...",
+        SupportsSettings = "Настройки поддержек",
     ),
 }
 
