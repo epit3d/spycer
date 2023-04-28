@@ -93,6 +93,83 @@ def parseArgs(args, x, y, z, a, b, cone_axis, rotationPoint, absolute=True):
     return xr + x, yr + y, zr + z, ar + a, br + b
 
 
+class Position:
+    def __init__(self, X=None, Y=None, Z=None, U=None, V=None):
+        self.X = X
+        self.Y = Y
+        self.Z = Z
+        self.U = U
+        self.V = V
+
+    def apply(self, pos):
+        for key in "XYZUV":
+            val = getattr(pos, key)
+            if val is not None:
+                setattr(self, key, val)
+
+
+class Printer:
+    def __init__(self):
+        self.currPos = Position(0, 0, 0, 0, 0)
+        self.prevPos = Position(0, 0, 0, 0, 0)
+
+    def updatePos(self, args):
+        # update previous position
+        self.prevPos.apply(self.currPos)
+
+        # convert text args to values
+        res = {}
+        for arg in args:
+            if len(arg) == 0:
+                continue
+            key, val = arg[0], arg[1:]
+            if key in "XYZUV":
+                res[key] = float(val)
+            elif key == ";":
+                break
+
+        # apply values to the printer position
+        for key, val in res.items():
+            setattr(self.currPos, key, val)
+
+        self.dU = self.prevPos.U - self.currPos.U
+
+    def getPoints(self):
+        maxDeltaU = 5
+        numPoints = int(abs(self.dU) // maxDeltaU)
+
+        res = []
+        if numPoints > 0:
+            rangeU = list(np.linspace(
+                self.prevPos.U, self.currPos.U, numPoints + 2)[1:])
+            rangeX = list(np.linspace(
+                self.prevPos.X, self.currPos.X, numPoints + 2)[1:])
+            rangeY = list(np.linspace(
+                self.prevPos.Y, self.currPos.Y, numPoints + 2)[1:])
+            rangeZ = list(np.linspace(
+                self.prevPos.Z, self.currPos.Z, numPoints + 2)[1:])
+
+            for dU, dX, dY, dZ in zip(rangeU, rangeX, rangeY, rangeZ):
+                res.append(
+                    (
+                        f"X{dX}",
+                        f"Y{dY}",
+                        f"Z{dZ}",
+                        f"U{dU}",
+                    )
+                )
+        else:
+            res.append(
+                (
+                    f"X{self.currPos.X}",
+                    f"Y{self.currPos.Y}",
+                    f"Z{self.currPos.Z}",
+                    f"U{self.currPos.U}",
+                )
+            )
+        return res
+
+
 def parseRotation(args: List[str]):
     e = 0
     for arg in args:
@@ -145,6 +222,7 @@ def parseGCode(lines):
         layer = []
 
     t = 0  # select extruder (t==0) or incline (t==2) or rotate (t==1)
+    printer = Printer()
     for line in lines:
         line = line.strip()
         if len(line) == 0:
@@ -185,13 +263,30 @@ def parseGCode(lines):
 
                 cone_axis = rotation_matrix([1, 0, 0], np.radians(rotations[-1].x_rot)).dot([0, 0, 1])
             elif args[0] == "G0":  # move to (or rotate)
+                pos = args[1:]
+
+                printer.updatePos(pos)
+
                 if len(path) > 1:  # finish path and start new
                     layer.append(path)
-                x, y, z, a, b = parseArgs(args[1:], x, y, z, a, b, cone_axis, rotationPoint, abs_pos)
+                x, y, z, a, b = parseArgs(pos, x, y, z, a, b, cone_axis, rotationPoint, abs_pos)
                 path = [Point(x, y, z, a, b)]
             elif args[0] == "G1":  # draw to
-                x, y, z, a, b = parseArgs(args[1:], x, y, z, a, b, cone_axis, rotationPoint, abs_pos)
-                path.append(Point(x, y, z, a, b))
+                pos = args[1:]
+
+                printer.updatePos(pos)
+
+                # check U coordinate change
+                if printer.dU == 0:
+                    # U not changed, do noraml arguments parsing
+                    x, y, z, a, b = parseArgs(pos, x, y, z, a, b, cone_axis, rotationPoint, abs_pos)
+                    path.append(Point(x, y, z, a, b))
+                else:
+                    # U changed, get interpolated points
+                    for point in printer.getPoints():
+                        x, y, z, a, b = parseArgs(point, x, y, z, a, b, cone_axis, rotationPoint, abs_pos)
+                        path.append(Point(x, y, z, a, b))
+
             elif args[0] == "G90":  # absolute positioning
                 abs_pos = True
             elif args[0] == "G91":  # relative positioning

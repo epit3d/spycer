@@ -4,25 +4,45 @@ from PyQt5.QtCore import QEventLoop
 from PyQt5.QtWidgets import QProgressDialog
 
 
+class TaskManager(QtCore.QObject):
+    # source: https://stackoverflow.com/questions/64500883/pyqt5-widget-qthread-issue-when-using-concurrent-futures-threadpoolexecutor
+    finished = QtCore.pyqtSignal(object)
+
+    def __init__(self, parent=None, max_workers=None):
+        super().__init__(parent)
+        self._executor = concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
+
+    @property
+    def executor(self):
+        return self._executor
+
+    def submit(self, fn, *args, **kwargs):
+        future = self.executor.submit(fn, *args, **kwargs)
+        future.add_done_callback(self._internal_done_callback)
+
+    def _internal_done_callback(self, future):
+        data = future.result()
+        self.finished.emit(data)
+
+
 def progress_dialog(title, msg, work_fn, parent=None):
     """Show a blocking progress dialog while executing work in background thread"""
-    def work():
-        """Executes work ending with accepting dialog"""
-        try:
-            return work_fn()
-        finally:
-            progress.accept()
-
     progress = QProgressDialog(msg, None, 0, 0, parent=parent)
     progress.setWindowTitle(title)
-    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-        # timer is used to schedule executing work after progress dialog
-        # is opened, otherwise it could be accepted before being opened
-        future = []
-        QtCore.QTimer.singleShot(0, lambda: future.append(executor.submit(work)))
-        _exec_dialog(progress)
-        return future[0].result()  # transports exceptions as well
 
+    manager = TaskManager(max_workers=1)
+    result = []
+
+    def task_finished(v):
+        progress.accept()
+        result.append(v)
+
+    manager.finished.connect(task_finished)
+
+    manager.submit(work_fn)
+    _exec_dialog(progress)
+
+    return result[0]
 
 def _exec_dialog(dg, closer=None):
     """

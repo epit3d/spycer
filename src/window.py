@@ -68,9 +68,12 @@ class LineEdit(QLineEdit):
     def value_formatting(self):
         self.fill_empty()
         if isinstance(self.validator(), QtGui.QDoubleValidator):
+            cursor_position = self.cursorPosition()
             self.setText(str(float(self.text())))
+            self.setCursorPosition(cursor_position)
 
     def input_validation(self):
+        cursor_position = self.cursorPosition()
         self.setText(self.text().replace(',', '.'))
 
         if (not self.colorize_invalid_value) and self.validator():
@@ -83,6 +86,7 @@ class LineEdit(QLineEdit):
                 self.setText(str(max_value))
             if value < min_value:
                 self.setText(str(min_value))
+        self.setCursorPosition(cursor_position)
 
     def coloryze_field(self):
         default_background_color = "#0e1621"
@@ -305,12 +309,12 @@ class MainWindow(QMainWindow):
         right_panel.addWidget(millimeter_label, get_cur_row(), 5)
 
         number_of_bottom_layers_label = QLabel(self.locale.NumberOfBottomLayers)
-        self.number_of_bottom_layers_value = LineEdit(str(sett().slicing.bottom_layers))
+        self.number_of_bottom_layers_value = LineEdit(str(sett().slicing.bottoms_depth))
         self.number_of_bottom_layers_value.setValidator(intValidator)
         right_panel.addWidget(number_of_bottom_layers_label, get_next_row(), 1)
         right_panel.addWidget(self.number_of_bottom_layers_value, get_cur_row(), 2)
         bottom_thickness_label = QLabel(self.locale.BottomThickness)
-        self.bottom_thickness_value = LineEdit(str(round(sett().slicing.layer_height*sett().slicing.bottom_layers,2)))
+        self.bottom_thickness_value = LineEdit(str(round(sett().slicing.layer_height*sett().slicing.bottoms_depth,2)))
         self.bottom_thickness_value.setReadOnly(True)
         millimeter_label = QLabel(self.locale.Millimeter)
         right_panel.addWidget(bottom_thickness_label, get_cur_row(), 3)
@@ -428,24 +432,77 @@ class MainWindow(QMainWindow):
         right_panel.addWidget(retract_compensation_amount_label, get_next_row(), 1)
         right_panel.addWidget(self.retract_compensation_amount_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
 
+        # supports related stuff section
+        right_panel.addWidget(QLabel(self.locale.SupportsSettings), get_next_row(), 1, Qt.AlignCenter)
+
         supports_on_label = QLabel(self.locale.SupportsOn)
         self.supports_on_box = QCheckBox()
-        if sett().slicing.supports_on:
+        if sett().supports.enabled:
             self.supports_on_box.setCheckState(QtCore.Qt.Checked)
         right_panel.addWidget(supports_on_label, get_next_row(), 1)
         right_panel.addWidget(self.supports_on_box, get_cur_row(), 2, 1, сolumn2_number_of_cells)
 
         support_density_label = QLabel(self.locale.SupportDensity)
-        self.support_density_value = LineEdit(str(sett().slicing.support_density))
+        self.support_density_value = LineEdit(str(sett().supports.fill_density))
         self.support_density_value.setValidator(doublePercentValidator)
         right_panel.addWidget(support_density_label, get_next_row(), 1)
         right_panel.addWidget(self.support_density_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
 
-        support_offset_label = QLabel(self.locale.SupportOffset)
-        self.support_offset_value = LineEdit(str(sett().slicing.support_offset))
-        self.support_offset_value.setValidator(doubleValidator)
-        right_panel.addWidget(support_offset_label, get_next_row(), 1)
-        right_panel.addWidget(self.support_offset_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
+        support_fill_type_label = QLabel(self.locale.FillingType)
+        right_panel.addWidget(support_fill_type_label, get_next_row(), 1)
+        support_fill_type_values_widget = QWidget()
+        support_fill_type_values_widget.setFixedHeight(26)
+        self.support_fill_type_values = QComboBox(support_fill_type_values_widget)
+        self.support_fill_type_values.addItems(self.locale.FillingTypeValues)
+        ind = locales.getLocaleByLang("en").FillingTypeValues.index(sett().supports.fill_type)
+        self.support_fill_type_values.setCurrentIndex(ind)
+        right_panel.addWidget(support_fill_type_values_widget, get_cur_row(), 2, 1, сolumn2_number_of_cells)
+
+        support_xy_offset_label = QLabel(self.locale.SupportXYOffset)
+        self.support_xy_offset_value = LineEdit(str(sett().supports.xy_offset))
+        self.support_xy_offset_value.setValidator(doubleValidator)
+        right_panel.addWidget(support_xy_offset_label, get_next_row(), 1)
+        right_panel.addWidget(self.support_xy_offset_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
+        
+        support_z_offset_layers_label = QLabel(self.locale.SupportZOffsetLayers)
+        self.support_z_offset_layers_value = LineEdit(str(sett().supports.z_offset_layers))
+        self.support_z_offset_layers_value.setValidator(doubleValidator)
+        right_panel.addWidget(support_z_offset_layers_label, get_next_row(), 1)
+        right_panel.addWidget(self.support_z_offset_layers_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
+
+        support_priorityZoffset_label = QLabel(self.locale.SupportPriorityZOffset)
+        self.support_priority_z_offset_box = QCheckBox()
+        if sett().supports.priority_z_offset:
+            self.support_priority_z_offset_box.setCheckState(QtCore.Qt.Checked)
+        right_panel.addWidget(support_priorityZoffset_label, get_next_row(), 1)
+        right_panel.addWidget(self.support_priority_z_offset_box, get_cur_row(), 2, 1, сolumn2_number_of_cells)
+
+        supports_number_of_bottom_layers_label = QLabel(self.locale.NumberOfBottomLayers)
+        self.supports_number_of_bottom_layers_value = LineEdit(str(sett().supports.bottoms_depth))
+        self.supports_number_of_bottom_layers_value.setValidator(intValidator)
+        right_panel.addWidget(supports_number_of_bottom_layers_label, get_next_row(), 1)
+        right_panel.addWidget(self.supports_number_of_bottom_layers_value, get_cur_row(), 2)
+        supports_bottom_thickness_label = QLabel(self.locale.BottomThickness)
+        self.supports_bottom_thickness_value = LineEdit(str(round(sett().slicing.layer_height*sett().supports.bottoms_depth,2)))
+        self.supports_bottom_thickness_value.setReadOnly(True)
+        millimeter_label = QLabel(self.locale.Millimeter)
+        right_panel.addWidget(supports_bottom_thickness_label, get_cur_row(), 3)
+        right_panel.addWidget(self.supports_bottom_thickness_value, get_cur_row(), 4)
+        right_panel.addWidget(millimeter_label, get_cur_row(), 5)
+
+        supports_number_of_lid_layers_label = QLabel(self.locale.NumberOfLidLayers)
+        self.supports_number_of_lid_layers_value = LineEdit(str(int(sett().supports.lids_depth)))
+        # self.number_of_lid_layers_value.setValidator(QtGui.QIntValidator(0, 100))
+        self.supports_number_of_lid_layers_value.setValidator(intValidator)
+        right_panel.addWidget(supports_number_of_lid_layers_label, get_next_row(), 1)
+        right_panel.addWidget(self.supports_number_of_lid_layers_value, get_cur_row(), 2)
+        supports_lid_thickness_label = QLabel(self.locale.LidThickness)
+        self.supports_lid_thickness_value = LineEdit(str(round(sett().slicing.layer_height*sett().supports.lids_depth,2)))
+        self.supports_lid_thickness_value.setReadOnly(True)
+        millimeter_label = QLabel(self.locale.Millimeter)
+        right_panel.addWidget(supports_lid_thickness_label, get_cur_row(), 3)
+        right_panel.addWidget(self.supports_lid_thickness_value, get_cur_row(), 4)
+        right_panel.addWidget(millimeter_label, get_cur_row(), 5)
 
         self.name_stl_file = QLabel("")
 
@@ -723,9 +780,11 @@ class MainWindow(QMainWindow):
         if not last:
             self.actors[new_slider_value].GetProperty().SetColor(get_color(sett().colors.last_layer))
             self.actors[new_slider_value].GetProperty().SetLineWidth(4)
+            self.actors[new_slider_value].GetProperty().SetOpacity(sett().common.opacity_last_layer)
         if not prev_last:
             self.actors[prev_value].GetProperty().SetColor(get_color(sett().colors.layer))
             self.actors[prev_value].GetProperty().SetLineWidth(1)
+            self.actors[prev_value].GetProperty().SetOpacity(sett().common.opacity_layer)
 
         self.layers_number_label.setText(str(new_slider_value))
 
@@ -908,6 +967,7 @@ class MainWindow(QMainWindow):
         sel = self.splanes_tree.currentIndex().row()
         if sel == ind:
             self.splanes_actors[sel].GetProperty().SetColor(get_color(sett().colors.last_layer))
+            self.splanes_actors[sel].GetProperty().SetOpacity(0.8)
         self.reload_scene()
 
     def update_cone(self, cone: Cone, ind):
@@ -919,12 +979,15 @@ class MainWindow(QMainWindow):
         sel = self.splanes_tree.currentIndex().row()
         if sel == ind:
             self.splanes_actors[sel].GetProperty().SetColor(get_color(sett().colors.last_layer))
+            self.splanes_actors[sel].GetProperty().SetOpacity(sett().common.opacity_current_plane)
         self.reload_scene()
 
     def change_combo_select(self, plane, ind):
         for p in self.splanes_actors:
             p.GetProperty().SetColor(get_color(sett().colors.splane))
+            p.GetProperty().SetOpacity(sett().common.opacity_plane)
         self.splanes_actors[ind].GetProperty().SetColor(get_color(sett().colors.last_layer))
+        self.splanes_actors[ind].GetProperty().SetOpacity(sett().common.opacity_current_plane)
         self.reload_scene()
 
     def load_gcode(self, actors, is_from_stl, plane_tf):

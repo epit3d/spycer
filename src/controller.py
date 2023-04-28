@@ -13,12 +13,12 @@ from typing import Dict, List
 import vtk
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-from src import gui_utils, locales
+from src import gui_utils, locales, qt_utils
 from src.figure_editor import PlaneEditor, ConeEditor
 from src.gui_utils import showErrorDialog, plane_tf, read_planes, Plane, Cone
-from src.settings import sett, save_settings, load_settings
 from src.process import Process
-import src.qt_utils as qt_utils
+from src.settings import sett, save_settings, load_settings, get_color
+
 
 class MainController:
     def __init__(self, view, model):
@@ -38,6 +38,8 @@ class MainController:
         self.view.layer_height_value.textChanged.connect(self.change_layer_height)
         self.view.number_of_bottom_layers_value.textChanged.connect(self.update_bottom_thickness)
         self.view.number_of_lid_layers_value.textChanged.connect(self.update_lid_thickness)
+        self.view.supports_number_of_bottom_layers_value.textChanged.connect(self.update_supports_bottom_thickness)
+        self.view.supports_number_of_lid_layers_value.textChanged.connect(self.update_supports_lid_thickness)
         self.view.model_switch_box.stateChanged.connect(self.view.switch_stl_gcode)
         self.view.model_centering_box.stateChanged.connect(self.view.model_centering)
         self.view.picture_slider.valueChanged.connect(self.change_layer_view)
@@ -153,6 +155,7 @@ class MainController:
                 if file_ext == ".TXT":
                     try:
                         self.model.splanes = read_planes(filename)
+                        self.view.hide_checkbox.setChecked(False)
                         self.view.reload_splanes(self.model.splanes)
                     except:
                         showErrorDialog("Error during reading planes file")
@@ -171,12 +174,20 @@ class MainController:
     def change_layer_height(self):
         self.update_bottom_thickness()
         self.update_lid_thickness()
+        self.update_supports_bottom_thickness()
+        self.update_supports_top_thickness()
 
     def update_bottom_thickness(self):
         self.update_dependent_fields(self.view.number_of_bottom_layers_value, self.view.layer_height_value, self.view.bottom_thickness_value)
 
     def update_lid_thickness(self):
         self.update_dependent_fields(self.view.number_of_lid_layers_value, self.view.layer_height_value, self.view.lid_thickness_value)
+
+    def update_supports_bottom_thickness(self):
+        self.update_dependent_fields(self.view.supports_number_of_bottom_layers_value, self.view.layer_height_value, self.view.supports_bottom_thickness_value)
+    
+    def update_supports_lid_thickness(self):
+        self.update_dependent_fields(self.view.supports_number_of_lid_layers_value, self.view.layer_height_value, self.view.supports_lid_thickness_value)
 
     def update_dependent_fields(self, entry_field_1, entry_field_2, output_field):
         entry_field_1_text = entry_field_1.text().replace(',', '.')
@@ -252,7 +263,17 @@ class MainController:
         blocks = gui_utils.makeBlocks(gc.layers, gc.rotations, gc.lays2rots)
         actors = gui_utils.wrapWithActors(blocks, gc.rotations, gc.lays2rots)
 
+        if len(self.model.splanes) > 0:
+            currentItem = int(self.view.splanes_tree.currentItem().text(1)) - 1
+        else:
+            currentItem = 0
+
         self.view.load_gcode(actors, is_from_stl, plane_tf(gc.rotations[0]))
+
+        if len(self.model.splanes) > 0:
+            self.view._recreate_splanes(self.model.splanes)
+            self.view.splanes_actors[currentItem].GetProperty().SetColor(get_color(sett().colors.last_layer))
+            self.view.splanes_actors[currentItem].GetProperty().SetOpacity(sett().common.opacity_last_layer) 
 
     def slice_stl(self, slicing_type):
         if slicing_type == "vip" and len(self.model.splanes) == 0:
@@ -315,15 +336,23 @@ class MainController:
         s.slicing.retraction_distance = float(self.view.retraction_distance_value.text())
         s.slicing.retraction_speed = float(self.view.retraction_speed_value.text())
         s.slicing.retract_compensation_amount = float(self.view.retract_compensation_amount_value.text())
-        s.slicing.support_offset = float(self.view.support_offset_value.text())
-        s.slicing.support_density = float(self.view.support_density_value.text())
         s.slicing.skirt_line_count = int(self.view.skirt_line_count_value.text())
         s.slicing.fan_off_layer1 = self.view.fan_off_layer1_box.isChecked()
         s.slicing.fan_speed = float(self.view.fan_speed_value.text())
-        s.slicing.supports_on = self.view.supports_on_box.isChecked()
         s.slicing.angle = float(self.view.colorize_angle_value.text())
+        
         s.slicing.lids_depth = int(self.view.number_of_lid_layers_value.text())
         s.slicing.bottoms_depth = int(self.view.number_of_bottom_layers_value.text())
+        
+        s.supports.enabled = self.view.supports_on_box.isChecked()
+        s.supports.xy_offset = float(self.view.support_xy_offset_value.text())
+        s.supports.z_offset_layers = int(float(self.view.support_z_offset_layers_value.text()))
+        s.supports.fill_density = float(self.view.support_density_value.text())
+        s.supports.fill_type = locales.getLocaleByLang("en").FillingTypeValues[
+            self.view.support_fill_type_values.currentIndex()]
+        s.supports.priority_z_offset = bool(self.view.support_priority_z_offset_box.isChecked())
+        s.supports.lids_depth = int(self.view.supports_number_of_lid_layers_value.text())
+        s.supports.bottoms_depth = int(self.view.supports_number_of_bottom_layers_value.text())
 
         s.slicing.overlapping_infill_percentage = float(self.view.overlapping_infill_value.text())
 
@@ -363,7 +392,7 @@ class MainController:
                         load_settings(filename)
                         self.display_settings()
                     except:
-                        showErrorDialog("Error during reading planes file")
+                        showErrorDialog("Error during reading settings file")
                 else:
                     showErrorDialog(
                         "This file format isn't supported:" + file_ext)
@@ -423,20 +452,22 @@ class MainController:
         self.view.stlActor.lastMove = lastMove
         self.model.opened_stl = s.slicing.stl_file
 
-
     # ######################bottom panel
 
     def add_splane(self):
+        self.view.hide_checkbox.setChecked(False)
         self.model.add_splane()
         self.view.reload_splanes(self.model.splanes)
         self.change_figure_parameters()
 
     def add_cone(self):
+        self.view.hide_checkbox.setChecked(False)
         self.model.add_cone()
         self.view.reload_splanes(self.model.splanes)
         self.change_figure_parameters()
 
     def remove_splane(self):
+        self.view.hide_checkbox.setChecked(False)
         ind = self.view.splanes_tree.currentIndex().row()
         if ind == -1:
             return
@@ -518,6 +549,10 @@ class MainController:
             string_print_time += str(math.floor(seconds)) + " " + self.view.locale.Second
 
         self.view.print_time_value.setText(string_print_time)
+
+        # !Temporary shutdown of the counter at too large values
+        if s.slicing.print_time > 250000:
+            self.view.print_time_value.setText("")
 
         string_consumption_material = ""
         if s.slicing.consumption_material > 0:
