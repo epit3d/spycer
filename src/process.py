@@ -31,10 +31,12 @@ class Process:
             kw.update(env={**os.environ.copy(), **env})
         if capture:
             self._files = dict(
-                stdout=tempfile.NamedTemporaryFile(mode="w"),
-                stderr=tempfile.NamedTemporaryFile(mode="w"),
-                stdin=tempfile.NamedTemporaryFile(mode="r"))
+                stdout=tempfile.NamedTemporaryFile(mode="w", delete=False),
+                stderr=tempfile.NamedTemporaryFile(mode="w", delete=False),
+                stdin=subprocess.PIPE)
             kw.update(**self._files)
+        if os.name == 'posix':
+            kw.update(preexec_fn=os.setsid)
         self._process = subprocess.Popen(cmd, **kw)
 
     def __enter__(self):
@@ -49,6 +51,7 @@ class Process:
             self.kill()
         for f in self._files.values():
             f.close()
+            os.unlink(f.name)
 
     @property
     def pid(self):
@@ -76,9 +79,12 @@ class Process:
 
     def kill(self):
         if not self.done:
-            os.killpg(self.pid, signal.SIGINT)
+            if os.name == 'posix':
+                os.killpg(os.getpgid(self.pid), signal.SIGINT)
+            else:
+                os.kill(self.pid, signal.CTRL_BREAK_EVENT)
         return self.wait()
 
     def wait(self):
         self._process.wait()
-        return self
+        return self.returncode
