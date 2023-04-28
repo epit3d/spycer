@@ -36,6 +36,8 @@ class MainController:
         self.view.layer_height_value.textChanged.connect(self.change_layer_height)
         self.view.number_of_bottom_layers_value.textChanged.connect(self.update_bottom_thickness)
         self.view.number_of_lid_layers_value.textChanged.connect(self.update_lid_thickness)
+        self.view.supports_number_of_bottom_layers_value.textChanged.connect(self.update_supports_bottom_thickness)
+        self.view.supports_number_of_lid_layers_value.textChanged.connect(self.update_supports_lid_thickness)
         self.view.model_switch_box.stateChanged.connect(self.view.switch_stl_gcode)
         self.view.model_centering_box.stateChanged.connect(self.view.model_centering)
         self.view.picture_slider.valueChanged.connect(self.change_layer_view)
@@ -170,12 +172,20 @@ class MainController:
     def change_layer_height(self):
         self.update_bottom_thickness()
         self.update_lid_thickness()
+        self.update_supports_bottom_thickness()
+        self.update_supports_top_thickness()
 
     def update_bottom_thickness(self):
         self.update_dependent_fields(self.view.number_of_bottom_layers_value, self.view.layer_height_value, self.view.bottom_thickness_value)
 
     def update_lid_thickness(self):
         self.update_dependent_fields(self.view.number_of_lid_layers_value, self.view.layer_height_value, self.view.lid_thickness_value)
+
+    def update_supports_bottom_thickness(self):
+        self.update_dependent_fields(self.view.supports_number_of_bottom_layers_value, self.view.layer_height_value, self.view.supports_bottom_thickness_value)
+    
+    def update_supports_lid_thickness(self):
+        self.update_dependent_fields(self.view.supports_number_of_lid_layers_value, self.view.layer_height_value, self.view.supports_lid_thickness_value)
 
     def update_dependent_fields(self, entry_field_1, entry_field_2, output_field):
         entry_field_1_text = entry_field_1.text().replace(',', '.')
@@ -320,15 +330,23 @@ class MainController:
         s.slicing.retraction_distance = float(self.view.retraction_distance_value.text())
         s.slicing.retraction_speed = float(self.view.retraction_speed_value.text())
         s.slicing.retract_compensation_amount = float(self.view.retract_compensation_amount_value.text())
-        s.slicing.support_offset = float(self.view.support_offset_value.text())
-        s.slicing.support_density = float(self.view.support_density_value.text())
         s.slicing.skirt_line_count = int(self.view.skirt_line_count_value.text())
         s.slicing.fan_off_layer1 = self.view.fan_off_layer1_box.isChecked()
         s.slicing.fan_speed = float(self.view.fan_speed_value.text())
-        s.slicing.supports_on = self.view.supports_on_box.isChecked()
         s.slicing.angle = float(self.view.colorize_angle_value.text())
+        
         s.slicing.lids_depth = int(self.view.number_of_lid_layers_value.text())
         s.slicing.bottoms_depth = int(self.view.number_of_bottom_layers_value.text())
+        
+        s.supports.enabled = self.view.supports_on_box.isChecked()
+        s.supports.xy_offset = float(self.view.support_xy_offset_value.text())
+        s.supports.z_offset_layers = int(float(self.view.support_z_offset_layers_value.text()))
+        s.supports.fill_density = float(self.view.support_density_value.text())
+        s.supports.fill_type = locales.getLocaleByLang("en").FillingTypeValues[
+            self.view.support_fill_type_values.currentIndex()]
+        s.supports.priority_z_offset = bool(self.view.support_priority_z_offset_box.isChecked())
+        s.supports.lids_depth = int(self.view.supports_number_of_lid_layers_value.text())
+        s.supports.bottoms_depth = int(self.view.supports_number_of_bottom_layers_value.text())
 
         s.slicing.overlapping_infill_percentage = float(self.view.overlapping_infill_value.text())
 

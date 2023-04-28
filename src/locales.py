@@ -42,7 +42,9 @@ class Locale:
     DeletePlane = "Delete"
     EditFigure = "Edit"
     Rotated = "Rotated"
-    SupportOffset = "Support offset, mm:"
+    SupportXYOffset = "Support XY offset, mm:"
+    SupportZOffsetLayers = "Support Z offset, layers:"
+    SupportPriorityZOffset = "Priority Z offset"
     FloatParsingError = "Error in float number"
     SkirtLineCount = "Skirt lines count:"
     FanSpeed = "Airflow amount, %:"
@@ -83,6 +85,7 @@ class Locale:
     SlicingProgress = "Slicing is in progress..."
     GCodeLoadingTitle = "GCode loading"
     GCodeLoadingProgress = "GCode loading is in progress..."
+    SupportsSettings = "Supports settings"
 
     def __init__(self, **entries):
         self.__dict__.update(entries)
@@ -132,7 +135,9 @@ dicts = {
         DeletePlane="Удалить",
         EditFigure="Редактировать",
         Rotated="Повёрнута",
-        SupportOffset="Отступ поддержки от детали, мм:",
+        SupportXYOffset = "Поддержки XY отступ, мм:",
+        SupportZOffsetLayers = "Поддержки Z отступ, слои:",
+        SupportPriorityZOffset = "Приоритет отступа по Z",
         FloatParsingError="Ошибка в написании дробного числа",
         SkirtLineCount="Количество линий юбки:",
         FanSpeed="Величина обдува детали, %:",
@@ -173,6 +178,7 @@ dicts = {
         SlicingProgress = "Слайсинг в прогрессе...",
         GCodeLoadingTitle = "Загрузка GCode",
         GCodeLoadingProgress = "Загрузка GCode в прогрессе...",
+        SupportsSettings = "Настройки поддержек",
     ),
 }
 
