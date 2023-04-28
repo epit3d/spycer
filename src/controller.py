@@ -323,13 +323,13 @@ class MainController:
         s.slicing.skirt_line_count = int(self.view.skirt_line_count_value.text())
         s.slicing.fan_off_layer1 = self.view.fan_off_layer1_box.isChecked()
         s.slicing.fan_speed = float(self.view.fan_speed_value.text())
-        s.slicing.supports_on = self.view.supports_on_box.isChecked()
         s.slicing.angle = float(self.view.colorize_angle_value.text())
         s.slicing.lids_depth = int(self.view.number_of_lid_layers_value.text())
         s.slicing.bottoms_depth = int(self.view.number_of_bottom_layers_value.text())
         
+        s.supports.enabled = self.view.supports_on_box.isChecked()
         s.supports.xy_offset = float(self.view.support_xy_offset_value.text())
-        s.supports.z_offset_layers = int(self.view.support_z_offset_layers_value.text())
+        s.supports.z_offset_layers = int(float(self.view.support_z_offset_layers_value.text()))
         s.supports.fill_density = float(self.view.support_density_value.text())
         s.supports.fill_type = locales.getLocaleByLang("en").FillingTypeValues[
             self.view.support_fill_type_values.currentIndex()]
