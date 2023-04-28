@@ -68,9 +68,7 @@ hardware:
 slicing:
   angle: 30
   bed_temperature: 60
-  bottom_layers: 3
   bottom_of_cut_layers: 1
-  bottoms_depth: 3
   cmd: ./lib/goosli --cmd=slice --settings=settings.yaml
   extruder_temperature: 200
   fan_off_layer1: false
@@ -82,6 +80,7 @@ slicing:
   gcode_file: goosli_out.gcode
   layer_height: 0.2
   lids_depth: 3
+  bottoms_depth: 3
   line_width: 0.4
   magic_epsilon: 40
   mesh_file: lib/goosli_middle.msh
@@ -118,3 +117,5 @@ supports:
   priority_z_offset: true
   fill_type: Lines
   fill_density: 5
+  bottoms_depth: 0
+  lids_depth: 0
