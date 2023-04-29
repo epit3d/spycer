@@ -261,7 +261,6 @@ class MainWindow(QMainWindow):
 
         validatorLocale = QtCore.QLocale("Englishs")
         intValidator = QtGui.QIntValidator(0, 100)
-        intValidator.setLocale(validatorLocale)
 
         doubleValidator = QtGui.QDoubleValidator(0.00, 100.00, 2)
         doubleValidator.setLocale(validatorLocale)
