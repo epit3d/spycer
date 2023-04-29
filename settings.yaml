@@ -81,7 +81,7 @@ slicing:
   flat_5d: 0
   ftetwild_cmd: ./lib/FloatTetwild_bin.exe -i sett.slicing.stl_file -o lib/goosli_middle.msh
   gcode_file: goosli_out.gcode
-  gcode_file_without_calibration: goosli_out_without_calibration.gcode
+  gcode_file_without_calibration: goosli_out_without_calibration.gcodevis
   layer_height: 0.2
   lids_depth: 3
   line_width: 0.4
