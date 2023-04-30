@@ -24,6 +24,7 @@ common:
 hardware:
   bar_diameter: 1.75
   calibration_file: data/calibration_data.csv
+  calibration_file_zero: data/calibration_data_zero.csv
   calibration_x:
     a0: 0
     a10: -0.13
@@ -78,6 +79,7 @@ slicing:
   flat_5d: 0
   ftetwild_cmd: ./lib/FloatTetwild_bin.exe -i sett.slicing.stl_file -o lib/goosli_middle.msh
   gcode_file: goosli_out.gcode
+  gcode_file_without_calibration: goosli_out_without_calibration.gcodevis
   layer_height: 0.2
   lids_depth: 3
   bottoms_depth: 3

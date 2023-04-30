@@ -301,7 +301,7 @@ class MainController:
         if not res:
             return
 
-        self.load_gcode(s.slicing.gcode_file, True)
+        self.load_gcode(s.slicing.gcode_file_without_calibration, True)
         print("loaded gcode")
         # self.debugMe()
         self.update_interface()
