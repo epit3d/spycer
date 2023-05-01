@@ -471,7 +471,7 @@ class MainWindow(QMainWindow):
         
         support_z_offset_layers_label = QLabel(self.locale.SupportZOffsetLayers)
         self.support_z_offset_layers_value = LineEdit(str(sett().supports.z_offset_layers))
-        self.support_z_offset_layers_value.setValidator(doubleValidator)
+        self.support_z_offset_layers_value.setValidator(intValidator)
         right_panel.addWidget(support_z_offset_layers_label, get_next_row(), 1)
         right_panel.addWidget(self.support_z_offset_layers_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
 
