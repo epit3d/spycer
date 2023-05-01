@@ -349,6 +349,7 @@ class MainController:
         s.supports.bottoms_depth = int(self.view.supports_number_of_bottom_layers_value.text())
 
         s.slicing.overlapping_infill_percentage = float(self.view.overlapping_infill_value.text())
+        s.slicing.material_shrinkage = float(self.view.material_shrinkage_value.text())
 
         s.slicing.slicing_type = slicing_type
 

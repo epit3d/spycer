@@ -86,6 +86,7 @@ class Locale:
     GCodeLoadingTitle = "GCode loading"
     GCodeLoadingProgress = "GCode loading is in progress..."
     SupportsSettings = "Supports settings"
+    MaterialShrinkage = "Material shrinkage, %:"
 
     def __init__(self, **entries):
         self.__dict__.update(entries)
@@ -179,6 +180,7 @@ dicts = {
         GCodeLoadingTitle = "Загрузка GCode",
         GCodeLoadingProgress = "Загрузка GCode в прогрессе...",
         SupportsSettings = "Настройки поддержек",
+        MaterialShrinkage = "Величина усадки материала, %:",
     ),
 }
 

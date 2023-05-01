@@ -431,6 +431,12 @@ class MainWindow(QMainWindow):
         right_panel.addWidget(retract_compensation_amount_label, get_next_row(), 1)
         right_panel.addWidget(self.retract_compensation_amount_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
 
+        material_shrinkage_label = QLabel(self.locale.MaterialShrinkage)
+        self.material_shrinkage_value = LineEdit(str(sett().slicing.material_shrinkage))
+        self.material_shrinkage_value.setValidator(doubleValidator)
+        right_panel.addWidget(material_shrinkage_label, get_next_row(), 1)
+        right_panel.addWidget(self.material_shrinkage_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
+
         # supports related stuff section
         right_panel.addWidget(QLabel(self.locale.SupportsSettings), get_next_row(), 1, Qt.AlignCenter)
 
