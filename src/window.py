@@ -127,6 +127,9 @@ class MainWindow(QMainWindow):
         self.load_sett_action = QAction(self.locale.LoadSettings, self)
         file_menu.addAction(self.load_sett_action)
 
+        self.slicing_info_action = QAction(self.locale.SlicerInfo, self)
+        file_menu.addAction(self.slicing_info_action)
+
         # main parts
         central_widget = QWidget()
         main_grid = QGridLayout()
@@ -261,7 +264,6 @@ class MainWindow(QMainWindow):
 
         validatorLocale = QtCore.QLocale("Englishs")
         intValidator = QtGui.QIntValidator(0, 100)
-        intValidator.setLocale(validatorLocale)
 
         doubleValidator = QtGui.QDoubleValidator(0.00, 100.00, 2)
         doubleValidator.setLocale(validatorLocale)
