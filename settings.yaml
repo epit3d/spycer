@@ -72,6 +72,7 @@ slicing:
   bottom_of_cut_layers: 1
   cmd: ./lib/goosli --cmd=slice --settings=settings.yaml
   cmd_version: ./lib/goosli --version
+  extruder_temperature: 200
   fan_off_layer1: false
   fan_speed: 95
   fill_density: 20
