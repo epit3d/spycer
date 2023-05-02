@@ -15,7 +15,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 from src import gui_utils, locales, qt_utils
 from src.figure_editor import PlaneEditor, ConeEditor
-from src.gui_utils import showErrorDialog, plane_tf, read_planes, Plane, Cone
+from src.gui_utils import showErrorDialog, plane_tf, read_planes, Plane, Cone, showInfoDialog
 from src.settings import sett, save_settings, load_settings, get_color
 
 class MainController:
@@ -29,6 +29,7 @@ class MainController:
         self.view.save_gcode_action.triggered.connect(partial(self.save_gcode_file))
         self.view.save_sett_action.triggered.connect(self.save_settings_file)
         self.view.load_sett_action.triggered.connect(self.load_settings_file)
+        self.view.slicing_info_action.triggered.connect(self.get_slicer_version)
 
         # right panel
         self.view.number_wall_lines_value.textChanged.connect(self.update_wall_thickness)
@@ -305,6 +306,17 @@ class MainController:
         print("loaded gcode")
         # self.debugMe()
         self.update_interface()
+
+    def get_slicer_version(self):
+        slicer_version = "0.0.0"
+        try:
+            s = sett()
+            slicer_version = subprocess.check_output(s.slicing.cmd_version.split(), stderr=subprocess.STDOUT).decode("utf-8")
+        except Exception as e:
+            showErrorDialog("Error during getting slicer version:" + str(e))
+            return
+        
+        showInfoDialog(locales.getLocale().SlicerVersion + slicer_version)
 
     def save_settings(self, slicing_type, filename = ""):
         s = sett()
