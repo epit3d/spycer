@@ -510,6 +510,16 @@ def showErrorDialog(text_msg):
     retval = msg.exec_()
     # print "value of pressed message box button:", retval
 
+def showInfoDialog(text_msg):
+    msg = QMessageBox()
+    msg.setIcon(QMessageBox.Information)
+
+    msg.setText(text_msg)
+    msg.setWindowTitle("Info")
+    msg.setStandardButtons(QMessageBox.Close)
+
+    retval = msg.exec_()
+
 
 def createCustomXYaxis(origin: Tuple[float, float, float], endPoints: List[Tuple[float, float, float]]) -> List[
     vtkActor]:

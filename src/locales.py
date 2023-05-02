@@ -81,6 +81,8 @@ class Locale:
     Open = "Open"
     SaveSettings = "Save settings"
     LoadSettings = "Load settings"
+    SlicerInfo = "Slicer info"
+    SlicerVersion = "Slicer version: "
     SlicingTitle = "Slicing"
     SlicingProgress = "Slicing is in progress..."
     GCodeLoadingTitle = "GCode loading"
@@ -174,6 +176,8 @@ dicts = {
         Open = "Открыть",
         SaveSettings = "Сохранить настройки",
         LoadSettings = "Загрузить настройки",
+        SlicerInfo = "Информация о слайсере",
+        SlicerVersion = "Версия слайсера: ",
         SlicingTitle = "Слайсинг",
         SlicingProgress = "Слайсинг в прогрессе...",
         GCodeLoadingTitle = "Загрузка GCode",
