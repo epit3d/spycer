@@ -1,6 +1,6 @@
 PyQt5==5.15.4
 PyYAML==5.4.1
-vtk==9.0.3
+vtk>=9.0.0
 numpy==1.22.0
 qdarkstyle==3.1
 numpy-stl
