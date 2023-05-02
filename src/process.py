@@ -33,7 +33,7 @@ class Process:
             self._files = dict(
                 stdout=tempfile.NamedTemporaryFile(mode="w", delete=False),
                 stderr=tempfile.NamedTemporaryFile(mode="w", delete=False),
-                stdin=subprocess.PIPE)
+                stdin=tempfile.NamedTemporaryFile(mode="r", delete=False))
             kw.update(**self._files)
         if os.name == 'posix':
             kw.update(preexec_fn=os.setsid)
@@ -87,4 +87,4 @@ class Process:
 
     def wait(self):
         self._process.wait()
-        return self.returncode
+        return self
