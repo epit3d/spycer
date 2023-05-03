@@ -13,7 +13,7 @@ class Locale:
     NumberWallLines='Number of wall lines:'
     BottomThickness='Bottom thickness:'
     NumberOfBottomLayers='Number of bottom layers:'
-    LidsThickness='Lid thickness:'
+    LidsThickness='Lids thickness:'
     NumberOfLidLayers='Number of lid layers:'
     LineWidth = 'Extruder diameter, mm:'
     FillingType = 'Filling type:'
@@ -108,7 +108,7 @@ dicts = {
         NumberWallLines='Количество проходов стенки:',
         BottomThickness='Толщина дна:',
         NumberOfBottomLayers='Количество слоев дна:',
-        LidThickness='Толщина крышки:',
+        LidsThickness='Толщина крышки:',
         NumberOfLidLayers='Количество слоев крышки:',
         LineWidth='Диаметр сопла, мм:',
         ShowStl='Отображение STL модели',
