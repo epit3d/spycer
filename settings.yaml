@@ -86,6 +86,7 @@ slicing:
   bottoms_depth: 3
   line_width: 0.4
   magic_epsilon: 40
+  material_shrinkage: 1.5
   mesh_file: lib/goosli_middle.msh
   model_centering: false
   originx: 0.0
