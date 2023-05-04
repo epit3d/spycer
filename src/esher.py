@@ -1,29 +1,11 @@
 from typing import List
 
 class DeltaParams:
-    def __init__(self):
-        self.diagonals = {
-            'X': 0.0,
-            'Y': 0.0,
-            'Z': 0.0,
-        }
-        self.deltaRadius = 0.0
-        self.homedHeight = 0.0
-        self.bedRadius = 0.0
-        self.towerAngCorr = {
-            'X': 0.0,
-            'Y': 0.0,
-            'Z': 0.0,
-        }
-        self.endstopCorr = {
-            'X': 0.0,
-            'Y': 0.0,
-            'Z': 0.0,
-        }
-        self.bedTilt = {
-            'X': 0.0,
-            'Y': 0.0,
-        }
+    def __init__(self, bedRadius: float, deltaRadius: float, homedHeight: float, diagonals: dict):
+        self.bedRadius = bedRadius
+        self.deltaRadius = deltaRadius
+        self.homedHeight = homedHeight
+        self.diagonals = diagonals
 
 class Point:
     def __init__(self, X: float, Y: float, Z: float):
@@ -97,23 +79,6 @@ def Esher(dp: DeltaParams, points: List[Point], factorsNumber: int) -> DeltaPara
             A[3 * i + 0][0] = 1.0
             A[3 * i + 1][1] = 1.0
             A[3 * i + 2][2] = 1.0
-            X[3 * i + 0] = x
-            X[3 * i + 1]
-            A[3 * i + 0][0] = x3 * sinThetaPhi - y3 * cosThetaPhi
-            A[3 * i + 0][1] = zp
-            A[3 * i + 0][2] = dp.bedRadius - r
-
-            # Tower Y
-            A[3 * i + 1][0] = x3 * (cos120 * cosTheta + sin120 * sinThetaPhi) - \
-                            y3 * (cos120 * sinTheta - sin120 * cosThetaPhi)
-            A[3 * i + 1][1] = zp
-            A[3 * i + 1][2] = dp.bedRadius - r
-
-            # Tower Z
-            A[3 * i + 2][0] = x3 * (cos240 * cosTheta + sin240 * sinThetaPhi) - \
-                            y3 * (cos240 * sinTheta - sin240 * cosThetaPhi)
-            A[3 * i + 2][1] = zp
-            A[3 * i + 2][2] = dp.bedRadius - r
 
             X[3 * i + 0] = x
             X[3 * i + 1] = y
@@ -141,29 +106,7 @@ def Esher(dp: DeltaParams, points: List[Point], factorsNumber: int) -> DeltaPara
 
     # Update delta params with calculated factors
     for i in range(K):
-        if i == 0:
-            dp.diagonals['X'] += factors[i]
-        elif i == 1:
-            dp.diagonals['Y'] += factors[i]
-        elif i == 2:
-            dp.diagonals['Z'] += factors[i]
-        elif i == 3:
-            dp.towerAngCorr['X'] += factors[i]
-        elif i == 4:
-            dp.towerAngCorr['Y'] += factors[i]
-        elif i == 5:
-            dp.towerAngCorr['Z'] += factors[i]
-        elif i == 6:
-            dp.bedTilt['X'] += factors[i]
-        elif i == 7:
-            dp.bedTilt['Y'] += factors[i]
-        elif i == 8:
-            dp.endstopCorr['X'] += factors[i]
-        elif i == 9:
-            dp.endstopCorr['Y'] += factors[i]
-        elif i == 10:
-            dp.endstopCorr['Z'] += factors[i]
+        dp.diagonals[i] *= factors[i]
+        dp.towerPosition[i] += factors[i + 3]
 
     return dp
-
-
