@@ -91,38 +91,79 @@ def Esher(dp: DeltaParams, points: List[Point], factorsNumber: int) -> DeltaPara
             X[3 * i + 0] = x
             X[3 * i + 1] = y
             X[3 * i + 2] = z
+        else:
+            # When the point is very close to the center
+            # we need to set the angles to zero.
+            A[3 * i + 0][0] = 1.0
+            A[3 * i + 1][1] = 1.0
+            A[3 * i + 2][2] = 1.0
+            X[3 * i + 0] = x
+            X[3 * i + 1]
+            A[3 * i + 0][0] = x3 * sinThetaPhi - y3 * cosThetaPhi
+            A[3 * i + 0][1] = zp
+            A[3 * i + 0][2] = dp.bedRadius - r
+
+            # Tower Y
+            A[3 * i + 1][0] = x3 * (cos120 * cosTheta + sin120 * sinThetaPhi) - \
+                            y3 * (cos120 * sinTheta - sin120 * cosThetaPhi)
+            A[3 * i + 1][1] = zp
+            A[3 * i + 1][2] = dp.bedRadius - r
+
+            # Tower Z
+            A[3 * i + 2][0] = x3 * (cos240 * cosTheta + sin240 * sinThetaPhi) - \
+                            y3 * (cos240 * sinTheta - sin240 * cosThetaPhi)
+            A[3 * i + 2][1] = zp
+            A[3 * i + 2][2] = dp.bedRadius - r
+
+            X[3 * i + 0] = x
+            X[3 * i + 1] = y
+            X[3 * i + 2] = z
 
     # Calculate least squares
-    ATA = numpy.dot(numpy.transpose(A), A)
-    ATX = numpy.dot(numpy.transpose(A), X)
-    dp.towerAngCorr = numpy.dot(numpy.linalg.inv(ATA), ATX)
+    AT = [[A[j][i] for j in range(len(A))] for i in range(K)]
+    ATA = [[0.0] * K for i in range(K)]
+    ATX = [0.0] * K
 
-    # Endstop corrections
-    dp.endstopCorr = {
-        'X': dp.diagonals['X'] - dp.towerAngCorr[0],
-        'Y': dp.diagonals['Y'] - dp.towerAngCorr[1],
-        'Z': dp.diagonals['Z'] - dp.towerAngCorr[2],
-    }
+    for i in range(K):
+        for j in range(K):
+            for k in range(len(A)):
+                ATA[i][j] += AT[i][k] * A[k][j]
 
-    # Bed tilt
-    B = [[0.0] * 3 for i in range(2)]
-    for i in range(2):
-        B[i][0] = A[i * 3][0] - A[i * 3 + 2][0]
-        B[i][1] = A[i * 3][1] - A[i * 3 + 2][1]
-        B[i][2] = A[i * 3][2] - A[i * 3 + 2][2]
+        for k in range(len(A)):
+            ATX[i] += AT[i][k] * X[k]
 
-    C = numpy.dot(numpy.linalg.inv(numpy.dot(numpy.transpose(B), B)),
-                numpy.transpose(B))
-    D = numpy.dot(C, dp.endstopCorr.values())
-    dp.bedTilt = {
-        'X': D[0],
-        'Y': D[1],
-    }
+    try:
+        ATA_inv = np.linalg.inv(ATA)
+        factors = np.matmul(ATA_inv, ATX)
+    except np.linalg.LinAlgError:
+        # Singular matrix, can't calculate factors
+        return dp
+
+    # Update delta params with calculated factors
+    for i in range(K):
+        if i == 0:
+            dp.diagonals['X'] += factors[i]
+        elif i == 1:
+            dp.diagonals['Y'] += factors[i]
+        elif i == 2:
+            dp.diagonals['Z'] += factors[i]
+        elif i == 3:
+            dp.towerAngCorr['X'] += factors[i]
+        elif i == 4:
+            dp.towerAngCorr['Y'] += factors[i]
+        elif i == 5:
+            dp.towerAngCorr['Z'] += factors[i]
+        elif i == 6:
+            dp.bedTilt['X'] += factors[i]
+        elif i == 7:
+            dp.bedTilt['Y'] += factors[i]
+        elif i == 8:
+            dp.endstopCorr['X'] += factors[i]
+        elif i == 9:
+            dp.endstopCorr['Y'] += factors[i]
+        elif i == 10:
+            dp.endstopCorr['Z'] += factors[i]
 
     return dp
-
-
-
-
 
 
