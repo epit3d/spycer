@@ -253,6 +253,8 @@ class EpitPrinter:
         self.deltaParams = DeltaParams()
         self.scaleParams = ScaleParams()
         self.skewParams = SkewParams()
+        self.calibBallDiam = 9.93
+        self.calibBallRadius = self.calibBallDiam / 2
 
     def zProbe(self):
         zA, probes = probeZ()
@@ -633,6 +635,26 @@ class EpitPrinter:
         res.append((0, aY, levelZ))
 
         moveTo(Y=-20)
+
+        doHoming()
+
+        return res
+
+    def touchBed(self, posZ=DEFAULT_Z):
+        doHoming()
+
+        X, Y, Z = 0, 0, posZ
+
+        moveTo(X, Y, Z)
+
+        zA, probes = probeZ()
+        print(zA)
+
+        moveTo(X, Y, Z)
+
+        self._appendOutput(f'X:{X:6.3f} Y:{Y:6.3f} Z:{zA:6.3f} mm' + ' ' + str(probes))
+
+        res = [(X, Y, zA)]
 
         doHoming()
 

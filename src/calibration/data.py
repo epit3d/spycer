@@ -10,5 +10,9 @@ class CalibrationData:
         csvfile = open(filename, 'w', newline='')
         csvwriter = csv.writer(csvfile)
 
+        print(self.points)
         for point in self.points:
-            csvwriter.writerow(point)
+            row = [f"{val:.3f}"for val in point]
+            csvwriter.writerow(row)
+
+        csvfile.close()

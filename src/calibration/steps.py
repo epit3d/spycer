@@ -111,7 +111,11 @@ class Step1(Step):
         res = printer.defAxisU()
         res += printer.defAxisV()
         res += printer.defOrigin()
+        res += printer.touchBed()
         calibrationData.points.extend(res)
+
+    def printerMethod(self):
+        self.collectPoints()
 
 
 class Step2(Step):
@@ -162,6 +166,13 @@ class Step2(Step):
         '</p>'
     )
 
+    def collectPoints(self):
+        res = printer.touchBed()
+        calibrationData.points.extend(res)
+
+    def printerMethod(self):
+        self.collectPoints()
+
 
 class Step3(Step):
     textRu = (
@@ -190,6 +201,13 @@ class Step3(Step):
         ' perform movements to collect the calibration data.'
         '</p>'
     )
+
+    def collectPoints(self):
+        res = printer.touchBed()
+        calibrationData.points.extend(res)
+
+    def printerMethod(self):
+        self.collectPoints()
 
 
 class FinalStep(Step):
@@ -235,6 +253,9 @@ class FinalStep(Step):
     )
 
     def printerMethod(self):
+        res = (printer.calibBallRadius, 0, 0)
+        calibrationData.points.append(res)
+
         calibrationData.writeToFile('test.csv')
         print('test.csv created')
 
