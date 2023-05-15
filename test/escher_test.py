@@ -6,6 +6,7 @@ def test_Escher_6_factors():
     factorsNumber = 6
 
     dp = DeltaParams()
+    print(dp.toString())
 
     points = [
         (  0,  90,   0.9),  # noqa
@@ -43,6 +44,7 @@ def test_Escher_6_factors():
     }
 
     result = Escher(dp, points, factorsNumber)
+    print(result.toString())
 
     assert result.diagonals == diagonals
     assert result.deltaRadius == deltaRadius
@@ -57,6 +59,7 @@ def test_Escher_7_factors():
     factorsNumber = 7
 
     dp = DeltaParams()
+    print(dp.toString())
 
     points = [
         (  0,  90,   0.9),  # noqa
@@ -68,7 +71,7 @@ def test_Escher_7_factors():
         (  0,   0,     0),  # noqa
     ]
 
-    points = [Point(p) for p in points]
+    points = [Point(*p) for p in points]
 
     diagonals = {
             'X': 247.790,
@@ -93,7 +96,8 @@ def test_Escher_7_factors():
         'Y': 0,
     }
 
-    result = Esher(dp, points, factorsNumber)
+    result = Escher(dp, points, factorsNumber)
+    print(result.toString())
 
     assert result.diagonals == diagonals
     assert result.deltaRadius == deltaRadius
