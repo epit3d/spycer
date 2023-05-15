@@ -355,7 +355,7 @@ class MainController:
 
         m = vtkMatrix4x4()
         tf.GetMatrix(m)
-        for i in range(3):
+        for i in range(4):
             for j in range(4):
                 setattr(s.slicing.transformation_matrix, "m" + str(i) + str(j), m.GetElement(i, j))
 

@@ -124,6 +124,10 @@ slicing:
     m21: 0.0
     m22: 0.0
     m23: 0.0
+    m30: 0.0
+    m31: 0.0
+    m32: 0.0
+    m33: 0.0
   wall_thickness: 0.8
 supports:
   enabled: true
