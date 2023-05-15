@@ -1,5 +1,6 @@
-from .steps import steps
+from .steps import StepsCollection
 
 
-def CalibrationModel():
-    return steps
+class CalibrationModel(StepsCollection):
+    def __init__(self):
+        super().__init__()

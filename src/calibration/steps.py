@@ -1,17 +1,34 @@
 import printer
 from .data import CalibrationData
 
-printer = printer.EpitPrinter()
-printer.setOutputMethod(print)
-printer.setStatusMethod(print)
-calibrationData = CalibrationData()
+
+class StepsCollection:
+    def __init__(self):
+        self.printer = printer.EpitPrinter()
+        self.printer.setOutputMethod(print)
+        self.printer.setStatusMethod(print)
+
+        self.calibrationData = CalibrationData()
+
+        stepClasses = (Step1, Step2, Step3, FinalStep)
+        self._steps = [Step(num, parent=self)
+                       for num, Step in enumerate(stepClasses)]
+
+    def __getitem__(self, i):
+        return self._steps[i]
+
+    def __len__(self):
+        return len(self._steps)
 
 
 class Step:
-    def __init__(self, num, stepType='text'):
+    def __init__(self, num, stepType='text', parent=None):
         self.num = num
         self.type = stepType
         self.setLang('ru')
+        self.parent = parent
+        self.printer = self.parent.printer
+        self.calibrationData = self.parent.calibrationData
 
     def setLang(self, lang):
         if lang == 'ru':
@@ -90,7 +107,7 @@ class Step1(Step):
     )
 
     def action_template(self):
-        points = printer.deltaCalibrator.collectPoints()
+        points = self.printer.deltaCalibrator.collectPoints()
         pointsText = ""
         for num, point in points:
             x, y, z = point
@@ -104,15 +121,15 @@ class Step1(Step):
         dialogText += pointsText
         dialogText += "\n"
 
-        dialogText += printer.deltaCalibrator.deltaParams.toString()
+        dialogText += self.printer.deltaCalibrator.deltaParams.toString()
         dialogText += "\n"
 
     def collectPoints(self):
-        res = printer.defAxisU()
-        res += printer.defAxisV()
-        res += printer.defOrigin()
-        res += printer.touchBed()
-        calibrationData.points.extend(res)
+        res = self.printer.defAxisU()
+        res += self.printer.defAxisV()
+        res += self.printer.defOrigin()
+        res += self.printer.touchBed()
+        self.calibrationData.points.extend(res)
 
     def printerMethod(self):
         self.collectPoints()
@@ -167,8 +184,8 @@ class Step2(Step):
     )
 
     def collectPoints(self):
-        res = printer.touchBed()
-        calibrationData.points.extend(res)
+        res = self.printer.touchBed()
+        self.calibrationData.points.extend(res)
 
     def printerMethod(self):
         self.collectPoints()
@@ -203,8 +220,8 @@ class Step3(Step):
     )
 
     def collectPoints(self):
-        res = printer.touchBed()
-        calibrationData.points.extend(res)
+        res = self.printer.touchBed()
+        self.calibrationData.points.extend(res)
 
     def printerMethod(self):
         self.collectPoints()
@@ -253,11 +270,8 @@ class FinalStep(Step):
     )
 
     def printerMethod(self):
-        res = (printer.calibBallRadius, 0, 0)
-        calibrationData.points.append(res)
+        res = (self.printer.calibBallRadius, 0, 0)
+        self.calibrationData.points.append(res)
 
-        calibrationData.writeToFile('test.csv')
+        self.calibrationData.writeToFile('test.csv')
         print('test.csv created')
-
-
-steps = [Step1, Step2, Step3, FinalStep]

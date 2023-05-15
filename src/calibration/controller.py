@@ -68,7 +68,7 @@ class CalibrationController(QObject):
         self.textResults = []
 
         self.view = view
-        self.steps = [step(num) for num, step in enumerate(steps)]
+        self.steps = steps
 
         view.btnNext.clicked.connect(self.clickNext)
         view.btnCancel.clicked.connect(self.view.close)
