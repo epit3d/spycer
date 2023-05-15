@@ -9,6 +9,7 @@ from pathlib import Path
 import shutil
 from shutil import copy2
 from typing import Dict, List
+from vtkmodules.vtkCommonMath import vtkMatrix4x4
 
 import vtk
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -351,6 +352,12 @@ class MainController:
         s.slicing.overlapping_infill_percentage = float(self.view.overlapping_infill_value.text())
 
         s.slicing.slicing_type = slicing_type
+
+        m = vtkMatrix4x4()
+        tf.GetMatrix(m)
+        for i in range(3):
+            for j in range(4):
+                setattr(s.slicing.transformation_matrix, "m" + str(i) + str(j), m.GetElement(i, j))
 
         save_settings(filename)
 

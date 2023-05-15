@@ -3,6 +3,7 @@ Provides a class creating a new window to edit parameters of custom figures
 """
 import sys
 from typing import List, Callable, Dict, Tuple, Optional
+from functools import partial
 
 from PyQt5 import QtCore, sip
 from PyQt5.QtWidgets import (QSlider, QLineEdit, QApplication, QGridLayout, QWidget, QLabel, QSizePolicy,
@@ -180,7 +181,10 @@ class StlMovePanel(QWidget):
                 act_pos, act_neg, act_set = methods[col, param]
                 btn_pos.clicked.connect(act_pos)
                 btn_neg.clicked.connect(act_neg)
-                edit.textChanged.connect(act_set)
+                if col == 1:
+                    edit.textChanged.connect(act_set)
+                else:
+                    edit.editingFinished.connect(partial(act_set, edit))
 
             mainLayout.addLayout(gridLayout)
 
