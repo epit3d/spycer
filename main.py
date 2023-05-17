@@ -31,11 +31,7 @@ if __name__ == "__main__":
     app.setStyleSheet(style_sheet)
 
     def open_project(project_path: str):
-        # copy_project_files(project_path)
-        settpath = pathlib.Path(project_path, "settings.yaml")
-        
-        load_settings(settpath)
-        print(sett().slicing.stl_file)
+        load_settings(pathlib.Path(project_path, "settings.yaml"))
 
         window = MainWindow()
         window.close_signal.connect(entry_window.show)
@@ -58,7 +54,6 @@ if __name__ == "__main__":
         entry_window.close()
 
     def create_project(project_path: str):
-        import pathlib
         copy_project_files(project_path)
         settpath = pathlib.Path(project_path, "settings.yaml")
         load_settings(settpath)

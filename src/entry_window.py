@@ -9,6 +9,7 @@ from PyQt5 import QtGui
 from typing import List
 
 from src.gui_utils import showErrorDialog
+import src.locales as locales
 
 
 class EntryWindow(QWidget):
@@ -23,7 +24,7 @@ class EntryWindow(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle('FASP project manager')
+        self.setWindowTitle(locales.getLocale().ProjectManager)
         self.setWindowIcon(QtGui.QIcon("icon.png"))
         self.init_ui()
 
@@ -35,48 +36,48 @@ class EntryWindow(QWidget):
         new_proj_layout.setAlignment(QtCore.Qt.AlignTop)
 
         # Create "New Project" button
-        self.new_project_button = QPushButton("New Project", self)
+        self.new_project_button = QPushButton(locales.getLocale().NewProject, self)
         self.new_project_button.clicked.connect(self.create_new_project)
         new_proj_layout.addWidget(self.new_project_button)
 
         # create project directory label
-        self.project_directory_label = QLabel("Project directory:", self)
+        self.project_directory_label = QLabel(locales.getLocale().ProjectDirectory, self)
         new_proj_layout.addWidget(self.project_directory_label)
 
         # create project location label with current folder
         self.project_directory_edit = QLineEdit("", self)
         self.project_directory_edit.setPlaceholderText(
-            "Choose folder for project")
+            locales.getLocale().ChooseProjectDirectory)
         self.project_directory_edit.setReadOnly(True)
         new_proj_layout.addWidget(self.project_directory_edit)
 
         # create project location folder dialog
         self.project_location_folder_dialog = QPushButton(
-            "Choose Folder", self)
+            locales.getLocale().ChooseProjectDirectory, self)
         new_proj_layout.addWidget(self.project_location_folder_dialog)
         self.project_location_folder_dialog.clicked.connect(
             self.choose_project_location)
 
         # create "project name" label
-        self.project_name_label = QLabel("Project Name:", self)
+        self.project_name_label = QLabel(locales.getLocale().ProjectName, self)
         new_proj_layout.addWidget(self.project_name_label)
 
         # create "project name" text edit
         self.project_name_text_edit = QLineEdit("", self)
-        self.project_name_text_edit.setPlaceholderText("Project Name")
+        self.project_name_text_edit.setPlaceholderText(locales.getLocale().ProjectName)
         new_proj_layout.addWidget(self.project_name_text_edit)
 
         # create layout for opening recent or existing projects
         existing_proj_layout = QVBoxLayout()
 
         # Create "Open Project" button
-        self.open_project_button = QPushButton("Open Project", self)
+        self.open_project_button = QPushButton(locales.getLocale().OpenProject, self)
         self.open_project_button.clicked.connect(self.open_existing_project)
 
         existing_proj_layout.addWidget(self.open_project_button)
 
         # Create label for recent projects
-        self.recent_projects_label = QLabel("Recent Projects:", self)
+        self.recent_projects_label = QLabel(locales.getLocale().RecentProjects, self)
 
         # Create list widget for recent projects
         self.recent_projects_list_widget = QListWidget(self)
@@ -100,7 +101,7 @@ class EntryWindow(QWidget):
         self.show()
 
     def choose_project_location(self):
-        file = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
+        file = str(QFileDialog.getExistingDirectory(self, locales.getLocale().ChooseFolder))
         if not file:
             return
 
@@ -124,12 +125,12 @@ class EntryWindow(QWidget):
         print("Creating new project...")
         # check if project name is empty
         if self.project_name_text_edit.text() == "":
-            showErrorDialog("Project name cannot be empty")
+            showErrorDialog(locales.getLocale().ProjectNameCannotBeEmpty)
             return
 
         # check if project location is empty
         if self.project_directory_edit.text() == "":
-            showErrorDialog("Project location cannot be empty")
+            showErrorDialog(locales.getLocale().ProjectLocationCannotBeEmpty)
             return
 
         import pathlib
@@ -140,7 +141,7 @@ class EntryWindow(QWidget):
 
         # check if project already exists
         if full_path.exists():
-            showErrorDialog("Project already exists")
+            showErrorDialog(locales.getLocale().ProjectAlreadyExists)
             return
 
         # add current project to recent projects
@@ -156,7 +157,7 @@ class EntryWindow(QWidget):
 
     def open_existing_project(self):
         if self.recent_projects_list_widget.currentItem() is None:
-            showErrorDialog("No project selected")
+            showErrorDialog(locales.getLocale().NoProjectSelected)
             return
         selected_project = self.recent_projects_list_widget.currentItem().text()
         print(f"Opening {selected_project}...")
