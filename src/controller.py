@@ -9,7 +9,7 @@ from pathlib import Path
 import shutil
 from shutil import copy2
 from typing import Dict, List
-
+import pathlib
 import vtk
 from PyQt5 import QtCore, QtGui, QtWidgets
 
@@ -62,6 +62,14 @@ class MainController:
         self.view.splanes_tree.model().rowsInserted.connect(self.moving_figure)
 
         self.view.hide_checkbox.stateChanged.connect(self.view.hide_splanes)
+
+        # on close of window we save current planes to project file
+        self.view.close_signal.connect(self.save_planes_on_close)
+
+    def save_planes_on_close(self):
+        save_splanes_to_file(self.model.splanes, str(pathlib.Path(sett().project_path, "planes_file.txt")))
+        sett().slicing.splanes_file = 'planes_file.txt'
+        save_settings()
 
     def moving_figure(self, sourceParent, previousRow):
         if sourceParent.row() != -1:
@@ -153,9 +161,7 @@ class MainController:
                 filename = str(Path(filename))
                 if file_ext == ".TXT":
                     try:
-                        self.model.splanes = read_planes(filename)
-                        self.view.hide_checkbox.setChecked(False)
-                        self.view.reload_splanes(self.model.splanes)
+                        self.load_planes(filename)
                     except:
                         showErrorDialog("Error during reading planes file")
                 else:
@@ -163,6 +169,11 @@ class MainController:
                         "This file format isn't supported:" + file_ext)
         except IOError as e:
             showErrorDialog("Error during file opening:" + str(e))
+
+    def load_planes(self, filename):
+        self.model.splanes = read_planes(filename)
+        self.view.hide_checkbox.setChecked(False)
+        self.view.reload_splanes(self.model.splanes)
 
     def change_layer_view(self):
         self.model.current_slider_value = self.view.change_layer_view(self.model.current_slider_value, self.model.gcode)
@@ -292,7 +303,8 @@ class MainController:
             return
 
         s = sett()
-        save_splanes_to_file(self.model.splanes, s.slicing.splanes_file)
+        save_splanes_to_file(self.model.splanes, str(pathlib.Path(sett().project_path, "planes_file.txt")))
+        sett().slicing.splanes_file = 'planes_file.txt'
         self.save_settings(slicing_type)
 
         def work():

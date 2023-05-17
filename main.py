@@ -2,10 +2,9 @@ import logging
 import sys
 import traceback
 import os
-import qdarkstyle
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QApplication
-
+import pathlib
 from src.settings import copy_project_files, load_settings, sett, get_color
 from src.window import MainWindow
 from src.model import MainModel
@@ -32,7 +31,6 @@ if __name__ == "__main__":
     app.setStyleSheet(style_sheet)
 
     def open_project(project_path: str):
-        import pathlib
         # copy_project_files(project_path)
         settpath = pathlib.Path(project_path, "settings.yaml")
         
@@ -45,11 +43,15 @@ if __name__ == "__main__":
         model = MainModel()
         cntrl = MainController(window, model)
 
-        stlpath = pathlib.Path(project_path, sett().slicing.stl_file)
-
         # try to open stl file
+        stlpath = pathlib.Path(project_path, sett().slicing.stl_file)
         if os.path.isfile(stlpath):
             cntrl.load_stl(stlpath)
+
+        # try to open figures file
+        figpath = pathlib.Path(project_path, sett().slicing.splanes_file)
+        if os.path.isfile(figpath):
+            cntrl.load_planes(figpath)
 
         window.showMaximized()
         window.show()
