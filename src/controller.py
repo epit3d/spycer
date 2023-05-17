@@ -215,7 +215,19 @@ class MainController:
                     s.slicing.print_time = 0
                     s.slicing.consumption_material = 0
                     s.slicing.planes_contact_with_nozzle = ""
-                    s.slicing.stl_file = filename
+                    # copy stl file to project directory
+                    # s = sett()
+                    import pathlib
+                    newpath = pathlib.Path(s.project_path, "model.stl")
+                    # replace file if exists
+                    # import shutil
+
+                    # if os.path.isfile(newpath):
+                    #     os.remove(newpath)
+
+                    shutil.copyfile(filename, newpath)
+                    s.slicing.stl_file = "model.stl" # it is relative path inside project
+                    print(s.slicing.stl_file, "slicing.stl_file in open file")
                     save_settings()
                     self.update_interface(filename)
 
@@ -224,7 +236,7 @@ class MainController:
                     if os.path.isfile(s.colorizer.copy_stl_file):
                         os.remove(s.colorizer.copy_stl_file)
 
-                    self.load_stl(filename)
+                    self.load_stl(newpath)
                 elif file_ext == ".GCODE":
                     s = sett()
                     s.slicing.stl_file = filename # TODO optimize

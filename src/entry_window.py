@@ -18,6 +18,9 @@ class EntryWindow(QWidget):
     # signal accepts path to project file
     open_project_signal = QtCore.pyqtSignal(str)
 
+    # signal accepts path to project file
+    create_project_signal = QtCore.pyqtSignal(str)
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle('FASP project manager')
@@ -107,7 +110,13 @@ class EntryWindow(QWidget):
         settings = QSettings('Epit3D', 'Spycer')
 
         if settings.contains('recent_projects'):
-            return settings.value('recent_projects', type=list)
+            projects = settings.value('recent_projects', type=list)
+
+            # filter projects which do not exist
+            import pathlib
+            projects = [p for p in projects if pathlib.Path(p).exists()]
+
+            return projects
 
         return []
 
@@ -142,12 +151,8 @@ class EntryWindow(QWidget):
         # create project directory
         full_path.mkdir(parents=True, exist_ok=True)
 
-        # create project file
-        with open(full_path / "project.json", "w") as project_file:
-            project_file.write("{}")
-
         # emit signal with path to project file
-        self.open_project_signal.emit(full_path)
+        self.create_project_signal.emit(str(full_path))
 
     def open_existing_project(self):
         if self.recent_projects_list_widget.currentItem() is None:

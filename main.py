@@ -6,7 +6,7 @@ import qdarkstyle
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QApplication
 
-from src.settings import load_settings, sett, get_color
+from src.settings import copy_project_files, load_settings, sett, get_color
 from src.window import MainWindow
 from src.model import MainModel
 from src.controller import MainController
@@ -31,7 +31,36 @@ if __name__ == "__main__":
     style_sheet = getStyleSheet()
     app.setStyleSheet(style_sheet)
 
-    def open_project(path):
+    def open_project(project_path: str):
+        import pathlib
+        # copy_project_files(project_path)
+        settpath = pathlib.Path(project_path, "settings.yaml")
+        
+        load_settings(settpath)
+        print(sett().slicing.stl_file)
+
+        window = MainWindow()
+        window.close_signal.connect(entry_window.show)
+        
+        model = MainModel()
+        cntrl = MainController(window, model)
+
+        stlpath = pathlib.Path(project_path, sett().slicing.stl_file)
+
+        # try to open stl file
+        if os.path.isfile(stlpath):
+            cntrl.load_stl(stlpath)
+
+        window.showMaximized()
+        window.show()
+        entry_window.close()
+
+    def create_project(project_path: str):
+        import pathlib
+        copy_project_files(project_path)
+        settpath = pathlib.Path(project_path, "settings.yaml")
+        load_settings(settpath)
+
         window = MainWindow()
         window.close_signal.connect(entry_window.show)
         
@@ -45,6 +74,7 @@ if __name__ == "__main__":
     entry_window.show()
 
     entry_window.open_project_signal.connect(open_project)
+    entry_window.create_project_signal.connect(create_project)
 
     # sys.exit(app.exec_())
     sys.excepthook = excepthook

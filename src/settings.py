@@ -26,8 +26,15 @@ def get_color(key):
     return val
 
 
-def load_settings(filename = ""):
+def copy_project_files(project_path: str):
+    load_settings()
+    global _sett
+    _sett.project_path = project_path
+    save_settings()
+
+def load_settings(filename=""):
     if not filename:
+        print('retrieving settings')
         if getattr(sys, 'frozen', False):
             app_path = path.dirname(sys.executable)
             # uncomment if you want some protection that nothing would be broken
@@ -46,9 +53,12 @@ def load_settings(filename = ""):
         global _sett
         _sett = Settings(data)
 
-def save_settings(filename = ""):
+
+def save_settings(filename=""):
     if not filename:
-        if getattr(sys, 'frozen', False):
+        if _sett.project_path:
+            app_path = _sett.project_path
+        elif getattr(sys, 'frozen', False):
             app_path = path.dirname(sys.executable)
         else:
             # have to add .. because settings.py is under src folder
@@ -60,13 +70,16 @@ def save_settings(filename = ""):
     temp = yaml.dump(_sett)
     temp = temp.replace("!!python/object:src.settings.Settings", "").strip()
 
+    print(f'saving settings to {filename}')
     with open(filename, 'w') as f:
         f.write(temp)
+
 
 class Settings(object):
     def __init__(self, d):
         for a, b in d.items():
             if isinstance(b, (list, tuple)):
-                setattr(self, a, [Settings(x) if isinstance(x, dict) else x for x in b])
+                setattr(self, a,
+                        [Settings(x) if isinstance(x, dict) else x for x in b])
             else:
                 setattr(self, a, Settings(b) if isinstance(b, dict) else b)
