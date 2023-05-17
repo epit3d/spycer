@@ -1,6 +1,6 @@
 from math import sin, cos, radians
 from .utils import polar2cart, tiltPoint, getPhi
-from .http import getPos, getHomed, getObjectModel, execGcode
+from .http import getPos, getHomed, getObjectModel, execGcode, fileUpload
 import time
 
 from .delta import DeltaParams
@@ -279,6 +279,12 @@ class EpitPrinter:
             global fileGcode
             fileGcode = open('output.g', 'w')
 
+    def fileUpload(self, filename, b):
+        fileUpload(filename, b)
+
+    def execGcode(self, gcode):
+        execGcode(gcode)
+
     def defAxisU(self, posZ=DEFAULT_Z):
         doHoming()
 
@@ -509,32 +515,35 @@ class EpitPrinter:
         moveTo(X=0, Y=0)
         tiltBed(V=0)
 
-    def defDelta(self, posZ, *args, **kwargs):
+    def defDelta(self, posZ=DEFAULT_Z, points=None, *args, **kwargs):
         print(args, kwargs)
 
         doHoming()
 
-        points = (
-            (  0,  100), # noqa
-            ( 87,   50), # noqa
-            ( 87,  -50), # noqa
-            (  0, -100), # noqa
-            (-87,  -50), # noqa
-            (-87,   50), # noqa
-            (  0,   15), # noqa
-            ( 13, -7.5), # noqa
-            (-13, -7.5), # noqa
-        )
+        uOffset = -45  # offset of the touch position from X+ axis
 
-        uOffset = -135
+        if points is None:
+            radius = 100
+            angles = (-150, -90, -30, 30, 90, 150)
+
+            positions = [(0, 0, posZ, 0)]
+            for angle in angles:
+                X, Y = polar2cart(angle, radius)
+                position = (X, Y, posZ, uOffset + angle)
+                positions.append(position)
+        else:
+            positions = []
+            for point in points:
+                X, Y, _ = point
+                position = (X, Y, posZ, uOffset + getPhi(X, Y))
+                positions.append(position)
 
         result = []
 
-        for num, point in enumerate(points):
-            X, Y = point
-            U = uOffset + getPhi(X, Y)
-            rotateBed(U=U)
-            moveTo(X, Y, posZ)
+        for num, position in enumerate(positions):
+            X, Y, Z, U = position
+            rotateBed(U)
+            moveTo(X, Y, Z)
 
             zA, probes = probeZ()
             # we multiply to -1 in order to get the correct values
@@ -544,7 +553,7 @@ class EpitPrinter:
             print(zA)
             result += [(X, Y, zA)]
 
-            moveTo(X, Y, posZ)
+            moveTo(X, Y, Z)
 
         doHoming()
         return result

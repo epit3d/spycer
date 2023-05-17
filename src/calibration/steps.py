@@ -1,5 +1,12 @@
 import printer
 from .data import CalibrationData
+from .reprapfirmware_lsq import Tuner
+
+
+class Container:
+    rawDelta = b''
+    rawScale = b''
+    rawSkew = b''
 
 
 class StepsCollection:
@@ -9,6 +16,8 @@ class StepsCollection:
         self.printer.setStatusMethod(print)
 
         self.calibrationData = CalibrationData()
+
+        self.container = Container()
 
         stepClasses = (Step1, Step2, Step3, FinalStep)
         self._steps = [Step(num, parent=self)
@@ -29,6 +38,7 @@ class Step:
         self.parent = parent
         self.printer = self.parent.printer
         self.calibrationData = self.parent.calibrationData
+        self.container = self.parent.container
 
     def setLang(self, lang):
         if lang == 'ru':
@@ -106,23 +116,43 @@ class Step1(Step):
         '</p>'
     )
 
-    def action_template(self):
-        points = self.printer.deltaCalibrator.collectPoints()
-        pointsText = ""
-        for num, point in points:
-            x, y, z = point
-            pointsText += f"Point {num}: X:{x:.3f} Y:{y:.3f} Z{z:.3f}\n"
+    def calibrateDelta(self):
+        print(self.printer.deltaParams.toString())
 
-        dialogText = ""
-        "Please use the following data to ajust printer parameters at:\n"
-        "https://escher3d.com/pages/wizards/wizarddelta.php\n"
-        "\n"
+        tuner = Tuner(
+            self.printer.deltaParams.diagonals['X'],
+            self.printer.deltaParams.deltaRadius,
+            self.printer.deltaParams.homedHeight,
+            self.printer.deltaParams.endstopCorr['X'],
+            self.printer.deltaParams.endstopCorr['Y'],
+            self.printer.deltaParams.endstopCorr['Z'],
+            self.printer.deltaParams.towerAngCorr['X'],
+            self.printer.deltaParams.towerAngCorr['Y'],
+            self.printer.deltaParams.towerAngCorr['Z'],
+            probe_radius=100,
+            num_probe_points=7,
+            num_factors=7,
+        )
+        tuner.set_firmware("RRF")
 
-        dialogText += pointsText
-        dialogText += "\n"
+        points = tuner.get_probe_points()
 
-        dialogText += self.printer.deltaCalibrator.deltaParams.toString()
-        dialogText += "\n"
+        # collect points for delta calibration
+        res = self.printer.defDelta(points=points)
+        for p in res:
+            print(p)
+
+        tuner.set_probe_errors(res)
+
+        # calculate new delta parameters
+        cmds, dev_before, dev_after = tuner.calc(recalc=False)
+        print(dev_before, dev_after)
+        for cmd in cmds:
+            print(cmd)
+            if cmd != "":
+                self.printer.runGcode(cmd)
+
+        self.container.rawDelta = '/n'.join(cmds).encode()
 
     def collectPoints(self):
         res = self.printer.defAxisU()
@@ -132,6 +162,13 @@ class Step1(Step):
         self.calibrationData.points.extend(res)
 
     def printerMethod(self):
+        # set default parameters for delta, scale and skew
+        self.printer.runGcode(self.printer.deltaParams.generateM665())
+        self.printer.runGcode(self.printer.deltaParams.generateM666())
+        self.printer.runGcode(self.printer.scaleParams.generateM579())
+        self.printer.runGcode(self.printer.skewParams.generateM556())
+
+        self.calibrateDelta()
         self.collectPoints()
 
 
@@ -270,8 +307,14 @@ class FinalStep(Step):
     )
 
     def printerMethod(self):
+        # write the required files to printer
+        self.printer.fileUpload("0:/sys/delta.g", self.container.rawDelta)
+        self.printer.fileUpload("0:/sys/scale.g", self.container.rawScale)
+        self.printer.fileUpload("0:/sys/skew.g", self.container.rawSkew)
+
+        # write the last string of calibration_data.csv
         res = (self.printer.calibBallRadius, 0, 0)
         self.calibrationData.points.append(res)
 
-        self.calibrationData.writeToFile('test.csv')
-        print('test.csv created')
+        self.calibrationData.writeToFile('data\calibration_data.csv')
+        print('calibration_data.csv created')

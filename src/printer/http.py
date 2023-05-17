@@ -11,7 +11,7 @@ def startSession():
     session = requests.Session()
 
 
-def sendRequest(request):
+def sendRequest(request, requestType='GET', data=None):
     # print('request: ' + host + request)
     global host, session
     if host is None:
@@ -28,10 +28,18 @@ def sendRequest(request):
     while True:
         try:
             i += 1
-            response = session.get(
-                host + request,
-                timeout=1,
-            )
+            if requestType == 'POST':
+                response = session.post(
+                    host + request,
+                    data=data,
+                    timeout=1,
+                    headers={'Content-Length': str(len(data))},
+                )
+            else:
+                response = session.get(
+                    host + request,
+                    timeout=1,
+                )
         except requests.exceptions.Timeout:
             print('The request timed out')
             if i > 5:
@@ -40,8 +48,14 @@ def sendRequest(request):
             return response
 
 
-def fileUpload():
-    pass
+def fileUpload(filename, b):
+    response = sendRequest(
+        f'/rr_upload?name={filename}',
+        requestType='POST',
+        data=b,
+    )
+    if response.json()['err'] > 0:
+        raise Exception(f'Failed to upload file: {filename}')
 
 
 def getObjectModel(entry):
@@ -53,7 +67,6 @@ def waitBusy():
     while True:
         time.sleep(0.5)
         response = sendRequest('/rr_model?key=state.status')
-        print('response:', response.status_code, response.content)
         status = response.json()['result']
 
         if status == 'idle':
