@@ -32,3 +32,7 @@ def tiltPoint(point, angle, rotVector):
     rotVector = np.array(rotVector)
     vector = np.array(point)
     return rotateVector(vector - rotVector, angle) + rotVector
+
+
+def getOtherCoordAt(coord, radius):
+    return np.sqrt(radius * radius - coord * coord)

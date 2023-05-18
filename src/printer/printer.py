@@ -1,5 +1,5 @@
 from math import sin, cos, radians
-from .utils import polar2cart, tiltPoint, getPhi
+from .utils import polar2cart, tiltPoint, getPhi, getOtherCoordAt
 from .http import getPos, getHomed, getObjectModel, execGcode, fileUpload
 import time
 
@@ -208,8 +208,12 @@ class EpitPrinter:
             'G90',  # absolute positioning
         ]
 
+        # for safety we take radius less then original
+        radius = 0.9 * self.deltaParams.bedRadius
+        limitX = getOtherCoordAt(getPos(axisY), radius)
+
         for _ in range(probeNum):
-            callGcode('G38.2 X40')
+            callGcode(f'G38.2 X{limitX}')
 
             results.append(requestX())
 
@@ -227,8 +231,12 @@ class EpitPrinter:
             'G90',  # absolute positioning
         ]
 
+        # for safety we take radius less then original
+        radius = 0.9 * self.deltaParams.bedRadius
+        limitX = getOtherCoordAt(getPos(axisY), radius)
+
         for _ in range(probeNum):
-            callGcode('G38.2 X0')
+            callGcode(f'G38.2 X-{limitX}')
 
             results.append(requestX())
 
@@ -246,8 +254,12 @@ class EpitPrinter:
             'G90',  # absolute positioning
         ]
 
+        # for safety we take radius less then original
+        radius = 0.9 * self.deltaParams.bedRadius
+        limitY = getOtherCoordAt(getPos(axisX), radius)
+
         for _ in range(probeNum):
-            callGcode('G38.2 Y40')
+            callGcode(f'G38.2 Y{limitY}')
 
             results.append(requestY())
 
@@ -265,8 +277,12 @@ class EpitPrinter:
             'G90',  # absolute positioning
         ]
 
+        # for safety we take radius less then original
+        radius = 0.9 * self.deltaParams.bedRadius
+        limitY = getOtherCoordAt(getPos(axisX), radius)
+
         for _ in range(probeNum):
-            callGcode('G38.2 Y0')
+            callGcode(f'G38.2 Y-{limitY}')
 
             results.append(requestY())
 
@@ -664,6 +680,98 @@ class EpitPrinter:
         doHoming()
 
         return res
+
+    def measureScaleX(self, posZ=DEFAULT_Z):
+        doHoming()
+
+        rotateBed(U=0)
+
+        X, Y, Z = 70, 0, posZ
+
+        moveTo(X=X, Y=Y)
+        moveTo(Z=Z)
+
+        X1, probes = self.probeNegX()
+        self._appendOutput(f'0: X:{X1:6.3f} mm' + ' ' + str(probes))
+
+        moveTo(X=X)
+        moveTo(Z=100)
+
+        X, Y, Z = -30, 0, posZ
+
+        moveTo(X=X, Y=Y)
+        moveTo(Z=Z)
+
+        X2, probes = self.probeNegX()
+        self._appendOutput(f'1: X:{X2:6.3f} mm' + ' ' + str(probes))
+
+        moveTo(X=X)
+        moveTo(Z=100)
+
+        doHoming()
+
+        return X1 - X2
+
+    def measureScaleY(self, posZ=DEFAULT_Z):
+        doHoming()
+
+        rotateBed(U=90)
+
+        X, Y, Z = 0, 70, posZ
+
+        moveTo(X=X, Y=Y)
+        moveTo(Z=Z)
+
+        Y1, probes = self.probeNegY()
+        self._appendOutput(f'0: Y:{Y1:6.3f} mm' + ' ' + str(probes))
+
+        moveTo(Y=Y)
+        moveTo(Z=100)
+
+        X, Y, Z = 0, -30, posZ
+
+        moveTo(X=X, Y=Y)
+        moveTo(Z=Z)
+
+        Y2, probes = self.probeNegY()
+        self._appendOutput(f'1: Y:{Y2:6.3f} mm' + ' ' + str(probes))
+
+        moveTo(Y=Y)
+        moveTo(Z=100)
+
+        doHoming()
+
+        return Y1 - Y2
+
+    def measureScaleZ(self):
+        doHoming()
+
+        rotateBed(U=0)
+
+        X, Y, Z = -40, -50, 15
+
+        moveTo(X=X, Y=Y)
+        moveTo(Z=Z)
+
+        Z1, probes = probeZ()
+        self._appendOutput(f'0: Z:{Z1:6.3f} mm' + ' ' + str(probes))
+
+        moveTo(Z=200)
+
+        X, Y, Z = -20, -50, 85
+
+        moveTo(X=X, Y=Y)
+        moveTo(Z=Z)
+
+        Z2, probes = probeZ()
+        self._appendOutput(f'1: Z:{Z2:6.3f} mm' + ' ' + str(probes))
+
+        moveTo(Y=Y)
+        moveTo(Z=200)
+
+        doHoming()
+
+        return Z2 - Z1
 
     def testCalibration(self, *args, **kwargs):
         print(args, kwargs)

@@ -150,9 +150,26 @@ class Step1(Step):
         for cmd in cmds:
             print(cmd)
             if cmd != "":
-                self.printer.runGcode(cmd)
+                self.printer.execGcode(cmd)
 
         self.container.rawDelta = '/n'.join(cmds).encode()
+
+    def calibrateScale(self):
+        nominalX = 105
+        nominalY = 105
+        nominalZ = 63
+
+        realX = self.printer.measureScaleX()
+        realY = self.printer.measureScaleY()
+        realZ = self.printer.measureScaleZ()
+
+        self.printer.scaleParams.scale['X'] = nominalX / realX
+        self.printer.scaleParams.scale['Y'] = nominalY / realY
+        self.printer.scaleParams.scale['Z'] = nominalZ / realZ
+
+        cmd = self.printer.scaleParams.generateM579()
+        self.printer.execGcode(cmd)
+        self.container.rawDelta = cmd.encode()
 
     def collectPoints(self):
         res = self.printer.defAxisU()
@@ -169,6 +186,7 @@ class Step1(Step):
         self.printer.runGcode(self.printer.skewParams.generateM556())
 
         self.calibrateDelta()
+        self.calibrateScale()
         self.collectPoints()
 
 
