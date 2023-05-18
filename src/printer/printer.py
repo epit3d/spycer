@@ -168,86 +168,6 @@ def requestY():
     return getPos(axisY)
 
 
-def probePosX():
-    probeNum = 4
-    results = []
-    gcodes = [
-        'G91',  # relative positioning
-        'G0 X-2 F100',
-        'G90',  # absolute positioning
-    ]
-
-    for _ in range(probeNum):
-        callGcode('G38.2 X40')
-
-        results.append(requestX())
-
-        for gcode in gcodes:
-            callGcode(gcode)
-
-    return sum(results[1:]) / len(results[1:]), results
-
-
-def probeNegX():
-    probeNum = 4
-    results = []
-    gcodes = [
-        'G91',  # relative positioning
-        'G0 X2 F100',
-        'G90',  # absolute positioning
-    ]
-
-    for _ in range(probeNum):
-        callGcode('G38.2 X0')
-
-        results.append(requestX())
-
-        for gcode in gcodes:
-            callGcode(gcode)
-
-    return sum(results[1:]) / len(results[1:]), results
-
-
-def probePosY():
-    probeNum = 4
-    results = []
-    gcodes = [
-        'G91',  # relative positioning
-        'G0 Y-2 F100',
-        'G90',  # absolute positioning
-    ]
-
-    for _ in range(probeNum):
-        callGcode('G38.2 Y40')
-
-        results.append(requestY())
-
-        for gcode in gcodes:
-            callGcode(gcode)
-
-    return sum(results[1:]) / len(results[1:]), results
-
-
-def probeNegY():
-    probeNum = 4
-    results = []
-    gcodes = [
-        'G91',  # relative positioning
-        'G0 Y2 F100',
-        'G90',  # absolute positioning
-    ]
-
-    for _ in range(probeNum):
-        callGcode('G38.2 Y0')
-
-        results.append(requestY())
-
-        for gcode in gcodes:
-            callGcode(gcode)
-
-    return sum(results[1:]) / len(results[1:]), results
-
-
 class EpitPrinter:
     def __init__(self):
         self.deltaParams = DeltaParams()
@@ -278,6 +198,82 @@ class EpitPrinter:
         if writeGcode:
             global fileGcode
             fileGcode = open('output.g', 'w')
+
+    def probePosX(self):
+        probeNum = 4
+        results = []
+        gcodes = [
+            'G91',  # relative positioning
+            'G0 X-2 F100',
+            'G90',  # absolute positioning
+        ]
+
+        for _ in range(probeNum):
+            callGcode('G38.2 X40')
+
+            results.append(requestX())
+
+            for gcode in gcodes:
+                callGcode(gcode)
+
+        return sum(results[1:]) / len(results[1:]), results
+
+    def probeNegX(self):
+        probeNum = 4
+        results = []
+        gcodes = [
+            'G91',  # relative positioning
+            'G0 X2 F100',
+            'G90',  # absolute positioning
+        ]
+
+        for _ in range(probeNum):
+            callGcode('G38.2 X0')
+
+            results.append(requestX())
+
+            for gcode in gcodes:
+                callGcode(gcode)
+
+        return sum(results[1:]) / len(results[1:]), results
+
+    def probePosY(self):
+        probeNum = 4
+        results = []
+        gcodes = [
+            'G91',  # relative positioning
+            'G0 Y-2 F100',
+            'G90',  # absolute positioning
+        ]
+
+        for _ in range(probeNum):
+            callGcode('G38.2 Y40')
+
+            results.append(requestY())
+
+            for gcode in gcodes:
+                callGcode(gcode)
+
+        return sum(results[1:]) / len(results[1:]), results
+
+    def probeNegY(self):
+        probeNum = 4
+        results = []
+        gcodes = [
+            'G91',  # relative positioning
+            'G0 Y2 F100',
+            'G90',  # absolute positioning
+        ]
+
+        for _ in range(probeNum):
+            callGcode('G38.2 Y0')
+
+            results.append(requestY())
+
+            for gcode in gcodes:
+                callGcode(gcode)
+
+        return sum(results[1:]) / len(results[1:]), results
 
     def fileUpload(self, filename, b):
         fileUpload(filename, b)
@@ -603,7 +599,7 @@ class EpitPrinter:
         moveTo(X=-20, Y=0)
         moveTo(Z=levelZ)
 
-        aX, probes = probePosX()
+        aX, probes = self.probePosX()
         print(aX)
         self._appendOutput(f'0: X:{aX:6.3f} mm' + ' ' + str(probes))
 
@@ -613,7 +609,7 @@ class EpitPrinter:
         moveTo(Y=20)
         moveTo(X=0)
 
-        aY, probes = probeNegY()
+        aY, probes = self.probeNegY()
         print(aY)
         self._appendOutput(f'0: Y:{aY:6.3f} mm' + ' ' + str(probes))
 
@@ -627,7 +623,7 @@ class EpitPrinter:
         moveTo(X=20, Y=0)
         moveTo(Z=levelZ)
 
-        aX, probes = probeNegX()
+        aX, probes = self.probeNegX()
         print(aX)
         self._appendOutput(f'0: X:{aX:6.3f} mm' + ' ' + str(probes))
 
@@ -637,7 +633,7 @@ class EpitPrinter:
         moveTo(Y=-20)
         moveTo(X=0)
 
-        aY, probes = probePosY()
+        aY, probes = self.probePosY()
         print(aY)
         self._appendOutput(f'0: Y:{aY:6.3f} mm' + ' ' + str(probes))
 
@@ -703,13 +699,13 @@ class EpitPrinter:
     def callProbePosX(self, *args, **kwargs):
         print(args, kwargs)
 
-        aX, probes = probePosX()
+        aX, probes = self.probePosX()
         self._appendOutput(f'0: X:{aX:6.3f} mm' + ' ' + str(probes))
 
     def callProbeNegX(self, *args, **kwargs):
         print(args, kwargs)
 
-        aX, probes = probeNegX()
+        aX, probes = self.probeNegX()
         self._appendOutput(f'0: X:{aX:6.3f} mm' + ' ' + str(probes))
 
     def callHome(self, *args, **kwargs):
@@ -726,14 +722,14 @@ class EpitPrinter:
         moveTo(X=25, Y=posY, Z=100)
         moveTo(X=25, Y=posY, Z=5)
 
-        aX, probes = probeNegX()
+        aX, probes = self.probeNegX()
         self._appendOutput(f'0: X:{aX:6.3f} mm' + ' ' + str(probes))
 
         moveTo(X=25, Y=posY, Z=5)
 
         moveTo(X=25, Y=-posY, Z=5)
 
-        aX, probes = probeNegX()
+        aX, probes = self.probeNegX()
         self._appendOutput(f'0: X:{aX:6.3f} mm' + ' ' + str(probes))
 
         moveTo(X=25, Y=-posY, Z=5)
@@ -747,14 +743,14 @@ class EpitPrinter:
         moveTo(X=45, Y=posY, Z=100)
         moveTo(X=45, Y=posY, Z=9)
 
-        aX, probes = probeNegX()
+        aX, probes = self.probeNegX()
         self._appendOutput(f'0: X:{aX:6.3f} mm' + ' ' + str(probes))
 
         moveTo(X=45, Y=posY, Z=9)
 
         moveTo(X=45, Y=-posY, Z=9)
 
-        aX, probes = probeNegX()
+        aX, probes = self.probeNegX()
         self._appendOutput(f'0: X:{aX:6.3f} mm' + ' ' + str(probes))
 
         moveTo(X=45, Y=-posY, Z=9)
@@ -768,14 +764,14 @@ class EpitPrinter:
         moveTo(X=posX, Y=-25, Z=100)
         moveTo(X=posX, Y=-25, Z=5)
 
-        A, probes = probePosY()
+        A, probes = self.probePosY()
         self._appendOutput(f'0: X:{A:6.3f} mm' + ' ' + str(probes))
 
         moveTo(X=posX, Y=-25, Z=5)
 
         moveTo(X=-posX, Y=-25, Z=5)
 
-        A, probes = probePosY()
+        A, probes = self.probePosY()
         self._appendOutput(f'1: Y:{A:6.3f} mm' + ' ' + str(probes))
 
         moveTo(X=-posX, Y=-25, Z=5)
@@ -789,14 +785,14 @@ class EpitPrinter:
         moveTo(X=posX, Y=-45, Z=100)
         moveTo(X=posX, Y=-45, Z=9)
 
-        A, probes = probePosY()
+        A, probes = self.probePosY()
         self._appendOutput(f'0: Y:{A:6.3f} mm' + ' ' + str(probes))
 
         moveTo(X=posX, Y=-45, Z=9)
 
         moveTo(X=-posX, Y=-45, Z=9)
 
-        A, probes = probePosY()
+        A, probes = self.probePosY()
         self._appendOutput(f'1: Y:{A:6.3f} mm' + ' ' + str(probes))
 
         moveTo(X=-posX, Y=-45, Z=9)
@@ -863,7 +859,7 @@ class EpitPrinter:
             moveTo(X, Y, Z, F=50)
             tiltBed(V, F=50)
 
-            A, probes = probePosX()
+            A, probes = self.probePosX()
             self._appendOutput(f'V={V:2d}: X:{A:6.3f} mm' + ' ' + str(probes))
 
         moveTo(X=0, Y=0, Z=100)
@@ -959,13 +955,13 @@ class EpitPrinter:
         moveTo(X=-50, Y=-30)
         moveTo(Z=12, F=500)
 
-        A, probes = probePosY()
+        A, probes = self.probePosY()
         self._appendOutput(f'X=-50: Y:{A:6.3f} mm' + ' ' + str(probes))
 
         moveTo(Y=-30, F=50)
         moveTo(X=20, F=500)
 
-        A, probes = probePosY()
+        A, probes = self.probePosY()
         self._appendOutput(f'X= 20: Y:{A:6.3f} mm' + ' ' + str(probes))
 
         moveTo(Y=-30, F=50)
@@ -974,13 +970,13 @@ class EpitPrinter:
         moveTo(Y=-15, F=500)
         moveTo(Z=8, F=50)
 
-        A, probes = probeNegX()
+        A, probes = self.probeNegX()
         self._appendOutput(f'Y=-15: X:{A:6.3f} mm' + ' ' + str(probes))
 
         moveTo(X=40, F=50)
         moveTo(Y=55, F=500)
 
-        A, probes = probeNegX()
+        A, probes = self.probeNegX()
         self._appendOutput(f'Y= 55: X:{A:6.3f} mm' + ' ' + str(probes))
 
         moveTo(X=40, F=50)
@@ -1009,13 +1005,13 @@ class EpitPrinter:
 
         moveTo(Z=10, F=100)
 
-        A, probes = probePosY()
+        A, probes = self.probePosY()
         self._appendOutput(f'Z= 10: Y:{A:6.3f} mm' + ' ' + str(probes))
 
         moveTo(Y=20, F=50)
         moveTo(Z=80, F=500)
 
-        A, probes = probePosY()
+        A, probes = self.probePosY()
         self._appendOutput(f'Z= 80: Y:{A:6.3f} mm' + ' ' + str(probes))
 
         moveTo(Y=20, F=50)
@@ -1044,13 +1040,13 @@ class EpitPrinter:
 
         moveTo(Z=10, F=100)
 
-        A, probes = probePosX()
+        A, probes = self.probePosX()
         self._appendOutput(f'Z= 10: Y:{A:6.3f} mm' + ' ' + str(probes))
 
         moveTo(X=20, F=50)
         moveTo(Z=80, F=500)
 
-        A, probes = probePosX()
+        A, probes = self.probePosX()
         self._appendOutput(f'Z= 80: Y:{A:6.3f} mm' + ' ' + str(probes))
 
         moveTo(X=20, F=50)
