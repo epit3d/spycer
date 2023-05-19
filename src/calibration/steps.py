@@ -169,7 +169,20 @@ class Step1(Step):
 
         cmd = self.printer.scaleParams.generateM579()
         self.printer.execGcode(cmd)
-        self.container.rawDelta = cmd.encode()
+        self.container.rawScale = cmd.encode()
+
+    def calibrateSkew(self):
+        skewXY = self.printer.measureOrthoXY()
+        skewYZ = self.printer.measureOrthoYZ()
+        skewXZ = self.printer.measureOrthoXZ()
+
+        self.printer.skewParams.skew['X'] = skewXY
+        self.printer.skewParams.skew['Y'] = skewYZ
+        self.printer.skewParams.skew['Z'] = skewXZ
+
+        cmd = self.printer.scaleParams.generateM556()
+        self.printer.execGcode(cmd)
+        self.container.rawSkew = cmd.encode()
 
     def collectPoints(self):
         res = self.printer.defAxisU()
@@ -187,6 +200,7 @@ class Step1(Step):
 
         self.calibrateDelta()
         self.calibrateScale()
+        self.calibrateSkew()
         self.collectPoints()
 
 

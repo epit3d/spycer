@@ -250,7 +250,7 @@ class ServicePanel(QDialog):
 
             button = QPushButton('Measure Ortho XY')
             layout.addWidget(button)
-            self.measureOrthogonalityXYButton = button
+            self.measureOrthoXYButton = button
 
             button = QPushButton('Measure Ortho YZ')
             layout.addWidget(button)

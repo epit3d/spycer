@@ -224,8 +224,8 @@ class ServiceController(QObject):
         view.measureVDeviationFromVButton.clicked.connect(
             partial(self.workSignal.emit, printer.measureVDeviationFromV)
         )
-        view.measureOrthogonalityXYButton.clicked.connect(
-            partial(self.workSignal.emit, printer.measureOrthogonalityXY)
+        view.measureOrthoXYButton.clicked.connect(
+            partial(self.workSignal.emit, printer.measureOrthoXY)
         )
         view.measureOrthoYZButton.clicked.connect(
             partial(self.workSignal.emit, printer.measureOrthoYZ)

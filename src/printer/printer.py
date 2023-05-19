@@ -1053,114 +1053,179 @@ class EpitPrinter:
         moveTo(X=0, Y=0)
         tiltBed(V=0)
 
-    def measureOrthogonalityXY(self, *args, **kwargs):
+    def measureOrthoXY(self, *args, **kwargs):
         print(args, kwargs)
 
         doHoming()
 
-        moveTo(Z=100, F=1000)
+        safeZ = 100
 
-        moveTo(X=-50, Y=-30)
-        moveTo(Z=12, F=500)
+        X1, X2 = -45, 45
+        Y = 70
+        Z = 5
 
-        A, probes = self.probePosY()
-        self._appendOutput(f'X=-50: Y:{A:6.3f} mm' + ' ' + str(probes))
+        moveTo(X=X1, Y=Y)
+        moveTo(Z=Z)
 
-        moveTo(Y=-30, F=50)
-        moveTo(X=20, F=500)
+        A, probes = self.probeNegY()
+        self._appendOutput(f'X={X1}: Y:{A:6.3f} mm' + ' ' + str(probes))
+        YatX1 = A
 
-        A, probes = self.probePosY()
-        self._appendOutput(f'X= 20: Y:{A:6.3f} mm' + ' ' + str(probes))
+        moveTo(Y=Y)
+        moveTo(X=X2)
 
-        moveTo(Y=-30, F=50)
+        A, probes = self.probeNegY()
+        self._appendOutput(f'X={X2}: Y:{A:6.3f} mm' + ' ' + str(probes))
+        YatX2 = A
 
-        moveTo(X=40, F=500)
-        moveTo(Y=-15, F=500)
-        moveTo(Z=8, F=50)
+        moveTo(Y=Y)
+        moveTo(Z=safeZ)
+
+        X = 70
+        Y1, Y2 = -45, 45
+        Z = 5
+
+        moveTo(X=X, Y=Y1)
+        moveTo(Z=Z)
 
         A, probes = self.probeNegX()
-        self._appendOutput(f'Y=-15: X:{A:6.3f} mm' + ' ' + str(probes))
+        self._appendOutput(f'Y={Y1}: X:{A:6.3f} mm' + ' ' + str(probes))
+        XatY1 = A
 
-        moveTo(X=40, F=50)
-        moveTo(Y=55, F=500)
+        moveTo(X=X)
+        moveTo(Y=Y2)
 
         A, probes = self.probeNegX()
-        self._appendOutput(f'Y= 55: X:{A:6.3f} mm' + ' ' + str(probes))
+        self._appendOutput(f'Y={Y2}: X:{A:6.3f} mm' + ' ' + str(probes))
+        XatY2 = A
 
-        moveTo(X=40, F=50)
-        moveTo(Z=100, F=500)
+        moveTo(X=X)
+        moveTo(Z=safeZ)
 
-        moveTo(X=0, Y=0)
+        doHoming()
+
+        # tangent to X axis
+        tgX = (YatX1 - YatX2) / (X1 - X2)
+        # tangent to Y axis
+        tgY = (XatY1 - XatY2) / (Y1 - Y2)
+
+        return tgY + tgX
 
     def measureOrthoYZ(self, *args, **kwargs):
         print(args, kwargs)
 
         doHoming()
 
-        moveTo(Z=100, F=1000)
+        safeZ = 100
 
-        moveTo(X=0, Y=-50)
-        moveTo(Z=10, F=500)
+        X = 30
+        Y1, Y2 = -52.5, 52.5
+        Z = 15
 
-        A, probes = probeZ()
-        self._appendOutput(f'Y=-35: Z:{A:6.3f} mm' + ' ' + str(probes))
-
-        moveTo(Z=10, F=100)
-        moveTo(Y=20, F=500)
+        moveTo(X=X, Y=Y1)
+        moveTo(Z=Z)
 
         A, probes = probeZ()
-        self._appendOutput(f'Y= 35: Z:{A:6.3f} mm' + ' ' + str(probes))
+        self._appendOutput(f'Y={Y1}: Z:{A:6.3f} mm' + ' ' + str(probes))
+        ZatY1 = A
 
-        moveTo(Z=10, F=100)
+        moveTo(Z=Z)
+        moveTo(Y=Y2)
 
-        A, probes = self.probePosY()
-        self._appendOutput(f'Z= 10: Y:{A:6.3f} mm' + ' ' + str(probes))
+        A, probes = probeZ()
+        self._appendOutput(f'Y={Y2}: Z:{A:6.3f} mm' + ' ' + str(probes))
+        ZatY2 = A
 
-        moveTo(Y=20, F=50)
-        moveTo(Z=80, F=500)
+        moveTo(Z=Z)
 
-        A, probes = self.probePosY()
-        self._appendOutput(f'Z= 80: Y:{A:6.3f} mm' + ' ' + str(probes))
+        X = 30
+        Y = -50
+        Z1, Z2 = 15, 65
 
-        moveTo(Y=20, F=50)
-        moveTo(Z=100, F=500)
+        moveTo(X=X, Y=Y)
+        moveTo(Z=Z1)
 
-        moveTo(X=0, Y=0, F=500)
+        A, probes = self.probeNegY()
+        self._appendOutput(f'Z={Z1}: Y:{A:6.3f} mm' + ' ' + str(probes))
+        YatZ1 = A
+
+        moveTo(Y=Y)
+        moveTo(Z=Z2)
+
+        A, probes = self.probeNegY()
+        self._appendOutput(f'Z={Z2}: Y:{A:6.3f} mm' + ' ' + str(probes))
+        YatZ2 = A
+
+        moveTo(Y=Y)
+        moveTo(Z=safeZ)
+
+        doHoming()
+
+        # tangent to Y axis
+        tgY = (ZatY1 - ZatY2) / (Y1 - Y2)
+        # tangent to Z axis
+        tgZ = (YatZ1 - YatZ2) / (Z1 - Z2)
+
+        return tgY + tgZ
 
     def measureOrthoXZ(self, *args, **kwargs):
         print(args, kwargs)
 
         doHoming()
 
-        moveTo(Z=100, F=1000)
+        rotateBed(U=-90)
 
-        moveTo(X=-50, Y=0)
-        moveTo(Z=10, F=500)
+        safeZ = 100
+
+        X1, X2 = -45, 45
+        Y = -30
+        Z = 15
+
+        moveTo(X=X1, Y=Y)
+        moveTo(Z=Z)
 
         A, probes = probeZ()
-        self._appendOutput(f'Y=-35: Z:{A:6.3f} mm' + ' ' + str(probes))
+        self._appendOutput(f'X={X1}: Z:{A:6.3f} mm' + ' ' + str(probes))
+        ZatX1 = A
 
-        moveTo(Z=10, F=100)
-        moveTo(X=20, F=500)
+        moveTo(Z=Z)
+        moveTo(X=X2)
 
         A, probes = probeZ()
-        self._appendOutput(f'Y= 35: Z:{A:6.3f} mm' + ' ' + str(probes))
+        self._appendOutput(f'X={X2}: Z:{A:6.3f} mm' + ' ' + str(probes))
+        ZatX2 = A
 
-        moveTo(Z=10, F=100)
+        moveTo(Z=Z)
 
-        A, probes = self.probePosX()
-        self._appendOutput(f'Z= 10: Y:{A:6.3f} mm' + ' ' + str(probes))
+        X = 0
+        Y = 20
+        Z1, Z2 = 15, 65
 
-        moveTo(X=20, F=50)
-        moveTo(Z=80, F=500)
+        moveTo(X=X, Y=Y)
+        moveTo(Z=Z1)
 
-        A, probes = self.probePosX()
-        self._appendOutput(f'Z= 80: Y:{A:6.3f} mm' + ' ' + str(probes))
+        A, probes = self.probeNegX()
+        self._appendOutput(f'Z={Z1}: X:{A:6.3f} mm' + ' ' + str(probes))
+        XatZ1 = A
 
-        moveTo(X=20, F=50)
-        moveTo(Z=100, F=500)
+        moveTo(X=X)
+        moveTo(Z=Z2)
 
-        moveTo(X=0, Y=0, F=500)
+        A, probes = self.probeNegX()
+        self._appendOutput(f'Z={Z2}: X:{A:6.3f} mm' + ' ' + str(probes))
+        XatZ2 = A
+
+        moveTo(X=X)
+        moveTo(Z=safeZ)
+
+        doHoming()
+
+        # tangent to Y axis
+        tgX = (ZatX1 - ZatX2) / (X1 - X2)
+        # tangent to Z axis
+        tgZ = (XatZ1 - XatZ2) / (Z1 - Z2)
+
+        return tgX + tgZ
 
     def doHeat(self, *args, **kwargs):
         print('heat', args, kwargs)
