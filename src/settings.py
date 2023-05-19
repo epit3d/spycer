@@ -53,6 +53,8 @@ def load_settings(filename=""):
         global _sett
         _sett = Settings(data)
 
+    print(f'after loading stl_file is {_sett.slicing.stl_file}')
+
 
 def save_settings(filename=""):
     if not filename:
@@ -69,6 +71,7 @@ def save_settings(filename=""):
 
     temp = yaml.dump(_sett)
     temp = temp.replace("!!python/object:src.settings.Settings", "").strip()
+    temp = temp.replace("!!python/object/apply:pathlib.PosixPath", "").strip()
 
     print(f'saving settings to {filename}')
     with open(filename, 'w') as f:

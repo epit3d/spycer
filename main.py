@@ -31,7 +31,7 @@ if __name__ == "__main__":
     app.setStyleSheet(style_sheet)
 
     def open_project(project_path: str):
-        load_settings(pathlib.Path(project_path, "settings.yaml"))
+        load_settings(str(pathlib.Path(project_path, "settings.yaml")))
 
         window = MainWindow()
         window.close_signal.connect(entry_window.show)
@@ -55,8 +55,7 @@ if __name__ == "__main__":
 
     def create_project(project_path: str):
         copy_project_files(project_path)
-        settpath = pathlib.Path(project_path, "settings.yaml")
-        load_settings(settpath)
+        load_settings(str(pathlib.Path(project_path, "settings.yaml")))
 
         window = MainWindow()
         window.close_signal.connect(entry_window.show)

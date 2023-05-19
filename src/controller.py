@@ -228,7 +228,7 @@ class MainController:
                     s.slicing.planes_contact_with_nozzle = ""
                     # copy stl file to project directory
 
-                    newpath = pathlib.Path(s.project_path, "model.stl")
+                    newpath = str(pathlib.Path(s.project_path, "model.stl"))
                     shutil.copyfile(filename, newpath)
                     s.slicing.stl_file = "model.stl" # it is relative path inside project
 
@@ -243,7 +243,7 @@ class MainController:
                     self.load_stl(newpath)
                 elif file_ext == ".GCODE":
                     s = sett()
-                    s.slicing.stl_file = filename # TODO optimize
+                    # s.slicing.stl_file = filename # TODO optimize
                     save_settings()
                     self.load_gcode(filename, False)
                     self.update_interface(filename)
@@ -296,14 +296,14 @@ class MainController:
             return
 
         s = sett()
-        save_splanes_to_file(self.model.splanes, str(pathlib.Path(sett().project_path, "planes_file.txt")))
+        save_splanes_to_file(self.model.splanes, str(pathlib.Path(s.project_path, "planes_file.txt")))
         sett().slicing.splanes_file = 'planes_file.txt'
         self.save_settings(slicing_type)
 
         def work():
             start_time = time.time()
             print("start slicing")
-            res = call_command(s.slicing.cmd)
+            res = call_command(s.slicing.cmd + str(pathlib.Path(s.project_path, "settings.yaml")))
             print("finished command")
             end_time = time.time()
             print('spent time for slicing: ', end_time - start_time, 's')
@@ -312,14 +312,14 @@ class MainController:
 
         res = qt_utils.progress_dialog(
             locales.getLocale().SlicingTitle, 
-            locales.getLocale().SlicingProgress, 
+            locales.getLocale().SlicingProgress,
             work,
         )
 
         if not res:
             return
 
-        self.load_gcode(s.slicing.gcode_file_without_calibration, True)
+        self.load_gcode(str(pathlib.Path(s.project_path, s.slicing.gcode_file_without_calibration)), True)
         print("loaded gcode")
         # self.debugMe()
         self.update_interface()
@@ -337,7 +337,8 @@ class MainController:
 
     def save_settings(self, slicing_type, filename = ""):
         s = sett()
-        s.slicing.stl_file = self.model.opened_stl
+        print(f"saving settings of stl file {self.model.opened_stl} {s.slicing.stl_file}")
+        # s.slicing.stl_file = self.model.opened_stl
         tf = vtk.vtkTransform()
         if self.view.stlActor is not None:
             tf = self.view.stlActor.GetUserTransform()
@@ -465,11 +466,11 @@ class MainController:
         s = sett()
         shutil.copyfile(s.slicing.stl_file, s.colorizer.copy_stl_file)
         save_splanes_to_file(self.model.splanes, s.slicing.splanes_file)
-        call_command(s.colorizer.cmd)
+        call_command(s.colorizer.cmd+ str(pathlib.Path(s.project_path, "settings.yaml")))
         lastMove = self.view.stlActor.lastMove
         self.load_stl(s.colorizer.copy_stl_file, colorize=True)
         self.view.stlActor.lastMove = lastMove
-        self.model.opened_stl = s.slicing.stl_file
+        # self.model.opened_stl = s.slicing.stl_file
 
     # ######################bottom panel
 
