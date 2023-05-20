@@ -260,12 +260,12 @@ class MainWindow(QMainWindow):
         сolumn2_number_of_cells = 4
 
         validatorLocale = QtCore.QLocale("Englishs")
-        intValidator = QtGui.QIntValidator(0, 100)
+        intValidator = QtGui.QIntValidator(0, 9000)
 
-        doubleValidator = QtGui.QDoubleValidator(0.00, 100.00, 2)
+        doubleValidator = QtGui.QDoubleValidator(0.00, 9000.00, 2)
         doubleValidator.setLocale(validatorLocale)
 
-        doublePercentValidator = QtGui.QDoubleValidator(0.00, 100.00, 2)
+        doublePercentValidator = QtGui.QDoubleValidator(0.00, 9000.00, 2)
         doublePercentValidator.setLocale(validatorLocale)
 
         # Front-end development at its best

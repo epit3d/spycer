@@ -219,12 +219,10 @@ def createStlActorInOrigin(filename, colorize=False):
 
     if colorize:
         actor = ColorizedStlActor(output)
-        actor = setTransformFromSettings(actor)
     else:
         actor = StlActor(output)
-        transform = vtk.vtkTransform()
-        actor.SetUserTransform(transform)
 
+    actor = setTransformFromSettings(actor)
     return actor
 
 def setTransformFromSettings(actor):

@@ -174,7 +174,7 @@ class MainController:
         self.update_bottom_thickness()
         self.update_lid_thickness()
         self.update_supports_bottom_thickness()
-        self.update_supports_top_thickness()
+        self.update_supports_lid_thickness()
 
     def update_bottom_thickness(self):
         self.update_dependent_fields(self.view.number_of_bottom_layers_value, self.view.layer_height_value, self.view.bottom_thickness_value)
@@ -207,14 +207,8 @@ class MainController:
                 file_ext = os.path.splitext(filename)[1].upper()
                 filename = str(Path(filename))
                 if file_ext == ".STL":
+                    self.reset_settings()
                     s = sett()
-                    s.slicing.originx, s.slicing.originy, s.slicing.originz = 0, 0, 0
-                    s.slicing.rotationx, s.slicing.rotationy, s.slicing.rotationz = 0, 0, 0
-                    s.slicing.scalex, s.slicing.scaley, s.slicing.scalez = 1, 1, 1
-                    s.slicing.model_centering = False
-                    s.slicing.print_time = 0
-                    s.slicing.consumption_material = 0
-                    s.slicing.planes_contact_with_nozzle = ""
                     s.slicing.stl_file = filename
                     save_settings()
                     self.update_interface(filename)
@@ -236,12 +230,33 @@ class MainController:
         except IOError as e:
             showErrorDialog("Error during file opening:" + str(e))
 
+    def reset_settings(self):
+        s = sett()
+        s.slicing.originx, s.slicing.originy, s.slicing.originz = 0, 0, 0
+        s.slicing.rotationx, s.slicing.rotationy, s.slicing.rotationz = 0, 0, 0
+        s.slicing.scalex, s.slicing.scaley, s.slicing.scalez = 1, 1, 1
+        s.slicing.model_centering = False
+        s.slicing.print_time = 0
+        s.slicing.consumption_material = 0
+        s.slicing.planes_contact_with_nozzle = ""
+
+        for i in range(4):
+            for j in range(4):
+                if i == j:
+                    setattr(s.slicing.transformation_matrix, "m" + str(i) + str(i), 1.0)
+                else:
+                    setattr(s.slicing.transformation_matrix, "m" + str(i) + str(j), 0.0)
+
+        save_settings()
+
     def load_stl(self, filename, colorize=False):
         if filename is None or filename == "":
             filename = self.model.opened_stl
         stl_actor = gui_utils.createStlActorInOrigin(filename, colorize)
         self.model.opened_stl = filename
         self.view.load_stl(stl_actor)
+        self.view.hide_checkbox.setChecked(True)
+        self.view._recreate_splanes(self.model.splanes)
 
     def load_gcode(self, filename, is_from_stl):
         def work():
@@ -524,7 +539,7 @@ class MainController:
             self.view.name_stl_file.setText("")
             self.view.setWindowTitle("FASP")
         else:
-            name_stl_file = os.path.basename(filename).split('.')[0]
+            name_stl_file = os.path.splitext(os.path.basename(filename))[0]
             file_ext = os.path.splitext(filename)[1].upper()
 
             self.view.setWindowTitle(name_stl_file + " - FASP")
