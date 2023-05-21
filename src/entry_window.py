@@ -45,7 +45,7 @@ class EntryWindow(QWidget):
         new_proj_layout.addWidget(self.project_directory_label)
 
         # create project location label with current folder
-        self.project_directory_edit = QLineEdit("", self)
+        self.project_directory_edit = QLineEdit(self.load_recent_projects_root(), self)
         self.project_directory_edit.setPlaceholderText(
             locales.getLocale().ChooseProjectDirectory)
         self.project_directory_edit.setReadOnly(True)
@@ -104,6 +104,10 @@ class EntryWindow(QWidget):
         file = str(QFileDialog.getExistingDirectory(self, locales.getLocale().ChooseFolder))
         if not file:
             return
+        
+        # update latest project root
+        settings = QSettings('Epit3D', 'Spycer')
+        settings.setValue('latest-project-root', file)
 
         self.project_directory_edit.setText(file)
 
@@ -120,6 +124,15 @@ class EntryWindow(QWidget):
             return projects
 
         return []
+    
+    def load_recent_projects_root(self) -> str:
+        # returns latest directory for projects
+        settings = QSettings('Epit3D', 'Spycer')
+
+        if settings.contains('latest-project-root'):
+            return settings.value('latest-project-root', type=str)
+        
+        return ""
 
     def create_new_project(self):
         print("Creating new project...")
@@ -157,9 +170,13 @@ class EntryWindow(QWidget):
 
     def open_existing_project(self):
         if self.recent_projects_list_widget.currentItem() is None:
-            showErrorDialog(locales.getLocale().NoProjectSelected)
-            return
-        selected_project = self.recent_projects_list_widget.currentItem().text()
+            if directory := str(QFileDialog.getExistingDirectory(self, locales.getLocale().ChooseFolder)):
+                selected_project = directory
+            else:
+                # didn't choose any project, release
+                return
+        else:
+            selected_project = self.recent_projects_list_widget.currentItem().text()
         print(f"Opening {selected_project}...")
 
         # emit signal with path to project file
