@@ -1,3 +1,4 @@
+import math
 import printer
 from .data import CalibrationData
 from .reprapfirmware_lsq import Tuner
@@ -7,6 +8,7 @@ class Container:
     rawDelta = b''
     rawScale = b''
     rawSkew = b''
+    rawAdjustV = b''
 
 
 class StepsCollection:
@@ -116,6 +118,19 @@ class Step1(Step):
         '</p>'
     )
 
+    def adjustBedIncline(self):
+        tangent = self.printer.defBedIncline()
+        angle = math.degrees(math.atan(tangent))
+        cmds = [
+            "G91",
+            f"G0 V{angle}",
+            "G92 V0",
+            "G90",
+        ]
+        for cmd in cmds:
+            self.printer.execGcode(cmd)
+        self.container.rawAdjustV = "\n".join(cmds)
+
     def calibrateDelta(self):
         print(self.printer.deltaParams.toString())
 
@@ -198,6 +213,7 @@ class Step1(Step):
         self.printer.runGcode(self.printer.scaleParams.generateM579())
         self.printer.runGcode(self.printer.skewParams.generateM556())
 
+        self.adjustBedIncline()
         self.calibrateDelta()
         self.calibrateScale()
         self.calibrateSkew()
@@ -343,6 +359,7 @@ class FinalStep(Step):
         self.printer.fileUpload("0:/sys/delta.g", self.container.rawDelta)
         self.printer.fileUpload("0:/sys/scale.g", self.container.rawScale)
         self.printer.fileUpload("0:/sys/skew.g", self.container.rawSkew)
+        self.printer.fileUpload("0:/sys/adjustV.g", self.container.rawAdjustV)
 
         # write the last string of calibration_data.csv
         res = (self.printer.calibBallRadius, 0, 0)

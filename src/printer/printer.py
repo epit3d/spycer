@@ -297,6 +297,37 @@ class EpitPrinter:
     def execGcode(self, gcode):
         execGcode(gcode)
 
+    def defBedIncline(self, posZ=DEFAULT_Z):
+        doHoming()
+
+        rotateBed(U=-90)
+
+        X = 0
+        Y1, Y2 = 52.5, -52.5
+        Z = posZ
+
+        moveTo(X=X, Y=Y1)
+        moveTo(Z=Z)
+
+        zA, probes = probeZ()
+        self._appendOutput(f'Z:{zA:6.3f} mm' + ' ' + str(probes))
+        Z1 = zA
+
+        moveTo(Z=Z)
+        moveTo(Y=Y2)
+
+        zA, probes = probeZ()
+        self._appendOutput(f'Z:{zA:6.3f} mm' + ' ' + str(probes))
+        Z2 = zA
+
+        moveTo(Z=Z)
+
+        tangent = (Z1 - Z2) / (Y1 - Y2)
+
+        doHoming()
+
+        return tangent
+
     def defAxisU(self, posZ=DEFAULT_Z):
         doHoming()
 
