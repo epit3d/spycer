@@ -240,12 +240,13 @@ class MainController:
         s.slicing.consumption_material = 0
         s.slicing.planes_contact_with_nozzle = ""
 
+        # Set 0.0 for the transformation matrix for rotation and translation. Set 1.0 for scaling
         for i in range(4):
             for j in range(4):
                 if i == j:
-                    setattr(s.slicing.transformation_matrix, "m" + str(i) + str(i), 1.0)
+                    setattr(s.slicing.transformation_matrix, f"m{i}{i}", 1.0)
                 else:
-                    setattr(s.slicing.transformation_matrix, "m" + str(i) + str(j), 0.0)
+                    setattr(s.slicing.transformation_matrix, f"m{i}{j}", 0.0)
 
         save_settings()
 
@@ -372,7 +373,7 @@ class MainController:
         tf.GetMatrix(m)
         for i in range(4):
             for j in range(4):
-                setattr(s.slicing.transformation_matrix, "m" + str(i) + str(j), m.GetElement(i, j))
+                setattr(s.slicing.transformation_matrix, f"m{i}{j}", m.GetElement(i, j))
 
         save_settings(filename)
 

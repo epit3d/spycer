@@ -111,7 +111,7 @@ slicing:
   splanes_file: lib/planes_file.txt
   stl_file: example.stl
   t_geodesic: 0.0
-  transformation_matrix: 
+  transformation_matrix:
     m00: 1.0
     m01: 0.0
     m02: 0.0

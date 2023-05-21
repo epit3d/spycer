@@ -230,9 +230,9 @@ def setTransformFromSettings(actor):
     transform = vtk.vtkTransform()
 
     m = vtkMatrix4x4()
-    for i in range(3):
+    for i in range(4):
         for j in range(4):
-            m.SetElement(i, j, getattr(s.slicing.transformation_matrix, "m" + str(i) + str(j)))
+            m.SetElement(i, j, getattr(s.slicing.transformation_matrix, f"m{i}{j}"))
 
     transform.SetMatrix(m)
     actor.SetUserTransform(transform)
