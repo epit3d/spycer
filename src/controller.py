@@ -1,6 +1,7 @@
 import logging
 import math
 import os
+from os import path
 import subprocess
 import time
 import sys
@@ -9,14 +10,13 @@ from pathlib import Path
 import shutil
 from shutil import copy2
 from typing import Dict, List
-import pathlib
 import vtk
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 from src import gui_utils, locales, qt_utils
 from src.figure_editor import PlaneEditor, ConeEditor
 from src.gui_utils import showErrorDialog, plane_tf, read_planes, Plane, Cone, showInfoDialog
-from src.settings import sett, save_settings, load_settings, get_color
+from src.settings import sett, save_settings, load_settings, get_color, PathBuilder
 
 class MainController:
     def __init__(self, view, model):
@@ -67,8 +67,9 @@ class MainController:
         self.view.close_signal.connect(self.save_planes_on_close)
 
     def save_planes_on_close(self):
-        save_splanes_to_file(self.model.splanes, str(pathlib.Path(sett().project_path, "planes_file.txt")))
-        sett().slicing.splanes_file = 'planes_file.txt'
+        splanes_full_pth = PathBuilder.splanes_file()
+        save_splanes_to_file(self.model.splanes, splanes_full_pth)
+        sett().slicing.splanes_file = path.basename(splanes_full_pth)
         save_settings()
 
     def moving_figure(self, sourceParent, previousRow):
@@ -228,9 +229,10 @@ class MainController:
                     s.slicing.planes_contact_with_nozzle = ""
                     # copy stl file to project directory
 
-                    newpath = str(pathlib.Path(s.project_path, "model.stl"))
-                    shutil.copyfile(filename, newpath)
-                    s.slicing.stl_file = "model.stl" # it is relative path inside project
+                    stl_full_path = PathBuilder.stl_model()
+                    shutil.copyfile(filename, stl_full_path)
+                    # relative path inside project
+                    s.slicing.stl_file = path.basename(stl_full_path) 
 
                     save_settings()
                     self.update_interface(filename)
@@ -240,7 +242,7 @@ class MainController:
                     if os.path.isfile(s.colorizer.copy_stl_file):
                         os.remove(s.colorizer.copy_stl_file)
 
-                    self.load_stl(newpath)
+                    self.load_stl(stl_full_path)
                 elif file_ext == ".GCODE":
                     s = sett()
                     # s.slicing.stl_file = filename # TODO optimize
@@ -296,14 +298,15 @@ class MainController:
             return
 
         s = sett()
-        save_splanes_to_file(self.model.splanes, str(pathlib.Path(s.project_path, "planes_file.txt")))
-        sett().slicing.splanes_file = 'planes_file.txt'
+        splanes_full_path = PathBuilder.splanes_file()
+        save_splanes_to_file(self.model.splanes, splanes_full_path)
+        sett().slicing.splanes_file = path.basename(splanes_full_path)
         self.save_settings(slicing_type)
 
         def work():
             start_time = time.time()
             print("start slicing")
-            res = call_command(s.slicing.cmd + str(pathlib.Path(s.project_path, "settings.yaml")))
+            res = call_command(PathBuilder.slicing_cmd())
             print("finished command")
             end_time = time.time()
             print('spent time for slicing: ', end_time - start_time, 's')
@@ -319,9 +322,9 @@ class MainController:
         if not res:
             return
 
-        self.load_gcode(str(pathlib.Path(s.project_path, s.slicing.gcode_file_without_calibration)), True)
+        # load gcode without calibration
+        self.load_gcode(PathBuilder.gcodevis_file(), True)
         print("loaded gcode")
-        # self.debugMe()
         self.update_interface()
 
     def get_slicer_version(self):
@@ -464,11 +467,11 @@ class MainController:
     def colorize_model(self):
         self.save_settings("vip")
         s = sett()
-        shutil.copyfile(s.slicing.stl_file, s.colorizer.copy_stl_file)
-        save_splanes_to_file(self.model.splanes, s.slicing.splanes_file)
-        call_command(s.colorizer.cmd+ str(pathlib.Path(s.project_path, "settings.yaml")))
+        shutil.copyfile(PathBuilder.stl_model(),PathBuilder.colorizer_stl())
+        save_splanes_to_file(self.model.splanes, PathBuilder.splanes_file())
+        call_command(PathBuilder.colorizer_cmd())
         lastMove = self.view.stlActor.lastMove
-        self.load_stl(s.colorizer.copy_stl_file, colorize=True)
+        self.load_stl(PathBuilder.colorizer_stl(), colorize=True)
         self.view.stlActor.lastMove = lastMove
         # self.model.opened_stl = s.slicing.stl_file
 
@@ -535,11 +538,6 @@ class MainController:
         for i in range(len(self.model.splanes)):
             self.view.splanes_tree.topLevelItem(i).setText(1, str(i + 1))
             self.view.splanes_tree.topLevelItem(i).setText(2, self.model.splanes[i].toFile())
-
-    # def debugMe(self):
-    #     debug.readFile(self.render, "/home/l1va/debug.txt", 4)
-    #     # debug.readFile(self.render, "/home/l1va/debug_simplified.txt", "Red", 3)
-    #     self.reloadScene()
 
     def update_interface(self, filename = ""):
         s = sett()

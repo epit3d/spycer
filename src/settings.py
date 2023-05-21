@@ -86,3 +86,47 @@ class Settings(object):
                         [Settings(x) if isinstance(x, dict) else x for x in b])
             else:
                 setattr(self, a, Settings(b) if isinstance(b, dict) else b)
+
+class PathBuilder:
+    # class to build paths to files and folders
+
+    @staticmethod
+    def project_path():
+        return sett().project_path
+    
+    @staticmethod
+    def stl_model():
+        return path.join(PathBuilder.project_path(), "model.stl")
+    
+    @staticmethod
+    def splanes_file():
+        return path.join(PathBuilder.project_path(), "planes.txt")
+    
+    @staticmethod
+    def settings_file():
+        return path.join(PathBuilder.project_path(), "settings.yaml")
+
+    @staticmethod
+    def colorizer_cmd():
+        return sett().colorizer.cmd + PathBuilder.settings_file()
+    
+    @staticmethod
+    def colorizer_stl():
+        return path.join(PathBuilder.project_path(), sett().colorizer.copy_stl_file)
+    
+    @staticmethod
+    def colorizer_result():
+        return path.join(PathBuilder.project_path(), sett().colorizer.result)
+    
+    @staticmethod
+    def slicing_cmd():
+        return sett().slicing.cmd + PathBuilder.settings_file()
+    
+    @staticmethod
+    def gcodevis_file():
+        return path.join(PathBuilder.project_path(), sett().slicing.gcode_file_without_calibration)
+    
+    @staticmethod
+    def gcode_file():
+        return path.join(PathBuilder.project_path(), sett().slicing.gcode_file)
+    
