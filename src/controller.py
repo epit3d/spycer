@@ -294,8 +294,8 @@ class MainController:
             end_time = time.time()
             print('spent time for slicing: ', end_time - start_time, 's')
             
-            # will return empty string, if everything is okay
-            return p.stderr
+            # goosli sends everything to stdout, returncode is 1 when fatal is called
+            return p.stdout if p.returncode else ""
 
         error = qt_utils.progress_dialog(
             locales.getLocale().SlicingTitle, 
@@ -314,15 +314,12 @@ class MainController:
         self.update_interface()
 
     def get_slicer_version(self):
-        slicer_version = "0.0.0"
-        try:
-            s = sett()
-            slicer_version = subprocess.check_output(s.slicing.cmd_version.split(), stderr=subprocess.STDOUT).decode("utf-8")
-        except Exception as e:
-            showErrorDialog("Error during getting slicer version:" + str(e))
-            return
+        proc = Process(sett().slicing.cmd_version).wait()
         
-        showInfoDialog(locales.getLocale().SlicerVersion + slicer_version)
+        if proc.returncode:
+            showErrorDialog("Error during getting slicer version:" + str(proc.stdout))
+        else:
+            showInfoDialog(locales.getLocale().SlicerVersion + proc.stdout)
 
     def save_settings(self, slicing_type, filename = ""):
         s = sett()
@@ -453,10 +450,10 @@ class MainController:
         s = sett()
         shutil.copyfile(s.slicing.stl_file, s.colorizer.copy_stl_file)
         save_splanes_to_file(self.model.splanes, s.slicing.splanes_file)
-        p = Process(s.colorizer.cmd)
-        if p.wait().stderr:
-            logging.error(f"error: <{p.stderr}>")
-            gui_utils.showErrorDialog(p.stderr)
+        p = Process(s.colorizer.cmd).wait()
+        if p.returncode:
+            logging.error(f"error: <{p.stdout}>")
+            gui_utils.showErrorDialog(p.stdout)
             return
         
         lastMove = self.view.stlActor.lastMove
