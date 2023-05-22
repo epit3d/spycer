@@ -108,7 +108,7 @@ class PathBuilder:
 
     @staticmethod
     def colorizer_cmd():
-        return sett().colorizer.cmd + PathBuilder.settings_file()
+        return sett().colorizer.cmd + f'"{PathBuilder.settings_file()}"'
     
     @staticmethod
     def colorizer_stl():
@@ -120,7 +120,7 @@ class PathBuilder:
     
     @staticmethod
     def slicing_cmd():
-        return sett().slicing.cmd + PathBuilder.settings_file()
+        return sett().slicing.cmd + f'"{PathBuilder.settings_file()}"'
     
     @staticmethod
     def gcodevis_file():
