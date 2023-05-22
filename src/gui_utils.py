@@ -8,7 +8,7 @@ from vtkmodules.vtkCommonTransforms import vtkTransform
 from vtkmodules.vtkFiltersSources import vtkLineSource, vtkConeSource
 from vtkmodules.vtkRenderingCore import vtkActor, vtkPolyDataMapper, vtkAssembly
 
-from src.settings import sett, get_color
+from src.settings import sett, get_color, PathBuilder
 
 
 def findStlOrigin(vtkBlock):
@@ -334,7 +334,7 @@ class ActorWithColor(vtkAssembly):
         allpoints = output.GetPoints()
 
         tocolor = []
-        with open(sett().colorizer.result, "rb") as f:
+        with open(PathBuilder.colorizer_result(), "rb") as f:
             content = f.read()
             for b in content:
                 if b == 1:

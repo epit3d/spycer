@@ -103,6 +103,8 @@ class MainWindow(QMainWindow):
     # by default it is None, because there is nothing to edit, will be updated by derived from FigureEditor
     parameters_tooling: Optional[FigureEditor] = None
 
+    close_signal = QtCore.pyqtSignal()
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle('FASP')
@@ -116,7 +118,6 @@ class MainWindow(QMainWindow):
         bar = self.menuBar()
         file_menu = bar.addMenu(self.locale.File)
         self.open_action = QAction(self.locale.Open, self)
-        # close_action = QAction('Close', self)
         file_menu.addAction(self.open_action)
         # file_menu.addAction(close_action)
 
@@ -182,6 +183,10 @@ class MainWindow(QMainWindow):
         # close_action.triggered.connect(self.close)
 
         ####################
+
+    def closeEvent(self, event):
+        self.close_signal.emit()
+        event.accept()
 
     def init3d_widget(self):
         widget3d = QVTKRenderWindowInteractor(self)

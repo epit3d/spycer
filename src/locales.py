@@ -89,6 +89,19 @@ class Locale:
     GCodeLoadingProgress = "GCode loading is in progress..."
     SupportsSettings = "Supports settings"
     MaterialShrinkage = "Material shrinkage, %:"
+    ProjectManager = "FASP project manager"
+    NewProject = "New project"
+    ProjectDirectory = "Project directory:"
+    ChooseProjectDirectory = "Choose project directory"
+    ChooseFolder = "Choose folder"
+    ProjectName = "Project name:"
+    OpenProject = "Open project"
+    RecentProjects = "Recent projects"
+    ProjectNameCannotBeEmpty = "Project name cannot be empty"
+    ProjectDirectoryCannotBeEmpty = "Project directory cannot be empty"
+    ProjectAlreadyExists = "Project already exists"
+    NoProjectSelected = "No project selected"
+
 
     def __init__(self, **entries):
         self.__dict__.update(entries)
@@ -185,6 +198,18 @@ dicts = {
         GCodeLoadingProgress = "Загрузка GCode в прогрессе...",
         SupportsSettings = "Настройки поддержек",
         MaterialShrinkage = "Величина усадки материала, %:",
+        ProjectManager = "FASP менеджер проектов",
+        NewProject = "Новый проект",
+        ProjectDirectory = "Директория проекта:",
+        ChooseProjectDirectory = "Выберите директорию проекта",
+        ChooseFolder = "Выберите папку",
+        ProjectName = "Имя проекта:",
+        OpenProject = "Открыть проект",
+        RecentProjects = "Последние проекты",
+        ProjectNameCannotBeEmpty = "Имя проекта не может быть пустым",
+        ProjectDirectoryCannotBeEmpty = "Директория проекта не может быть пустой",
+        ProjectAlreadyExists = "Проект с таким именем уже существует",
+        NoProjectSelected = "Проект не выбран",
     ),
 }
 
