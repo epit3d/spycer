@@ -10,6 +10,8 @@ from pathlib import Path
 import shutil
 from shutil import copy2
 from typing import Dict, List
+from vtkmodules.vtkCommonMath import vtkMatrix4x4
+
 import vtk
 from PyQt5 import QtCore, QtGui, QtWidgets
 
@@ -188,7 +190,7 @@ class MainController:
         self.update_bottom_thickness()
         self.update_lid_thickness()
         self.update_supports_bottom_thickness()
-        self.update_supports_top_thickness()
+        self.update_supports_lid_thickness()
 
     def update_bottom_thickness(self):
         self.update_dependent_fields(self.view.number_of_bottom_layers_value, self.view.layer_height_value, self.view.bottom_thickness_value)
@@ -221,14 +223,8 @@ class MainController:
                 file_ext = os.path.splitext(filename)[1].upper()
                 filename = str(Path(filename))
                 if file_ext == ".STL":
+                    self.reset_settings()
                     s = sett()
-                    s.slicing.originx, s.slicing.originy, s.slicing.originz = 0, 0, 0
-                    s.slicing.rotationx, s.slicing.rotationy, s.slicing.rotationz = 0, 0, 0
-                    s.slicing.scalex, s.slicing.scaley, s.slicing.scalez = 1, 1, 1
-                    s.slicing.model_centering = False
-                    s.slicing.print_time = 0
-                    s.slicing.consumption_material = 0
-                    s.slicing.planes_contact_with_nozzle = ""
                     # copy stl file to project directory
 
                     stl_full_path = PathBuilder.stl_model()
@@ -256,12 +252,34 @@ class MainController:
         except IOError as e:
             showErrorDialog("Error during file opening:" + str(e))
 
+    def reset_settings(self):
+        s = sett()
+        s.slicing.originx, s.slicing.originy, s.slicing.originz = 0, 0, 0
+        s.slicing.rotationx, s.slicing.rotationy, s.slicing.rotationz = 0, 0, 0
+        s.slicing.scalex, s.slicing.scaley, s.slicing.scalez = 1, 1, 1
+        s.slicing.model_centering = False
+        s.slicing.print_time = 0
+        s.slicing.consumption_material = 0
+        s.slicing.planes_contact_with_nozzle = ""
+
+        # Set 0.0 for the transformation matrix for rotation and translation. Set 1.0 for scaling
+        for i in range(4):
+            for j in range(4):
+                if i == j:
+                    setattr(s.slicing.transformation_matrix, f"m{i}{i}", 1.0)
+                else:
+                    setattr(s.slicing.transformation_matrix, f"m{i}{j}", 0.0)
+
+        save_settings()
+
     def load_stl(self, filename, colorize=False):
         if filename is None or filename == "":
             filename = self.model.opened_stl
         stl_actor = gui_utils.createStlActorInOrigin(filename, colorize)
         self.model.opened_stl = filename
         self.view.load_stl(stl_actor)
+        self.view.hide_checkbox.setChecked(True)
+        self.view._recreate_splanes(self.model.splanes)
 
     def load_gcode(self, filename, is_from_stl):
         def work():
@@ -389,6 +407,12 @@ class MainController:
 
         s.slicing.slicing_type = slicing_type
 
+        m = vtkMatrix4x4()
+        tf.GetMatrix(m)
+        for i in range(4):
+            for j in range(4):
+                setattr(s.slicing.transformation_matrix, f"m{i}{j}", m.GetElement(i, j))
+
         save_settings(filename)
 
     def save_gcode_file(self):
@@ -435,7 +459,7 @@ class MainController:
         self.view.line_width_value.setText(str(s.slicing.line_width))
         self.view.layer_height_value.setText(str(s.slicing.layer_height))
         self.view.wall_thickness_value.setText(str(s.slicing.wall_thickness))
-        self.view.number_of_bottom_layers_value.setText(str(s.slicing.bottom_layers))
+        self.view.number_of_bottom_layers_value.setText(str(s.slicing.bottoms_depth))
         self.view.number_of_lid_layers_value.setText(str(s.slicing.lids_depth))
         self.view.extruder_temp_value.setText(str(s.slicing.extruder_temperature))
         self.view.bed_temp_value.setText(str(s.slicing.bed_temperature))
@@ -459,12 +483,23 @@ class MainController:
         self.view.retraction_distance_value.setText(str(s.slicing.retraction_distance))
         self.view.retraction_speed_value.setText(str(s.slicing.retraction_speed))
         self.view.retract_compensation_amount_value.setText(str(s.slicing.retract_compensation_amount))
-        if s.slicing.supports_on:
+        if s.supports.enabled:
             self.view.supports_on_box.setCheckState(QtCore.Qt.Checked)
         else:
             self.view.supports_on_box.setCheckState(QtCore.Qt.Unchecked)
-        self.view.support_density_value.setText(str(s.slicing.support_density))
-        self.view.support_offset_value.setText(str(s.slicing.support_offset))
+        self.view.support_density_value.setText(str(s.supports.fill_density))
+        ind = locales.getLocaleByLang("en").FillingTypeValues.index(s.supports.fill_type)
+        self.view.support_fill_type_values.setCurrentIndex(ind)
+        self.view.support_xy_offset_value.setText(str(s.supports.xy_offset))
+        self.view.support_z_offset_layers_value.setText(str(s.supports.z_offset_layers))
+        if s.supports.priority_z_offset:
+            self.view.support_priority_z_offset_box.setCheckState(QtCore.Qt.Checked)
+        else:
+            self.view.support_priority_z_offset_box.setCheckState(QtCore.Qt.Unchecked)
+        self.view.supports_number_of_bottom_layers_value.setText(str(s.supports.bottoms_depth))
+        self.view.supports_bottom_thickness_value.setText(str(round(s.slicing.layer_height*s.supports.bottoms_depth,2)))
+        self.view.supports_number_of_lid_layers_value.setText(str(int(s.supports.lids_depth)))
+        self.view.supports_lid_thickness_value.setText(str(round(s.slicing.layer_height*s.supports.lids_depth,2)))
         self.view.colorize_angle_value.setText(str(s.slicing.angle))
 
     def colorize_model(self):
@@ -554,7 +589,7 @@ class MainController:
             self.view.name_stl_file.setText("")
             self.view.setWindowTitle("FASP")
         else:
-            name_stl_file = os.path.basename(filename).split('.')[0]
+            name_stl_file = os.path.splitext(os.path.basename(filename))[0]
             file_ext = os.path.splitext(filename)[1].upper()
 
             self.view.setWindowTitle(name_stl_file + " - FASP")

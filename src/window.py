@@ -268,12 +268,12 @@ class MainWindow(QMainWindow):
         сolumn2_number_of_cells = 4
 
         validatorLocale = QtCore.QLocale("Englishs")
-        intValidator = QtGui.QIntValidator(0, 100)
+        intValidator = QtGui.QIntValidator(0, 9000)
 
-        doubleValidator = QtGui.QDoubleValidator(0.00, 100.00, 2)
+        doubleValidator = QtGui.QDoubleValidator(0.00, 9000.00, 2)
         doubleValidator.setLocale(validatorLocale)
 
-        doublePercentValidator = QtGui.QDoubleValidator(0.00, 100.00, 2)
+        doublePercentValidator = QtGui.QDoubleValidator(0.00, 9000.00, 2)
         doublePercentValidator.setLocale(validatorLocale)
 
         # Front-end development at its best
@@ -662,6 +662,19 @@ class MainWindow(QMainWindow):
     def init_stl_move_panel(self):
         stlRotator = gui_utils.StlRotator(self)
 
+        def translate(x, y, z):
+
+            def translatePos():
+                stlTranslator.act(5, [x, y, z])
+
+            def translateNeg():
+                stlTranslator.act(-5, [x, y, z])
+
+            def translateSet(self):
+                stlTranslator.set(self.text(), [x, y, z])
+
+            return translatePos, translateNeg, translateSet
+
         def rotate(x, y, z):
 
             def rotatePos():
@@ -677,19 +690,6 @@ class MainWindow(QMainWindow):
 
         stlTranslator = gui_utils.StlTranslator(self)
 
-        def translate(x, y, z):
-
-            def translatePos():
-                stlTranslator.act(5, [x, y, z])
-
-            def translateNeg():
-                stlTranslator.act(-5, [x, y, z])
-
-            def translateSet(text):
-                stlTranslator.set(text, [x, y, z])
-
-            return translatePos, translateNeg, translateSet
-
         stlScale = gui_utils.StlScale(self)
 
         def scale(x, y, z):
@@ -700,8 +700,8 @@ class MainWindow(QMainWindow):
             def scaleNeg():
                 stlScale.act(-5, [x, y, z])
 
-            def scaleSet(text):
-                stlScale.set(text, [x, y, z])
+            def scaleSet(self):
+                stlScale.set(self.text(), [x, y, z])
 
             return scalePos, scaleNeg, scaleSet
 

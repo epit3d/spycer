@@ -222,20 +222,22 @@ def createStlActorInOrigin(filename, colorize=False):
     else:
         actor = StlActor(output)
 
-    s = sett()
-    transform = vtk.vtkTransform()
-    transform.Translate(s.hardware.plane_center_x, s.hardware.plane_center_y, s.hardware.plane_center_z)
-    transform.Translate(s.slicing.originx, s.slicing.originy, s.slicing.originz)
-
-    transform.RotateZ(s.slicing.rotationz)
-    transform.RotateX(s.slicing.rotationx)
-    transform.RotateY(s.slicing.rotationy)
-
-    transform.Scale(s.slicing.scalex, s.slicing.scaley, s.slicing.scalez)
-
-    actor.SetUserTransform(transform)
+    actor = setTransformFromSettings(actor)
     return actor
 
+def setTransformFromSettings(actor):
+    s = sett()
+    transform = vtk.vtkTransform()
+
+    m = vtkMatrix4x4()
+    for i in range(4):
+        for j in range(4):
+            m.SetElement(i, j, getattr(s.slicing.transformation_matrix, f"m{i}{j}"))
+
+    transform.SetMatrix(m)
+    actor.SetUserTransform(transform)
+
+    return actor
 
 def makeBlocks(layers, rotations, lays2rots):
     blocks = []
@@ -595,37 +597,6 @@ class StlMover:
     def actMethod(self, val, axis):
         pass
 
-class StlScale(StlMover):
-
-    def __init__(self, view):
-        super().__init__(view)
-
-    def setMethod(self, val, axis):
-        x, y, z = axis
-        x1, y1, z1 = self.tf.GetScale()
-        val = val if val > 0 else 1
-        val = val / 100
-
-        sx = val / x1 if x else 1
-        sy = val / y1 if y else 1
-        sz = val / z1 if z else 1
-
-        self.tf.Scale(sx, sy, sz)
-
-    def actMethod(self, val, axis):
-        x, y, z = axis
-        x1, y1, z1 = self.tf.GetScale()
-        val = val / 100
-
-        sx = x1 + val * x
-        sy = y1 + val * y
-        sz = z1 + val * z
-
-        sx = sx / x1 if sx > 0 else 0.01 / x1
-        sy = sy / y1 if sy > 0 else 0.01 / y1
-        sz = sz / z1 if sz > 0 else 0.01 / z1
-
-        self.tf.Scale(sx, sy, sz)
 
 class StlTranslator(StlMover):
 
@@ -657,57 +628,60 @@ class StlRotator(StlMover):
 
     def setMethod(self, val, axis):
         x, y, z = axis
-
-        x1, y1, z1 = self.tf.GetScale()
-        self.tf.Scale(1 / x1, 1 / y1, 1 / z1)
-
         cx, cy, cz = self.view.stlActor.center
-        self.tf.Translate(cx, cy, cz)
-
         rx, ry, rz = self.tf.GetOrientation()
-        rx = val if x else rx
-        ry = val if y else ry
-        rz = val if z else rz
+        rx = val - rx if x else 0
+        ry = val - ry if y else 0
+        rz = val - rz if z else 0
 
         tf = vtkTransform()
+        tf.Translate(cx, cy, cz)
+
         tf.RotateZ(rz)
         tf.RotateX(rx)
         tf.RotateY(ry)
 
-        m = vtkMatrix4x4()
-        self.tf.GetMatrix(m)
+        tf.Translate(-cx, -cy, -cz)
+        tf.Concatenate(self.tf)
 
-        for i in range(3):
-            for j in range(3):
-                m.SetElement(i, j, tf.GetMatrix().GetElement(i, j))
-
-        self.tf.SetMatrix(m)
-        self.tf.Translate(-cx, -cy, -cz)
-
-        self.tf.Scale(x1, y1, z1)
+        self.tf = tf
 
     def actMethod(self, val, axis):
         x, y, z = axis
+        rx, ry, rz = self.tf.GetOrientation()
+        val = val + rx if x else val
+        val = val + ry if y else val
+        val = val + rz if z else val
 
+        self.setMethod(val, axis)
+
+class StlScale(StlMover):
+
+    def __init__(self, view):
+        super().__init__(view)
+
+    def setMethod(self, val, axis):
+        x, y, z = axis
         x1, y1, z1 = self.tf.GetScale()
-        self.tf.Scale(1 / x1, 1 / y1, 1 / z1)
+        val = val if val > 0 else 1
+        val = val / 100
 
-        print(x, y, z)
-        print(self.tf.GetPosition(), self.tf.GetOrientation())
-        m0 = self.tf.GetMatrix()
-        m1 = vtkMatrix4x4()
-        for i in range(3):
-            for j in range(3):
-                m1.SetElement(i, j, m0.GetElement(i, j))
-        m1.Transpose()
-        tf1 = vtkTransform()
-        tf1.SetMatrix(m1)
-        vx, vy, vz = tf1.TransformVector(x, y, z)
-        print(vx, vy, vz)
+        sx = val / x1 if x else 1
+        sy = val / y1 if y else 1
+        sz = val / z1 if z else 1
 
-        ox, oy, oz = self.view.stlActor.center
-        self.tf.Translate(ox, oy, oz)
-        self.tf.RotateWXYZ(val, vx, vy, vz)
-        self.tf.Translate(-ox, -oy, -oz)
+        tf = vtk.vtkTransform()
+        tf.Scale(sx, sy, sz)
+        tf.Concatenate(self.tf)
 
-        self.tf.Scale(x1, y1, z1)
+        self.tf = tf
+
+
+    def actMethod(self, val, axis):
+        x, y, z = axis
+        rx, ry, rz = self.tf.GetScale()
+        val = val + rx * 100 if x else val
+        val = val + ry * 100 if y else val
+        val = val + rz * 100 if z else val
+
+        self.setMethod(val, axis)
