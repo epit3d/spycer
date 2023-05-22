@@ -16,7 +16,9 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from src import gui_utils, locales, qt_utils
 from src.figure_editor import PlaneEditor, ConeEditor
 from src.gui_utils import showErrorDialog, plane_tf, read_planes, Plane, Cone, showInfoDialog
+from src.process import Process
 from src.settings import sett, save_settings, load_settings, get_color
+
 
 class MainController:
     def __init__(self, view, model):
@@ -286,20 +288,24 @@ class MainController:
         def work():
             start_time = time.time()
             print("start slicing")
-            res = call_command(s.slicing.cmd)
+            p = Process(s.slicing.cmd)
+            p.wait()
             print("finished command")
             end_time = time.time()
             print('spent time for slicing: ', end_time - start_time, 's')
+            
+            # goosli sends everything to stdout, returncode is 1 when fatal is called
+            return p.stdout if p.returncode else ""
 
-            return res
-
-        res = qt_utils.progress_dialog(
+        error = qt_utils.progress_dialog(
             locales.getLocale().SlicingTitle, 
             locales.getLocale().SlicingProgress, 
             work,
         )
 
-        if not res:
+        if error:
+            logging.error(f"error: <{error}>")
+            gui_utils.showErrorDialog(error)
             return
 
         self.load_gcode(s.slicing.gcode_file_without_calibration, True)
@@ -308,15 +314,12 @@ class MainController:
         self.update_interface()
 
     def get_slicer_version(self):
-        slicer_version = "0.0.0"
-        try:
-            s = sett()
-            slicer_version = subprocess.check_output(s.slicing.cmd_version.split(), stderr=subprocess.STDOUT).decode("utf-8")
-        except Exception as e:
-            showErrorDialog("Error during getting slicer version:" + str(e))
-            return
+        proc = Process(sett().slicing.cmd_version).wait()
         
-        showInfoDialog(locales.getLocale().SlicerVersion + slicer_version)
+        if proc.returncode:
+            showErrorDialog("Error during getting slicer version:" + str(proc.stdout))
+        else:
+            showInfoDialog(locales.getLocale().SlicerVersion + proc.stdout)
 
     def save_settings(self, slicing_type, filename = ""):
         s = sett()
@@ -448,7 +451,12 @@ class MainController:
         s = sett()
         shutil.copyfile(s.slicing.stl_file, s.colorizer.copy_stl_file)
         save_splanes_to_file(self.model.splanes, s.slicing.splanes_file)
-        call_command(s.colorizer.cmd)
+        p = Process(s.colorizer.cmd).wait()
+        if p.returncode:
+            logging.error(f"error: <{p.stdout}>")
+            gui_utils.showErrorDialog(p.stdout)
+            return
+        
         lastMove = self.view.stlActor.lastMove
         self.load_stl(s.colorizer.copy_stl_file, colorize=True)
         self.view.stlActor.lastMove = lastMove
@@ -569,26 +577,6 @@ class MainController:
         else:
             self.view.warning_nozzle_and_table_collision.setText("")
 
-def call_command(cmd) -> bool:
-    try:
-        cmds = cmd.split(" ")
-        # print(cmds)
-        subprocess.check_output(cmds, stderr=subprocess.STDOUT)
-    except subprocess.CalledProcessError as er:
-        print("Error:", sys.exc_info())
-        print("Error2:", er.output)
-        logging.error(str(sys.exc_info()))
-        gui_utils.showErrorDialog(repr(er.output))
-        return False
-    except:
-        print("Error:", sys.exc_info())
-        logging.error(str(sys.exc_info()))
-        # print("Error2:", er.output)
-        gui_utils.showErrorDialog(str(sys.exc_info()))
-        return False
-    
-    # return positive that we can load new gcode from file and it for sure will be new
-    return True
 
 def save_splanes_to_file(splanes, filename):
     with open(filename, 'w') as out:
