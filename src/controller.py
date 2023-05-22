@@ -421,7 +421,7 @@ class MainController:
         self.view.line_width_value.setText(str(s.slicing.line_width))
         self.view.layer_height_value.setText(str(s.slicing.layer_height))
         self.view.wall_thickness_value.setText(str(s.slicing.wall_thickness))
-        self.view.number_of_bottom_layers_value.setText(str(s.slicing.bottom_layers))
+        self.view.number_of_bottom_layers_value.setText(str(s.slicing.bottoms_depth))
         self.view.number_of_lid_layers_value.setText(str(s.slicing.lids_depth))
         self.view.extruder_temp_value.setText(str(s.slicing.extruder_temperature))
         self.view.bed_temp_value.setText(str(s.slicing.bed_temperature))
@@ -445,12 +445,23 @@ class MainController:
         self.view.retraction_distance_value.setText(str(s.slicing.retraction_distance))
         self.view.retraction_speed_value.setText(str(s.slicing.retraction_speed))
         self.view.retract_compensation_amount_value.setText(str(s.slicing.retract_compensation_amount))
-        if s.slicing.supports_on:
+        if s.supports.enabled:
             self.view.supports_on_box.setCheckState(QtCore.Qt.Checked)
         else:
             self.view.supports_on_box.setCheckState(QtCore.Qt.Unchecked)
-        self.view.support_density_value.setText(str(s.slicing.support_density))
-        self.view.support_offset_value.setText(str(s.slicing.support_offset))
+        self.view.support_density_value.setText(str(s.supports.fill_density))
+        ind = locales.getLocaleByLang("en").FillingTypeValues.index(s.supports.fill_type)
+        self.view.support_fill_type_values.setCurrentIndex(ind)
+        self.view.support_xy_offset_value.setText(str(s.supports.xy_offset))
+        self.view.support_z_offset_layers_value.setText(str(s.supports.z_offset_layers))
+        if s.supports.priority_z_offset:
+            self.view.support_priority_z_offset_box.setCheckState(QtCore.Qt.Checked)
+        else:
+            self.view.support_priority_z_offset_box.setCheckState(QtCore.Qt.Unchecked)
+        self.view.supports_number_of_bottom_layers_value.setText(str(s.supports.bottoms_depth))
+        self.view.supports_bottom_thickness_value.setText(str(round(s.slicing.layer_height*s.supports.bottoms_depth,2)))
+        self.view.supports_number_of_lid_layers_value.setText(str(int(s.supports.lids_depth)))
+        self.view.supports_lid_thickness_value.setText(str(round(s.slicing.layer_height*s.supports.lids_depth,2)))
         self.view.colorize_angle_value.setText(str(s.slicing.angle))
 
     def colorize_model(self):
