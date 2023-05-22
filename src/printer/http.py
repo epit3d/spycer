@@ -4,6 +4,19 @@ import time
 
 host = None
 session = None
+settings = None
+
+
+def setSettings(s):
+    global settings
+    settings = s
+
+
+def httpDefaultSettings():
+    return dict(
+        hostname='epit.local',
+        requests_interval=0.05,
+    )
 
 
 def startSession():
@@ -13,9 +26,9 @@ def startSession():
 
 def sendRequest(request, requestType='GET', data=None):
     # print('request: ' + host + request)
-    global host, session
+    global host, session, settings
     if host is None:
-        ip = socket.gethostbyname('3d.local')
+        ip = socket.gethostbyname(settings.http.hostname)
         # ip = socket.gethostbyname('EPIT3D')
         print('printer ip:', ip)
         host = 'http://' + ip
@@ -64,8 +77,9 @@ def getObjectModel(entry):
 
 
 def waitBusy():
+    global settings
     while True:
-        time.sleep(0.5)
+        time.sleep(settings.http.requests_interval)
         response = sendRequest('/rr_model?key=state.status')
         status = response.json()['result']
 

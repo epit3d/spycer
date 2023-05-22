@@ -7,6 +7,8 @@ from .delta import DeltaParams
 from .scale import ScaleParams
 from .skew import SkewParams
 
+from . import http
+from . import settings
 
 writeGcode = False
 useDwell = True
@@ -175,6 +177,20 @@ class EpitPrinter:
         self.skewParams = SkewParams()
         self.calibBallDiam = 9.93
         self.calibBallRadius = self.calibBallDiam / 2
+
+        # manage settings
+        self.settingsManager = settings.Manager()
+        if self.settingsManager.settingsFileExists():
+            self.settingsManager.loadSettingsFromFile()
+        else:
+            defaultSettings = dict(
+                http=http.httpDefaultSettings(),
+            )
+            self.settingsManager.loadDefaultSettings(defaultSettings)
+            self.settingsManager.saveSettings()
+
+        self.settings = self.settingsManager.getSettings()
+        http.setSettings(self.settings)
 
     def zProbe(self):
         zA, probes = probeZ()
