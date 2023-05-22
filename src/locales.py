@@ -101,7 +101,8 @@ class Locale:
     ProjectDirectoryCannotBeEmpty = "Project directory cannot be empty"
     ProjectAlreadyExists = "Project already exists"
     NoProjectSelected = "No project selected"
-
+    Tools = "Tools"
+    Calibration = "Calibration"
 
     def __init__(self, **entries):
         self.__dict__.update(entries)
@@ -210,6 +211,8 @@ dicts = {
         ProjectDirectoryCannotBeEmpty = "Директория проекта не может быть пустой",
         ProjectAlreadyExists = "Проект с таким именем уже существует",
         NoProjectSelected = "Проект не выбран",
+        Tools="Инструменты",
+        Calibration="Калибровка",
     ),
 }
 

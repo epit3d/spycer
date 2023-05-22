@@ -131,6 +131,10 @@ class MainWindow(QMainWindow):
         self.slicing_info_action = QAction(self.locale.SlicerInfo, self)
         file_menu.addAction(self.slicing_info_action)
 
+        tools_menu = bar.addMenu(self.locale.Tools)
+        self.calibration_action = QAction(self.locale.Calibration, self)
+        tools_menu.addAction(self.calibration_action)
+
         # main parts
         central_widget = QWidget()
         main_grid = QGridLayout()

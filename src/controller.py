@@ -54,6 +54,10 @@ class MainController:
         self.view.load_sett_action.triggered.connect(self.load_settings_file)
         self.view.slicing_info_action.triggered.connect(self.get_slicer_version)
 
+        self.view.calibration_action.triggered.connect(
+            self.calibrationPanel.show
+        )
+
         # right panel
         self.view.number_wall_lines_value.textChanged.connect(self.update_wall_thickness)
         self.view.line_width_value.textChanged.connect(self.update_wall_thickness)
