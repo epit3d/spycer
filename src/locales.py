@@ -13,11 +13,11 @@ class Locale:
     NumberWallLines='Number of wall lines:'
     BottomThickness='Bottom thickness:'
     NumberOfBottomLayers='Number of bottom layers:'
-    LidsThickness='Lid thickness:'
+    LidsThickness='Lids thickness:'
     NumberOfLidLayers='Number of lid layers:'
     LineWidth = 'Extruder diameter, mm:'
     FillingType = 'Filling type:'
-    FillingTypeValues = ["Lines", "Squares", "Triangles"]
+    FillingTypeValues = ["Lines", "Squares", "Triangles", "Cross"]
     ShowStl = "Show stl"
     LayersCount = "Layers count:"
     OpenModel = "Open model"
@@ -81,11 +81,27 @@ class Locale:
     Open = "Open"
     SaveSettings = "Save settings"
     LoadSettings = "Load settings"
+    SlicerInfo = "Slicer info"
+    SlicerVersion = "Slicer version: "
     SlicingTitle = "Slicing"
     SlicingProgress = "Slicing is in progress..."
     GCodeLoadingTitle = "GCode loading"
     GCodeLoadingProgress = "GCode loading is in progress..."
     SupportsSettings = "Supports settings"
+    MaterialShrinkage = "Material shrinkage, %:"
+    ProjectManager = "FASP project manager"
+    NewProject = "New project"
+    ProjectDirectory = "Project directory:"
+    ChooseProjectDirectory = "Choose project directory"
+    ChooseFolder = "Choose folder"
+    ProjectName = "Project name:"
+    OpenProject = "Open project"
+    RecentProjects = "Recent projects"
+    ProjectNameCannotBeEmpty = "Project name cannot be empty"
+    ProjectDirectoryCannotBeEmpty = "Project directory cannot be empty"
+    ProjectAlreadyExists = "Project already exists"
+    NoProjectSelected = "No project selected"
+
 
     def __init__(self, **entries):
         self.__dict__.update(entries)
@@ -105,13 +121,13 @@ dicts = {
         NumberWallLines='Количество проходов стенки:',
         BottomThickness='Толщина дна:',
         NumberOfBottomLayers='Количество слоев дна:',
-        LidThickness='Толщина крышки:',
+        LidsThickness='Толщина крышки:',
         NumberOfLidLayers='Количество слоев крышки:',
         LineWidth='Диаметр сопла, мм:',
         ShowStl='Отображение STL модели',
         LayersCount='Отображаемые слои:',
         FillingType='Тип заполнения:',
-        FillingTypeValues=["Линии", "Квадраты", "Треугольники"],
+        FillingTypeValues=["Линии", "Квадраты", "Треугольники", "Перекрёстное"],
         OpenModel='Открыть модель',
         ColorModel='Выделить критические свесы',
         MoveModel='Передвинуть модель',
@@ -174,11 +190,26 @@ dicts = {
         Open = "Открыть",
         SaveSettings = "Сохранить настройки",
         LoadSettings = "Загрузить настройки",
+        SlicerInfo = "Информация о слайсере",
+        SlicerVersion = "Версия слайсера: ",
         SlicingTitle = "Слайсинг",
         SlicingProgress = "Слайсинг в прогрессе...",
         GCodeLoadingTitle = "Загрузка GCode",
         GCodeLoadingProgress = "Загрузка GCode в прогрессе...",
         SupportsSettings = "Настройки поддержек",
+        MaterialShrinkage = "Величина усадки материала, %:",
+        ProjectManager = "FASP менеджер проектов",
+        NewProject = "Новый проект",
+        ProjectDirectory = "Директория проекта:",
+        ChooseProjectDirectory = "Выберите директорию проекта",
+        ChooseFolder = "Выберите папку",
+        ProjectName = "Имя проекта:",
+        OpenProject = "Открыть проект",
+        RecentProjects = "Последние проекты",
+        ProjectNameCannotBeEmpty = "Имя проекта не может быть пустым",
+        ProjectDirectoryCannotBeEmpty = "Директория проекта не может быть пустой",
+        ProjectAlreadyExists = "Проект с таким именем уже существует",
+        NoProjectSelected = "Проект не выбран",
     ),
 }
 

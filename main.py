@@ -2,15 +2,15 @@ import logging
 import sys
 import traceback
 import os
-import qdarkstyle
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QApplication
-
-from src.settings import load_settings, sett, get_color
+import pathlib
+from src.settings import copy_project_files, load_settings, sett, get_color
 from src.window import MainWindow
 from src.model import MainModel
 from src.controller import MainController
 from src.interface_style_sheet import getStyleSheet
+from src.entry_window import EntryWindow
 
 logging.basicConfig(filename='interface.log', filemode='a+', level=logging.INFO, format='%(asctime)s %(message)s')
 
@@ -30,12 +30,47 @@ if __name__ == "__main__":
     style_sheet = getStyleSheet()
     app.setStyleSheet(style_sheet)
 
-    window = MainWindow()
-    model = MainModel()
-    cntrl = MainController(window, model)
-    # cntrl.load_stl("/home/l1va/Downloads/1_odn2.stl")  # TODO: removeme
-    window.showMaximized()
-    window.show()
+    def open_project(project_path: str):
+        load_settings(str(pathlib.Path(project_path, "settings.yaml")))
+
+        window = MainWindow()
+        window.close_signal.connect(entry_window.show)
+        
+        model = MainModel()
+        cntrl = MainController(window, model)
+
+        # try to open stl file
+        stlpath = pathlib.Path(project_path, sett().slicing.stl_file)
+        if os.path.isfile(stlpath):
+            cntrl.load_stl(stlpath)
+
+        # try to open figures file
+        figpath = pathlib.Path(project_path, sett().slicing.splanes_file)
+        if os.path.isfile(figpath):
+            cntrl.load_planes(figpath)
+
+        window.showMaximized()
+        window.show()
+        entry_window.close()
+
+    def create_project(project_path: str):
+        copy_project_files(project_path)
+        load_settings(str(pathlib.Path(project_path, "settings.yaml")))
+
+        window = MainWindow()
+        window.close_signal.connect(entry_window.show)
+        
+        model = MainModel()
+        cntrl = MainController(window, model)
+        window.showMaximized()
+        window.show()
+        entry_window.close()
+
+    entry_window = EntryWindow()
+    entry_window.show()
+
+    entry_window.open_project_signal.connect(open_project)
+    entry_window.create_project_signal.connect(create_project)
 
     # sys.exit(app.exec_())
     sys.excepthook = excepthook

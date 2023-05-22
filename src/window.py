@@ -103,6 +103,8 @@ class MainWindow(QMainWindow):
     # by default it is None, because there is nothing to edit, will be updated by derived from FigureEditor
     parameters_tooling: Optional[FigureEditor] = None
 
+    close_signal = QtCore.pyqtSignal()
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle('FASP')
@@ -116,7 +118,6 @@ class MainWindow(QMainWindow):
         bar = self.menuBar()
         file_menu = bar.addMenu(self.locale.File)
         self.open_action = QAction(self.locale.Open, self)
-        # close_action = QAction('Close', self)
         file_menu.addAction(self.open_action)
         # file_menu.addAction(close_action)
 
@@ -126,6 +127,9 @@ class MainWindow(QMainWindow):
         file_menu.addAction(self.save_sett_action)
         self.load_sett_action = QAction(self.locale.LoadSettings, self)
         file_menu.addAction(self.load_sett_action)
+
+        self.slicing_info_action = QAction(self.locale.SlicerInfo, self)
+        file_menu.addAction(self.slicing_info_action)
 
         # main parts
         central_widget = QWidget()
@@ -179,6 +183,10 @@ class MainWindow(QMainWindow):
         # close_action.triggered.connect(self.close)
 
         ####################
+
+    def closeEvent(self, event):
+        self.close_signal.emit()
+        event.accept()
 
     def init3d_widget(self):
         widget3d = QVTKRenderWindowInteractor(self)
@@ -326,7 +334,7 @@ class MainWindow(QMainWindow):
         self.number_of_lid_layers_value.setValidator(intValidator)
         right_panel.addWidget(number_of_lid_layers_label, get_next_row(), 1)
         right_panel.addWidget(self.number_of_lid_layers_value, get_cur_row(), 2)
-        lid_thickness_label = QLabel(self.locale.LidThickness)
+        lid_thickness_label = QLabel(self.locale.LidsThickness)
         self.lid_thickness_value = LineEdit(str(round(sett().slicing.layer_height*sett().slicing.lids_depth,2)))
         self.lid_thickness_value.setReadOnly(True)
         millimeter_label = QLabel(self.locale.Millimeter)
@@ -431,6 +439,12 @@ class MainWindow(QMainWindow):
         right_panel.addWidget(retract_compensation_amount_label, get_next_row(), 1)
         right_panel.addWidget(self.retract_compensation_amount_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
 
+        material_shrinkage_label = QLabel(self.locale.MaterialShrinkage)
+        self.material_shrinkage_value = LineEdit(str(sett().slicing.material_shrinkage))
+        self.material_shrinkage_value.setValidator(doubleValidator)
+        right_panel.addWidget(material_shrinkage_label, get_next_row(), 1)
+        right_panel.addWidget(self.material_shrinkage_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
+
         # supports related stuff section
         right_panel.addWidget(QLabel(self.locale.SupportsSettings), get_next_row(), 1, Qt.AlignCenter)
 
@@ -465,7 +479,7 @@ class MainWindow(QMainWindow):
         
         support_z_offset_layers_label = QLabel(self.locale.SupportZOffsetLayers)
         self.support_z_offset_layers_value = LineEdit(str(sett().supports.z_offset_layers))
-        self.support_z_offset_layers_value.setValidator(doubleValidator)
+        self.support_z_offset_layers_value.setValidator(intValidator)
         right_panel.addWidget(support_z_offset_layers_label, get_next_row(), 1)
         right_panel.addWidget(self.support_z_offset_layers_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
 
@@ -495,7 +509,7 @@ class MainWindow(QMainWindow):
         self.supports_number_of_lid_layers_value.setValidator(intValidator)
         right_panel.addWidget(supports_number_of_lid_layers_label, get_next_row(), 1)
         right_panel.addWidget(self.supports_number_of_lid_layers_value, get_cur_row(), 2)
-        supports_lid_thickness_label = QLabel(self.locale.LidThickness)
+        supports_lid_thickness_label = QLabel(self.locale.LidsThickness)
         self.supports_lid_thickness_value = LineEdit(str(round(sett().slicing.layer_height*sett().supports.lids_depth,2)))
         self.supports_lid_thickness_value.setReadOnly(True)
         millimeter_label = QLabel(self.locale.Millimeter)

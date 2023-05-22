@@ -1,6 +1,7 @@
 import logging
 import math
 import os
+from os import path
 import subprocess
 import time
 import sys
@@ -16,8 +17,10 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 from src import gui_utils, locales, qt_utils
 from src.figure_editor import PlaneEditor, ConeEditor
-from src.gui_utils import showErrorDialog, plane_tf, read_planes, Plane, Cone
-from src.settings import sett, save_settings, load_settings, get_color
+from src.gui_utils import showErrorDialog, plane_tf, read_planes, Plane, Cone, showInfoDialog
+from src.process import Process
+from src.settings import sett, save_settings, load_settings, get_color, PathBuilder
+
 
 class MainController:
     def __init__(self, view, model):
@@ -30,6 +33,7 @@ class MainController:
         self.view.save_gcode_action.triggered.connect(partial(self.save_gcode_file))
         self.view.save_sett_action.triggered.connect(self.save_settings_file)
         self.view.load_sett_action.triggered.connect(self.load_settings_file)
+        self.view.slicing_info_action.triggered.connect(self.get_slicer_version)
 
         # right panel
         self.view.number_wall_lines_value.textChanged.connect(self.update_wall_thickness)
@@ -62,6 +66,15 @@ class MainController:
         self.view.splanes_tree.model().rowsInserted.connect(self.moving_figure)
 
         self.view.hide_checkbox.stateChanged.connect(self.view.hide_splanes)
+
+        # on close of window we save current planes to project file
+        self.view.close_signal.connect(self.save_planes_on_close)
+
+    def save_planes_on_close(self):
+        splanes_full_pth = PathBuilder.splanes_file()
+        save_splanes_to_file(self.model.splanes, splanes_full_pth)
+        sett().slicing.splanes_file = path.basename(splanes_full_pth)
+        save_settings()
 
     def moving_figure(self, sourceParent, previousRow):
         if sourceParent.row() != -1:
@@ -153,9 +166,7 @@ class MainController:
                 filename = str(Path(filename))
                 if file_ext == ".TXT":
                     try:
-                        self.model.splanes = read_planes(filename)
-                        self.view.hide_checkbox.setChecked(False)
-                        self.view.reload_splanes(self.model.splanes)
+                        self.load_planes(filename)
                     except:
                         showErrorDialog("Error during reading planes file")
                 else:
@@ -163,6 +174,11 @@ class MainController:
                         "This file format isn't supported:" + file_ext)
         except IOError as e:
             showErrorDialog("Error during file opening:" + str(e))
+
+    def load_planes(self, filename):
+        self.model.splanes = read_planes(filename)
+        self.view.hide_checkbox.setChecked(False)
+        self.view.reload_splanes(self.model.splanes)
 
     def change_layer_view(self):
         self.model.current_slider_value = self.view.change_layer_view(self.model.current_slider_value, self.model.gcode)
@@ -209,7 +225,13 @@ class MainController:
                 if file_ext == ".STL":
                     self.reset_settings()
                     s = sett()
-                    s.slicing.stl_file = filename
+                    # copy stl file to project directory
+
+                    stl_full_path = PathBuilder.stl_model()
+                    shutil.copyfile(filename, stl_full_path)
+                    # relative path inside project
+                    s.slicing.stl_file = path.basename(stl_full_path) 
+
                     save_settings()
                     self.update_interface(filename)
 
@@ -218,10 +240,10 @@ class MainController:
                     if os.path.isfile(s.colorizer.copy_stl_file):
                         os.remove(s.colorizer.copy_stl_file)
 
-                    self.load_stl(filename)
+                    self.load_stl(stl_full_path)
                 elif file_ext == ".GCODE":
                     s = sett()
-                    s.slicing.stl_file = filename # TODO optimize
+                    # s.slicing.stl_file = filename # TODO optimize
                     save_settings()
                     self.load_gcode(filename, False)
                     self.update_interface(filename)
@@ -296,36 +318,51 @@ class MainController:
             return
 
         s = sett()
-        save_splanes_to_file(self.model.splanes, s.slicing.splanes_file)
+        splanes_full_path = PathBuilder.splanes_file()
+        save_splanes_to_file(self.model.splanes, splanes_full_path)
+        sett().slicing.splanes_file = path.basename(splanes_full_path)
         self.save_settings(slicing_type)
 
         def work():
             start_time = time.time()
             print("start slicing")
-            res = call_command(s.slicing.cmd)
+            p = Process(PathBuilder.slicing_cmd())
+            p.wait()
             print("finished command")
             end_time = time.time()
             print('spent time for slicing: ', end_time - start_time, 's')
+            
+            # goosli sends everything to stdout, returncode is 1 when fatal is called
+            return p.stdout if p.returncode else ""
 
-            return res
-
-        res = qt_utils.progress_dialog(
+        error = qt_utils.progress_dialog(
             locales.getLocale().SlicingTitle, 
-            locales.getLocale().SlicingProgress, 
+            locales.getLocale().SlicingProgress,
             work,
         )
 
-        if not res:
+        if error:
+            logging.error(f"error: <{error}>")
+            gui_utils.showErrorDialog(error)
             return
 
-        self.load_gcode(s.slicing.gcode_file_without_calibration, True)
+        # load gcode without calibration
+        self.load_gcode(PathBuilder.gcodevis_file(), True)
         print("loaded gcode")
-        # self.debugMe()
         self.update_interface()
+
+    def get_slicer_version(self):
+        proc = Process(sett().slicing.cmd_version).wait()
+        
+        if proc.returncode:
+            showErrorDialog("Error during getting slicer version:" + str(proc.stdout))
+        else:
+            showInfoDialog(locales.getLocale().SlicerVersion + proc.stdout)
 
     def save_settings(self, slicing_type, filename = ""):
         s = sett()
-        s.slicing.stl_file = self.model.opened_stl
+        print(f"saving settings of stl file {self.model.opened_stl} {s.slicing.stl_file}")
+        # s.slicing.stl_file = self.model.opened_stl
         tf = vtk.vtkTransform()
         if self.view.stlActor is not None:
             tf = self.view.stlActor.GetUserTransform()
@@ -366,6 +403,7 @@ class MainController:
         s.supports.bottoms_depth = int(self.view.supports_number_of_bottom_layers_value.text())
 
         s.slicing.overlapping_infill_percentage = float(self.view.overlapping_infill_value.text())
+        s.slicing.material_shrinkage = float(self.view.material_shrinkage_value.text())
 
         s.slicing.slicing_type = slicing_type
 
@@ -467,13 +505,18 @@ class MainController:
     def colorize_model(self):
         self.save_settings("vip")
         s = sett()
-        shutil.copyfile(s.slicing.stl_file, s.colorizer.copy_stl_file)
-        save_splanes_to_file(self.model.splanes, s.slicing.splanes_file)
-        call_command(s.colorizer.cmd)
+        shutil.copyfile(PathBuilder.stl_model(),PathBuilder.colorizer_stl())
+        save_splanes_to_file(self.model.splanes, PathBuilder.splanes_file())
+        p = Process(PathBuilder.colorizer_cmd()).wait()
+        if p.returncode:
+            logging.error(f"error: <{p.stdout}>")
+            gui_utils.showErrorDialog(p.stdout)
+            return
+        
         lastMove = self.view.stlActor.lastMove
-        self.load_stl(s.colorizer.copy_stl_file, colorize=True)
+        self.load_stl(PathBuilder.colorizer_stl(), colorize=True)
         self.view.stlActor.lastMove = lastMove
-        self.model.opened_stl = s.slicing.stl_file
+        # self.model.opened_stl = s.slicing.stl_file
 
     # ######################bottom panel
 
@@ -539,11 +582,6 @@ class MainController:
             self.view.splanes_tree.topLevelItem(i).setText(1, str(i + 1))
             self.view.splanes_tree.topLevelItem(i).setText(2, self.model.splanes[i].toFile())
 
-    # def debugMe(self):
-    #     debug.readFile(self.render, "/home/l1va/debug.txt", 4)
-    #     # debug.readFile(self.render, "/home/l1va/debug_simplified.txt", "Red", 3)
-    #     self.reloadScene()
-
     def update_interface(self, filename = ""):
         s = sett()
 
@@ -590,26 +628,6 @@ class MainController:
         else:
             self.view.warning_nozzle_and_table_collision.setText("")
 
-def call_command(cmd) -> bool:
-    try:
-        cmds = cmd.split(" ")
-        # print(cmds)
-        subprocess.check_output(cmds, stderr=subprocess.STDOUT)
-    except subprocess.CalledProcessError as er:
-        print("Error:", sys.exc_info())
-        print("Error2:", er.output)
-        logging.error(str(sys.exc_info()))
-        gui_utils.showErrorDialog(repr(er.output))
-        return False
-    except:
-        print("Error:", sys.exc_info())
-        logging.error(str(sys.exc_info()))
-        # print("Error2:", er.output)
-        gui_utils.showErrorDialog(str(sys.exc_info()))
-        return False
-    
-    # return positive that we can load new gcode from file and it for sure will be new
-    return True
 
 def save_splanes_to_file(splanes, filename):
     with open(filename, 'w') as out:

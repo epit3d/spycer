@@ -1,8 +1,5 @@
-analyzer:
-  cmd: ./lib/goosli --cmd=analyze --settings=settings.yaml
-  result: analyze_triangles.txt
 colorizer:
-  cmd: ./lib/goosli --cmd=colorize --settings=settings.yaml
+  cmd: ./lib/goosli --cmd=colorize --settings=
   color: Red
   copy_stl_file: ./copy_stl_file.stl
   result: colorize_triangles.bin
@@ -70,7 +67,8 @@ slicing:
   angle: 30
   bed_temperature: 60
   bottom_of_cut_layers: 1
-  cmd: ./lib/goosli --cmd=slice --settings=settings.yaml
+  cmd: ./lib/goosli --cmd=slice --settings=
+  cmd_version: ./lib/goosli --version
   extruder_temperature: 200
   fan_off_layer1: false
   fan_speed: 95
@@ -85,6 +83,7 @@ slicing:
   bottoms_depth: 3
   line_width: 0.4
   magic_epsilon: 40
+  material_shrinkage: 1.5
   mesh_file: lib/goosli_middle.msh
   model_centering: false
   originx: 0.0
