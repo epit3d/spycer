@@ -5,6 +5,7 @@ from .reprapfirmware_lsq import Tuner
 
 
 class Container:
+    initZ = 0
     rawDelta = b''
     rawScale = b''
     rawSkew = b''
@@ -118,8 +119,17 @@ class Step1(Step):
         '</p>'
     )
 
+    def touchFixture(self):
+        # first we touch the fixture from a long distance for safety
+        safeZ = 50
+        res = self.printer.touchBed(posZ=safeZ)
+        _, _, Z = res[0]
+
+        # set initial Z some distance higher than fixture surface
+        self.container.initZ = Z + 5
+
     def adjustBedIncline(self):
-        tangent = self.printer.defBedIncline()
+        tangent = self.printer.defBedIncline(posZ=self.container.initZ)
         angle = math.degrees(math.atan(tangent))
         cmds = [
             "G91",
@@ -153,7 +163,7 @@ class Step1(Step):
         points = tuner.get_probe_points()
 
         # collect points for delta calibration
-        res = self.printer.defDelta(points=points)
+        res = self.printer.defDelta(posZ=self.container.initZ, points=points)
         for p in res:
             print(p)
 
@@ -195,7 +205,7 @@ class Step1(Step):
         self.printer.skewParams.skew['Y'] = skewYZ
         self.printer.skewParams.skew['Z'] = skewXZ
 
-        cmd = self.printer.scaleParams.generateM556()
+        cmd = self.printer.skewParams.generateM556()
         self.printer.execGcode(cmd)
         self.container.rawSkew = cmd.encode()
 
@@ -208,11 +218,12 @@ class Step1(Step):
 
     def printerMethod(self):
         # set default parameters for delta, scale and skew
-        self.printer.runGcode(self.printer.deltaParams.generateM665())
-        self.printer.runGcode(self.printer.deltaParams.generateM666())
-        self.printer.runGcode(self.printer.scaleParams.generateM579())
-        self.printer.runGcode(self.printer.skewParams.generateM556())
+        self.printer.execGcode(self.printer.deltaParams.generateM665())
+        self.printer.execGcode(self.printer.deltaParams.generateM666())
+        self.printer.execGcode(self.printer.scaleParams.generateM579())
+        self.printer.execGcode(self.printer.skewParams.generateM556())
 
+        self.touchFixture()
         self.adjustBedIncline()
         self.calibrateDelta()
         self.calibrateScale()
