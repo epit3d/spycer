@@ -13,8 +13,8 @@ class SkewParams:
     }
 
     def generateM556(self):
-        M556 = "M556 S1"
-        M556 += f" X{self.skew['X']}"
-        M556 += f" Y{self.skew['Y']}"
-        M556 += f" Z{self.skew['Z']}"
+        M556 = "M556 S100"
+        M556 += f" X{self.skew['X'] * 100}"
+        M556 += f" Y{self.skew['Y'] * 100}"
+        M556 += f" Z{self.skew['Z'] * 100}"
         return M556

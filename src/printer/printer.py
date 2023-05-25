@@ -175,7 +175,7 @@ class EpitPrinter:
         self.deltaParams = DeltaParams()
         self.scaleParams = ScaleParams()
         self.skewParams = SkewParams()
-        self.calibBallDiam = 9.93
+        self.calibBallDiam = 9.98
         self.calibBallRadius = self.calibBallDiam / 2
 
         # manage settings
@@ -316,12 +316,14 @@ class EpitPrinter:
     def defBedIncline(self, posZ=DEFAULT_Z):
         doHoming()
 
-        rotateBed(U=-90)
+        safeZ = 100
 
         X = 0
         Y1, Y2 = 52.5, -52.5
         Z = posZ
+        U1, U2 = 0, 180
 
+        rotateBed(U=U1)
         moveTo(X=X, Y=Y1)
         moveTo(Z=Z)
 
@@ -329,16 +331,20 @@ class EpitPrinter:
         self._appendOutput(f'Z:{zA:6.3f} mm' + ' ' + str(probes))
         Z1 = zA
 
-        moveTo(Z=Z)
+        moveTo(Z=safeZ)
+
+        rotateBed(U=U2)
         moveTo(Y=Y2)
+        moveTo(Z=Z)
 
         zA, probes = probeZ()
         self._appendOutput(f'Z:{zA:6.3f} mm' + ' ' + str(probes))
         Z2 = zA
 
-        moveTo(Z=Z)
+        moveTo(Z=safeZ)
 
-        tangent = (Z1 - Z2) / (Y1 - Y2)
+        # if Z2 higher than Z1 we adjust V axis in positive direction
+        tangent = (Z2 - Z1) / (Y1 - Y2)
 
         doHoming()
 
@@ -347,13 +353,26 @@ class EpitPrinter:
     def defAxisU(self, posZ=DEFAULT_Z):
         doHoming()
 
-        radius = 90
+        safeZ = 100
 
-        points1 = (
-            polar2cart(135, radius), # noqa
-            polar2cart(-45, radius), # noqa
-            polar2cart( 45, radius), # noqa
-        )
+        radius = 90
+        angles = (135, -45, 45)
+        uOffset = -45
+
+        points1 = []
+        for angle in angles:
+            X, Y = polar2cart(angle, radius)
+            point = (X, Y, posZ, uOffset + angle)
+            points1.append(point)
+
+        uOffset = 135
+
+        points2 = []
+        for angle in angles:
+            X, Y = polar2cart(angle, radius)
+            point = (X, Y, posZ, uOffset + angle)
+            points2.append(point)
+
 
         """points2 = (
             (0, -90),
@@ -363,29 +382,34 @@ class EpitPrinter:
 
         res = []
 
+        moveTo(Z=safeZ)
+
         for num, point in enumerate(points1):
-            X, Y = point
-            moveTo(X, Y, posZ)
+            X, Y, Z, U = point
+            rotateBed(U)
+            moveTo(X=X, Y=Y)
+            moveTo(Z=Z)
 
             zA, probes = probeZ()
             print(zA)
 
-            moveTo(X, Y, posZ)
+            moveTo(Z=safeZ)
 
             self._appendOutput(f'{num:d}: X:{X:6.3f} Y:{Y:6.3f} Z:{zA:6.3f} mm' + ' ' + str(probes))
 
             res.append((X, Y, zA))
 
-        rotateBed(U=-180)
 
-        for num, point in enumerate(points1):
-            X, Y = point
-            moveTo(X, Y, posZ)
+        for num, point in enumerate(points2):
+            X, Y, Z, U = point
+            rotateBed(U)
+            moveTo(X=X, Y=Y)
+            moveTo(Z=Z)
 
             zA, probes = probeZ()
             print(zA)
 
-            moveTo(X, Y, posZ)
+            moveTo(Z=safeZ)
 
             self._appendOutput(f'{num:d}: X:{X:6.3f} Y:{Y:6.3f} Z:{zA:6.3f} mm' + ' ' + str(probes))
 
@@ -442,20 +466,23 @@ class EpitPrinter:
             ( 35, 65,  50), # noqa
         )"""
 
+        safeZ = 100
+
         radius = 60
 
         points1 = (
-            polar2cart(-135, radius),  # noqa
-            polar2cart( 135, radius),  # noqa
-            polar2cart( -45, radius),  # noqa
-            polar2cart(  45, radius),  # noqa
+            (-52.5, -43),  # noqa
+            (-52.5,  43),  # noqa
+            ( 52.5, -43),  # noqa
+            ( 52.5,  43),  # noqa
         )
 
         basePoints = []
-        rotVector = (0, 0, 63.5)
-        ballRadius = 4.965
+        rotVector = (0, 0, 63.5 - 8)
+        ballRadius = self.calibBallRadius
 
-        moveTo(Z=100)
+        rotateBed(U=90)
+        moveTo(Z=safeZ)
         tiltBed(V=0)
 
         res = []
@@ -463,12 +490,13 @@ class EpitPrinter:
         self._appendOutput('Area 1')
         for num, point in enumerate(points1):
             X, Y = point
-            moveTo(X, Y, posZ)
+            moveTo(X=X, Y=Y)
+            moveTo(Z=posZ)
 
             zA, probes = probeZ()
             print(zA)
 
-            moveTo(X, Y, posZ)
+            moveTo(Z=safeZ)
 
             basePoints.append((X, Y, zA))
 
@@ -476,7 +504,7 @@ class EpitPrinter:
 
             res.append((X, Y, zA))
 
-        moveTo(Z=100)
+        moveTo(Z=safeZ)
         posV = 25
         tiltBed(V=posV)
 
@@ -486,22 +514,23 @@ class EpitPrinter:
         for num, point in enumerate(points2):
             X, Y, Z = point
             # incremnet Z position to approach higher
-            Z += 5
+            Z += 10
             # increment Z position more since the ball touches inclined plane earlier
             Z += -ballRadius + ballRadius / cos(radians(posV))
 
-            moveTo(X, Y, Z)
+            moveTo(X=X, Y=Y)
+            moveTo(Z=Z)
 
             zA, probes = probeZ()
             print(zA)
 
-            moveTo(X, Y, Z)
+            moveTo(Z=safeZ)
 
             self._appendOutput(f'{num:d}: X:{X:6.3f} Y:{Y:6.3f} Z:{zA:6.3f} mm' + ' ' + str(probes))
 
             res.append((X, Y, zA))
 
-        moveTo(Z=100)
+        moveTo(Z=safeZ)
         posV = 50
         tiltBed(V=posV)
 
@@ -511,15 +540,16 @@ class EpitPrinter:
         for num, point in enumerate(points3):
             X, Y, Z = point
             # incremnet Z position to approach higher
-            Z += 5
+            Z += 15
             # increment Z position more since the ball touches inclined plane earlier
             Z += -ballRadius + ballRadius / cos(radians(posV))
-            moveTo(X, Y, Z)
+            moveTo(X=X, Y=Y)
+            moveTo(Z=Z)
 
             zA, probes = probeZ()
             print(zA)
 
-            moveTo(X, Y, Z)
+            moveTo(Z=safeZ)
 
             self._appendOutput(f'{num:d}: X:{X:6.3f} Y:{Y:6.3f} Z:{zA:6.3f} mm' + ' ' + str(probes))
 
@@ -579,6 +609,8 @@ class EpitPrinter:
 
         doHoming()
 
+        safeZ = 100
+
         uOffset = -45  # offset of the touch position from X+ axis
 
         if points is None:
@@ -602,7 +634,8 @@ class EpitPrinter:
         for num, position in enumerate(positions):
             X, Y, Z, U = position
             rotateBed(U)
-            moveTo(X, Y, Z)
+            moveTo(X=X, Y=Y)
+            moveTo(Z=Z)
 
             zA, probes = probeZ()
             # we multiply to -1 in order to get the correct values
@@ -612,7 +645,7 @@ class EpitPrinter:
             print(zA)
             result += [(X, Y, zA)]
 
-            moveTo(X, Y, Z)
+            moveTo(Z=safeZ)
 
         doHoming()
         return result
@@ -653,37 +686,17 @@ class EpitPrinter:
     def defOrigin(self, *args, **kwargs):
         print(args, kwargs)
 
-        levelZ = 17
+        safeZ = 100
+
+        levelZ = -7
 
         doHoming()
 
         res = []
 
-        moveTo(X=-20, Y=0)
-        moveTo(Z=levelZ)
+        X, Y = 70, 0
 
-        aX, probes = self.probePosX()
-        print(aX)
-        self._appendOutput(f'0: X:{aX:6.3f} mm' + ' ' + str(probes))
-
-        res.append((aX, 0, levelZ))
-
-        moveTo(X=-20)
-        moveTo(Y=20)
-        moveTo(X=0)
-
-        aY, probes = self.probeNegY()
-        print(aY)
-        self._appendOutput(f'0: Y:{aY:6.3f} mm' + ' ' + str(probes))
-
-        res.append((0, aY, levelZ))
-
-        moveTo(Y=20)
-        moveTo(Z=100)
-
-        rotateBed(U=-180)
-
-        moveTo(X=20, Y=0)
+        moveTo(X=X, Y=Y)
         moveTo(Z=levelZ)
 
         aX, probes = self.probeNegX()
@@ -692,9 +705,13 @@ class EpitPrinter:
 
         res.append((aX, 0, levelZ))
 
-        moveTo(X=20)
-        moveTo(Y=-20)
-        moveTo(X=0)
+        moveTo(X=X)
+        moveTo(Z=safeZ)
+
+        X, Y = 0, -70
+
+        moveTo(X=X, Y=Y)
+        moveTo(Z=levelZ)
 
         aY, probes = self.probePosY()
         print(aY)
@@ -702,7 +719,38 @@ class EpitPrinter:
 
         res.append((0, aY, levelZ))
 
-        moveTo(Y=-20)
+        moveTo(Y=Y)
+        moveTo(Z=safeZ)
+
+        rotateBed(U=-180)
+
+        X, Y = -70, 0
+
+        moveTo(X=X, Y=Y)
+        moveTo(Z=levelZ)
+
+        aX, probes = self.probePosX()
+        print(aX)
+        self._appendOutput(f'0: X:{aX:6.3f} mm' + ' ' + str(probes))
+
+        res.append((aX, 0, levelZ))
+
+        moveTo(X=X)
+        moveTo(Z=safeZ)
+
+        X, Y = 0, 70
+
+        moveTo(X=X, Y=Y)
+        moveTo(Z=levelZ)
+
+        aY, probes = self.probeNegY()
+        print(aY)
+        self._appendOutput(f'0: Y:{aY:6.3f} mm' + ' ' + str(probes))
+
+        res.append((0, aY, levelZ))
+
+        moveTo(Y=Y)
+        moveTo(Z=safeZ)
 
         doHoming()
 
@@ -729,9 +777,15 @@ class EpitPrinter:
         return res
 
     def measureScaleX(self, posZ=DEFAULT_Z):
+        posZ = -7
+
         doHoming()
 
-        rotateBed(U=0)
+        safeZ = 100
+
+        moveTo(Z=safeZ)
+
+        rotateBed(U=-90)
 
         X, Y, Z = 70, 0, posZ
 
@@ -742,7 +796,7 @@ class EpitPrinter:
         self._appendOutput(f'0: X:{X1:6.3f} mm' + ' ' + str(probes))
 
         moveTo(X=X)
-        moveTo(Z=100)
+        moveTo(Z=safeZ)
 
         X, Y, Z = -30, 0, posZ
 
@@ -753,16 +807,22 @@ class EpitPrinter:
         self._appendOutput(f'1: X:{X2:6.3f} mm' + ' ' + str(probes))
 
         moveTo(X=X)
-        moveTo(Z=100)
+        moveTo(Z=safeZ)
 
         doHoming()
 
         return X1 - X2
 
     def measureScaleY(self, posZ=DEFAULT_Z):
+        posZ = -7
+
         doHoming()
 
-        rotateBed(U=90)
+        safeZ = 100
+
+        moveTo(Z=safeZ)
+
+        rotateBed(U=0)
 
         X, Y, Z = 0, 70, posZ
 
@@ -773,7 +833,7 @@ class EpitPrinter:
         self._appendOutput(f'0: Y:{Y1:6.3f} mm' + ' ' + str(probes))
 
         moveTo(Y=Y)
-        moveTo(Z=100)
+        moveTo(Z=safeZ)
 
         X, Y, Z = 0, -30, posZ
 
@@ -784,7 +844,7 @@ class EpitPrinter:
         self._appendOutput(f'1: Y:{Y2:6.3f} mm' + ' ' + str(probes))
 
         moveTo(Y=Y)
-        moveTo(Z=100)
+        moveTo(Z=safeZ)
 
         doHoming()
 
@@ -793,9 +853,13 @@ class EpitPrinter:
     def measureScaleZ(self):
         doHoming()
 
+        safeZ = 100
+
+        moveTo(Z=safeZ)
+
         rotateBed(U=0)
 
-        X, Y, Z = -40, -50, 15
+        X, Y, Z = -52.5, -10, 10
 
         moveTo(X=X, Y=Y)
         moveTo(Z=Z)
@@ -803,9 +867,9 @@ class EpitPrinter:
         Z1, probes = probeZ()
         self._appendOutput(f'0: Z:{Z1:6.3f} mm' + ' ' + str(probes))
 
-        moveTo(Z=200)
+        moveTo(Z=safeZ)
 
-        X, Y, Z = -20, -50, 85
+        X, Y, Z = -57, 16, 85
 
         moveTo(X=X, Y=Y)
         moveTo(Z=Z)
@@ -1108,20 +1172,21 @@ class EpitPrinter:
         safeZ = 100
 
         X1, X2 = -45, 45
-        Y = 70
-        Z = 5
+        Y = -70
+        Z = -7
 
+        moveTo(Z=safeZ)
         moveTo(X=X1, Y=Y)
         moveTo(Z=Z)
 
-        A, probes = self.probeNegY()
+        A, probes = self.probePosY()
         self._appendOutput(f'X={X1}: Y:{A:6.3f} mm' + ' ' + str(probes))
         YatX1 = A
 
         moveTo(Y=Y)
         moveTo(X=X2)
 
-        A, probes = self.probeNegY()
+        A, probes = self.probePosY()
         self._appendOutput(f'X={X2}: Y:{A:6.3f} mm' + ' ' + str(probes))
         YatX2 = A
 
@@ -1130,7 +1195,7 @@ class EpitPrinter:
 
         X = 70
         Y1, Y2 = -45, 45
-        Z = 5
+        Z = -7
 
         moveTo(X=X, Y=Y1)
         moveTo(Z=Z)
@@ -1165,10 +1230,13 @@ class EpitPrinter:
 
         safeZ = 100
 
-        X = 30
-        Y1, Y2 = -52.5, 52.5
-        Z = 15
+        rotateBed(U=90)
 
+        X = 40
+        Y1, Y2 = -52.5, 52.5
+        Z = 5
+
+        moveTo(Z=safeZ)
         moveTo(X=X, Y=Y1)
         moveTo(Z=Z)
 
@@ -1185,11 +1253,12 @@ class EpitPrinter:
 
         moveTo(Z=Z)
 
-        X = 30
-        Y = -50
-        Z1, Z2 = 15, 65
+        X = 25
+        Y = -45
+        Z1, Z2 = 5, 50
 
-        moveTo(X=X, Y=Y)
+        moveTo(Y=Y)
+        moveTo(X=X)
         moveTo(Z=Z1)
 
         A, probes = self.probeNegY()
@@ -1220,14 +1289,15 @@ class EpitPrinter:
 
         doHoming()
 
-        rotateBed(U=-90)
+        rotateBed(U=0)
 
         safeZ = 100
 
-        X1, X2 = -45, 45
-        Y = -30
-        Z = 15
+        X1, X2 = -52.5, 52.5
+        Y = -40
+        Z = 5
 
+        moveTo(Z=safeZ)
         moveTo(X=X1, Y=Y)
         moveTo(Z=Z)
 
@@ -1245,10 +1315,11 @@ class EpitPrinter:
         moveTo(Z=Z)
 
         X = 0
-        Y = 20
-        Z1, Z2 = 15, 65
+        Y = 15
+        Z1, Z2 = 5, 50
 
-        moveTo(X=X, Y=Y)
+        moveTo(Y=Y)
+        moveTo(X=X)
         moveTo(Z=Z1)
 
         A, probes = self.probeNegX()

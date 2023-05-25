@@ -3,9 +3,9 @@ from .http import getObjectModel, execGcode
 
 class DeltaParams:
     diagonals = {
-        'X': 246.650,
-        'Y': 246.650,
-        'Z': 246.650,
+        'X': 246,
+        'Y': 246,
+        'Z': 246,
     }
     deltaRadius = 100
     homedHeight = 240
