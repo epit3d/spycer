@@ -75,12 +75,6 @@ class MainController:
         self.view.slice_vip_button.clicked.connect(partial(self.slice_stl, "vip"))
         self.view.save_gcode_button.clicked.connect(self.save_gcode_file)
         self.view.color_model_button.clicked.connect(self.colorize_model)
-        self.view.service_button.clicked.connect(
-            self.servicePanel.show
-        )
-        self.view.calibration_button.clicked.connect(
-            self.calibrationPanel.show
-        )
 
         # bottom panel
         self.view.add_plane_button.clicked.connect(self.add_splane)

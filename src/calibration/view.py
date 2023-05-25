@@ -8,7 +8,7 @@ class CalibrationPanel(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setFixedWidth(400)
-        self.setMinimumHeight(300)
+        self.setMinimumHeight(400)
 
         btnLayout = QHBoxLayout()
 
@@ -55,10 +55,12 @@ class CalibrationPanel(QDialog):
     def setLang(self, lang):
         if lang == 'ru':
             print('lang', lang)
+            self.setWindowTitle("Калибровка")
             self.btnNext.setText('Далее')
             self.btnCancel.setText('Отмена')
             self.btnFinish.setText('Завершить')
         elif lang == 'en':
+            self.setWindowTitle("Calibration")
             self.btnNext.setText('Next')
             self.btnCancel.setText('Cancel')
             self.btnFinish.setText('Finish')

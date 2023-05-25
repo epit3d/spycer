@@ -39,6 +39,8 @@ class CalibrationController(QObject):
 
     @pyqtSlot()
     def showSlot(self):
+        self.worker_thread.start()
+
         self.step = 0
         self.view.label.setText(self.steps[self.step].labelText)
         self.view.btnFinish.setVisible(False)
@@ -83,10 +85,10 @@ class CalibrationController(QObject):
 
         view.showedSignal.connect(self.showSlot)
         # view.closedSignal.connect(self.closeSlot)
+        view.closeEvent = self.closeEvent
 
         self.worker_thread = QThread()
         worker.moveToThread(self.worker_thread)
-        self.worker_thread.start()
 
     def clickNext(self):
         self.workSignal.emit(self.step)
@@ -96,3 +98,8 @@ class CalibrationController(QObject):
     def clickFinish(self):
         self.steps[self.step].printerMethod()
         self.view.close()
+
+    def closeEvent(self, event):
+        self.worker_thread.terminate()
+        self.worker_thread.wait()
+        event.accept()
