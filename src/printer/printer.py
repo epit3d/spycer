@@ -76,6 +76,15 @@ def moveTo(*args, **kwargs):
         if result.split(' ')[0] == 'Error:':
             raise Exception(result)
 
+    # check if the required position has been reached
+    accuracy = 0.001
+    for idx, axis in enumerate('XYZUV'):
+        val = getattr(point, axis)
+        if val is None:
+            continue
+        if abs(val - getPos(idx)) > accuracy:
+            raise Exception('Printer cannot reach position')
+
 
 def moveRelTo(X=None, Y=None, Z=None, F=2000):
     parameters = ''
@@ -94,30 +103,6 @@ def moveRelTo(X=None, Y=None, Z=None, F=2000):
         result = callGcode(gcode).strip()
         if result.split(' ')[0] == 'Error:':
             raise Exception(result)
-
-
-def doHoming():
-    homed = True
-    for axis in (axisX, axisY, axisZ):
-        homed = homed and getHomed(axis)
-
-    if not homed:
-        callGcode('G28 Z')
-    else:
-        moveTo(Z=200)
-        moveTo(X=0, Y=0)
-
-    homedU = getHomed(axisU) and getPos(axisU) < 360
-    if not homedU:
-        callGcode('G28 U')
-    else:
-        rotateBed(U=0)
-
-    homedV = getHomed(axisV)
-    if not homedV:
-        callGcode('G28 V')
-    else:
-        tiltBed(V=0)
 
 
 def rotateBed(U):
@@ -214,6 +199,29 @@ class EpitPrinter:
         if writeGcode:
             global fileGcode
             fileGcode = open('output.g', 'w')
+
+    def doHoming(self):
+        homed = True
+        for axis in (axisX, axisY, axisZ):
+            homed = homed and getHomed(axis)
+
+        if not homed:
+            callGcode('G28 Z')
+        else:
+            moveTo(Z=200)
+            moveTo(X=0, Y=0)
+
+        homedU = getHomed(axisU) and getPos(axisU) < 360
+        if not homedU:
+            callGcode('G28 U')
+        else:
+            rotateBed(U=0)
+
+        homedV = getHomed(axisV)
+        if not homedV:
+            callGcode('G28 V')
+        else:
+            tiltBed(V=0)
 
     def probePosX(self):
         probeNum = 4
@@ -314,7 +322,7 @@ class EpitPrinter:
         execGcode(gcode)
 
     def defBedIncline(self, posZ=DEFAULT_Z):
-        doHoming()
+        self.doHoming()
 
         safeZ = 100
 
@@ -346,12 +354,12 @@ class EpitPrinter:
         # if Z2 higher than Z1 we adjust V axis in positive direction
         tangent = (Z2 - Z1) / (Y1 - Y2)
 
-        doHoming()
+        self.doHoming()
 
         return tangent
 
     def defAxisU(self, posZ=DEFAULT_Z):
-        doHoming()
+        self.doHoming()
 
         safeZ = 100
 
@@ -415,14 +423,14 @@ class EpitPrinter:
 
             res.append((X, Y, zA))
 
-        doHoming()
+        self.doHoming()
 
         return res
 
     def defAxisV(self, posZ=DEFAULT_Z, *args, **kwargs):
         print(args, kwargs)
 
-        doHoming()
+        self.doHoming()
 
         """points1 = (
             (-50, -85, 10),
@@ -555,14 +563,14 @@ class EpitPrinter:
 
             res.append((X, Y, zA))
 
-        doHoming()
+        self.doHoming()
 
         return res
 
     def probeLine(self, *args, **kwargs):
         print(args, kwargs)
 
-        doHoming()
+        self.doHoming()
 
         """points = (
             (-35, 65,  50), # noqa
@@ -607,7 +615,7 @@ class EpitPrinter:
     def defDelta(self, posZ=DEFAULT_Z, points=None, *args, **kwargs):
         print(args, kwargs)
 
-        doHoming()
+        self.doHoming()
 
         safeZ = 100
 
@@ -647,7 +655,7 @@ class EpitPrinter:
 
             moveTo(Z=safeZ)
 
-        doHoming()
+        self.doHoming()
         return result
 
     def startCalibration(self, *args, **kwargs):
@@ -656,7 +664,7 @@ class EpitPrinter:
         self._status('Starting calibration')
         self._appendOutput(callGcode('M665'))
 
-        doHoming()
+        self.doHoming()
         moveTo(X=0, Y=80, Z=50)
         moveTo(X=0, Y=80, Z=25)
 
@@ -690,7 +698,7 @@ class EpitPrinter:
 
         levelZ = -7
 
-        doHoming()
+        self.doHoming()
 
         res = []
 
@@ -752,12 +760,12 @@ class EpitPrinter:
         moveTo(Y=Y)
         moveTo(Z=safeZ)
 
-        doHoming()
+        self.doHoming()
 
         return res
 
     def touchBed(self, posZ=DEFAULT_Z):
-        doHoming()
+        self.doHoming()
 
         X, Y, Z = 0, 0, posZ
 
@@ -772,14 +780,14 @@ class EpitPrinter:
 
         res = [(X, Y, zA)]
 
-        doHoming()
+        self.doHoming()
 
         return res
 
     def measureScaleX(self, posZ=DEFAULT_Z):
         posZ = -7
 
-        doHoming()
+        self.doHoming()
 
         safeZ = 100
 
@@ -809,14 +817,14 @@ class EpitPrinter:
         moveTo(X=X)
         moveTo(Z=safeZ)
 
-        doHoming()
+        self.doHoming()
 
         return X1 - X2
 
     def measureScaleY(self, posZ=DEFAULT_Z):
         posZ = -7
 
-        doHoming()
+        self.doHoming()
 
         safeZ = 100
 
@@ -846,12 +854,12 @@ class EpitPrinter:
         moveTo(Y=Y)
         moveTo(Z=safeZ)
 
-        doHoming()
+        self.doHoming()
 
         return Y1 - Y2
 
     def measureScaleZ(self):
-        doHoming()
+        self.doHoming()
 
         safeZ = 100
 
@@ -880,7 +888,7 @@ class EpitPrinter:
         moveTo(Y=Y)
         moveTo(Z=200)
 
-        doHoming()
+        self.doHoming()
 
         return Z2 - Z1
 
@@ -902,7 +910,7 @@ class EpitPrinter:
             'G90',  # absolute positioning
         ]
 
-        doHoming()
+        self.doHoming()
         callGcode('G0 Z150 F1000')
         for _ in range(10):
             for gcode in gcodes:
@@ -930,13 +938,13 @@ class EpitPrinter:
     def callHome(self, *args, **kwargs):
         print(args, kwargs)
 
-        doHoming()
+        self.doHoming()
         self._appendOutput('Homing done')
 
     def adjustPlateY(self, posY, *args, **kwargs):
         print(args, kwargs)
 
-        doHoming()
+        self.doHoming()
 
         moveTo(X=25, Y=posY, Z=100)
         moveTo(X=25, Y=posY, Z=5)
@@ -957,7 +965,7 @@ class EpitPrinter:
     def measurePlateY(self, posY, *args, **kwargs):
         print(args, kwargs)
 
-        doHoming()
+        self.doHoming()
 
         moveTo(X=45, Y=posY, Z=100)
         moveTo(X=45, Y=posY, Z=9)
@@ -978,7 +986,7 @@ class EpitPrinter:
     def adjustPlateX(self, posX, *args, **kwargs):
         print(args, kwargs)
 
-        doHoming()
+        self.doHoming()
 
         moveTo(X=posX, Y=-25, Z=100)
         moveTo(X=posX, Y=-25, Z=5)
@@ -999,7 +1007,7 @@ class EpitPrinter:
     def measurePlateX(self, posX, *args, **kwargs):
         print(args, kwargs)
 
-        doHoming()
+        self.doHoming()
 
         moveTo(X=posX, Y=-45, Z=100)
         moveTo(X=posX, Y=-45, Z=9)
@@ -1067,7 +1075,7 @@ class EpitPrinter:
             (50, (-17, 35.749, 30.226)), # noqa
         )
 
-        doHoming()
+        self.doHoming()
 
         moveTo(X=-17, Y=0, Z=100)
         tiltBed(V=0)
@@ -1099,7 +1107,7 @@ class EpitPrinter:
             (50, (  0.492, 35.395, 49.151 + 4 + ballRadius * (1 - 1 / cos(radians(50)) ) )), # noqa
         )
 
-        doHoming()
+        self.doHoming()
 
         moveTo(Z=100, F=1000)
         moveTo(X=0, Y=0)
@@ -1134,7 +1142,7 @@ class EpitPrinter:
             (50, (0, 88, 85), (0,  27, 2)), # noqa
         )
 
-        doHoming()
+        self.doHoming()
 
         moveTo(Z=100, F=1000)
         moveTo(X=0, Y=0)
@@ -1167,7 +1175,7 @@ class EpitPrinter:
     def measureOrthoXY(self, *args, **kwargs):
         print(args, kwargs)
 
-        doHoming()
+        self.doHoming()
 
         safeZ = 100
 
@@ -1214,7 +1222,7 @@ class EpitPrinter:
         moveTo(X=X)
         moveTo(Z=safeZ)
 
-        doHoming()
+        self.doHoming()
 
         # tangent to X axis
         tgX = (YatX1 - YatX2) / (X1 - X2)
@@ -1226,7 +1234,7 @@ class EpitPrinter:
     def measureOrthoYZ(self, *args, **kwargs):
         print(args, kwargs)
 
-        doHoming()
+        self.doHoming()
 
         safeZ = 100
 
@@ -1275,7 +1283,7 @@ class EpitPrinter:
         moveTo(Y=Y)
         moveTo(Z=safeZ)
 
-        doHoming()
+        self.doHoming()
 
         # tangent to Y axis
         tgY = (ZatY1 - ZatY2) / (Y1 - Y2)
@@ -1287,7 +1295,7 @@ class EpitPrinter:
     def measureOrthoXZ(self, *args, **kwargs):
         print(args, kwargs)
 
-        doHoming()
+        self.doHoming()
 
         rotateBed(U=0)
 
@@ -1336,7 +1344,7 @@ class EpitPrinter:
         moveTo(X=X)
         moveTo(Z=safeZ)
 
-        doHoming()
+        self.doHoming()
 
         # tangent to Y axis
         tgX = (ZatX1 - ZatX2) / (X1 - X2)
@@ -1348,7 +1356,7 @@ class EpitPrinter:
     def doHeat(self, *args, **kwargs):
         print('heat', args, kwargs)
 
-        doHoming()
+        self.doHoming()
 
         moveTo(Z=200, F=1000)
 
@@ -1385,7 +1393,7 @@ class EpitPrinter:
     def doDemo(self, *args, **kwargs):
         print(args, kwargs)
 
-        doHoming()
+        self.doHoming()
 
         rotateBed(U=0)
         tiltBed(V=0)
@@ -1453,7 +1461,7 @@ class EpitPrinter:
     def doDemo2(self, *args, **kwargs):
         print(args, kwargs)
 
-        doHoming()
+        self.doHoming()
 
         rotateBed(U=0)
         tiltBed(V=0)
