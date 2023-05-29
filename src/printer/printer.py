@@ -7,6 +7,7 @@ from .delta import DeltaParams
 from .scale import ScaleParams
 from .skew import SkewParams
 
+from . import adjust
 from . import http
 from . import settings
 
@@ -160,6 +161,7 @@ class EpitPrinter:
         self.deltaParams = DeltaParams()
         self.scaleParams = ScaleParams()
         self.skewParams = SkewParams()
+        self.adjustParams = adjust.AdjustParams()
         self.calibBallDiam = 9.98
         self.calibBallRadius = self.calibBallDiam / 2
 
@@ -200,6 +202,15 @@ class EpitPrinter:
             global fileGcode
             fileGcode = open('output.g', 'w')
 
+    def applyAdjustV(self):
+        # apply temporary adjustment
+        gcodes = [
+            f'G92 V{-self.adjustParams.tempV}',
+            'G0 V0',
+        ]
+        for gcode in gcodes:
+            self.execGcode(gcode)
+
     def doHoming(self):
         homed = True
         for axis in (axisX, axisY, axisZ):
@@ -220,6 +231,7 @@ class EpitPrinter:
         homedV = getHomed(axisV)
         if not homedV:
             callGcode('G28 V')
+            self.applyAdjustV()
         else:
             tiltBed(V=0)
 
@@ -314,6 +326,10 @@ class EpitPrinter:
                 callGcode(gcode)
 
         return sum(results[1:]) / len(results[1:]), results
+
+    def fileRead(self, filename):
+        # get only raw data here
+        return http.fileDownload(filename)
 
     def fileUpload(self, filename, b):
         fileUpload(filename, b)

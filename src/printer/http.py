@@ -61,6 +61,13 @@ def sendRequest(request, requestType='GET', data=None):
             return response
 
 
+def fileDownload(filename):
+    response = sendRequest(f'/rr_download?name={filename}')
+    if response.status_code != requests.codes['ok']:
+        raise Exception(f'Failed to download file: {filename}')
+    return response.content
+
+
 def fileUpload(filename, b):
     response = sendRequest(
         f'/rr_upload?name={filename}',

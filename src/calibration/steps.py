@@ -131,15 +131,14 @@ class Step1(Step):
     def adjustBedIncline(self):
         tangent = self.printer.defBedIncline(posZ=self.container.initZ)
         angle = math.degrees(math.atan(tangent))
-        cmds = [
-            "G91",
-            f"G0 V{angle}",
-            "G92 V0",
-            "G90",
-        ]
-        for cmd in cmds:
-            self.printer.execGcode(cmd)
-        self.container.rawAdjustV = "\n".join(cmds)
+        self.printer.adjustParams.tempV = angle
+        self.printer.applyAdjustV()
+
+        raw = self.printer.fileRead("0:/sys/adjustv.g")
+        self.printer.adjustParams.getVfromRaw(raw)
+
+        cmd = self.printer.adjustParams.genG92forV()
+        self.container.rawAdjustV = cmd.encode()
 
     def calibrateDelta(self):
         print(self.printer.deltaParams.toString())
@@ -217,6 +216,9 @@ class Step1(Step):
         self.calibrationData.points.extend(res)
 
     def printerMethod(self):
+        # zeroing temporary adjustments
+        self.printer.adjustParams.tempV = 0
+
         # set default parameters for delta, scale and skew
         self.printer.execGcode(self.printer.deltaParams.generateM665())
         self.printer.execGcode(self.printer.deltaParams.generateM666())
