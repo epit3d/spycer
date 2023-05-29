@@ -234,6 +234,23 @@ class ServiceController(QObject):
             partial(self.workSignal.emit, printer.measureOrthoXZ)
         )
 
+        view.defScaleXButton.clicked.connect(
+            partial(self.workSignal.emit, printer.measureScaleX)
+        )
+        view.defScaleYButton.clicked.connect(
+            partial(self.workSignal.emit, printer.measureScaleY)
+        )
+        view.defScaleZButton.clicked.connect(
+            partial(self.workSignal.emit, printer.measureScaleZ)
+        )
+
+        def runHandler(textSource):
+            posZ = float(textSource.text().strip())
+            self.workSignal[object, list].emit(printer.defBedIncline, [posZ])
+        view.bedInclineButton.clicked.connect(
+            partial(runHandler, view.bedZLevelWidget.zLevelSource)
+        )
+
         self.worker_thread = QThread()
         worker.moveToThread(self.worker_thread)
         self.worker_thread.start()

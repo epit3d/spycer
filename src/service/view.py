@@ -17,6 +17,10 @@ class ServicePanel(QDialog):
 
         mainLayout = QVBoxLayout()
 
+        button = QPushButton('Bed Incline')
+        mainLayout.addWidget(button)
+        self.bedInclineButton = button
+
         button = QPushButton('Z probe')
         mainLayout.addWidget(button)
         self.zProbeButton = button
@@ -61,6 +65,25 @@ class ServicePanel(QDialog):
             button = QPushButton('Origin Definition')
             layout.addWidget(button)
             self.defOriginButton = button
+
+            return layout
+
+        mainLayout.addLayout(subLayout())
+
+        def subLayout():
+            layout = QHBoxLayout()
+
+            button = QPushButton('Scale X Definition')
+            layout.addWidget(button)
+            self.defScaleXButton = button
+
+            button = QPushButton('Scale Y Definition')
+            layout.addWidget(button)
+            self.defScaleYButton = button
+
+            button = QPushButton('Scale Z Definition')
+            layout.addWidget(button)
+            self.defScaleZButton = button
 
             return layout
 
