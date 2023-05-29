@@ -4,7 +4,7 @@ from PyQt5.QtCore import QObject, QThread, pyqtSignal, pyqtSlot
 
 
 class Worker(QObject):
-    completedSignal = pyqtSignal(int)
+    completedSignal = pyqtSignal(str)
 
     def __init__(self, steps):
         super().__init__()
@@ -18,12 +18,12 @@ class Worker(QObject):
             except Exception as e:
                 print('handler:', e)
                 traceback.print_exc(chain=False)
-                self.completedSignal.emit(1)
+                self.completedSignal.emit(str(e))
                 return
                 # traceback.print_last()
                 # exc_info = sys.exc_info()
 
-            self.completedSignal.emit(0)
+            self.completedSignal.emit("")
 
         return _wrapper
 
@@ -47,9 +47,9 @@ class CalibrationController(QObject):
         self.view.progressBar.setVisible(False)
         self.view.btnNext.setEnabled(True)
 
-    @pyqtSlot(int)
+    @pyqtSlot(str)
     def completedHandler(self, res):
-        if res == 0:
+        if res == "":
             self.step += 1
         else:
             errorText = f"An error has occured! {res}"
