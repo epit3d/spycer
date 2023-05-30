@@ -329,6 +329,14 @@ class Step3(Step):
         Z -= self.container.fixture2Height
         self.calibrationData.points.append((X, Y, Z))
 
+        # adjust printer height
+        self.printer.deltaParams.readFromPrinter()
+        self.printer.deltaParams.homedHeight -= Z
+
+        cmds = self.printer.deltaParams.generateM665() + "\n"
+        cmds += self.printer.deltaParams.generateM666()
+        self.container.rawDelta = cmds.encode()
+
     def printerMethod(self):
         self.collectPoints()
 
