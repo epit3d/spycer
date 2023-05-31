@@ -28,8 +28,12 @@ def sendRequest(request, requestType='GET', data=None):
     # print('request: ' + host + request)
     global host, session, settings
     if host is None:
-        ip = socket.gethostbyname(settings.http.hostname)
-        # ip = socket.gethostbyname('EPIT3D')
+        hostname = settings.http.hostname
+        try:
+            ip = socket.gethostbyname(hostname)
+        except socket.gaierror:
+            fault = f"Device not found on the network by hostname: {hostname}"
+            raise Exception(fault)
         print('printer ip:', ip)
         host = 'http://' + ip
 

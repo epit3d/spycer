@@ -8,7 +8,7 @@ class CalibrationPanel(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setFixedWidth(400)
-        self.setMinimumHeight(400)
+        self.setMinimumHeight(500)
 
         btnLayout = QHBoxLayout()
 
