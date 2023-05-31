@@ -5,6 +5,8 @@ from os import path
 import subprocess
 import time
 import sys
+import src.service as service
+import src.calibration as calibration
 from functools import partial
 from pathlib import Path
 import shutil
@@ -26,6 +28,23 @@ class MainController:
     def __init__(self, view, model):
         self.view = view
         self.model = model
+
+        # embed service tool
+        self.servicePanel = service.ServicePanel(view)
+        self.servicePanel.setModal(True)
+        self.serviceController = service.ServiceController(
+            self.servicePanel,
+            service.ServiceModel()
+        )
+
+        # embed calibration tool
+        self.calibrationPanel = calibration.CalibrationPanel(view)
+        self.calibrationPanel.setModal(True)
+        self.calibrationController = calibration.CalibrationController(
+            self.calibrationPanel,
+            calibration.CalibrationModel()
+        )
+
         self._connect_signals()
 
     def _connect_signals(self):
@@ -34,6 +53,10 @@ class MainController:
         self.view.save_sett_action.triggered.connect(self.save_settings_file)
         self.view.load_sett_action.triggered.connect(self.load_settings_file)
         self.view.slicing_info_action.triggered.connect(self.get_slicer_version)
+
+        self.view.calibration_action.triggered.connect(
+            self.calibrationPanel.show
+        )
 
         # right panel
         self.view.number_wall_lines_value.textChanged.connect(self.update_wall_thickness)
