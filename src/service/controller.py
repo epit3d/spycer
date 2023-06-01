@@ -73,13 +73,14 @@ class ServiceController(QObject):
 
     workSignal = pyqtSignal([object], [object, list])
 
-    def __init__(self, view, printer):
+    def __init__(self, view, model):
         super().__init__()
 
         view.showedSignal.connect(self.showSlot)
         view.closedSignal.connect(self.closeSlot)
 
         worker = Worker()
+        printer = model.printer
 
         printer.setOutputMethod(lambda text: worker.outputSignal.emit(text))
         printer.setStatusMethod(lambda text: worker.statusSignal.emit(text))

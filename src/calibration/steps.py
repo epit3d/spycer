@@ -1,5 +1,4 @@
 import math
-import printer
 from .data import CalibrationData
 from .reprapfirmware_lsq import Tuner
 
@@ -10,12 +9,12 @@ class Container:
     rawScale = b''
     rawSkew = b''
     rawAdjustV = b''
-    fixture2Height = 0.15
+    fixture2Height = 0.1
 
 
 class StepsCollection:
-    def __init__(self):
-        self.printer = printer.EpitPrinter()
+    def __init__(self, printer):
+        self.printer = printer
         self.printer.setOutputMethod(print)
         self.printer.setStatusMethod(print)
 
