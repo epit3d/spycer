@@ -528,10 +528,12 @@ class MainController:
         self.view.colorize_angle_value.setText(str(s.slicing.angle))
 
     def colorize_model(self):
-        self.save_settings("vip")
-        s = sett()
         shutil.copyfile(PathBuilder.stl_model(),PathBuilder.colorizer_stl())
-        save_splanes_to_file(self.model.splanes, PathBuilder.splanes_file())
+        splanes_full_path = PathBuilder.splanes_file()
+        save_splanes_to_file(self.model.splanes, splanes_full_path)
+        sett().slicing.splanes_file = path.basename(splanes_full_path)
+        self.save_settings("vip")
+
         p = Process(PathBuilder.colorizer_cmd()).wait()
         if p.returncode:
             logging.error(f"error: <{p.stdout}>")
