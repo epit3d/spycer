@@ -62,7 +62,7 @@ class CalibrationController(QObject):
         self.view.progressBar.setVisible(False)
         self.view.label.setText(self.steps[self.step].labelText)
 
-    def __init__(self, view, steps):
+    def __init__(self, view, model):
         super().__init__()
 
         self.messageBox = QMessageBox()
@@ -70,7 +70,7 @@ class CalibrationController(QObject):
         self.textResults = []
 
         self.view = view
-        self.steps = steps
+        self.steps = model.steps
 
         view.btnNext.clicked.connect(self.clickNext)
         view.btnCancel.clicked.connect(self.view.close)

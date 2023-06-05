@@ -1,6 +1,3 @@
-from printer import EpitPrinter
-
-
-class ServiceModel(EpitPrinter):
-    def __init__(self):
-        super().__init__()
+class ServiceModel():
+    def __init__(self, printer):
+        self.printer = printer

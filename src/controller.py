@@ -7,6 +7,7 @@ import time
 import sys
 import src.service as service
 import src.calibration as calibration
+import src.printer as printer
 from functools import partial
 from pathlib import Path
 import shutil
@@ -29,12 +30,13 @@ class MainController:
         self.view = view
         self.model = model
 
+        self.printer = printer.EpitPrinter()
         # embed service tool
         self.servicePanel = service.ServicePanel(view)
         self.servicePanel.setModal(True)
         self.serviceController = service.ServiceController(
             self.servicePanel,
-            service.ServiceModel()
+            service.ServiceModel(self.printer)
         )
 
         # embed calibration tool
@@ -42,7 +44,7 @@ class MainController:
         self.calibrationPanel.setModal(True)
         self.calibrationController = calibration.CalibrationController(
             self.calibrationPanel,
-            calibration.CalibrationModel()
+            calibration.CalibrationModel(self.printer)
         )
 
         self._connect_signals()
