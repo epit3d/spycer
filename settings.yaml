@@ -107,7 +107,7 @@ slicing:
   skirt_line_count: 3
   slicing_type: vip
   smooth_cmd: ./smooth_FASP.exe
-  splanes_file: lib/planes_file.txt
+  splanes_file: planes_file.txt
   stl_file: example.stl
   t_geodesic: 0.0
   transformation_matrix:
