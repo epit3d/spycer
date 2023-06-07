@@ -50,20 +50,11 @@ class CalibrationPanel(QDialog):
         self.btnFinish = btnFinish
         self.progressBar = progressBar
 
-        self.setLang('ru')
-
-    def setLang(self, lang):
-        if lang == 'ru':
-            print('lang', lang)
-            self.setWindowTitle("Калибровка")
-            self.btnNext.setText('Далее')
-            self.btnCancel.setText('Отмена')
-            self.btnFinish.setText('Завершить')
-        elif lang == 'en':
-            self.setWindowTitle("Calibration")
-            self.btnNext.setText('Next')
-            self.btnCancel.setText('Cancel')
-            self.btnFinish.setText('Finish')
+    def updateMainInterface(self, locale):
+        self.setWindowTitle(locale['window'])
+        self.btnNext.setText(locale['btnNext'])
+        self.btnCancel.setText(locale['btnCancel'])
+        self.btnFinish.setText(locale['btnFinish'])
 
     showedSignal = pyqtSignal()
 

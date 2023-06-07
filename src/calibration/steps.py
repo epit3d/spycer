@@ -32,6 +32,10 @@ class StepsCollection:
     def __len__(self):
         return len(self._steps)
 
+    def setLang(self, lang):
+        for step in self._steps:
+            step.setLang(lang)
+
 
 class Step:
     def __init__(self, num, stepType='text', parent=None):
@@ -46,7 +50,7 @@ class Step:
     def setLang(self, lang):
         if lang == 'ru':
             self.labelText = self.textRu
-        elif lang == 'en':
+        else:
             self.labelText = self.textEn
 
     def printerMethod(self):

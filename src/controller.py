@@ -46,6 +46,7 @@ class MainController:
             self.calibrationPanel,
             calibration.CalibrationModel(self.printer)
         )
+        self.calibrationController.setLang(sett().common.lang)
 
         self._connect_signals()
 

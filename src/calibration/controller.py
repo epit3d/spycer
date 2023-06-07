@@ -70,6 +70,7 @@ class CalibrationController(QObject):
         self.textResults = []
 
         self.view = view
+        self.model = model
         self.steps = model.steps
 
         view.btnNext.clicked.connect(self.clickNext)
@@ -103,3 +104,7 @@ class CalibrationController(QObject):
         self.worker_thread.terminate()
         self.worker_thread.wait()
         event.accept()
+
+    def setLang(self, lang):
+        self.model.setLang(lang)
+        self.view.updateMainInterface(self.model.mainLocale)
