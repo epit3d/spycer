@@ -51,6 +51,9 @@ class CalibrationController(QObject):
     def completedHandler(self, res):
         if res == "":
             self.step += 1
+            if not getattr(self.steps[self.step], 'showEnabled', True):
+                self.workSignal.emit(self.step)
+                return
         else:
             errorText = f"An error has occured! {res}"
             self.messageBox.critical(self.view, "Error", errorText)
