@@ -19,8 +19,8 @@ import vtk
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 from src import gui_utils, locales, qt_utils
-from src.figure_editor import PlaneEditor, ConeEditor
-from src.gui_utils import showErrorDialog, plane_tf, read_planes, Plane, Cone, showInfoDialog
+from src.figure_editor import PlaneEditor, ConeEditor, CylinderEditor
+from src.gui_utils import showErrorDialog, plane_tf, read_planes, Plane, Cone, Cylinder, showInfoDialog
 from src.process import Process
 from src.settings import sett, save_settings, load_settings, get_color, PathBuilder
 
@@ -81,6 +81,7 @@ class MainController:
         # bottom panel
         self.view.add_plane_button.clicked.connect(self.add_splane)
         self.view.add_cone_button.clicked.connect(self.add_cone)
+        self.view.add_cylinder_button.clicked.connect(self.add_cylinder)
         self.view.edit_figure_button.clicked.connect(self.change_figure_parameters)
         self.view.save_planes_button.clicked.connect(self.save_planes)
         self.view.download_planes_button.clicked.connect(self.download_planes)
@@ -171,6 +172,8 @@ class MainController:
             self.view.parameters_tooling = PlaneEditor(self.view.tabs, self.update_plane_common, self.model.splanes[ind].params())
         elif isinstance(self.model.splanes[ind], Cone):
             self.view.parameters_tooling = ConeEditor(self.view.tabs, self.update_cone_common, self.model.splanes[ind].params())
+        elif isinstance(self.model.splanes[ind], Cylinder):
+            self.view.parameters_tooling = CylinderEditor(self.view.tabs, self.update_cylinder_common, self.model.splanes[ind].params())
 
     def save_planes(self):
         try:
@@ -559,6 +562,12 @@ class MainController:
         self.view.reload_splanes(self.model.splanes)
         self.change_figure_parameters()
 
+    def add_cylinder(self):
+        self.view.hide_checkbox.setChecked(False)
+        self.model.add_cylinder()
+        self.view.reload_splanes(self.model.splanes)
+        self.change_figure_parameters()
+
     def remove_splane(self):
         self.view.hide_checkbox.setChecked(False)
         ind = self.view.splanes_tree.currentIndex().row()
@@ -604,6 +613,17 @@ class MainController:
             return
         self.model.splanes[ind] = gui_utils.Cone(values.get("A", 0), tuple(center), values.get("H1", 0), values.get("H2", 15))
         self.view.update_cone(self.model.splanes[ind], ind)
+
+        for i in range(len(self.model.splanes)):
+            self.view.splanes_tree.topLevelItem(i).setText(1, str(i + 1))
+            self.view.splanes_tree.topLevelItem(i).setText(2, self.model.splanes[i].toFile())
+
+    def update_cylinder_common(self, values: Dict[str, float]):
+        ind = self.view.splanes_tree.currentIndex().row()
+        if ind == -1:
+            return
+        self.model.splanes[ind] = gui_utils.Cylinder(values.get("Z", 0), values.get("R0", 0), values.get("R1", 0))
+        self.view.update_cylinder(self.model.splanes[ind], ind)
 
         for i in range(len(self.model.splanes)):
             self.view.splanes_tree.topLevelItem(i).setText(1, str(i + 1))

@@ -12,7 +12,7 @@ from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
 from src import locales, gui_utils, interactor_style
 from src.InteractorAroundActivePlane import InteractionAroundActivePlane
-from src.gui_utils import plane_tf, Plane, Cone
+from src.gui_utils import plane_tf, Plane, Cone, Cylinder
 from src.settings import sett, get_color, save_settings
 from src.figure_editor import StlMovePanel
 
@@ -645,11 +645,14 @@ class MainWindow(QMainWindow):
         self.add_cone_button = QPushButton(self.locale.AddCone)
         bottom_layout.addWidget(self.add_cone_button, 2, 2)
 
+        self.add_cylinder_button = QPushButton("Add cylinder")
+        bottom_layout.addWidget(self.add_cylinder_button, 3, 2)
+
         self.remove_plane_button = QPushButton(self.locale.DeletePlane)
-        bottom_layout.addWidget(self.remove_plane_button, 3, 2)
+        bottom_layout.addWidget(self.remove_plane_button, 4, 2)
 
         self.edit_figure_button = QPushButton(self.locale.EditFigure)
-        bottom_layout.addWidget(self.edit_figure_button, 4, 2)
+        bottom_layout.addWidget(self.edit_figure_button, 5, 2)
 
         self.save_planes_button = QPushButton(self.locale.SavePlanes)
         bottom_layout.addWidget(self.save_planes_button, 1, 3)
@@ -956,8 +959,10 @@ class MainWindow(QMainWindow):
         for i, p in enumerate(splanes):
             if isinstance(p, Plane):
                 act = gui_utils.create_splane_actor([p.x, p.y, p.z], p.incline, p.rot)
-            else:  # isinstance(p, Cone):
+            elif isinstance(p, Cone):
                 act = gui_utils.create_cone_actor((p.x, p.y, p.z), p.cone_angle, p.h1, p.h2)
+            elif isinstance(p, Cylinder):
+                act = gui_utils.create_cylinder_actor(p.z, p.r0, p.r1)
 
             row = self.splanes_tree.topLevelItem(i)
             if row != None:
@@ -998,6 +1003,18 @@ class MainWindow(QMainWindow):
             self.splanes_actors[sel].GetProperty().SetColor(get_color(sett().colors.last_layer))
             self.splanes_actors[sel].GetProperty().SetOpacity(sett().common.opacity_current_plane)
         self.reload_scene()
+
+    def update_cylinder(self, cylinder: Cylinder, ind):
+        self.render.RemoveActor(self.splanes_actors[ind])
+        act = gui_utils.create_cylinder_actor(cylinder.z, cylinder.r0, cylinder.r1)
+        self.splanes_actors[ind] = act
+        self.render.AddActor(act)
+        sel = self.splanes_tree.currentIndex().row()
+        if sel == ind:
+            self.splanes_actors[sel].GetProperty().SetColor(get_color(sett().colors.last_layer))
+            self.splanes_actors[sel].GetProperty().SetOpacity(sett().common.opacity_current_plane)
+        self.reload_scene()
+
 
     def change_combo_select(self, plane, ind):
         for p in self.splanes_actors:
