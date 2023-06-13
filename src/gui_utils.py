@@ -12,10 +12,19 @@ from src.settings import sett, get_color, PathBuilder
 
 
 def findStlOrigin(vtkBlock):
-    bound = getBounds(vtkBlock)
-    x_mid = (bound[0] + bound[1]) / 2
-    y_mid = (bound[2] + bound[3]) / 2
-    return x_mid, y_mid, bound[4]
+    polydata = vtkBlock.GetMapper().GetInput()
+    points = polydata.GetPoints()
+
+    transform = vtkBlock.GetUserTransform()
+    boundingBox = vtk.vtkBoundingBox()
+    for i in range(points.GetNumberOfPoints()):
+        point = points.GetPoint(i)
+        boundingBox.AddPoint(transform.TransformPoint(point))
+
+    center = [0.0, 0.0, 0.0]
+    boundingBox.GetCenter(center)
+
+    return center[0], center[1], boundingBox.GetMinPoint()[2]
 
 
 def getBounds(vtkBlock):
