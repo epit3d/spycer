@@ -1,5 +1,6 @@
 import os
 import yaml
+from . import http, printer
 
 
 class Settings:
@@ -25,12 +26,9 @@ class Settings:
 class Manager:
     _filename = "printer.yaml"
 
-    def dummy(self):
-        if os.path.exists(self._filename):
-            with open(self._filename) as f:
-                data = yaml.safe_load(f)
-                print(data)
-                self._settings = Settings(data)
+    def __init__(self):
+        if self.settingsFileExists():
+            self.loadSettingsFromFile()
         else:
             self.loadDefaultSettings()
             self.saveSettings()
@@ -44,7 +42,11 @@ class Manager:
             print(data)
             self._settings = Settings(data)
 
-    def loadDefaultSettings(self, data):
+    def loadDefaultSettings(self):
+        # collect here default settings from submodules
+        data = {}
+        data.update(http.defaultSettings())
+        data.update(printer.defaultSettings())
         self._settings = Settings(data)
 
     def saveSettings(self):

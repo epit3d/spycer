@@ -156,6 +156,14 @@ def requestY():
     return getPos(axisY)
 
 
+def defaultSettings():
+    return dict(
+        fixture2=dict(
+                height=0.1,
+            )
+    )
+
+
 class EpitPrinter:
     def __init__(self):
         self.deltaParams = DeltaParams()
@@ -167,15 +175,6 @@ class EpitPrinter:
 
         # manage settings
         self.settingsManager = settings.Manager()
-        if self.settingsManager.settingsFileExists():
-            self.settingsManager.loadSettingsFromFile()
-        else:
-            defaultSettings = dict(
-                http=http.httpDefaultSettings(),
-            )
-            self.settingsManager.loadDefaultSettings(defaultSettings)
-            self.settingsManager.saveSettings()
-
         self.settings = self.settingsManager.getSettings()
         http.setSettings(self.settings)
 
