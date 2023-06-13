@@ -9,7 +9,6 @@ class Container:
     rawScale = b''
     rawSkew = b''
     rawAdjustV = b''
-    fixture2Height = 0.1
 
 
 class StepsCollection:
@@ -286,7 +285,7 @@ class Step2(Step):
         res = self.printer.touchBed()
         X, Y, Z = res[0]
         # udjust Z by fixture #2 height
-        Z -= self.container.fixture2Height
+        Z -= self.printer.settings.fixture2.height
         self.calibrationData.points.append((X, Y, Z))
 
     def printerMethod(self):
@@ -325,7 +324,7 @@ class Step3(Step):
         res = self.printer.touchBed()
         X, Y, Z = res[0]
         # udjust Z by fixture #2 height
-        Z -= self.container.fixture2Height
+        Z -= self.printer.settings.fixture2.height
         self.calibrationData.points.append((X, Y, Z))
 
         # adjust printer height

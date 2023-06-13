@@ -12,10 +12,12 @@ def setSettings(s):
     settings = s
 
 
-def httpDefaultSettings():
+def defaultSettings():
     return dict(
-        hostname='epit.local',
-        requests_interval=0.05,
+        http=dict(
+            hostname='epit.local',
+            requests_interval=0.05,
+        )
     )
 
 
