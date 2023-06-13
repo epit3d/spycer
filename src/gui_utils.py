@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QMessageBox
 from vtkmodules.vtkCommonColor import vtkNamedColors
 from vtkmodules.vtkCommonMath import vtkMatrix4x4
 from vtkmodules.vtkCommonTransforms import vtkTransform
-from vtkmodules.vtkFiltersSources import vtkLineSource, vtkConeSource
+from vtkmodules.vtkFiltersSources import vtkLineSource, vtkConeSource, vtkCylinderSource
 from vtkmodules.vtkRenderingCore import vtkActor, vtkPolyDataMapper, vtkAssembly
 
 from src.settings import sett, get_color, PathBuilder
@@ -140,6 +140,42 @@ def create_cone_actor(vertex: Tuple[float, float, float], bending_angle: float, 
 
     return actor
 
+def create_cylinder_actor(z: float, r0: float, r1: float):
+    height = 10
+
+    sourceOuter = vtkCylinderSource()
+    sourceOuter.SetCenter(0.0, z, 0.0)
+    sourceOuter.SetRadius(r1)
+    sourceOuter.SetHeight(0.1)
+    sourceOuter.SetResolution(50)
+    sourceOuter.SetCapping(1)
+    sourceOuter.Update()
+    input1 = sourceOuter.GetOutput()
+
+    sourceInner = vtkCylinderSource()
+    sourceInner.SetCenter(0.0, z + height / 2, 0.0)
+    sourceInner.SetRadius(r0)
+    sourceInner.SetHeight(height)
+    sourceInner.SetResolution(50)
+    sourceInner.SetCapping(0)
+    sourceInner.Update()
+    input2 = sourceInner.GetOutput()
+
+    # append the two meshes
+    appendFilter = vtk.vtkAppendPolyData()
+    appendFilter.AddInputData(input1)
+    appendFilter.AddInputData(input2)
+    appendFilter.Update()
+
+    mapper = vtkPolyDataMapper()
+    mapper.SetInputConnection(appendFilter.GetOutputPort())
+
+    actor = vtkActor()
+    actor.SetMapper(mapper)
+    actor.GetProperty().SetColor(get_color(sett().colors.splane))
+    actor.GetProperty().SetRepresentationToWireframe()
+    actor.RotateX(90)
+    return actor
 
 def createBoxActors():
     s = sett()
@@ -473,6 +509,18 @@ class Cone:
         return {"X": self.x, "Y": self.y, "Z": self.z, "A": self.cone_angle, "H1": self.h1, "H2": self.h2}
 
 
+class Cylinder:
+    def __init__(self, z: float, r0: float, r1: float):
+        self.z = z
+        self.r0 = r0
+        self.r1 = r1
+    
+    def toFile(self) -> str:
+        return f"cylinder Z{self.z} R{self.r0} R{self.r1}"
+    
+    def params(self) -> Dict[str, float]:
+        return {"Z": self.z, "R0": self.r0, "R1": self.r1}
+
 def read_planes(filename):
     planes = []
     with open(filename) as fp:
@@ -483,9 +531,12 @@ def read_planes(filename):
                 #plane X10 Y10 Z10 T-60 R0 - Plane string format
                 planes.append(
                     Plane(float(v[4][1:]), float(v[5][1:]), (float(v[1][1:]), float(v[2][1:]), float(v[3][1:]))))
-            else:
+            elif v[0] == 'cone':
                 #cone X0 Y0 Z10 A60 H10 H50 - Cone string format
                 planes.append(Cone(float(v[4][1:]), (float(v[1][1:]), float(v[2][1:]), float(v[3][1:])), float(v[5][1:]), float(v[6][1:])))
+            elif v[0] == 'cylinder':
+                #cylinder Z10 R10 R20 - Cylinder string format
+                planes.append(Cylinder(float(v[1][1:]), float(v[2][1:]), float(v[3][1:])))
 
     return planes
 

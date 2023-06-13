@@ -26,3 +26,6 @@ class MainModel:
 
     def add_cone(self):
         self.splanes.append(gui_utils.Cone(60, (0, 0, 10), 0, 100))
+    
+    def add_cylinder(self):
+        self.splanes.append(gui_utils.Cylinder(10, 10, 250))

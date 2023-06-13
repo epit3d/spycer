@@ -95,7 +95,7 @@ class FigureEditor(QWidget):
             slider.setOrientation(QtCore.Qt.Horizontal)
             slider.setMinimum(constrains[param_idx][0])
             slider.setMaximum(constrains[param_idx][1])
-            slider.setValue((initial_params.get(param, 0)))
+            slider.setValue(int(initial_params.get(param, 0)))
             slider.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             slider.setMinimumWidth(200)
 
@@ -137,6 +137,18 @@ class PlaneEditor(FigureEditor):
 class ConeEditor(FigureEditor):
     __params = ["Z", "A", "H1", "H2"]
     __constrains = [(-100, 200), (-60, 60), (0, 150), (1, 150)]
+
+    def __init__(self, tabs, on_change: Callable[[Dict[str, float]], None],
+                 initial_params: Optional[Dict[str, float]] = None):
+        super().__init__(tabs, self.__params, self.__constrains, on_change, initial_params)
+
+    def params(self):
+        return self.__params
+
+
+class CylinderEditor(FigureEditor):
+    __params = ["Z", "R0", "R1"]
+    __constrains = [(0, 200), (0, 150), (0, 150)]
 
     def __init__(self, tabs, on_change: Callable[[Dict[str, float]], None],
                  initial_params: Optional[Dict[str, float]] = None):
