@@ -24,7 +24,9 @@ def findStlOrigin(vtkBlock):
     center = [0.0, 0.0, 0.0]
     boundingBox.GetCenter(center)
 
-    return center[0], center[1], boundingBox.GetMinPoint()[2]
+    zMin = boundingBox.GetMinPoint()[2]
+
+    return center[0], center[1], zMin
 
 
 def getBounds(vtkBlock):
