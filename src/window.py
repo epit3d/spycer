@@ -13,7 +13,7 @@ from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 from src import locales, gui_utils, interactor_style
 from src.InteractorAroundActivePlane import InteractionAroundActivePlane
 from src.gui_utils import plane_tf, Plane, Cone
-from src.settings import sett, get_color, save_settings
+from src.settings import sett, get_color, save_settings, PathBuilder
 from src.figure_editor import StlMovePanel
 
 NothingState = "nothing"
@@ -1180,8 +1180,7 @@ class MainWindow(QMainWindow):
 
     def hide_colorize(self):
         if isinstance(self.stlActor, src.gui_utils.ColorizedStlActor):
-            s = sett()
-            stl_actor = gui_utils.createStlActorInOrigin(s.slicing.stl_file)
+            stl_actor = gui_utils.createStlActorInOrigin(PathBuilder().stl_model())
             stl_actor.lastMove = self.stlActor.lastMove
             boxWidget = self.boxWidget
             axesWidget = self.axesWidget

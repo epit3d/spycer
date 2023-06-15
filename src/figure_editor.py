@@ -95,7 +95,8 @@ class FigureEditor(QWidget):
             slider.setOrientation(QtCore.Qt.Horizontal)
             slider.setMinimum(constrains[param_idx][0])
             slider.setMaximum(constrains[param_idx][1])
-            slider.setValue((initial_params.get(param, 0)))
+            # slider is int, ensure that it will not get float
+            slider.setValue(int(initial_params.get(param, 0)))
             slider.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             slider.setMinimumWidth(200)
 
