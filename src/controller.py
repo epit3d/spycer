@@ -446,7 +446,7 @@ class MainController:
             if name != "":
                 if not name.endswith(".gcode"):
                     name += ".gcode"
-                copy2(self.model.opened_gcode, name)
+                copy2(PathBuilder.gcode_file(), name)
         except IOError as e:
             showErrorDialog("Error during file saving:" + str(e))
 
