@@ -141,7 +141,7 @@ def create_cone_actor(vertex: Tuple[float, float, float], bending_angle: float, 
     return actor
 
 def create_cylinder_actor(z: float, r0: float, r1: float):
-    height = 10
+    height = 30
 
     sourceOuter = vtkCylinderSource()
     sourceOuter.SetCenter(0.0, z, 0.0)
@@ -510,16 +510,16 @@ class Cone:
 
 
 class Cylinder:
-    def __init__(self, z: float, r0: float, r1: float):
+    def __init__(self, z: float, r0: float):
         self.z = z
         self.r0 = r0
-        self.r1 = r1
+        self.r1 = r0 + 10
     
     def toFile(self) -> str:
-        return f"cylinder Z{self.z} R{self.r0} R{self.r1}"
+        return f"cylinder Z{self.z} R{self.r0}"
     
     def params(self) -> Dict[str, float]:
-        return {"Z": self.z, "R0": self.r0, "R1": self.r1}
+        return {"Z": self.z, "R0": self.r0}
 
 def read_planes(filename):
     planes = []
@@ -536,7 +536,7 @@ def read_planes(filename):
                 planes.append(Cone(float(v[4][1:]), (float(v[1][1:]), float(v[2][1:]), float(v[3][1:])), float(v[5][1:]), float(v[6][1:])))
             elif v[0] == 'cylinder':
                 #cylinder Z10 R10 R20 - Cylinder string format
-                planes.append(Cylinder(float(v[1][1:]), float(v[2][1:]), float(v[3][1:])))
+                planes.append(Cylinder(float(v[1][1:]), float(v[2][1:])))
 
     return planes
 

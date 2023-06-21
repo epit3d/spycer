@@ -147,8 +147,8 @@ class ConeEditor(FigureEditor):
 
 
 class CylinderEditor(FigureEditor):
-    __params = ["Z", "R0", "R1"]
-    __constrains = [(0, 200), (0, 150), (0, 150)]
+    __params = ["Z", "R0"]
+    __constrains = [(0, 200), (0, 150)]
 
     def __init__(self, tabs, on_change: Callable[[Dict[str, float]], None],
                  initial_params: Optional[Dict[str, float]] = None):

@@ -622,7 +622,7 @@ class MainController:
         ind = self.view.splanes_tree.currentIndex().row()
         if ind == -1:
             return
-        self.model.splanes[ind] = gui_utils.Cylinder(values.get("Z", 0), values.get("R0", 0), values.get("R1", 0))
+        self.model.splanes[ind] = gui_utils.Cylinder(values.get("Z", 0), values.get("R0", 0))
         self.view.update_cylinder(self.model.splanes[ind], ind)
 
         for i in range(len(self.model.splanes)):
