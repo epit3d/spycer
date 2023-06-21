@@ -158,9 +158,12 @@ def requestY():
 
 def defaultSettings():
     return dict(
+        fixture1=dict(
+            height=8.0,
+        ),
         fixture2=dict(
-                height=0.1,
-            )
+            height=0.1,
+        )
     )
 
 
