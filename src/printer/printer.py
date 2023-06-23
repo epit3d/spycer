@@ -20,8 +20,6 @@ DEFAULT_Z = 5
 
 
 def callGcode(gcode):
-    print(f'G-code: {gcode}')
-
     if writeGcode:
         global fileGcode
         fileGcode.write(f'{gcode}\n')
@@ -206,11 +204,7 @@ class EpitPrinter:
 
     def applyAdjustV(self):
         # apply temporary adjustment
-        gcodes = [
-            f'G92 V{-self.adjustParams.tempV}',
-            'G0 V0',
-        ]
-        for gcode in gcodes:
+        for gcode in self.adjustParams.genAdjustTempV():
             self.execGcode(gcode)
 
     def doHoming(self):

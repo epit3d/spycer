@@ -3,17 +3,16 @@ class AdjustParams:
     tempV = 0
 
     def getVfromRaw(self, raw):
-        # we invert value due to G92+G0 logic
-        self.V = -self.parseG92(raw.decode(), 'V')
+        self.V = self.parseAdjust(raw.decode(), "V")
 
-    def parseG92(self, text: str, axis):
+    def parseAdjust(self, text: str, axis):
         lines = text.splitlines()
         res = None
         for line in lines:
             line = line.strip()
             if line.startswith(';'):
                 continue
-            if line.startswith('G92'):
+            if line.startswith("G0"):
                 args = line.split(' ')[1:]
                 for arg in args:
                     if arg.startswith(';'):
@@ -28,6 +27,16 @@ class AdjustParams:
 
         return res
 
-    def genG92forV(self):
-        # we invert value due to G92+G0 logic
-        return f'G92 V{-(self.V + self.tempV)}'
+    def genAdjustV(self):
+        return self.genAdjust("V", self.V + self.tempV)
+
+    def genAdjustTempV(self):
+        return self.genAdjust("V", self.tempV)
+
+    def genAdjust(self, axis, val):
+        return [
+            "G91",
+            f"G0 H2 {axis}{val}",
+            "G90",
+            f"G92 {axis}0",
+        ]

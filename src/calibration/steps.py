@@ -142,8 +142,8 @@ class Step1(Step):
         raw = self.printer.fileRead("0:/sys/adjustv.g")
         self.printer.adjustParams.getVfromRaw(raw)
 
-        cmd = self.printer.adjustParams.genG92forV()
-        self.container.rawAdjustV = cmd.encode()
+        cmds = self.printer.adjustParams.genAdjustV()
+        self.container.rawAdjustV = "\n".join(cmds).encode()
 
     def calibrateDelta(self):
         self.printer.deltaParams.readFromPrinter()
@@ -245,6 +245,42 @@ class Step2(Step):
         'Шаг 2 из 3'
         '</p>'
         '<p>'
+        'Демонтируйте специальный калибровочный модуль и установите на место'
+        ' печатающую головку.'
+        '</p>'
+        '<p>'
+        'После нажатия кнопки <b>Далее</b> 3Д принтер начнёт выполнять'
+        ' последовательность движений для сбора калибровочных данных.'
+        '</p>'
+    )
+
+    textEn = (
+        '<p>'
+        'Step 2 of 3'
+        '</p>'
+        '<p>'
+        'Please unmount calibrating module and mount printing head back.'
+        '</p>'
+        '<p>'
+        'Upon pressing  the <b>Next</b> button printer will'
+        ' perform movements to collect the calibration data.'
+        '</p>'
+    )
+
+    def collectPoints(self):
+        res = self.printer.touchBed()
+        self.calibrationData.points.extend(res)
+
+    def printerMethod(self):
+        self.collectPoints()
+
+
+class Step3(Step):
+    textRu = (
+        '<p>'
+        'Шаг 3 из 3'
+        '</p>'
+        '<p>'
         'Отсоедините кабель калибровочной оснастки №1 от калибровочного'
         ' разъема 3Д принтера.'
         '</p>'
@@ -267,7 +303,7 @@ class Step2(Step):
 
     textEn = (
         '<p>'
-        'Step 2 of 3'
+        'Step 3 of 3'
         '</p>'
         '<p>'
         'Please disconnect the calibration wire.'
@@ -290,46 +326,7 @@ class Step2(Step):
     def collectPoints(self):
         res = self.printer.touchBed()
         X, Y, Z = res[0]
-        # udjust Z by fixture #2 height
-        Z -= self.printer.settings.fixture2.height
-        self.calibrationData.points.append((X, Y, Z))
-
-    def printerMethod(self):
-        self.collectPoints()
-
-
-class Step3(Step):
-    textRu = (
-        '<p>'
-        'Шаг 3 из 3'
-        '</p>'
-        '<p>'
-        'Демонтируйте специальный калибровочный модуль и установите на место'
-        ' печатающую головку.'
-        '</p>'
-        '<p>'
-        'После нажатия кнопки <b>Далее</b> 3Д принтер начнёт выполнять'
-        ' последовательность движений для сбора калибровочных данных.'
-        '</p>'
-    )
-
-    textEn = (
-        '<p>'
-        'Step 3 of 3'
-        '</p>'
-        '<p>'
-        'Please unmount calibrating module and mount printing head back.'
-        '</p>'
-        '<p>'
-        'Upon pressing  the <b>Next</b> button printer will'
-        ' perform movements to collect the calibration data.'
-        '</p>'
-    )
-
-    def collectPoints(self):
-        res = self.printer.touchBed()
-        X, Y, Z = res[0]
-        # udjust Z by fixture #2 height
+        # adjust Z by fixture #2 height
         Z -= self.printer.settings.fixture2.height
         self.calibrationData.points.append((X, Y, Z))
 
@@ -401,7 +398,7 @@ class FinalStep(Step):
         print('calibration_data.csv created')
 
 
-class OneFixtureStep1(Step):
+class OneFixtureStep1(Step1):
     textRu = (
         '<p>'
         'Шаг 1 из 2'
@@ -441,12 +438,42 @@ class OneFixtureStep1(Step):
         '</p>'
     )
 
-    def printerMethod(self):
-        Step1.printerMethod(self)
-        Step2.printerMethod(self)
+    textEn = (
+        '<p>'
+        'Step 1 of 2'
+        '</p>'
+        '<p>'
+        'This wizard is intended for collecting the'
+        ' calibration data of the Epit 3D printer.'
+        '</p>'
+        '<p>'
+        '<b>!!!IMPORTANT!!!</b>'
+        '<br>'
+        'Please do not press <b>Next</b> button until the following actions'
+        ' are fully completed. Otherwise, the printing head may crash into the'
+        ' bed and 3D printer may be damaged.'
+        '</p>'
+        '<p>'
+        'Please unmount printing head and mount calibration module.'
+        '</p>'
+        '<p>'
+        'Please connect the calibration module wire to the socket on the'
+        ' printing head holder plate.'
+        '</p>'
+        '<p>'
+        'Please mount the calibration fixture to the bed.'
+        '</p>'
+        '<p>'
+        'Please connect jumper between the calibration fixture and bed.'
+        '</p>'
+        '<p>'
+        'Upon pressing  the <b>Next</b> button printer will'
+        ' perform movements to collect the calibration data.'
+        '</p>'
+    )
 
 
-class OneFixtureStep2(Step3):
+class OneFixtureStep2(Step):
     textRu = (
         '<p>'
         'Шаг 2 из 2'
@@ -460,7 +487,7 @@ class OneFixtureStep2(Step3):
         ' печатающую головку.'
         '</p>'
         '<p>'
-        'Демонтируйте перемычку, соединияющую калибровочную оснастку'
+        'Демонтируйте перемычку, соединяющую калибровочную оснастку'
         ' и рабочий стол.'
         '</p>'
         '<p>'
@@ -472,6 +499,34 @@ class OneFixtureStep2(Step3):
         ' последовательность движений для сбора калибровочных данных.'
         '</p>'
     )
+
+    textEn = (
+        '<p>'
+        'Step 2 of 2'
+        '</p>'
+        '<p>'
+        'Please disconnect the calibration module wire from the socket on the'
+        ' printing head holder plate.'
+        '</p>'
+        '<p>'
+        'Please unmount the calibration module and mount printing head.'
+        '</p>'
+        '<p>'
+        'Please disconnect jumper between the calibration fixture and bed.'
+        '</p>'
+        '<p>'
+        'Please connect the calibration wire between the calibration fixture'
+        ' and the socket on the printing head holder plate.'
+        '</p>'
+        '<p>'
+        'Upon pressing  the <b>Next</b> button printer will'
+        ' perform movements to collect the calibration data.'
+        '</p>'
+    )
+
+    def printerMethod(self):
+        Step2(0, parent=self.parent).printerMethod()
+        Step3(0, parent=self.parent).printerMethod()
 
 
 class OneFixtureFinalStep(FinalStep):
@@ -489,5 +544,22 @@ class OneFixtureFinalStep(FinalStep):
         '<p>'
         'После нажатия кнопки <b>Завершить</b> будет создан новый'
         ' калибровочный файл для этого 3Д принтера.'
+        '</p>'
+    )
+
+    textEn = (
+        '<p>'
+        'Calibration data collection finished successfully.'
+        '</p>'
+        '<p>'
+        'Please disconnect the calibration wire between the calibration'
+        ' fixture and the socket on the printing head holder plate.'
+        '</p>'
+        '<p>'
+        'Please unmount the calibration fixture from the bed.'
+        '</p>'
+        '<p>'
+        'Upon pressing  the <b>Finish</b> button a new calibration'
+        ' file will be created for this printer.'
         '</p>'
     )
