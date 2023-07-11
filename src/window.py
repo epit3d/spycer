@@ -134,6 +134,8 @@ class MainWindow(QMainWindow):
         tools_menu = bar.addMenu(self.locale.Tools)
         self.calibration_action = QAction(self.locale.Calibration, self)
         tools_menu.addAction(self.calibration_action)
+        self.bug_report = QAction(self.locale.SubmitBugReport, self)
+        tools_menu.addAction(self.bug_report)
 
         # main parts
         central_widget = QWidget()

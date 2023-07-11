@@ -103,6 +103,15 @@ class Locale:
     NoProjectSelected = "No project selected"
     Tools = "Tools"
     Calibration = "Calibration"
+    SubmitBugReport = "Submit a bug report"
+    SubmittingBugReport = "Submitting a bug report"
+    ErrorDescription = "Error description:"
+    AddImage = "Add image"
+    Send = "Send"
+    Cancel = "Cancel"
+    AddingImage = "Adding an image"
+    ReportSubmitSuccessfully = "Report submit successfully"
+    ErrorReport = "An error occurred while submitting the report"
 
     def __init__(self, **entries):
         self.__dict__.update(entries)
@@ -211,8 +220,17 @@ dicts = {
         ProjectDirectoryCannotBeEmpty = "Директория проекта не может быть пустой",
         ProjectAlreadyExists = "Проект с таким именем уже существует",
         NoProjectSelected = "Проект не выбран",
-        Tools="Инструменты",
-        Calibration="Калибровка",
+        Tools = "Инструменты",
+        Calibration = "Калибровка",
+        SubmitBugReport = "Отправить сообщение об ошибке",
+        SubmittingBugReport = "Отправка сообщения об ошибке",
+        ErrorDescription = "Описание ошибки:",
+        AddImage = "Добавить изображение",
+        Send = "Отправить",
+        Cancel = "Отмена",
+        AddingImage = "Выбрать изображение",
+        ReportSubmitSuccessfully = "Отчет успешно отправлен",
+        ErrorReport = "Произошла ошибка при отправке отчета",
     ),
 }
 
