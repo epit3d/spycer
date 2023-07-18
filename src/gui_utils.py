@@ -450,7 +450,7 @@ class ColorizedStlActor(StlActorMixin, ActorWithColor):
 
 
 class Plane:
-    def __init__(self, incl, rot, point, smooth):
+    def __init__(self, incl, rot, point, smooth=False):
         self.incline = incl
         self.x = point[0]
         self.y = point[1]
