@@ -4,11 +4,18 @@ on:
     branches: [release_win_ru]
   workflow_dispatch:
     inputs:
-      branch:
-        description: "Branch to build"
-        required: true
-        default: "release_win_ru"
+      id:
+        description: "run identifier"
+        required: false
 jobs:
+  id:
+    name: Workflow ID Provider
+    runs-on: ubuntu-latest
+    steps:
+      - name: ${{ github.event.inputs.id }}
+        run: echo run ID ${{ github.event.inputs.id }}
+      - name: Get current branch
+        run: echo current branch ${{ github.ref }}
   build:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -18,7 +25,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
         with:
-          ref: ${{ github.event.inputs.branch }}
+          ref: ${{ github.ref }}
       - name: Set up python 3.10
         uses: actions/setup-python@v4
         with:
