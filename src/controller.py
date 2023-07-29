@@ -26,6 +26,7 @@ from src.figure_editor import PlaneEditor, ConeEditor
 from src.gui_utils import showErrorDialog, plane_tf, read_planes, Plane, Cone, showInfoDialog
 from src.process import Process
 from src.settings import sett, save_settings, load_settings, get_color, PathBuilder
+from src.server import send_bug_report
 
 
 class MainController:
@@ -736,16 +737,17 @@ class bugReportDialog(QWidget):
             controller.save_settings("vip")
 
             current_datetime = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
-            archive_path = f"temp/{current_datetime}.zip"
+            self.archive_path = f"temp/{current_datetime}.zip"
 
-            self.addFolderToArchive(archive_path, PathBuilder.project_path(), "project")
-            self.addFolderToArchive(archive_path, self.temp_images_folder, "images")
+            self.addFolderToArchive(self.archive_path, PathBuilder.project_path(), "project")
+            self.addFolderToArchive(self.archive_path, self.temp_images_folder, "images")
 
-            with zipfile.ZipFile(archive_path, 'a') as archive:
+            with zipfile.ZipFile(self.archive_path, 'a') as archive:
                 archive.writestr("error_description.txt", self.error_description.toPlainText())
 
-            self.cleaningTempFiles()
+            send_bug_report(self.archive_path)
 
+            self.cleaningTempFiles()
             self.close()
 
             message_box = QMessageBox(parent=self)
@@ -786,6 +788,9 @@ class bugReportDialog(QWidget):
     def cleaningTempFiles(self):
         for image_path in self.images:
             os.remove(image_path)
+        if self.archive_path:
+            os.remove(self.archive_path)
+            self.archive_path = ""
         self.images = []
         self.image_list.setText("")
         self.error_description.setText("")
