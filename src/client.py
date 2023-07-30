@@ -38,10 +38,11 @@ def send_bug_report(filename):
         # check if file exists
         if not os.path.exists(filename):
             print("File not found: %s" % filename)
-            exit(1)
+            return False
 
         msgs = prepare_bug(filename)
 
         print("prepared to call rpc")
         response = stub.AddBug(msgs)
         print(response)
+        return True

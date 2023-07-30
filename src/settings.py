@@ -77,6 +77,10 @@ def save_settings(filename=""):
     with open(filename, 'w') as f:
         f.write(temp)
 
+def save_splanes_to_file(splanes, filename):
+    with open(filename, 'w') as out:
+        for p in splanes:
+            out.write(p.toFile() + '\n')
 
 class Settings(object):
     def __init__(self, d):

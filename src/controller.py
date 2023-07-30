@@ -14,20 +14,16 @@ import shutil
 from shutil import copy2
 from typing import Dict, List
 from vtkmodules.vtkCommonMath import vtkMatrix4x4
-from datetime import datetime
-import zipfile
 
 import vtk
-from PyQt5 import QtCore, QtGui
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QTextEdit, QPushButton, QLabel, QHBoxLayout, QFileDialog, QMessageBox
+from PyQt5 import QtCore
 
 from src import gui_utils, locales, qt_utils
 from src.figure_editor import PlaneEditor, ConeEditor
 from src.gui_utils import showErrorDialog, plane_tf, read_planes, Plane, Cone, showInfoDialog
 from src.process import Process
-from src.settings import sett, save_settings, load_settings, get_color, PathBuilder
-from src.server import send_bug_report
-
+from src.settings import sett, save_settings, save_splanes_to_file, load_settings, get_color, PathBuilder
+from src.bug_report import bugReportDialog
 
 class MainController:
     def __init__(self, view, model):
@@ -662,135 +658,3 @@ class MainController:
             self.view.warning_nozzle_and_table_collision.setText(self.view.locale.WarningNozzleAndTableCollision + s.slicing.planes_contact_with_nozzle)
         else:
             self.view.warning_nozzle_and_table_collision.setText("")
-
-
-def save_splanes_to_file(splanes, filename):
-    with open(filename, 'w') as out:
-        for p in splanes:
-            out.write(p.toFile() + '\n')
-
-class bugReportDialog(QWidget):
-    def __init__(self, controller):
-        super().__init__()
-        self.setWindowIcon(QtGui.QIcon("icon.png"))
-        self.setWindowTitle(controller.view.locale.SubmittingBugReport)
-        self.setMinimumWidth(500)
-
-        layout = QVBoxLayout()
-
-        self.description_label = QLabel(controller.view.locale.ErrorDescription)
-        layout.addWidget(self.description_label)
-
-        self.error_description = QTextEdit()
-        layout.addWidget(self.error_description)
-        self.error_description.setMinimumSize(400, 200)
-
-        self.image_list = QLabel()
-        layout.addWidget(self.image_list)
-
-        add_image_button = QPushButton(controller.view.locale.AddImage)
-        add_image_button.setFixedWidth(207)
-        add_image_button.clicked.connect(partial(self.addImage, controller))
-        layout.addWidget(add_image_button)
-
-        send_layout = QHBoxLayout()
-        send_layout.setAlignment(QtCore.Qt.AlignLeft)
-        layout.addLayout(send_layout)
-
-        send_button = QPushButton(controller.view.locale.Send)
-        send_button.setFixedWidth(100)
-        send_button.clicked.connect(partial(self.send, controller))
-        send_layout.addWidget(send_button)
-
-        cancel_button = QPushButton(controller.view.locale.Cancel)
-        cancel_button.setFixedWidth(100)
-        cancel_button.clicked.connect(self.cancel)
-        send_layout.addWidget(cancel_button)
-
-        self.setLayout(layout)
-
-        self.images = []
-        self.temp_images_folder = "temp\\images"
-
-    def addImage(self, controller):
-        image_path, _ = QFileDialog.getOpenFileName(self, controller.view.locale.AddingImage, "", "Images (*.png *.jpg)")
-
-        if image_path:
-            image_name = os.path.basename(image_path)
-            temp_image_path = os.path.join(self.temp_images_folder, image_name)
-            shutil.copy2(image_path, temp_image_path)
-
-            if not temp_image_path in self.images:
-                self.images.append(temp_image_path)
-                self.update_image_names_label()
-
-    def update_image_names_label(self):
-        image_names = ', '.join([os.path.basename(image_name) for image_name in self.images])
-        self.image_list.setText(image_names)
-
-    def send(self, controller):
-        try:
-            s = sett()
-            splanes_full_path = PathBuilder.splanes_file()
-            save_splanes_to_file(controller.model.splanes, splanes_full_path)
-            sett().slicing.splanes_file = path.basename(splanes_full_path)
-            controller.save_settings("vip")
-
-            current_datetime = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
-            self.archive_path = f"temp/{current_datetime}.zip"
-
-            self.addFolderToArchive(self.archive_path, PathBuilder.project_path(), "project")
-            self.addFolderToArchive(self.archive_path, self.temp_images_folder, "images")
-
-            with zipfile.ZipFile(self.archive_path, 'a') as archive:
-                archive.writestr("error_description.txt", self.error_description.toPlainText())
-
-            send_bug_report(self.archive_path)
-
-            self.cleaningTempFiles()
-            self.close()
-
-            message_box = QMessageBox(parent=self)
-            message_box.setWindowTitle(controller.view.locale.SubmittingBugReport)
-            message_box.setText(controller.view.locale.ReportSubmitSuccessfully)
-            message_box.setIcon(QMessageBox.Information)
-            message_box.exec_()
-
-        except Exception as e:
-            self.cleaningTempFiles()
-            self.close()
-
-            message_box = QMessageBox(parent=self)
-            message_box.setWindowTitle(controller.view.locale.SubmittingBugReport)
-            message_box.setText(controller.view.locale.ErrorReport)
-            message_box.setIcon(QMessageBox.Critical)
-            message_box.exec_()
-
-    def addFolderToArchive(self, archive_path, folder_path, subfolder = ""):
-        with zipfile.ZipFile(archive_path, 'a') as archive:
-            for path, _, files in os.walk(folder_path):
-                for file in files:
-                    file_path = os.path.join(path, file)
-                    archive_relative_path = os.path.relpath(file_path, folder_path)
-                    if subfolder:
-                        archive.write(file_path, os.path.join(subfolder, archive_relative_path))
-                    else:
-                        archive.write(file_path, archive_relative_path)
-
-    def closeEvent(self, event):
-        self.cleaningTempFiles()
-        event.accept()
-
-    def cancel(self):
-        self.cleaningTempFiles()
-        self.close()
-
-    def cleaningTempFiles(self):
-        for image_path in self.images:
-            os.remove(image_path)
-        if self.archive_path:
-            os.remove(self.archive_path)
-            self.archive_path = ""
-        self.images = []
-        self.image_list.setText("")
-        self.error_description.setText("")
