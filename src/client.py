@@ -14,13 +14,13 @@ def get_file_chunks(filename):
                 return
             yield piece
 
-def prepare_bug(filename):
+def prepare_bug(filename, error_description):
     with open("auth.yaml", 'r') as file:
         auth_data = yaml.safe_load(file)
 
     req = srv_bug_pb2.AddBugRequest(
         info=srv_bug_pb2.BugInfo(
-            message="",
+            message=error_description,
             creds=srv_bug_pb2.Credentials(
                 login=auth_data.get('login'),
                 passw=auth_data.get('password')),
@@ -31,7 +31,7 @@ def prepare_bug(filename):
     for piece in get_file_chunks(filename):
         yield srv_bug_pb2.AddBugRequest(content=piece)
 
-def send_bug_report(filename):
+def send_bug_report(filename, error_description):
     with grpc.insecure_channel('37.27.2.40:3456') as channel:
         stub = srv_bug_pb2_grpc.BugServiceStub(channel)
 
@@ -40,7 +40,7 @@ def send_bug_report(filename):
             print("File not found: %s" % filename)
             return False
 
-        msgs = prepare_bug(filename)
+        msgs = prepare_bug(filename, error_description)
 
         print("prepared to call rpc")
         response = stub.AddBug(msgs)
