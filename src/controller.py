@@ -16,14 +16,14 @@ from typing import Dict, List
 from vtkmodules.vtkCommonMath import vtkMatrix4x4
 
 import vtk
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtCore
 
 from src import gui_utils, locales, qt_utils
 from src.figure_editor import PlaneEditor, ConeEditor
 from src.gui_utils import showErrorDialog, plane_tf, read_planes, Plane, Cone, showInfoDialog
 from src.process import Process
-from src.settings import sett, save_settings, load_settings, get_color, PathBuilder
-
+from src.settings import sett, save_settings, save_splanes_to_file, load_settings, get_color, PathBuilder
+from src.bug_report import bugReportDialog
 
 class MainController:
     def __init__(self, view, model):
@@ -47,6 +47,7 @@ class MainController:
             calibration.CalibrationModel(self.printer)
         )
 
+        self.bugReportDialog = bugReportDialog(self)
         self._connect_signals()
 
     def _connect_signals(self):
@@ -58,6 +59,9 @@ class MainController:
 
         self.view.calibration_action.triggered.connect(
             self.calibrationPanel.show
+        )
+        self.view.bug_report.triggered.connect(
+            self.bugReportDialog.show
         )
 
         # right panel
@@ -654,9 +658,3 @@ class MainController:
             self.view.warning_nozzle_and_table_collision.setText(self.view.locale.WarningNozzleAndTableCollision + s.slicing.planes_contact_with_nozzle)
         else:
             self.view.warning_nozzle_and_table_collision.setText("")
-
-
-def save_splanes_to_file(splanes, filename):
-    with open(filename, 'w') as out:
-        for p in splanes:
-            out.write(p.toFile() + '\n')
