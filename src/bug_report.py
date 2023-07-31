@@ -87,7 +87,7 @@ class bugReportDialog(QWidget):
             with zipfile.ZipFile(self.archive_path, 'a') as archive:
                 archive.writestr("error_description.txt", self.error_description.toPlainText())
 
-            successfully_sent = send_bug_report(self.archive_path, self.error_description)
+            successfully_sent = send_bug_report(self.archive_path, self.error_description.toPlainText())
 
             self.cleaningTempFiles()
             self.close()
