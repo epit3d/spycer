@@ -1,7 +1,5 @@
 name: Build executable
 on:
-  push:
-    branches: [release]
   workflow_dispatch:
     inputs:
       id:
@@ -17,7 +15,7 @@ jobs:
       - name: Get current branch
         run: echo current branch ${{ github.ref }}
   build:
-    runs-on: [windows-latest]
+    runs-on: windows-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
