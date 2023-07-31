@@ -5,3 +5,6 @@ numpy>=1.25.0
 qdarkstyle>=3.1
 numpy-stl
 requests
+grpcio-tools
+grpcio
+protobuf
