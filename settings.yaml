@@ -19,6 +19,7 @@ common:
   opacity_table: 0.3
   splane_diameter: 150
 hardware:
+  printer_dir: ""
   bar_diameter: 1.75
   calibration_file: data/calibration_data.csv
   calibration_file_zero: data/calibration_data_zero.csv

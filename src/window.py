@@ -15,6 +15,8 @@ from src.InteractorAroundActivePlane import InteractionAroundActivePlane
 from src.gui_utils import plane_tf, Plane, Cone
 from src.settings import sett, get_color, save_settings, PathBuilder
 from src.figure_editor import StlMovePanel
+from src.qt_utils import ClickableLineEdit
+import os.path as path
 
 NothingState = "nothing"
 GCodeState = "gcode"
@@ -291,6 +293,20 @@ class MainWindow(QMainWindow):
 
         def get_cur_row():
             return self.cur_row
+        
+        # printer choice
+        printer_label = QLabel("Printer config")
+
+        printer_basename = ""
+        try:
+            printer_basename = path.basename(sett().hardware.printer_dir)
+        except:
+            # set default path to printer config
+            sett().hardware.printer_dir = ""
+        self.printer_path_edit = ClickableLineEdit(printer_basename)
+        self.printer_path_edit.setReadOnly(True)
+        right_panel.addWidget(printer_label, get_next_row(), 1)
+        right_panel.addWidget(self.printer_path_edit, get_cur_row(), 2, 1, сolumn2_number_of_cells)
 
         line_width_label = QLabel(self.locale.LineWidth)
         self.line_width_value = LineEdit(str(sett().slicing.line_width))
