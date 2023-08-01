@@ -5,9 +5,9 @@ from os import path
 import subprocess
 import time
 import sys
-import src.service as service
-import src.calibration as calibration
-import src.printer as printer
+import src.hardware.service as service
+import src.hardware.calibration as calibration
+import src.hardware.printer as printer
 from functools import partial
 from pathlib import Path
 import shutil
