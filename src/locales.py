@@ -113,6 +113,9 @@ class Locale:
     ReportSubmitSuccessfully = "Report submit successfully"
     ErrorReport = "An error occurred while submitting the report"
 
+    ErrorHardwareModule = "Hardware module is unavailable in public"
+    ErrorBugModule = "Bug reporting is unavailable in public"
+
     def __init__(self, **entries):
         self.__dict__.update(entries)
 
@@ -231,6 +234,9 @@ dicts = {
         AddingImage = "Выбрать изображение",
         ReportSubmitSuccessfully = "Отчет успешно отправлен",
         ErrorReport = "Произошла ошибка при отправке отчета",
+
+        ErrorHardwareModule = "Модуль калибровки недоступен публично",
+        ErrorBugModule = "Модуль отправки багов недоступен публично"
     ),
 }
 
