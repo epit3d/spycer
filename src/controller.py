@@ -56,7 +56,7 @@ class MainController:
             self.calibrationPanel.setModal(True)
             self.calibrationController = calibration.CalibrationController(
                 self.calibrationPanel,
-                calibration.CalibrationModel(self.printer, sett().hardware.calibration_file)
+                calibration.CalibrationModel(self.printer, PathBuilder.calibration_file())
             )
         except:
             print("printer is not initialized")
@@ -138,7 +138,7 @@ class MainController:
     def choose_printer_path(self):
         printer_path = QFileDialog.getExistingDirectory(
             self.view,
-            "Choose printer path", # TODO: add locale
+            locales.getLocale().ChoosePrinterDirectory,
             sett().hardware.printer_dir
         )
 

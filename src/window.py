@@ -295,7 +295,7 @@ class MainWindow(QMainWindow):
             return self.cur_row
         
         # printer choice
-        printer_label = QLabel("Printer config")
+        printer_label = QLabel(locales.getLocale().PrinterName)
 
         printer_basename = ""
         try:
