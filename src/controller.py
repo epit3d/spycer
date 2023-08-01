@@ -5,9 +5,6 @@ from os import path
 import subprocess
 import time
 import sys
-import src.service as service
-import src.calibration as calibration
-import src.printer as printer
 from functools import partial
 from pathlib import Path
 import shutil
@@ -23,31 +20,51 @@ from src.figure_editor import PlaneEditor, ConeEditor
 from src.gui_utils import showErrorDialog, plane_tf, read_planes, Plane, Cone, showInfoDialog
 from src.process import Process
 from src.settings import sett, save_settings, save_splanes_to_file, load_settings, get_color, PathBuilder
-from src.bug_report import bugReportDialog
+
+try:
+    from src.bug_report import bugReportDialog
+except:
+    print('bug reporting is unavailable')
+
+# try import of private hardware module
+try:
+    import src.hardware.service as service
+    import src.hardware.calibration as calibration
+    import src.hardware.printer as printer
+except:
+    print('hardware module is unavailable')
 
 class MainController:
     def __init__(self, view, model):
         self.view = view
         self.model = model
 
-        self.printer = printer.EpitPrinter()
-        # embed service tool
-        self.servicePanel = service.ServicePanel(view)
-        self.servicePanel.setModal(True)
-        self.serviceController = service.ServiceController(
-            self.servicePanel,
-            service.ServiceModel(self.printer)
-        )
+        # hardware part might be unavailable
+        try:
+            self.printer = printer.EpitPrinter()
+            # embed service tool
+            self.servicePanel = service.ServicePanel(view)
+            self.servicePanel.setModal(True)
+            self.serviceController = service.ServiceController(
+                self.servicePanel,
+                service.ServiceModel(self.printer)
+            )
 
-        # embed calibration tool
-        self.calibrationPanel = calibration.CalibrationPanel(view)
-        self.calibrationPanel.setModal(True)
-        self.calibrationController = calibration.CalibrationController(
-            self.calibrationPanel,
-            calibration.CalibrationModel(self.printer)
-        )
+            # embed calibration tool
+            self.calibrationPanel = calibration.CalibrationPanel(view)
+            self.calibrationPanel.setModal(True)
+            self.calibrationController = calibration.CalibrationController(
+                self.calibrationPanel,
+                calibration.CalibrationModel(self.printer)
+            )
+        except:
+            print("printer is not initialized")
 
-        self.bugReportDialog = bugReportDialog(self)
+        # bug reporting might be unavailable
+        try:
+            self.bugReportDialog = bugReportDialog(self)
+        except:
+            print("bug reporting is unavailable")
         self._connect_signals()
 
     def _connect_signals(self):
@@ -57,12 +74,23 @@ class MainController:
         self.view.load_sett_action.triggered.connect(self.load_settings_file)
         self.view.slicing_info_action.triggered.connect(self.get_slicer_version)
 
-        self.view.calibration_action.triggered.connect(
-            self.calibrationPanel.show
-        )
-        self.view.bug_report.triggered.connect(
-            self.bugReportDialog.show
-        )
+        try:
+            self.view.calibration_action.triggered.connect(
+                self.calibrationPanel.show
+            )
+        except:
+            self.view.calibration_action.triggered.connect(
+                lambda: showInfoDialog(locales.getLocale().ErrorHardwareModule)
+            )
+
+        try:
+            self.view.bug_report.triggered.connect(
+                self.bugReportDialog.show
+            )
+        except:
+            self.view.bug_report.triggered.connect(
+                lambda: showInfoDialog(locales.getLocale().ErrorBugModule)
+            )
 
         # right panel
         self.view.number_wall_lines_value.textChanged.connect(self.update_wall_thickness)

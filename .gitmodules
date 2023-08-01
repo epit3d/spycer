@@ -1,3 +1,6 @@
 [submodule "src/server_api"]
 	path = src/server_api
 	url = https://github.com/epit3d/server_api
+[submodule "src/hardware"]
+	path = src/hardware
+	url = git@github.com:epit3d/hardware.git
