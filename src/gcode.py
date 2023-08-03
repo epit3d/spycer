@@ -133,6 +133,7 @@ class Printer:
         self.rotations = []
         self.rotations.append(Rotation(0, 0))
         self.lays2rots = []
+        self.abs_pos = True  # absolute positioning
 
     def updatePos(self, args):
         if len(self.layers) == 150:
@@ -152,8 +153,13 @@ class Printer:
                 break
 
         # apply values to the printer position
-        for key, val in res.items():
-            setattr(self.currPos, key, val)
+        if self.abs_pos:
+            for key, val in res.items():
+                setattr(self.currPos, key, val)
+        else:
+            for key, val in res.items():
+                val += getattr(self.currPos, key)
+                setattr(self.currPos, key, val)
 
         self.dX = self.prevPos.X - self.currPos.X
         self.dY = self.prevPos.Y - self.currPos.Y
@@ -386,9 +392,9 @@ def parseGCode(lines):
 
                 printer.updatePos(pos)
             elif args[0] == "G90":  # absolute positioning
-                abs_pos = True
+                printer.abs_pos = True
             elif args[0] == "G91":  # relative positioning
-                abs_pos = False
+                printer.abs_pos = False
             else:
                 pass  # skip
 
