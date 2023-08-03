@@ -87,7 +87,6 @@ class Printer:
         self.cone_axis = rotation_matrix([1, 0, 0], 0).dot([0, 0, 1])
 
         self.path = []
-        self.pathIsCone = False
         self.layer = []
         self.layers = []
         self.rotations = []
@@ -129,9 +128,6 @@ class Printer:
         if self.dE == 0 or noMove:
             self.finishPath()
         else:
-            if self.dU != 0 or self.rotations[-1].z_rot != self.currPos.U:
-                self.pathIsCone = True
-
             if len(self.path) == 0:
                 self.path.append(self.prevPos.getCopy())
             self.path.append(self.currPos.getCopy())
@@ -163,12 +159,19 @@ class Printer:
         return res
 
     def finishPath(self):
+        # finish path and start new
         if len(self.path) < 2:
             return
 
-        # finish path and start new
+        # U coordinate of cone path differs from current bed plane Z rotation
+        pathIsCone = False
+        for pos in self.path:
+            if pos.U != self.rotations[-1].z_rot:
+                pathIsCone = True
+                break
+
         points = []
-        if self.pathIsCone:
+        if pathIsCone:
             rotationPoint = self.rotationPoint
             cone_axis = self.cone_axis
 
@@ -187,7 +190,6 @@ class Printer:
 
         self.layer.append(points)
         self.path = []
-        self.pathIsCone = False
 
     def finishLayer(self):
         self.finishPath()
