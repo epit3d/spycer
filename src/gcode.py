@@ -94,6 +94,10 @@ class Printer:
         self.lays2rots = []
         self.abs_pos = True  # absolute positioning
 
+        # add an empty layer in the beginning
+        self.layers.append(self.layer)
+        self.lays2rots.append(len(self.rotations) - 1)
+
     def parseArgs(self, args):
         # convert text args to values
         res = {}
