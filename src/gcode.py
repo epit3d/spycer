@@ -94,10 +94,7 @@ class Printer:
         self.lays2rots = []
         self.abs_pos = True  # absolute positioning
 
-    def updatePos(self, args):
-        # update previous position
-        self.prevPos.apply(self.currPos)
-
+    def parseArgs(self, args):
         # convert text args to values
         res = {}
         for arg in args:
@@ -109,14 +106,30 @@ class Printer:
             elif key == ";":
                 break
 
+        return res
+
+    def setAbsPos(self, args):
+        res = self.parseArgs(args)
+
+        for key, val in res.items():
+            setattr(self.currPos, key, val)
+
+    def setRelPos(self, args):
+        res = self.parseArgs(args)
+
+        for key, val in res.items():
+            val += getattr(self.currPos, key)
+            setattr(self.currPos, key, val)
+
+    def updatePos(self, args):
+        # update previous position
+        self.prevPos.apply(self.currPos)
+
         # apply values to the printer position
         if self.abs_pos:
-            for key, val in res.items():
-                setattr(self.currPos, key, val)
+            self.setAbsPos(args)
         else:
-            for key, val in res.items():
-                val += getattr(self.currPos, key)
-                setattr(self.currPos, key, val)
+            self.setRelPos(args)
 
         self.dX = self.prevPos.X - self.currPos.X
         self.dY = self.prevPos.Y - self.currPos.Y
@@ -282,6 +295,9 @@ def parseGCode(lines):
                 printer.abs_pos = True
             elif args[0] == "G91":  # relative positioning
                 printer.abs_pos = False
+            elif args[0] == "G92":  # set position
+                printer.setAbsPos(args[1:])
+                printer.finishPath()
             else:
                 pass  # skip
 
