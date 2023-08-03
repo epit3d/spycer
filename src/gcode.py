@@ -59,44 +59,6 @@ class Point:
         return res
 
 
-class Dummy:
-    pass
-
-
-def parseArgs(args, x, y, z, a, b, cone_axis, rotationPoint, absolute=True):
-    xr, yr, zr, ar, br = 0, 0, 0, 0, 0
-    if absolute:
-        xr, yr, zr, ar, br = x, y, z, a, b
-
-    for arg in args:
-        if len(arg) == 0:
-            continue
-        if arg[0] == "X":
-            xr = float(arg[1:])
-        elif arg[0] == "Y":
-            yr = float(arg[1:])
-        elif arg[0] == "Z":
-            zr = float(arg[1:])
-        elif arg[0] == "A":
-            ar = float(arg[1:])
-        elif arg[0] == "B":
-            br = float(arg[1:])
-        elif arg[0] == ";":
-            break
-        elif arg[0] == "U":  # rotation around z of bed planer
-            import numpy as np
-
-            # convert from cylindrical coordinates to xyz
-            u = math.radians(float(arg[1:]))
-            r = yr
-            z = zr
-
-            xr, yr, zr = rotation_matrix(cone_axis, -u).dot(np.array([xr, r, z]) - rotationPoint) + rotationPoint
-    if absolute:
-        return xr, yr, zr, ar, br
-    return xr + x, yr + y, zr + z, ar + a, br + b
-
-
 class Position:
     def __init__(self, X=None, Y=None, Z=None, U=None, V=None, E=None):
         self.X = X
@@ -118,14 +80,12 @@ class Position:
 
 class Printer:
     def __init__(self, s):
-        self.tmp = 0
         self.currPos = Position(0, 0, 0, 0, 0, 0)
         self.prevPos = Position(0, 0, 0, 0, 0, 0)
 
         self.rotationPoint = np.array([s.hardware.rotation_center_x, s.hardware.rotation_center_y, s.hardware.rotation_center_z])
         self.cone_axis = rotation_matrix([1, 0, 0], 0).dot([0, 0, 1])
-        self.model = Dummy()
-        self.model.layers = Dummy()
+
         self.path = []
         self.pathIsCone = False
         self.layer = []
@@ -136,8 +96,6 @@ class Printer:
         self.abs_pos = True  # absolute positioning
 
     def updatePos(self, args):
-        if len(self.layers) == 150:
-            print(args)
         # update previous position
         self.prevPos.apply(self.currPos)
 
@@ -171,20 +129,12 @@ class Printer:
         if self.dE == 0 or noMove:
             self.finishPath()
         else:
-            # if self.rotations[-1].z_rot == 0 and (self.currPos.U != 0 or self.prevPos.U != 0):
             if self.dU != 0 or self.rotations[-1].z_rot != self.currPos.U:
                 self.pathIsCone = True
 
             if len(self.path) == 0:
                 self.path.append(self.prevPos.getCopy())
             self.path.append(self.currPos.getCopy())
-
-            p1 = self.path[-2]
-            p2 = self.currPos
-            # if len(self.rotations) > 1 and self.tmp < 400:
-            if len(self.layers) == 150 and self.tmp < 3000:
-                print(f"{len(self.layers):2d} {p1.X:7.3f} {p1.Y:7.3f} {p1.Z:7.3f} {p1.U:8.3f} {len(self.path):3d} {p2.X:7.3f} {p2.Y:7.3f} {p2.Z:7.3f} {p2.U:8.3f}")
-                self.tmp += 1
 
     def pathSplit(self):
         maxDeltaU = 5
@@ -210,41 +160,6 @@ class Printer:
                     (pos.X, pos.Y, pos.Z, pos.U))
             lastPos = pos
 
-        return res
-
-    def getPoints(self):
-        maxDeltaU = 5
-        numPoints = int(abs(self.dU) // maxDeltaU)
-
-        res = []
-        if numPoints > 0:
-            rangeU = list(np.linspace(
-                self.prevPos.U, self.currPos.U, numPoints + 2)[1:])
-            rangeX = list(np.linspace(
-                self.prevPos.X, self.currPos.X, numPoints + 2)[1:])
-            rangeY = list(np.linspace(
-                self.prevPos.Y, self.currPos.Y, numPoints + 2)[1:])
-            rangeZ = list(np.linspace(
-                self.prevPos.Z, self.currPos.Z, numPoints + 2)[1:])
-
-            for dU, dX, dY, dZ in zip(rangeU, rangeX, rangeY, rangeZ):
-                res.append(
-                    (
-                        f"X{dX}",
-                        f"Y{dY}",
-                        f"Z{dZ}",
-                        f"U{dU}",
-                    )
-                )
-        else:
-            res.append(
-                (
-                    f"X{self.currPos.X}",
-                    f"Y{self.currPos.Y}",
-                    f"Z{self.currPos.Z}",
-                    f"U{self.currPos.U}",
-                )
-            )
         return res
 
     def finishPath(self):
@@ -302,47 +217,17 @@ def readGCode(filename):
 
 
 def parseGCode(lines):
-    path = []
     layer = []
-    layers = []
-    rotations = []
-    lays2rots = []
     planes = []
 
-    rotations.append(Rotation(0, 0))
-    x, y, z, a, b = 0, 0, 0, 0, 0
-    abs_pos = True  # absolute positioning
-
     s = src.settings.sett()
-    rotationPoint = np.array([s.hardware.rotation_center_x, s.hardware.rotation_center_y, s.hardware.rotation_center_z])
-
-    cone_axis = rotation_matrix([1, 0, 0], 0).dot([0, 0, 1])
 
     current_layer = 0
 
-    def finishLayer():
-        nonlocal path, layer
-        if len(path) > 1:
-            layer.append(path)
-
-        path = [Point(x, y, z, a, b)]
-        if len(layer) > 0:
-            layers.append(layer)
-            if a != 0:  # TODO: fixme
-                rotations.append(Rotation(layer[-1][-1].a, layer[-1][-1].b))
-            lays2rots.append(len(rotations) - 1)
-
-        layer = []
-
     t = 0  # select extruder (t==0) or incline (t==2) or rotate (t==1)
     printer = Printer(src.settings.sett())
-    tmp_idx = 0
-    tmp = 0
+
     for line in lines:
-        #print(line)
-        if tmp_idx % 10000 == 0:
-            print(tmp_idx)
-        tmp_idx += 1
         line = line.strip()
         if len(line) == 0:
             continue
