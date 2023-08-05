@@ -134,3 +134,10 @@ class PathBuilder:
     def gcode_file():
         return path.join(PathBuilder.project_path(), sett().slicing.gcode_file)
     
+    @staticmethod
+    def printer_dir():
+        return sett().hardware.printer_dir
+
+    @staticmethod
+    def calibration_file():
+        return path.join(PathBuilder.printer_dir(), sett().hardware.calibration_file)

@@ -14,6 +14,7 @@ from vtkmodules.vtkCommonMath import vtkMatrix4x4
 
 import vtk
 from PyQt5 import QtCore
+from PyQt5.QtWidgets import QFileDialog
 
 from src import gui_utils, locales, qt_utils
 from src.figure_editor import PlaneEditor, ConeEditor
@@ -55,7 +56,7 @@ class MainController:
             self.calibrationPanel.setModal(True)
             self.calibrationController = calibration.CalibrationController(
                 self.calibrationPanel,
-                calibration.CalibrationModel(self.printer)
+                calibration.CalibrationModel(self.printer, PathBuilder.calibration_file())
             )
         except:
             print("printer is not initialized")
@@ -93,6 +94,7 @@ class MainController:
             )
 
         # right panel
+        self.view.printer_path_edit.clicked.connect(self.choose_printer_path)
         self.view.number_wall_lines_value.textChanged.connect(self.update_wall_thickness)
         self.view.line_width_value.textChanged.connect(self.update_wall_thickness)
         self.view.layer_height_value.textChanged.connect(self.change_layer_height)
@@ -132,6 +134,30 @@ class MainController:
         save_splanes_to_file(self.model.splanes, splanes_full_pth)
         sett().slicing.splanes_file = path.basename(splanes_full_pth)
         save_settings()
+
+    def choose_printer_path(self):
+        printer_path = QFileDialog.getExistingDirectory(
+            self.view,
+            locales.getLocale().ChoosePrinterDirectory,
+            sett().hardware.printer_dir
+        )
+
+        if printer_path:
+            sett().hardware.printer_dir = printer_path
+            # calibration file will be at default location
+            sett().hardware.calibration_file = "calibration_data.csv"
+            
+            # save settings
+            save_settings()
+
+            # update label with printer path
+            self.view.printer_path_edit.setText(os.path.basename(printer_path))
+
+            # update path in calibration model
+            try:
+                self.calibrationController.updateCalibrationFilepath(PathBuilder.calibration_file())
+            except AttributeError:
+                print("hardware module is unavailable, skip")
 
     def moving_figure(self, sourceParent, previousRow):
         if sourceParent.row() != -1:

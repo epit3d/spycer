@@ -116,6 +116,9 @@ class Locale:
     ErrorHardwareModule = "Hardware module is unavailable in public"
     ErrorBugModule = "Bug reporting is unavailable in public"
 
+    PrinterName = "Printer name:"
+    ChoosePrinterDirectory = "Choose printer directory"
+
     def __init__(self, **entries):
         self.__dict__.update(entries)
 
@@ -236,7 +239,10 @@ dicts = {
         ErrorReport = "Произошла ошибка при отправке отчета",
 
         ErrorHardwareModule = "Модуль калибровки недоступен публично",
-        ErrorBugModule = "Модуль отправки багов недоступен публично"
+        ErrorBugModule = "Модуль отправки багов недоступен публично",
+
+        PrinterName = "Название принтера:",
+        ChoosePrinterDirectory = "Выберите директорию принтера",
     ),
 }
 
