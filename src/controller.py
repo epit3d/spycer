@@ -154,7 +154,10 @@ class MainController:
             self.view.printer_path_edit.setText(os.path.basename(printer_path))
 
             # update path in calibration model
-            self.calibrationController.updateCalibrationFilepath(PathBuilder.calibration_file())
+            try:
+                self.calibrationController.updateCalibrationFilepath(PathBuilder.calibration_file())
+            except AttributeError:
+                print("hardware module is unavailable, skip")
 
     def moving_figure(self, sourceParent, previousRow):
         if sourceParent.row() != -1:
