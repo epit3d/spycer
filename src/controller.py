@@ -162,6 +162,8 @@ class MainController:
         self.change_figure_parameters()
 
     def change_figure_parameters(self):
+        self.view.model_switch_box.setChecked(True)
+        self.view.hide_checkbox.setChecked(False)
         ind = self.view.splanes_tree.currentIndex().row()
         if ind == -1:
             self.view.tabs.setCurrentWidget(self.view.tabs.widget(0))
@@ -552,18 +554,24 @@ class MainController:
     # ######################bottom panel
 
     def add_splane(self):
+        self.view.model_switch_box.setChecked(True)
+        self.view.hide_checkbox.setChecked(False)
         self.view.hide_checkbox.setChecked(False)
         self.model.add_splane()
         self.view.reload_splanes(self.model.splanes)
         self.change_figure_parameters()
 
     def add_cone(self):
+        self.view.model_switch_box.setChecked(True)
+        self.view.hide_checkbox.setChecked(False)
         self.view.hide_checkbox.setChecked(False)
         self.model.add_cone()
         self.view.reload_splanes(self.model.splanes)
         self.change_figure_parameters()
 
     def remove_splane(self):
+        self.view.model_switch_box.setChecked(True)
+        self.view.hide_checkbox.setChecked(False)
         self.view.hide_checkbox.setChecked(False)
         ind = self.view.splanes_tree.currentIndex().row()
         if ind == -1:

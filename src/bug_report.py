@@ -52,9 +52,16 @@ class bugReportDialog(QWidget):
 
         self.archive_path = ""
         self.images = []
-        self.temp_images_folder = os.path.join("temp", "images")
+        self.temp_folder = "temp"
+        self.temp_images_folder = os.path.join(self.temp_folder, "images")
 
     def addImage(self, controller):
+        if not os.path.exists(self.temp_folder):
+            os.mkdir(self.temp_folder)
+
+        if not os.path.exists(self.temp_images_folder):
+            os.mkdir(self.temp_images_folder)
+
         image_path, _ = QFileDialog.getOpenFileName(self, controller.view.locale.AddingImage, "", "Images (*.png *.jpg)")
 
         if image_path:
