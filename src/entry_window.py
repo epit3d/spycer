@@ -28,6 +28,16 @@ class EntryWindow(QWidget):
         self.setWindowIcon(QtGui.QIcon("icon.png"))
         self.init_ui()
 
+    def showEvent(self, e):
+        # showEvent is run when we first open and when we close project
+        # when we close project and entry window pops up we need to update
+        # list of projects because new project will not be included
+
+        # update list of recent projects
+        self.reload_recent_projects_list()
+        
+        super().showEvent(e)
+
     def init_ui(self):
         self.setFixedSize(600, 300)
 
@@ -85,8 +95,7 @@ class EntryWindow(QWidget):
             self.open_existing_project)
 
         # Add recent projects to list widget
-        self.recent_projects = self.load_recent_projects()
-        self.recent_projects_list_widget.addItems(self.recent_projects)
+        self.reload_recent_projects_list()
         existing_proj_layout.addWidget(self.recent_projects_label)
         existing_proj_layout.addWidget(self.recent_projects_list_widget)
 
@@ -99,6 +108,12 @@ class EntryWindow(QWidget):
 
         self.setLayout(layout)
         self.show()
+
+    def reload_recent_projects_list(self):
+        # Add recent projects to list widget
+        self.recent_projects = self.load_recent_projects()
+        self.recent_projects_list_widget.clear()
+        self.recent_projects_list_widget.addItems(self.recent_projects)
 
     def choose_project_location(self):
         file = str(QFileDialog.getExistingDirectory(self, locales.getLocale().ChooseFolder))
@@ -158,15 +173,22 @@ class EntryWindow(QWidget):
             return
 
         # add current project to recent projects
-        self.recent_projects.append(str(full_path))
-        settings = QSettings('Epit3D', 'Spycer')
-        settings.setValue('recent_projects', self.recent_projects)
-
+        self.add_recent_project(full_path)
+        
         # create project directory
         full_path.mkdir(parents=True, exist_ok=True)
 
         # emit signal with path to project file
         self.create_project_signal.emit(str(full_path))
+
+    def add_recent_project(self, project_path):
+        # adds recent project to system settings
+        if project_path in self.recent_projects:
+            return
+        
+        self.recent_projects.append(str(project_path))
+        settings = QSettings('Epit3D', 'Spycer')
+        settings.setValue('recent_projects', self.recent_projects)
 
     def open_existing_project(self):
         if self.recent_projects_list_widget.currentItem() is None:
@@ -178,6 +200,9 @@ class EntryWindow(QWidget):
         else:
             selected_project = self.recent_projects_list_widget.currentItem().text()
         print(f"Opening {selected_project}...")
+
+        # add existing project to recent projects
+        self.add_recent_project(selected_project)
 
         # emit signal with path to project file
         self.open_project_signal.emit(selected_project)

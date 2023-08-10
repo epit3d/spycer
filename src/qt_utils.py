@@ -1,8 +1,17 @@
 import concurrent.futures
 from PyQt5 import QtCore
 from PyQt5.QtCore import QEventLoop
-from PyQt5.QtWidgets import QProgressDialog
+from PyQt5.QtWidgets import QProgressDialog, QLineEdit
+from PyQt5.QtCore import Qt
 
+class ClickableLineEdit(QLineEdit):
+    clicked = QtCore.pyqtSignal()
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton: 
+            self.clicked.emit()
+        else: 
+            super().mousePressEvent(event)
 
 class TaskManager(QtCore.QObject):
     # source: https://stackoverflow.com/questions/64500883/pyqt5-widget-qthread-issue-when-using-concurrent-futures-threadpoolexecutor
