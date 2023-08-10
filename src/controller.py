@@ -162,7 +162,7 @@ class MainController:
         self.change_figure_parameters()
 
     def change_figure_parameters(self):
-        self.model_switch_box.setChecked(True)
+        self.view.model_switch_box.setChecked(True)
         self.view.hide_checkbox.setChecked(False)
         ind = self.view.splanes_tree.currentIndex().row()
         if ind == -1:
