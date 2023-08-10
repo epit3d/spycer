@@ -125,7 +125,7 @@ class FigureEditor(QWidget):
 
 class PlaneEditor(FigureEditor):
     __params = ["X", "Y", "Z", "Rotation", "Tilt"]
-    __constrains = [(-100, 100), (-100, 100), (0, 200), (-180, 180), (-60, 0)]
+    __constrains = [(-100, 100), (-100, 100), (0, 200), (-180, 180), (-90, 0)]
 
     def __init__(self, tabs, on_change: Callable[[Dict[str, float]], None],
                  initial_params: Optional[Dict[str, float]] = None):
@@ -137,7 +137,7 @@ class PlaneEditor(FigureEditor):
 
 class ConeEditor(FigureEditor):
     __params = ["Z", "A", "H1", "H2"]
-    __constrains = [(-100, 200), (-60, 60), (0, 150), (1, 150)]
+    __constrains = [(-100, 200), (-80, 80), (0, 150), (1, 150)]
 
     def __init__(self, tabs, on_change: Callable[[Dict[str, float]], None],
                  initial_params: Optional[Dict[str, float]] = None):
