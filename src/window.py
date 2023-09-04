@@ -297,16 +297,40 @@ class MainWindow(QMainWindow):
         # printer choice
         printer_label = QLabel(locales.getLocale().PrinterName)
 
+        # TODO: remove to some settings module
+        import sys
+        # get path to application directory
+        if getattr(sys, 'frozen', False):
+            app_path = path.dirname(sys.executable)
+        else:
+            # have to add .. because controller.py is under src folder
+            app_path = path.join(path.dirname(__file__), "..")
+
         printer_basename = ""
         try:
             printer_basename = path.basename(sett().hardware.printer_dir)
+            if sett().hardware.printer_dir == "":
+                # empty directory
+                raise Exception("Choose default printer")
+
         except:
             # set default path to printer config
-            sett().hardware.printer_dir = ""
+            sett().hardware.printer_dir = path.join(app_path, "printers", "default")
+            print(sett().hardware.printer_dir)
+            printer_basename = path.basename(sett().hardware.printer_dir)
+            save_settings()
+
         self.printer_path_edit = ClickableLineEdit(printer_basename)
         self.printer_path_edit.setReadOnly(True)
+
+        self.printer_add_btn = QPushButton("+")
+        # self.printer_add_btn.setMaximumWidth(30)
+        # TODO: add locale
+        self.printer_add_btn.setToolTip("Add new printer")
+
         right_panel.addWidget(printer_label, get_next_row(), 1)
-        right_panel.addWidget(self.printer_path_edit, get_cur_row(), 2, 1, сolumn2_number_of_cells)
+        right_panel.addWidget(self.printer_add_btn, get_cur_row(), 2)
+        right_panel.addWidget(self.printer_path_edit, get_cur_row(), 3, 1, сolumn2_number_of_cells)
 
         line_width_label = QLabel(self.locale.LineWidth)
         self.line_width_value = LineEdit(str(sett().slicing.line_width))

@@ -241,8 +241,8 @@ dicts = {
         ErrorHardwareModule = "Модуль калибровки недоступен публично",
         ErrorBugModule = "Модуль отправки багов недоступен публично",
 
-        PrinterName = "Название принтера:",
-        ChoosePrinterDirectory = "Выберите директорию принтера",
+        PrinterName = "Конфигурация принтера:",
+        ChoosePrinterDirectory = "Выберите директорию с конфигурацией принтера",
     ),
 }
 
