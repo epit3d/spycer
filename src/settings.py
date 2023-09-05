@@ -9,6 +9,17 @@ import vtk
 
 _sett = None  # do not forget to load_settings() at start
 
+# setup app path
+if getattr(sys, 'frozen', False):
+    APP_PATH = path.dirname(sys.executable)
+    # uncomment if you want some protection that nothing would be broken
+    # if not path.exists(path.join(app_path, settings_filename)):
+    #     bundle_path = sys._MEIPASS
+    #     shutil.copyfile(path.join(bundle_path, settings_filename), path.join(app_path, settings_filename))
+else:
+    # have to add .. because settings.py is under src folder
+    APP_PATH = path.join(path.dirname(__file__), "..")
+
 
 def sett():
     return _sett

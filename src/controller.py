@@ -21,6 +21,7 @@ from src.figure_editor import PlaneEditor, ConeEditor
 from src.gui_utils import showErrorDialog, plane_tf, read_planes, Plane, Cone, showInfoDialog
 from src.process import Process
 from src.settings import sett, save_settings, save_splanes_to_file, load_settings, get_color, PathBuilder
+import src.settings as settings
 
 try:
     from src.bug_report import bugReportDialog
@@ -146,8 +147,7 @@ class MainController:
 
     def create_printer(self):
         # query user for printer name and create directory in printers/<name> relative to FASP root
-        # TODO: change to locale
-        text, ok = QInputDialog.getText(self.view, 'Printer name', 'Enter printer name:')
+        text, ok = QInputDialog.getText(self.view, locales.getLocale().AddNewPrinter, locales.getLocale().ChoosePrinterDirectory)
         if not ok:
             return
         
@@ -155,16 +155,8 @@ class MainController:
         if not printer_name:
             return
 
-        # TODO: move to some settings module
-        # get path to application directory
-        if getattr(sys, 'frozen', False):
-            app_path = path.dirname(sys.executable)
-        else:
-            # have to add .. because controller.py is under src folder
-            app_path = path.join(path.dirname(__file__), "..")
-
         # create directory in printers/<name> relative to FASP root
-        printer_path = path.join(app_path, "printers", printer_name)
+        printer_path = path.join(settings.APP_PATH, "printers", printer_name)
         
         # check if directory already exists
         if path.exists(printer_path):
@@ -175,7 +167,7 @@ class MainController:
         os.makedirs(printer_path)
 
         # copy calibration data from default directory to new printer directory
-        default_calibration_file = path.join(app_path, "printers", "default", "calibration_data.csv")
+        default_calibration_file = path.join(settings.APP_PATH, "printers", "default", "calibration_data.csv")
         target_calibration_file = path.join(printer_path, "calibration_data.csv")
 
         shutil.copyfile(default_calibration_file, target_calibration_file)

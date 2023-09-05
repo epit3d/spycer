@@ -14,9 +14,11 @@ from src import locales, gui_utils, interactor_style
 from src.InteractorAroundActivePlane import InteractionAroundActivePlane
 from src.gui_utils import plane_tf, Plane, Cone
 from src.settings import sett, get_color, save_settings, PathBuilder
+import src.settings as settings
 from src.figure_editor import StlMovePanel
 from src.qt_utils import ClickableLineEdit
 import os.path as path
+import logging
 
 NothingState = "nothing"
 GCodeState = "gcode"
@@ -296,27 +298,18 @@ class MainWindow(QMainWindow):
         
         # printer choice
         printer_label = QLabel(locales.getLocale().PrinterName)
-
-        # TODO: remove to some settings module
-        import sys
-        # get path to application directory
-        if getattr(sys, 'frozen', False):
-            app_path = path.dirname(sys.executable)
-        else:
-            # have to add .. because controller.py is under src folder
-            app_path = path.join(path.dirname(__file__), "..")
-
         printer_basename = ""
         try:
             printer_basename = path.basename(sett().hardware.printer_dir)
-            if sett().hardware.printer_dir == "":
+            if sett().hardware.printer_dir == "" or not path.isdir(sett().hardware.printer_dir):
                 # empty directory
                 raise Exception("Choose default printer")
 
+            logging.info(f"hardware printer path is {sett().hardware.printer_dir}")
         except:
             # set default path to printer config
-            sett().hardware.printer_dir = path.join(app_path, "printers", "default")
-            print(sett().hardware.printer_dir)
+            sett().hardware.printer_dir = path.join(settings.APP_PATH, "printers", "default")
+            logging.info(f"hardware printer path is default: {sett().hardware.printer_dir}")
             printer_basename = path.basename(sett().hardware.printer_dir)
             save_settings()
 
@@ -324,9 +317,7 @@ class MainWindow(QMainWindow):
         self.printer_path_edit.setReadOnly(True)
 
         self.printer_add_btn = QPushButton("+")
-        # self.printer_add_btn.setMaximumWidth(30)
-        # TODO: add locale
-        self.printer_add_btn.setToolTip("Add new printer")
+        self.printer_add_btn.setToolTip(locales.getLocale().AddNewPrinter)
 
         right_panel.addWidget(printer_label, get_next_row(), 1)
         right_panel.addWidget(self.printer_add_btn, get_cur_row(), 2)

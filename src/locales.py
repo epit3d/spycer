@@ -117,7 +117,8 @@ class Locale:
     ErrorBugModule = "Bug reporting is unavailable in public"
 
     PrinterName = "Printer name:"
-    ChoosePrinterDirectory = "Choose printer directory"
+    ChoosePrinterDirectory = "Choose printer name"
+    AddNewPrinter = "Add new printer"
 
     def __init__(self, **entries):
         self.__dict__.update(entries)
@@ -242,7 +243,8 @@ dicts = {
         ErrorBugModule = "Модуль отправки багов недоступен публично",
 
         PrinterName = "Конфигурация принтера:",
-        ChoosePrinterDirectory = "Выберите директорию с конфигурацией принтера",
+        ChoosePrinterDirectory = "Выберите название принтера",
+        AddNewPrinter = "Добавить новый принтер",
     ),
 }
 
