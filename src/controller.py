@@ -146,7 +146,7 @@ class MainController:
         save_settings()
 
     def create_printer(self):
-        # query user for printer name and create directory in printers/<name> relative to FASP root
+        # query user for printer name and create directory in data/printers/<name> relative to FASP root
         text, ok = QInputDialog.getText(self.view, locales.getLocale().AddNewPrinter, locales.getLocale().ChoosePrinterDirectory)
         if not ok:
             return
@@ -155,8 +155,8 @@ class MainController:
         if not printer_name:
             return
 
-        # create directory in printers/<name> relative to FASP root
-        printer_path = path.join(settings.APP_PATH, "printers", printer_name)
+        # create directory in data/printers/<name> relative to FASP root
+        printer_path = path.join(settings.APP_PATH, "data", "printers", printer_name)
         
         # check if directory already exists
         if path.exists(printer_path):
@@ -167,7 +167,7 @@ class MainController:
         os.makedirs(printer_path)
 
         # copy calibration data from default directory to new printer directory
-        default_calibration_file = path.join(settings.APP_PATH, "printers", "default", "calibration_data.csv")
+        default_calibration_file = path.join(settings.APP_PATH, "data", "printers", "default", "calibration_data.csv")
         target_calibration_file = path.join(printer_path, "calibration_data.csv")
 
         shutil.copyfile(default_calibration_file, target_calibration_file)

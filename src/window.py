@@ -308,7 +308,7 @@ class MainWindow(QMainWindow):
             logging.info(f"hardware printer path is {sett().hardware.printer_dir}")
         except:
             # set default path to printer config
-            sett().hardware.printer_dir = path.join(settings.APP_PATH, "printers", "default")
+            sett().hardware.printer_dir = path.join(settings.APP_PATH, "data", "printers", "default")
             logging.info(f"hardware printer path is default: {sett().hardware.printer_dir}")
             printer_basename = path.basename(sett().hardware.printer_dir)
             save_settings()
