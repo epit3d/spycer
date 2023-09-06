@@ -117,7 +117,9 @@ class Locale:
     ErrorBugModule = "Bug reporting is unavailable in public"
 
     PrinterName = "Printer name:"
-    ChoosePrinterDirectory = "Choose printer directory"
+    ChoosePrinterDirectory = "Choose printer name"
+    AddNewPrinter = "Add new printer"
+    DefaultPrinterWarn = "Be aware that you are using default printer. New data might be removed after update. We recommend to create new printer and calibrate it."
 
     def __init__(self, **entries):
         self.__dict__.update(entries)
@@ -241,8 +243,10 @@ dicts = {
         ErrorHardwareModule = "Модуль калибровки недоступен публично",
         ErrorBugModule = "Модуль отправки багов недоступен публично",
 
-        PrinterName = "Название принтера:",
-        ChoosePrinterDirectory = "Выберите директорию принтера",
+        PrinterName = "Конфигурация принтера:",
+        ChoosePrinterDirectory = "Выберите название принтера",
+        AddNewPrinter = "Добавить новый принтер",
+        DefaultPrinterWarn = "Будьте внимательны, Вы используете принтер по умолчанию. Данные этого принтера будут перезаписываться при обновлениях. Мы рекомендуем создать и использовать свою конфигурацию принтера.",
     ),
 }
 
