@@ -134,8 +134,7 @@ class MainController:
     def calibration_action_show(self):
         # check that printer is not default, otherwise show information with warning
         if os.path.basename(sett().hardware.printer_dir) == "default":
-            # TODO: change to locale
-            showInfoDialog("Be aware that you are using default printer. New data might be removed after update. We recommend to create new printer and calibrate it.")
+            showInfoDialog(locales.getLocale().DefaultPrinterWarn)
         
         self.calibrationPanel.show()
 
