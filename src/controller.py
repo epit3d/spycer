@@ -14,13 +14,14 @@ from vtkmodules.vtkCommonMath import vtkMatrix4x4
 
 import vtk
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import QFileDialog
+from PyQt5.QtWidgets import QFileDialog, QInputDialog
 
 from src import gui_utils, locales, qt_utils
 from src.figure_editor import PlaneEditor, ConeEditor
 from src.gui_utils import showErrorDialog, plane_tf, read_planes, Plane, Cone, showInfoDialog
 from src.process import Process
 from src.settings import sett, save_settings, save_splanes_to_file, load_settings, get_color, PathBuilder
+import src.settings as settings
 
 try:
     from src.bug_report import bugReportDialog
@@ -77,7 +78,7 @@ class MainController:
 
         try:
             self.view.calibration_action.triggered.connect(
-                self.calibrationPanel.show
+                self.calibration_action_show
             )
         except:
             self.view.calibration_action.triggered.connect(
@@ -94,6 +95,7 @@ class MainController:
             )
 
         # right panel
+        self.view.printer_add_btn.clicked.connect(self.create_printer)
         self.view.printer_path_edit.clicked.connect(self.choose_printer_path)
         self.view.number_wall_lines_value.textChanged.connect(self.update_wall_thickness)
         self.view.line_width_value.textChanged.connect(self.update_wall_thickness)
@@ -129,11 +131,63 @@ class MainController:
         # on close of window we save current planes to project file
         self.view.close_signal.connect(self.save_planes_on_close)
 
+    def calibration_action_show(self):
+        # check that printer is not default, otherwise show information with warning
+        if os.path.basename(sett().hardware.printer_dir) == "default":
+            showInfoDialog(locales.getLocale().DefaultPrinterWarn)
+        
+        self.calibrationPanel.show()
+
     def save_planes_on_close(self):
         splanes_full_pth = PathBuilder.splanes_file()
         save_splanes_to_file(self.model.splanes, splanes_full_pth)
         sett().slicing.splanes_file = path.basename(splanes_full_pth)
         save_settings()
+
+    def create_printer(self):
+        # query user for printer name and create directory in data/printers/<name> relative to FASP root
+        text, ok = QInputDialog.getText(self.view, locales.getLocale().AddNewPrinter, locales.getLocale().ChoosePrinterDirectory)
+        if not ok:
+            return
+        
+        printer_name = text.strip()
+        if not printer_name:
+            return
+
+        # create directory in data/printers/<name> relative to FASP root
+        printer_path = path.join(settings.APP_PATH, "data", "printers", printer_name)
+        
+        # check if directory already exists
+        if path.exists(printer_path):
+            showErrorDialog("Printer with this name already exists")
+            return
+        
+        # create directory
+        os.makedirs(printer_path)
+
+        # copy calibration data from default directory to new printer directory
+        default_calibration_file = path.join(settings.APP_PATH, "data", "printers", "default", "calibration_data.csv")
+        target_calibration_file = path.join(printer_path, "calibration_data.csv")
+
+        shutil.copyfile(default_calibration_file, target_calibration_file)
+
+        # update settings
+        sett().hardware.printer_dir = printer_path
+        sett().hardware.calibration_file = "calibration_data.csv"
+        save_settings()
+
+        # update label with printer path
+        self.view.printer_path_edit.setText(os.path.basename(printer_path))
+
+        # update path in calibration model
+        try:
+            self.calibrationController.updateCalibrationFilepath(PathBuilder.calibration_file())
+        except AttributeError:
+            print("hardware module is unavailable, skip")
+
+        # show info dialog
+        showInfoDialog("Printer created successfully, please calibrate before first use")
+
 
     def choose_printer_path(self):
         printer_path = QFileDialog.getExistingDirectory(
@@ -143,6 +197,12 @@ class MainController:
         )
 
         if printer_path:
+            # check if directory contains calibration file
+            calibration_file = path.join(printer_path, "calibration_data.csv")
+            if not path.exists(calibration_file):
+                showErrorDialog("Directory doesn't contain calibration file. Please choose another directory.")
+                return
+
             sett().hardware.printer_dir = printer_path
             # calibration file will be at default location
             sett().hardware.calibration_file = "calibration_data.csv"
