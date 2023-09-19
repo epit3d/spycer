@@ -14,7 +14,11 @@ from src import locales, gui_utils, interactor_style
 from src.InteractorAroundActivePlane import InteractionAroundActivePlane
 from src.gui_utils import plane_tf, Plane, Cone
 from src.settings import sett, get_color, save_settings, PathBuilder
+import src.settings as settings
 from src.figure_editor import StlMovePanel
+from src.qt_utils import ClickableLineEdit
+import os.path as path
+import logging
 
 NothingState = "nothing"
 GCodeState = "gcode"
@@ -134,6 +138,8 @@ class MainWindow(QMainWindow):
         tools_menu = bar.addMenu(self.locale.Tools)
         self.calibration_action = QAction(self.locale.Calibration, self)
         tools_menu.addAction(self.calibration_action)
+        self.bug_report = QAction(self.locale.SubmitBugReport, self)
+        tools_menu.addAction(self.bug_report)
 
         self.check_updates_action = QAction(self.locale.CheckUpdates, self)
         tools_menu.addAction(self.check_updates_action)
@@ -292,6 +298,33 @@ class MainWindow(QMainWindow):
 
         def get_cur_row():
             return self.cur_row
+        
+        # printer choice
+        printer_label = QLabel(locales.getLocale().PrinterName)
+        printer_basename = ""
+        try:
+            printer_basename = path.basename(sett().hardware.printer_dir)
+            if sett().hardware.printer_dir == "" or not path.isdir(sett().hardware.printer_dir):
+                # empty directory
+                raise Exception("Choose default printer")
+
+            logging.info(f"hardware printer path is {sett().hardware.printer_dir}")
+        except:
+            # set default path to printer config
+            sett().hardware.printer_dir = path.join(settings.APP_PATH, "data", "printers", "default")
+            logging.info(f"hardware printer path is default: {sett().hardware.printer_dir}")
+            printer_basename = path.basename(sett().hardware.printer_dir)
+            save_settings()
+
+        self.printer_path_edit = ClickableLineEdit(printer_basename)
+        self.printer_path_edit.setReadOnly(True)
+
+        self.printer_add_btn = QPushButton("+")
+        self.printer_add_btn.setToolTip(locales.getLocale().AddNewPrinter)
+
+        right_panel.addWidget(printer_label, get_next_row(), 1)
+        right_panel.addWidget(self.printer_add_btn, get_cur_row(), 2)
+        right_panel.addWidget(self.printer_path_edit, get_cur_row(), 3, 1, сolumn2_number_of_cells)
 
         line_width_label = QLabel(self.locale.LineWidth)
         self.line_width_value = LineEdit(str(sett().slicing.line_width))

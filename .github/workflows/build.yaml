@@ -1,24 +1,28 @@
 name: Build executable
 on:
-  push:
-    branches: [release_win_ru]
   workflow_dispatch:
     inputs:
-      branch:
-        description: "Branch to build"
-        required: true
-        default: "release_win_ru"
+      id:
+        description: "run identifier"
+        required: false
 jobs:
+  id:
+    name: Workflow ID Provider
+    runs-on: ubuntu-latest
+    steps:
+      - name: ${{ github.event.inputs.id }}
+        run: echo run ID ${{ github.event.inputs.id }}
+      - name: Get current branch
+        run: echo current branch ${{ github.ref }}
   build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [windows-latest] #ubuntu-18.04, ubuntu-20.04,
+    runs-on: windows-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
         with:
-          ref: ${{ github.event.inputs.branch }}
+          ref: ${{ github.ref }}
+          submodules: recursive
+          token: ${{ secrets.PAT_TOKEN }}
       - name: Set up python 3.10
         uses: actions/setup-python@v4
         with:

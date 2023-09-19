@@ -9,6 +9,17 @@ import vtk
 
 _sett = None  # do not forget to load_settings() at start
 
+# setup app path
+if getattr(sys, 'frozen', False):
+    APP_PATH = path.dirname(sys.executable)
+    # uncomment if you want some protection that nothing would be broken
+    # if not path.exists(path.join(app_path, settings_filename)):
+    #     bundle_path = sys._MEIPASS
+    #     shutil.copyfile(path.join(bundle_path, settings_filename), path.join(app_path, settings_filename))
+else:
+    # have to add .. because settings.py is under src folder
+    APP_PATH = path.join(path.dirname(__file__), "..")
+
 
 def sett():
     return _sett
@@ -77,6 +88,10 @@ def save_settings(filename=""):
     with open(filename, 'w') as f:
         f.write(temp)
 
+def save_splanes_to_file(splanes, filename):
+    with open(filename, 'w') as out:
+        for p in splanes:
+            out.write(p.toFile() + '\n')
 
 class Settings(object):
     def __init__(self, d):
@@ -130,3 +145,10 @@ class PathBuilder:
     def gcode_file():
         return path.join(PathBuilder.project_path(), sett().slicing.gcode_file)
     
+    @staticmethod
+    def printer_dir():
+        return sett().hardware.printer_dir
+
+    @staticmethod
+    def calibration_file():
+        return path.join(PathBuilder.printer_dir(), sett().hardware.calibration_file)

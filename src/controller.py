@@ -5,9 +5,6 @@ from os import path
 import subprocess
 import time
 import sys
-import src.service as service
-import src.calibration as calibration
-import src.printer as printer
 from functools import partial
 from pathlib import Path
 import shutil
@@ -16,37 +13,60 @@ from typing import Dict, List
 from vtkmodules.vtkCommonMath import vtkMatrix4x4
 
 import vtk
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtCore
+from PyQt5.QtWidgets import QFileDialog, QInputDialog
 
 from src import gui_utils, locales, qt_utils
 from src.figure_editor import PlaneEditor, ConeEditor
 from src.gui_utils import showErrorDialog, plane_tf, read_planes, Plane, Cone, showInfoDialog
 from src.process import Process
-from src.settings import sett, save_settings, load_settings, get_color, PathBuilder
+from src.settings import sett, save_settings, save_splanes_to_file, load_settings, get_color, PathBuilder
+import src.settings as settings
 
+try:
+    from src.bug_report import bugReportDialog
+except:
+    print('bug reporting is unavailable')
+
+# try import of private hardware module
+try:
+    import src.hardware.service as service
+    import src.hardware.calibration as calibration
+    import src.hardware.printer as printer
+except:
+    print('hardware module is unavailable')
 
 class MainController:
     def __init__(self, view, model):
         self.view = view
         self.model = model
 
-        self.printer = printer.EpitPrinter()
-        # embed service tool
-        self.servicePanel = service.ServicePanel(view)
-        self.servicePanel.setModal(True)
-        self.serviceController = service.ServiceController(
-            self.servicePanel,
-            service.ServiceModel(self.printer)
-        )
+        # hardware part might be unavailable
+        try:
+            self.printer = printer.EpitPrinter()
+            # embed service tool
+            self.servicePanel = service.ServicePanel(view)
+            self.servicePanel.setModal(True)
+            self.serviceController = service.ServiceController(
+                self.servicePanel,
+                service.ServiceModel(self.printer)
+            )
 
-        # embed calibration tool
-        self.calibrationPanel = calibration.CalibrationPanel(view)
-        self.calibrationPanel.setModal(True)
-        self.calibrationController = calibration.CalibrationController(
-            self.calibrationPanel,
-            calibration.CalibrationModel(self.printer)
-        )
+            # embed calibration tool
+            self.calibrationPanel = calibration.CalibrationPanel(view)
+            self.calibrationPanel.setModal(True)
+            self.calibrationController = calibration.CalibrationController(
+                self.calibrationPanel,
+                calibration.CalibrationModel(self.printer, PathBuilder.calibration_file())
+            )
+        except:
+            print("printer is not initialized")
 
+        # bug reporting might be unavailable
+        try:
+            self.bugReportDialog = bugReportDialog(self)
+        except:
+            print("bug reporting is unavailable")
         self._connect_signals()
 
     def _connect_signals(self):
@@ -57,11 +77,27 @@ class MainController:
         self.view.slicing_info_action.triggered.connect(self.get_slicer_version)
         self.view.check_updates_action.triggered.connect(self.open_updater)
 
-        self.view.calibration_action.triggered.connect(
-            self.calibrationPanel.show
-        )
+        try:
+            self.view.calibration_action.triggered.connect(
+                self.calibration_action_show
+            )
+        except:
+            self.view.calibration_action.triggered.connect(
+                lambda: showInfoDialog(locales.getLocale().ErrorHardwareModule)
+            )
+
+        try:
+            self.view.bug_report.triggered.connect(
+                self.bugReportDialog.show
+            )
+        except:
+            self.view.bug_report.triggered.connect(
+                lambda: showInfoDialog(locales.getLocale().ErrorBugModule)
+            )
 
         # right panel
+        self.view.printer_add_btn.clicked.connect(self.create_printer)
+        self.view.printer_path_edit.clicked.connect(self.choose_printer_path)
         self.view.number_wall_lines_value.textChanged.connect(self.update_wall_thickness)
         self.view.line_width_value.textChanged.connect(self.update_wall_thickness)
         self.view.layer_height_value.textChanged.connect(self.change_layer_height)
@@ -96,11 +132,93 @@ class MainController:
         # on close of window we save current planes to project file
         self.view.close_signal.connect(self.save_planes_on_close)
 
+    def calibration_action_show(self):
+        # check that printer is not default, otherwise show information with warning
+        if os.path.basename(sett().hardware.printer_dir) == "default":
+            showInfoDialog(locales.getLocale().DefaultPrinterWarn)
+        
+        self.calibrationPanel.show()
+
     def save_planes_on_close(self):
         splanes_full_pth = PathBuilder.splanes_file()
         save_splanes_to_file(self.model.splanes, splanes_full_pth)
         sett().slicing.splanes_file = path.basename(splanes_full_pth)
         save_settings()
+
+    def create_printer(self):
+        # query user for printer name and create directory in data/printers/<name> relative to FASP root
+        text, ok = QInputDialog.getText(self.view, locales.getLocale().AddNewPrinter, locales.getLocale().ChoosePrinterDirectory)
+        if not ok:
+            return
+        
+        printer_name = text.strip()
+        if not printer_name:
+            return
+
+        # create directory in data/printers/<name> relative to FASP root
+        printer_path = path.join(settings.APP_PATH, "data", "printers", printer_name)
+        
+        # check if directory already exists
+        if path.exists(printer_path):
+            showErrorDialog("Printer with this name already exists")
+            return
+        
+        # create directory
+        os.makedirs(printer_path)
+
+        # copy calibration data from default directory to new printer directory
+        default_calibration_file = path.join(settings.APP_PATH, "data", "printers", "default", "calibration_data.csv")
+        target_calibration_file = path.join(printer_path, "calibration_data.csv")
+
+        shutil.copyfile(default_calibration_file, target_calibration_file)
+
+        # update settings
+        sett().hardware.printer_dir = printer_path
+        sett().hardware.calibration_file = "calibration_data.csv"
+        save_settings()
+
+        # update label with printer path
+        self.view.printer_path_edit.setText(os.path.basename(printer_path))
+
+        # update path in calibration model
+        try:
+            self.calibrationController.updateCalibrationFilepath(PathBuilder.calibration_file())
+        except AttributeError:
+            print("hardware module is unavailable, skip")
+
+        # show info dialog
+        showInfoDialog("Printer created successfully, please calibrate before first use")
+
+
+    def choose_printer_path(self):
+        printer_path = QFileDialog.getExistingDirectory(
+            self.view,
+            locales.getLocale().ChoosePrinterDirectory,
+            sett().hardware.printer_dir
+        )
+
+        if printer_path:
+            # check if directory contains calibration file
+            calibration_file = path.join(printer_path, "calibration_data.csv")
+            if not path.exists(calibration_file):
+                showErrorDialog("Directory doesn't contain calibration file. Please choose another directory.")
+                return
+
+            sett().hardware.printer_dir = printer_path
+            # calibration file will be at default location
+            sett().hardware.calibration_file = "calibration_data.csv"
+            
+            # save settings
+            save_settings()
+
+            # update label with printer path
+            self.view.printer_path_edit.setText(os.path.basename(printer_path))
+
+            # update path in calibration model
+            try:
+                self.calibrationController.updateCalibrationFilepath(PathBuilder.calibration_file())
+            except AttributeError:
+                print("hardware module is unavailable, skip")
 
     def moving_figure(self, sourceParent, previousRow):
         if sourceParent.row() != -1:
@@ -159,6 +277,8 @@ class MainController:
         self.change_figure_parameters()
 
     def change_figure_parameters(self):
+        self.view.model_switch_box.setChecked(True)
+        self.view.hide_checkbox.setChecked(False)
         ind = self.view.splanes_tree.currentIndex().row()
         if ind == -1:
             self.view.tabs.setCurrentWidget(self.view.tabs.widget(0))
@@ -549,18 +669,24 @@ class MainController:
     # ######################bottom panel
 
     def add_splane(self):
+        self.view.model_switch_box.setChecked(True)
+        self.view.hide_checkbox.setChecked(False)
         self.view.hide_checkbox.setChecked(False)
         self.model.add_splane()
         self.view.reload_splanes(self.model.splanes)
         self.change_figure_parameters()
 
     def add_cone(self):
+        self.view.model_switch_box.setChecked(True)
+        self.view.hide_checkbox.setChecked(False)
         self.view.hide_checkbox.setChecked(False)
         self.model.add_cone()
         self.view.reload_splanes(self.model.splanes)
         self.change_figure_parameters()
 
     def remove_splane(self):
+        self.view.model_switch_box.setChecked(True)
+        self.view.hide_checkbox.setChecked(False)
         self.view.hide_checkbox.setChecked(False)
         ind = self.view.splanes_tree.currentIndex().row()
         if ind == -1:
