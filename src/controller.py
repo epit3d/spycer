@@ -55,6 +55,7 @@ class MainController:
         self.view.save_sett_action.triggered.connect(self.save_settings_file)
         self.view.load_sett_action.triggered.connect(self.load_settings_file)
         self.view.slicing_info_action.triggered.connect(self.get_slicer_version)
+        self.view.check_updates_action.triggered.connect(self.open_updater)
 
         self.view.calibration_action.triggered.connect(
             self.calibrationPanel.show
@@ -655,6 +656,8 @@ class MainController:
         else:
             self.view.warning_nozzle_and_table_collision.setText("")
 
+    def open_updater(self):
+        subprocess.Popen("updater.exe")
 
 def save_splanes_to_file(splanes, filename):
     with open(filename, 'w') as out:

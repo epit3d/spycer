@@ -103,6 +103,7 @@ class Locale:
     NoProjectSelected = "No project selected"
     Tools = "Tools"
     Calibration = "Calibration"
+    CheckUpdates = "Check for updates"
 
     def __init__(self, **entries):
         self.__dict__.update(entries)
@@ -213,6 +214,7 @@ dicts = {
         NoProjectSelected = "Проект не выбран",
         Tools="Инструменты",
         Calibration="Калибровка",
+        CheckUpdates = "Проверить наличие обновлений",
     ),
 }
 

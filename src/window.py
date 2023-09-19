@@ -135,6 +135,9 @@ class MainWindow(QMainWindow):
         self.calibration_action = QAction(self.locale.Calibration, self)
         tools_menu.addAction(self.calibration_action)
 
+        self.check_updates_action = QAction(self.locale.CheckUpdates, self)
+        tools_menu.addAction(self.check_updates_action)
+
         # main parts
         central_widget = QWidget()
         main_grid = QGridLayout()
