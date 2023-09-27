@@ -93,6 +93,13 @@ def save_splanes_to_file(splanes, filename):
         for p in splanes:
             out.write(p.toFile() + '\n')
 
+def get_version(settings_filename):
+    with open(settings_filename, "r") as settings_file:
+        settings = yaml.safe_load(settings_file)
+
+    version = settings["common"]["version"]
+    return version
+
 class Settings(object):
     def __init__(self, d):
         for a, b in d.items():

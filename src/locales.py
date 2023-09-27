@@ -121,6 +121,10 @@ class Locale:
     AddNewPrinter = "Add new printer"
     DefaultPrinterWarn = "Be aware that you are using default printer. New data might be removed after update. We recommend to create new printer and calibrate it."
     CheckUpdates = "Check for updates"
+    ProjectUpdate = "Project update"
+    SettingsUpdate = "The current project settings format is outdated. This may lead to errors in the program. Update format? When updating, the project settings will be reset!"
+    Update = "Update"
+    ContinueWithoutUpdating = "Continue without updating"
 
     def __init__(self, **entries):
         self.__dict__.update(entries)
@@ -249,6 +253,10 @@ dicts = {
         AddNewPrinter = "Добавить новый принтер",
         DefaultPrinterWarn = "Будьте внимательны, Вы используете принтер по умолчанию. Данные этого принтера будут перезаписываться при обновлениях. Мы рекомендуем создать и использовать свою конфигурацию принтера.",
         CheckUpdates = "Проверить наличие обновлений",
+        ProjectUpdate = "Обновление проекта",
+        SettingsUpdate = "Формат настроек текущего проекта устарел. Это может привести к ошибкам в работе программы. Обновить формат? При обновлении настройки проекта будут сброшены!",
+        Update = "Обновить",
+        ContinueWithoutUpdating = "Продолжить без обновления",
     ),
 }
 

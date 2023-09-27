@@ -1,7 +1,8 @@
 import sys
 from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, \
-    QPushButton, QLabel, QListWidget, QDesktopWidget, QLineEdit, QFileDialog
+    QPushButton, QLabel, QListWidget, QDesktopWidget, QLineEdit, QFileDialog, QMessageBox
 from PyQt5.QtCore import QSettings
+from os import path
 
 # import aligntop
 from PyQt5 import QtCore
@@ -9,8 +10,10 @@ from PyQt5 import QtGui
 from typing import List
 
 from src.gui_utils import showErrorDialog
+from src.settings import get_version
 import src.locales as locales
-
+import pathlib
+import shutil
 
 class EntryWindow(QWidget):
     # entry window is a window that is shown before main window
@@ -204,5 +207,33 @@ class EntryWindow(QWidget):
         # add existing project to recent projects
         self.add_recent_project(selected_project)
 
+        self.сheck_project_version(selected_project)
+
         # emit signal with path to project file
         self.open_project_signal.emit(selected_project)
+
+    def сheck_project_version(self, project_path):
+        settings_filename = "settings.yaml"
+        project_settings_filename = str(pathlib.Path(project_path, settings_filename))
+
+        build_version = get_version(settings_filename)
+
+        try:
+            project_version = get_version(project_settings_filename)
+        except Exception as e:
+            project_version = ""
+
+        if (not project_version) or (build_version > project_version):
+            locale = locales.getLocale()
+            message_box = QMessageBox()
+            message_box.setWindowTitle(locale.ProjectUpdate)
+            message_box.setText(locale.SettingsUpdate)
+            message_box.addButton(QMessageBox.Yes)
+            message_box.addButton(QMessageBox.No)
+            message_box.button(QMessageBox.Yes).setText(locale.Update)
+            message_box.button(QMessageBox.No).setText(locale.ContinueWithoutUpdating)
+
+            reply = message_box.exec()
+
+            if reply == QMessageBox.Yes:
+                shutil.copyfile(settings_filename, project_settings_filename)
