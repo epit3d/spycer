@@ -100,6 +100,22 @@ def get_version(settings_filename):
     version = settings["common"]["version"]
     return version
 
+def paths_transfer_in_settings(initial_settings_filename, final_settings_filename):
+    with open(initial_settings_filename, "r") as settings_file:
+        initial_settings = yaml.safe_load(settings_file)
+
+    splanes_file = initial_settings["slicing"]["splanes_file"]
+    stl_file = initial_settings["slicing"]["stl_file"]
+
+    with open(final_settings_filename, "r") as settings_file:
+        final_settings = yaml.safe_load(settings_file)
+
+        final_settings["slicing"]["splanes_file"] = splanes_file
+        final_settings["slicing"]["stl_file"] = stl_file
+
+        with open(final_settings_filename, "w") as settings_file:
+            yaml.dump(final_settings, settings_file, default_flow_style=False)
+
 class Settings(object):
     def __init__(self, d):
         for a, b in d.items():

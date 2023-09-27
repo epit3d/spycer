@@ -10,7 +10,7 @@ from PyQt5 import QtGui
 from typing import List
 
 from src.gui_utils import showErrorDialog
-from src.settings import get_version
+from src.settings import get_version, paths_transfer_in_settings
 import src.locales as locales
 import pathlib
 import shutil
@@ -236,4 +236,7 @@ class EntryWindow(QWidget):
             reply = message_box.exec()
 
             if reply == QMessageBox.Yes:
+                project_settings_old_filename = str(pathlib.Path(project_path, "settings_old.yaml"))
+                shutil.copyfile(project_settings_filename, project_settings_old_filename)
                 shutil.copyfile(settings_filename, project_settings_filename)
+                paths_transfer_in_settings(project_settings_old_filename, project_settings_filename)
