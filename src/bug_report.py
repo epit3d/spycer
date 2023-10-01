@@ -144,12 +144,15 @@ class bugReportDialog(QWidget):
         self.close()
 
     def cleaningTempFiles(self):
-        for image_path in self.images:
-            os.remove(image_path)
-        if self.archive_path:
-            if os.path.exists(self.archive_path):
-                os.remove(self.archive_path)
-            self.archive_path = ""
-        self.images = []
-        self.image_list.setText("")
-        self.error_description.setText("")
+        try:
+            for image_path in self.images:
+                os.remove(image_path)
+            if self.archive_path:
+                if os.path.exists(self.archive_path):
+                    os.remove(self.archive_path)
+                self.archive_path = ""
+            self.images = []
+            self.image_list.setText("")
+            self.error_description.setText("")
+        except Exception as e:
+            print(str(e))
