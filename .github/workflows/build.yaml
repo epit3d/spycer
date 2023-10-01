@@ -16,6 +16,7 @@ jobs:
         run: echo current branch ${{ github.ref }}
   build:
     runs-on: ${{ matrix.os }}
+    container: node:16-buster
     strategy:
       matrix:
         os: [windows-latest, ubuntu-20.04]
@@ -26,11 +27,22 @@ jobs:
           ref: ${{ github.ref }}
           submodules: recursive
           token: ${{ secrets.PAT_TOKEN }}
-      - name: Set up python 3.10
+      - name: Set lsb_release
+        if: ${{ matrix.os == 'ubuntu-20.04' }}
+        run: |
+          apt-get update && apt-get install -y lsb-release && cat lsb_entry > /etc/lsb-release
+      - name: Set up python 3.8 for ubuntu
+        if: ${{ matrix.os == 'ubuntu-20.04' }}
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
-          cache: 'pip'
+          python-version: "3.8.16"
+          cache: "pip"
+      - name: Set up python 3.10 for windows
+        if: ${{ matrix.os == 'windows-latest' }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.10"
+          cache: "pip"
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip setuptools wheel flake8 pyinstaller
