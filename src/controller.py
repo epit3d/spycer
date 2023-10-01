@@ -783,9 +783,4 @@ class MainController:
             self.view.warning_nozzle_and_table_collision.setText("")
 
     def open_updater(self):
-        subprocess.Popen("updater.exe")
-
-def save_splanes_to_file(splanes, filename):
-    with open(filename, 'w') as out:
-        for p in splanes:
-            out.write(p.toFile() + '\n')
+        subprocess.Popen("./updater")

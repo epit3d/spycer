@@ -94,11 +94,14 @@ def save_splanes_to_file(splanes, filename):
             out.write(p.toFile() + '\n')
 
 def get_version(settings_filename):
-    with open(settings_filename, "r") as settings_file:
-        settings = yaml.safe_load(settings_file)
+    try:
+        with open(settings_filename, "r") as settings_file:
+            settings = yaml.safe_load(settings_file)
 
-    version = settings["common"]["version"]
-    return version
+        version = settings["common"]["version"]
+        return version
+    except Exception as e:
+        return ""
 
 def paths_transfer_in_settings(initial_settings_filename, final_settings_filename):
     with open(initial_settings_filename, "r") as settings_file:
@@ -106,12 +109,18 @@ def paths_transfer_in_settings(initial_settings_filename, final_settings_filenam
 
     splanes_file = initial_settings["slicing"]["splanes_file"]
     stl_file = initial_settings["slicing"]["stl_file"]
+    calibration_file = initial_settings["hardware"]["calibration_file"]
+    calibration_file_zero = initial_settings["hardware"]["calibration_file_zero"]
+    printer_dir = initial_settings["hardware"]["printer_dir"]
 
     with open(final_settings_filename, "r") as settings_file:
         final_settings = yaml.safe_load(settings_file)
 
         final_settings["slicing"]["splanes_file"] = splanes_file
         final_settings["slicing"]["stl_file"] = stl_file
+        final_settings["hardware"]["calibration_file"] = calibration_file
+        final_settings["hardware"]["calibration_file_zero"] = calibration_file_zero
+        final_settings["hardware"]["printer_dir"] = printer_dir
 
         with open(final_settings_filename, "w") as settings_file:
             yaml.dump(final_settings, settings_file, default_flow_style=False)
@@ -143,6 +152,10 @@ class PathBuilder:
     @staticmethod
     def settings_file():
         return path.join(PathBuilder.project_path(), "settings.yaml")
+
+    @staticmethod
+    def settings_file_old():
+        return path.join(PathBuilder.project_path(), "settings_old.yaml")
 
     @staticmethod
     def colorizer_cmd():

@@ -10,7 +10,7 @@ from PyQt5 import QtGui
 from typing import List
 
 from src.gui_utils import showErrorDialog
-from src.settings import get_version, paths_transfer_in_settings
+from src.settings import sett, get_version, paths_transfer_in_settings, PathBuilder
 import src.locales as locales
 import pathlib
 import shutil
@@ -213,17 +213,16 @@ class EntryWindow(QWidget):
         self.open_project_signal.emit(selected_project)
 
     def сheck_project_version(self, project_path):
-        settings_filename = "settings.yaml"
-        project_settings_filename = str(pathlib.Path(project_path, settings_filename))
-
-        build_version = get_version(settings_filename)
+        sett().project_path = project_path
+        project_settings_filename = PathBuilder.settings_file()
+        build_version = sett().common.version
 
         try:
             project_version = get_version(project_settings_filename)
         except Exception as e:
             project_version = ""
 
-        if (not project_version) or (build_version > project_version):
+        if build_version != project_version:
             locale = locales.getLocale()
             message_box = QMessageBox()
             message_box.setWindowTitle(locale.ProjectUpdate)
@@ -236,7 +235,7 @@ class EntryWindow(QWidget):
             reply = message_box.exec()
 
             if reply == QMessageBox.Yes:
-                project_settings_old_filename = str(pathlib.Path(project_path, "settings_old.yaml"))
+                project_settings_old_filename = PathBuilder.settings_file_old()
                 shutil.copyfile(project_settings_filename, project_settings_old_filename)
-                shutil.copyfile(settings_filename, project_settings_filename)
+                shutil.copyfile("settings.yaml", project_settings_filename)
                 paths_transfer_in_settings(project_settings_old_filename, project_settings_filename)
