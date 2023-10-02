@@ -24,7 +24,7 @@ jobs:
           submodules: recursive
           token: ${{ secrets.PAT_TOKEN }}
       - name: Set up python 3.10 for windows
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: "3.10"
           cache: "pip"
