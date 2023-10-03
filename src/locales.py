@@ -110,7 +110,7 @@ class Locale:
     Send = "Send"
     Cancel = "Cancel"
     AddingImage = "Adding an image"
-    ReportSubmitSuccessfully = "Report submit successfully"
+    ReportSubmitSuccessfully = "Report submit successfully. \nYou will be notified as soon as the problem is resolved. If necessary, our specialists will contact you for additional information. Thank you for helping us make the product better!"
     ErrorReport = "An error occurred while submitting the report"
 
     ErrorHardwareModule = "Hardware module is unavailable in public"
@@ -125,6 +125,7 @@ class Locale:
     SettingsUpdate = "The current project settings format is outdated. This may lead to errors in the program. Update format? When updating, the project settings will be reset!"
     Update = "Update"
     ContinueWithoutUpdating = "Continue without updating"
+    EmptyDescription = "The error description cannot be empty"
 
     def __init__(self, **entries):
         self.__dict__.update(entries)
@@ -242,7 +243,7 @@ dicts = {
         Send = "Отправить",
         Cancel = "Отмена",
         AddingImage = "Выбрать изображение",
-        ReportSubmitSuccessfully = "Отчет успешно отправлен",
+        ReportSubmitSuccessfully = "Отчет успешно отправлен. \nВы будете уведомлены, как только проблема будет устранена. При необходимости, наши специалисты свяжутся с вами для получения дополнительной информации. Благодарим Вас, что помогаете нам сделать продукт лучше!",
         ErrorReport = "Произошла ошибка при отправке отчета",
 
         ErrorHardwareModule = "Модуль калибровки недоступен публично",
@@ -257,6 +258,7 @@ dicts = {
         SettingsUpdate = "Формат настроек текущего проекта устарел. Это может привести к ошибкам в работе программы. Обновить формат? При обновлении настройки проекта будут сброшены!",
         Update = "Обновить",
         ContinueWithoutUpdating = "Продолжить без обновления",
+        EmptyDescription = "Описание ошибки не может быть пустым",
     ),
 }
 

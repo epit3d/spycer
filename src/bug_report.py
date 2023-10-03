@@ -79,6 +79,16 @@ class bugReportDialog(QWidget):
 
     def send(self, controller):
         try:
+            error_description = self.error_description.toPlainText()
+
+            if not error_description:
+                message_box = QMessageBox(parent=self)
+                message_box.setWindowTitle(controller.view.locale.SubmittingBugReport)
+                message_box.setText(controller.view.locale.EmptyDescription)
+                message_box.setIcon(QMessageBox.Critical)
+                message_box.exec_()
+                return
+
             s = sett()
             splanes_full_path = PathBuilder.splanes_file()
             save_splanes_to_file(controller.model.splanes, splanes_full_path)
@@ -92,9 +102,9 @@ class bugReportDialog(QWidget):
             self.addFolderToArchive(self.archive_path, self.temp_images_folder, "images")
 
             with zipfile.ZipFile(self.archive_path, 'a') as archive:
-                archive.writestr("error_description.txt", self.error_description.toPlainText())
+                archive.writestr("error_description.txt", error_description)
 
-            successfully_sent = send_bug_report(self.archive_path, self.error_description.toPlainText())
+            successfully_sent = send_bug_report(self.archive_path, error_description)
 
             self.cleaningTempFiles()
             self.close()
