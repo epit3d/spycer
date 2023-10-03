@@ -101,6 +101,7 @@ def get_version(settings_filename):
         version = settings["common"]["version"]
         return version
     except Exception as e:
+        print("Error reading version")
         return ""
 
 def paths_transfer_in_settings(initial_settings_filename, final_settings_filename):
