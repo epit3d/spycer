@@ -1,3 +1,20 @@
+# if we run pyinstaller build for linux, we have to extend LD_LIBRARY_PATH with goosli dependencies
+import os, sys
+
+# check whether we are in pyinstaller bundle
+if getattr(sys, 'frozen', False):
+    app_path = os.path.dirname(sys.executable)
+
+    prev_ld_path = os.environ.get('LD_LIBRARY_PATH', '')
+    
+    # shared libraries are located at lib/
+    shared_libs = os.path.join(app_path, 'lib')
+
+    # add shared libraries to LD_LIBRARY_PATH
+    os.environ['LD_LIBRARY_PATH'] = shared_libs + ':' + prev_ld_path
+    print("LD_LIBRARY_PATH:", os.environ['LD_LIBRARY_PATH'])
+
+
 import logging
 import sys
 import traceback
