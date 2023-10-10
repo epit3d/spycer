@@ -15,7 +15,7 @@ jobs:
       - name: Get current branch
         run: echo current branch ${{ github.ref }}
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     container: node:16-buster
     steps:
       - name: Checkout
