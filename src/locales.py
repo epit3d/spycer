@@ -122,7 +122,7 @@ class Locale:
     DefaultPrinterWarn = "Be aware that you are using default printer. New data might be removed after update. We recommend to create new printer and calibrate it."
     CheckUpdates = "Check for updates"
     ProjectUpdate = "Project update"
-    SettingsUpdate = "The current project settings format is outdated. This may lead to errors in the program. Update format? When updating, some settings will be set to default!"
+    SettingsUpdate = "The current project's settings are outdated. This may lead to errors in the program. Do you want to update? New setting's fields will be set to default values, please recheck."
     Update = "Update"
     ContinueWithoutUpdating = "Continue without updating"
 
@@ -254,7 +254,7 @@ dicts = {
         DefaultPrinterWarn = "Будьте внимательны, Вы используете принтер по умолчанию. Данные этого принтера будут перезаписываться при обновлениях. Мы рекомендуем создать и использовать свою конфигурацию принтера.",
         CheckUpdates = "Проверить наличие обновлений",
         ProjectUpdate = "Обновление проекта",
-        SettingsUpdate = "Формат настроек текущего проекта устарел. Это может привести к ошибкам в работе программы. Обновить формат? При обновлении некоторым настройкам будет установлено значение по умолчанию!",
+        SettingsUpdate = "Настройки текущего проекта устарели. Это может привести к ошибкам в работе программы. Хотите обновить? Новые поля настроек будут выставлены в значения по умолчанию, пожалуйста проверьте.",
         Update = "Обновить",
         ContinueWithoutUpdating = "Продолжить без обновления",
     ),
