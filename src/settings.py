@@ -108,20 +108,12 @@ def paths_transfer_in_settings(initial_settings_filename, final_settings_filenam
     with open(initial_settings_filename, "r") as settings_file:
         initial_settings = yaml.safe_load(settings_file)
 
-    splanes_file = initial_settings["slicing"]["splanes_file"]
-    stl_file = initial_settings["slicing"]["stl_file"]
-    calibration_file = initial_settings["hardware"]["calibration_file"]
-    calibration_file_zero = initial_settings["hardware"]["calibration_file_zero"]
-    printer_dir = initial_settings["hardware"]["printer_dir"]
-
     with open(final_settings_filename, "r") as settings_file:
         final_settings = yaml.safe_load(settings_file)
 
-        final_settings["slicing"]["splanes_file"] = splanes_file
-        final_settings["slicing"]["stl_file"] = stl_file
-        final_settings["hardware"]["calibration_file"] = calibration_file
-        final_settings["hardware"]["calibration_file_zero"] = calibration_file_zero
-        final_settings["hardware"]["printer_dir"] = printer_dir
+        for k, v in initial_settings.items():
+            if k in final_settings:
+                final_settings[k] = v
 
         with open(final_settings_filename, "w") as settings_file:
             yaml.dump(final_settings, settings_file, default_flow_style=False)
@@ -153,6 +145,10 @@ class PathBuilder:
     @staticmethod
     def settings_file():
         return path.join(PathBuilder.project_path(), "settings.yaml")
+    
+    @staticmethod
+    def settings_file_default():
+        return "settings.yaml"
 
     @staticmethod
     def settings_file_old():

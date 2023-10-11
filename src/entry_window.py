@@ -1,8 +1,7 @@
 import sys
 from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, \
-    QPushButton, QLabel, QListWidget, QDesktopWidget, QLineEdit, QFileDialog, QMessageBox
+    QPushButton, QLabel, QListWidget, QLineEdit, QFileDialog, QMessageBox
 from PyQt5.QtCore import QSettings
-from os import path
 
 # import aligntop
 from PyQt5 import QtCore
@@ -12,7 +11,6 @@ from typing import List
 from src.gui_utils import showErrorDialog
 from src.settings import sett, get_version, paths_transfer_in_settings, PathBuilder
 import src.locales as locales
-import pathlib
 import shutil
 
 class EntryWindow(QWidget):
@@ -215,12 +213,9 @@ class EntryWindow(QWidget):
     def сheck_project_version(self, project_path):
         sett().project_path = project_path
         project_settings_filename = PathBuilder.settings_file()
-        build_version = sett().common.version
 
-        try:
-            project_version = get_version(project_settings_filename)
-        except Exception as e:
-            project_version = ""
+        build_version = get_version(PathBuilder.settings_file_default())
+        project_version = get_version(project_settings_filename)
 
         if build_version != project_version:
             locale = locales.getLocale()

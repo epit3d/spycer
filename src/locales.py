@@ -110,7 +110,7 @@ class Locale:
     Send = "Send"
     Cancel = "Cancel"
     AddingImage = "Adding an image"
-    ReportSubmitSuccessfully = "Report submit successfully. \nYou will be notified as soon as the problem is resolved. If necessary, our specialists will contact you for additional information. Thank you for helping us make the product better!"
+    ReportSubmitSuccessfully = "Report submit successfully"
     ErrorReport = "An error occurred while submitting the report"
 
     ErrorHardwareModule = "Hardware module is unavailable in public"
@@ -122,10 +122,9 @@ class Locale:
     DefaultPrinterWarn = "Be aware that you are using default printer. New data might be removed after update. We recommend to create new printer and calibrate it."
     CheckUpdates = "Check for updates"
     ProjectUpdate = "Project update"
-    SettingsUpdate = "The current project settings format is outdated. This may lead to errors in the program. Update format? When updating, the project settings will be reset!"
+    SettingsUpdate = "The current project settings format is outdated. This may lead to errors in the program. Update format? When updating, some settings will be set to default!"
     Update = "Update"
     ContinueWithoutUpdating = "Continue without updating"
-    EmptyDescription = "The error description cannot be empty"
 
     def __init__(self, **entries):
         self.__dict__.update(entries)
@@ -243,7 +242,7 @@ dicts = {
         Send = "Отправить",
         Cancel = "Отмена",
         AddingImage = "Выбрать изображение",
-        ReportSubmitSuccessfully = "Отчет успешно отправлен. \nВы будете уведомлены, как только проблема будет устранена. При необходимости, наши специалисты свяжутся с вами для получения дополнительной информации. Благодарим Вас, что помогаете нам сделать продукт лучше!",
+        ReportSubmitSuccessfully = "Отчет успешно отправлен",
         ErrorReport = "Произошла ошибка при отправке отчета",
 
         ErrorHardwareModule = "Модуль калибровки недоступен публично",
@@ -255,10 +254,9 @@ dicts = {
         DefaultPrinterWarn = "Будьте внимательны, Вы используете принтер по умолчанию. Данные этого принтера будут перезаписываться при обновлениях. Мы рекомендуем создать и использовать свою конфигурацию принтера.",
         CheckUpdates = "Проверить наличие обновлений",
         ProjectUpdate = "Обновление проекта",
-        SettingsUpdate = "Формат настроек текущего проекта устарел. Это может привести к ошибкам в работе программы. Обновить формат? При обновлении настройки проекта будут сброшены!",
+        SettingsUpdate = "Формат настроек текущего проекта устарел. Это может привести к ошибкам в работе программы. Обновить формат? При обновлении некоторым настройкам будет установлено значение по умолчанию!",
         Update = "Обновить",
         ContinueWithoutUpdating = "Продолжить без обновления",
-        EmptyDescription = "Описание ошибки не может быть пустым",
     ),
 }
 
