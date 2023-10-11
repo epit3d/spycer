@@ -79,7 +79,16 @@ class bugReportDialog(QWidget):
 
     def send(self, controller):
         try:
-            s = sett()
+            error_description = self.error_description.toPlainText()
+
+            if not error_description:
+                message_box = QMessageBox(parent=self)
+                message_box.setWindowTitle(controller.view.locale.SubmittingBugReport)
+                message_box.setText(controller.view.locale.EmptyDescription)
+                message_box.setIcon(QMessageBox.Critical)
+                message_box.exec_()
+                return
+
             splanes_full_path = PathBuilder.splanes_file()
             save_splanes_to_file(controller.model.splanes, splanes_full_path)
             sett().slicing.splanes_file = path.basename(splanes_full_path)
@@ -92,9 +101,9 @@ class bugReportDialog(QWidget):
             self.addFolderToArchive(self.archive_path, self.temp_images_folder, "images")
 
             with zipfile.ZipFile(self.archive_path, 'a') as archive:
-                archive.writestr("error_description.txt", self.error_description.toPlainText())
+                archive.writestr("error_description.txt", error_description)
 
-            successfully_sent = send_bug_report(self.archive_path, self.error_description.toPlainText())
+            successfully_sent = send_bug_report(self.archive_path, error_description)
 
             self.cleaningTempFiles()
             self.close()
@@ -144,12 +153,15 @@ class bugReportDialog(QWidget):
         self.close()
 
     def cleaningTempFiles(self):
-        for image_path in self.images:
-            os.remove(image_path)
-        if self.archive_path:
-            if os.path.exists(self.archive_path):
-                os.remove(self.archive_path)
-            self.archive_path = ""
-        self.images = []
-        self.image_list.setText("")
-        self.error_description.setText("")
+        try:
+            for image_path in self.images:
+                os.remove(image_path)
+            if self.archive_path:
+                if os.path.exists(self.archive_path):
+                    os.remove(self.archive_path)
+                self.archive_path = ""
+            self.images = []
+            self.image_list.setText("")
+            self.error_description.setText("")
+        except Exception as e:
+            print(str(e))

@@ -110,7 +110,7 @@ class Locale:
     Send = "Send"
     Cancel = "Cancel"
     AddingImage = "Adding an image"
-    ReportSubmitSuccessfully = "Report submit successfully"
+    ReportSubmitSuccessfully = "Report submit successfully. \nYou will be notified as soon as the problem is resolved. If necessary, our specialists will contact you for additional information. Thank you for helping us make the product better!"
     ErrorReport = "An error occurred while submitting the report"
 
     ErrorHardwareModule = "Hardware module is unavailable in public"
@@ -120,6 +120,7 @@ class Locale:
     ChoosePrinterDirectory = "Choose printer name"
     AddNewPrinter = "Add new printer"
     DefaultPrinterWarn = "Be aware that you are using default printer. New data might be removed after update. We recommend to create new printer and calibrate it."
+    EmptyDescription = "The error description cannot be empty"
 
     def __init__(self, **entries):
         self.__dict__.update(entries)
@@ -237,7 +238,7 @@ dicts = {
         Send = "Отправить",
         Cancel = "Отмена",
         AddingImage = "Выбрать изображение",
-        ReportSubmitSuccessfully = "Отчет успешно отправлен",
+        ReportSubmitSuccessfully = "Отчет успешно отправлен. \nВы будете уведомлены, как только проблема будет устранена. При необходимости, наши специалисты свяжутся с вами для получения дополнительной информации. Благодарим Вас, что помогаете нам сделать продукт лучше!",
         ErrorReport = "Произошла ошибка при отправке отчета",
 
         ErrorHardwareModule = "Модуль калибровки недоступен публично",
@@ -247,6 +248,7 @@ dicts = {
         ChoosePrinterDirectory = "Выберите название принтера",
         AddNewPrinter = "Добавить новый принтер",
         DefaultPrinterWarn = "Будьте внимательны, Вы используете принтер по умолчанию. Данные этого принтера будут перезаписываться при обновлениях. Мы рекомендуем создать и использовать свою конфигурацию принтера.",
+        EmptyDescription = "Описание ошибки не может быть пустым",
     ),
 }
 
