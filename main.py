@@ -1,8 +1,8 @@
 # if we run pyinstaller build for linux, we have to extend LD_LIBRARY_PATH with goosli dependencies
 import os, sys
 
-# check whether we are in pyinstaller bundle
-if getattr(sys, 'frozen', False):
+# check whether we are in pyinstaller bundle and on linux
+if getattr(sys, 'frozen', False) and sys.platform.startswith('linux'):
     app_path = os.path.dirname(sys.executable)
 
     prev_ld_path = os.environ.get('LD_LIBRARY_PATH', '')
