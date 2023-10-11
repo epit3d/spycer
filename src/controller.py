@@ -478,7 +478,20 @@ class MainController:
             print('spent time for slicing: ', end_time - start_time, 's')
             
             # goosli sends everything to stdout, returncode is 1 when fatal is called
-            return p.stdout if p.returncode else ""
+            # print(p.stdout, p.stderr, p.returncode)
+            print(f"return code: '{p.returncode}'")
+            print(f"stdout: '{p.stdout}'")
+            print(f"stderr: '{p.stderr}'")
+
+            if p.returncode == 2:
+                # panic
+                return p.stderr
+            elif p.returncode == 1:
+                # fatal, the error is in the latest line
+                return p.stdout.splitlines()[-1]
+
+            # no errors            
+            return ""
 
         error = qt_utils.progress_dialog(
             locales.getLocale().SlicingTitle, 
