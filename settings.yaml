@@ -18,6 +18,7 @@ common:
   opacity_plane: 0.3
   opacity_table: 0.3
   splane_diameter: 150
+  version: v1.0.0
 hardware:
   printer_dir: ""
   bar_diameter: 1.75
