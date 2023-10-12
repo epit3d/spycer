@@ -112,6 +112,7 @@ class Locale:
     AddingImage = "Adding an image"
     ReportSubmitSuccessfully = "Report submit successfully"
     ErrorReport = "An error occurred while submitting the report"
+    PlaceModelOnEdge = "Place the model on the edge"
 
     ErrorHardwareModule = "Hardware module is unavailable in public"
     ErrorBugModule = "Bug reporting is unavailable in public"
@@ -239,6 +240,7 @@ dicts = {
         AddingImage = "Выбрать изображение",
         ReportSubmitSuccessfully = "Отчет успешно отправлен",
         ErrorReport = "Произошла ошибка при отправке отчета",
+        PlaceModelOnEdge = "Положить модель на грань",
 
         ErrorHardwareModule = "Модуль калибровки недоступен публично",
         ErrorBugModule = "Модуль отправки багов недоступен публично",

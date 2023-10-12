@@ -160,6 +160,11 @@ class MainWindow(QMainWindow):
         self.move_button.setFixedWidth(190)
         page_layout.addWidget(self.move_button, 1, 1)
 
+        self.place_button = QPushButton(self.locale.PlaceModelOnEdge)
+        self.place_button.setCheckable(True)
+        self.place_button.setFixedWidth(240)
+        page_layout.addWidget(self.place_button, 1, 2)
+
         page_layout.addWidget(self.init_stl_move_panel(), 2, 0, 1, 5)
         page_layout.setColumnStretch(0, 0)
         page_layout.setRowStretch(0, 0)

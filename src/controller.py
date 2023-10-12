@@ -108,6 +108,7 @@ class MainController:
         self.view.model_centering_box.stateChanged.connect(self.view.model_centering)
         self.view.picture_slider.valueChanged.connect(self.change_layer_view)
         self.view.move_button.clicked.connect(self.move_model)
+        self.view.place_button.clicked.connect(self.place_model)
         self.view.load_model_button.clicked.connect(self.open_file)
         self.view.slice3a_button.clicked.connect(partial(self.slice_stl, "3axes"))
         self.view.slice_vip_button.clicked.connect(partial(self.slice_stl, "vip"))
@@ -360,6 +361,9 @@ class MainController:
 
     def move_model(self):
         self.view.move_stl2()
+
+    def place_model(self):
+        self.view.stlActor.ResetColorize()
 
     def open_file(self):
         try:

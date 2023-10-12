@@ -436,6 +436,19 @@ class StlActorMixin:
         for method in self.tfUpdateMethods:
             method(center, tf.GetOrientation(), tf.GetScale())
 
+    def ResetColorize(self):
+        poly_data = self.GetMapper().GetInput()
+        colors = poly_data.GetCellData().GetScalars()
+
+        num_triangles = poly_data.GetNumberOfCells()
+        colors = vtk.vtkUnsignedCharArray()
+        colors.SetNumberOfComponents(3)
+        colors.SetNumberOfTuples(num_triangles)
+        for i in range(num_triangles):
+            colors.SetTuple(i, (255, 255, 255)) #To Do
+
+        poly_data.GetCellData().SetScalars(colors)
+
 
 class StlActor(StlActorMixin, ActorFromPolyData):
 

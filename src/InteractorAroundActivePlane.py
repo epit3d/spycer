@@ -86,60 +86,76 @@ class InteractionAroundActivePlane:
         """
         self.isRotating = event == "LeftButtonPressEvent"
 
-        clickPos = self.interactor.GetEventPosition()
-            
-        picker = vtk.vtkPropPicker()
+        # -------------------------------------------------
+        if view and view.place_button.isChecked():
 
-        self.NewPickedActor = picker.GetActor()
-        picker.Pick(clickPos[0], clickPos[1], 0, self.render)
+            clickPos = self.interactor.GetEventPosition()
+                
+            picker = vtk.vtkPropPicker()
 
-        picker1 = vtk.vtkCellPicker()
-        picker1.SetTolerance(0.005)
-        picker1.Pick(clickPos[0], clickPos[1], 0, self.render)
+            self.NewPickedActor = picker.GetActor()
+            picker.Pick(clickPos[0], clickPos[1], 0, self.render)
 
-        if (picker1.GetCellId() >= 0) and (isinstance(picker.GetActor(), src.gui_utils.StlActor)) and view:
-            triangle_id = picker1.GetCellId()
+            picker1 = vtk.vtkCellPicker()
+            picker1.SetTolerance(0.005)
+            picker1.Pick(clickPos[0], clickPos[1], 0, self.render)
 
-            poly_data = picker.GetActor().GetMapper().GetInput()
+            if (picker1.GetCellId() >= 0) and (isinstance(picker.GetActor(), src.gui_utils.StlActor)) and view:
+                # -------------------------------------------------
+                poly_data = picker.GetActor().GetMapper().GetInput()
+                normals_filter = vtk.vtkPolyDataNormals()
+                normals_filter.SetInputData(poly_data)
+                normals_filter.ComputePointNormalsOn()
+                normals_filter.ComputeCellNormalsOff()
+                normals_filter.Update()
 
-            poly_data1 = vtk.vtkPolyData()
-            poly_data1.DeepCopy(picker.GetActor().GetMapper().GetInput())
+                normals = normals_filter.GetOutput().GetPointData().GetNormals()
+                # -------------------------------------------------
 
-            triangles = poly_data.GetPolys()
-            points = poly_data.GetPoints()
-            normals = []
+                triangle_id = picker1.GetCellId()
 
-            triangles.InitTraversal()
-            triangle = vtk.vtkIdList()
+                # poly_data = picker.GetActor().GetMapper().GetInput()
 
-            while triangles.GetNextCell(triangle):
-                v0 = points.GetPoint(triangle.GetId(0))
-                v1 = points.GetPoint(triangle.GetId(1))
-                v2 = points.GetPoint(triangle.GetId(2))
+                # poly_data1 = vtk.vtkPolyData()
+                # poly_data1.DeepCopy(picker.GetActor().GetMapper().GetInput())
 
-                side1 = np.array(v1) - np.array(v0)
-                side2 = np.array(v2) - np.array(v0)
+                triangles = poly_data.GetPolys()
+                points = poly_data.GetPoints()
 
-                normal = np.cross(side1, side2)
-                normal /= np.linalg.norm(normal)
-                normals.append(normal)
+                triangles.InitTraversal()
+                triangle = vtk.vtkIdList()
 
-            if normals:
-                selected_triangle_normal = normals[triangle_id]
-                theta = np.arccos(np.dot(selected_triangle_normal, [0, 0, -1]) / (np.linalg.norm(selected_triangle_normal) * np.linalg.norm([0, 0, -1])))
-                rotation_axis = np.cross(selected_triangle_normal, [0, 0, -1])
+                # normals = []
+                # while triangles.GetNextCell(triangle):
+                #     v0 = points.GetPoint(triangle.GetId(0))
+                #     v1 = points.GetPoint(triangle.GetId(1))
+                #     v2 = points.GetPoint(triangle.GetId(2))
 
-                rotation_matrix = vtk.vtkTransform()
-                rotation_matrix.Identity()
-                rotation_matrix.RotateWXYZ(np.degrees(theta), rotation_axis)
+                #     side1 = np.array(v1) - np.array(v0)
+                #     side2 = np.array(v2) - np.array(v0)
 
-                picker.GetActor().SetUserTransform(rotation_matrix)
+                #     normal = np.cross(side1, side2)
+                #     normal /= np.linalg.norm(normal)
+                #     normals.append(normal)
 
-                if view:
+                if normals:
+                    # selected_triangle_normal = normals[triangle_id]
+                    selected_triangle_normal = normals.GetTuple(triangle_id)
+
+                    theta = np.arccos(np.dot(selected_triangle_normal, [0, 0, -1]) / (np.linalg.norm(selected_triangle_normal) * np.linalg.norm([0, 0, -1])))
+                    rotation_axis = np.cross(selected_triangle_normal, [0, 0, -1])
+                    rotation_angle = np.degrees(theta)
+
+                    rotation_matrix = vtk.vtkTransform()
+                    rotation_matrix.Identity()
+                    rotation_matrix.RotateWXYZ(rotation_angle, rotation_axis)
+
+                    picker.GetActor().SetUserTransform(rotation_matrix)
+
                     view.model_centering()
 
-            if view:
                 view.reload_scene()
+            # -------------------------------------------------
 
     def middleBtnPress(self, obj, event):
         if event == "MouseWheelForwardEvent":
@@ -220,34 +236,49 @@ class InteractionAroundActivePlane:
         self.render.GetActiveCamera().SetFocalPoint(*self.focalPoint[:3])
         self.interactor.ReInitialize()
 
-        clickPos = self.interactor.GetEventPosition()
-            
-        picker = vtk.vtkPropPicker()
+        # -------------------------------------------------
+        if view and view.place_button.isChecked():
+            clickPos = self.interactor.GetEventPosition()
+                
+            picker = vtk.vtkPropPicker()
 
-        self.NewPickedActor = picker.GetActor()
-        picker.Pick(clickPos[0], clickPos[1], 0, self.render)
+            self.NewPickedActor = picker.GetActor()
+            picker.Pick(clickPos[0], clickPos[1], 0, self.render)
 
-        picker1 = vtk.vtkCellPicker()
-        picker1.SetTolerance(0.005)
-        picker1.Pick(clickPos[0], clickPos[1], 0, self.render)
+            picker1 = vtk.vtkCellPicker()
+            picker1.SetTolerance(0.005)
+            picker1.Pick(clickPos[0], clickPos[1], 0, self.render)
 
-        if (picker1.GetCellId() >= 0) and (isinstance(picker.GetActor(), src.gui_utils.StlActor)):
-            triangle_id = picker1.GetCellId()
-            poly_data = picker.GetActor().GetMapper().GetInput()
-            colors = poly_data.GetCellData().GetScalars()
+            if (picker1.GetCellId() >= 0) and (isinstance(picker.GetActor(), src.gui_utils.StlActor)):
+                triangle_id = picker1.GetCellId()
+                # poly_data = picker.GetActor().GetMapper().GetInput()
+                # colors = poly_data.GetCellData().GetScalars()
 
-            num_triangles = poly_data.GetNumberOfCells()
-            colors = vtk.vtkUnsignedCharArray()
-            colors.SetNumberOfComponents(3)
-            colors.SetNumberOfTuples(num_triangles)
-            for i in range(num_triangles):
-                colors.SetTuple(i, (255, 255, 255))
+                # num_triangles = poly_data.GetNumberOfCells()
+                # colors = vtk.vtkUnsignedCharArray()
+                # colors.SetNumberOfComponents(3)
+                # colors.SetNumberOfTuples(num_triangles)
+                # for i in range(num_triangles):
+                #     colors.SetTuple(i, (255, 255, 255))
 
-            colors.SetTuple(triangle_id, (255, 0, 0))
-            poly_data.GetCellData().SetScalars(colors)
+                try:
+                    picker.GetActor().ResetColorize()
 
-            mapper = picker.GetActor().GetMapper()
-            mapper.Modified()
+                    poly_data = picker.GetActor().GetMapper().GetInput()
+                    num_triangles = poly_data.GetNumberOfCells()
 
-            if view:
-                view.reload_scene()
+                    if 0 <= triangle_id < num_triangles:
+                        # colors = vtk.vtkUnsignedCharArray()
+                        colors = poly_data.GetCellData().GetScalars()
+                        colors.SetNumberOfComponents(3)
+                        colors.SetNumberOfTuples(num_triangles)
+                        colors.SetTuple(triangle_id, (255, 0, 0))
+                        poly_data.GetCellData().SetScalars(colors)
+
+                        mapper = picker.GetActor().GetMapper()
+                        mapper.Modified()
+
+                        view.reload_scene()
+                except Exception as e:
+                    test = 1
+        # -------------------------------------------------
