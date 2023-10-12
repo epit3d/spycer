@@ -32,7 +32,7 @@ def prepare_bug(filename, error_description):
         yield srv_bug_pb2.AddBugRequest(content=piece)
 
 def send_bug_report(filename, error_description):
-    with grpc.insecure_channel('37.27.2.40:3456') as channel:
+    with grpc.insecure_channel("app.epit3d.com:3456") as channel:
         stub = srv_bug_pb2_grpc.BugServiceStub(channel)
 
         # check if file exists

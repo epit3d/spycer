@@ -1,6 +1,6 @@
 import sys
 from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, \
-    QPushButton, QLabel, QListWidget, QDesktopWidget, QLineEdit, QFileDialog
+    QPushButton, QLabel, QListWidget, QLineEdit, QFileDialog, QMessageBox
 from PyQt5.QtCore import QSettings
 
 # import aligntop
@@ -9,8 +9,9 @@ from PyQt5 import QtGui
 from typing import List
 
 from src.gui_utils import showErrorDialog
+from src.settings import sett, get_version, paths_transfer_in_settings, PathBuilder
 import src.locales as locales
-
+import shutil
 
 class EntryWindow(QWidget):
     # entry window is a window that is shown before main window
@@ -204,5 +205,32 @@ class EntryWindow(QWidget):
         # add existing project to recent projects
         self.add_recent_project(selected_project)
 
+        self.сheck_project_version(selected_project)
+
         # emit signal with path to project file
         self.open_project_signal.emit(selected_project)
+
+    def сheck_project_version(self, project_path):
+        sett().project_path = project_path
+        project_settings_filename = PathBuilder.settings_file()
+
+        build_version = get_version(PathBuilder.settings_file_default())
+        project_version = get_version(project_settings_filename)
+
+        if build_version != project_version:
+            locale = locales.getLocale()
+            message_box = QMessageBox()
+            message_box.setWindowTitle(locale.ProjectUpdate)
+            message_box.setText(locale.SettingsUpdate)
+            message_box.addButton(QMessageBox.Yes)
+            message_box.addButton(QMessageBox.No)
+            message_box.button(QMessageBox.Yes).setText(locale.Update)
+            message_box.button(QMessageBox.No).setText(locale.ContinueWithoutUpdating)
+
+            reply = message_box.exec()
+
+            if reply == QMessageBox.Yes:
+                project_settings_old_filename = PathBuilder.settings_file_old()
+                shutil.copyfile(project_settings_filename, project_settings_old_filename)
+                shutil.copyfile("settings.yaml", project_settings_filename)
+                paths_transfer_in_settings(project_settings_old_filename, project_settings_filename)

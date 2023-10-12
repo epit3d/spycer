@@ -141,6 +141,9 @@ class MainWindow(QMainWindow):
         self.bug_report = QAction(self.locale.SubmitBugReport, self)
         tools_menu.addAction(self.bug_report)
 
+        self.check_updates_action = QAction(self.locale.CheckUpdates, self)
+        tools_menu.addAction(self.check_updates_action)
+
         # main parts
         central_widget = QWidget()
         main_grid = QGridLayout()
