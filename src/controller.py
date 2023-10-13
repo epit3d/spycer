@@ -33,8 +33,8 @@ try:
     import src.hardware.service as service
     import src.hardware.calibration as calibration
     import src.hardware.printer as printer
-except:
-    print('hardware module is unavailable')
+except Exception as e:
+    print(f'hardware module is unavailable: {e}')
 
 class MainController:
     def __init__(self, view, model):

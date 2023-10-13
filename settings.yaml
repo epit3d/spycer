@@ -22,7 +22,7 @@ common:
 hardware:
   printer_dir: ""
   bar_diameter: 1.75
-  calibration_file: data/calibration_data.csv
+  calibration_file: calibration_data.csv
   calibration_file_zero: data/calibration_data_zero.csv
   calibration_x:
     a0: 0
