@@ -51,7 +51,7 @@ def progress_dialog(title, msg, work_fn, parent=None):
     manager.submit(work_fn)
     _exec_dialog(progress)
 
-    return result[0] # if len(result) != 0 else 'Program crashed without returning a result.'
+    return result[0]
 
 def _exec_dialog(dg, closer=None):
     """

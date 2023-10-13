@@ -477,12 +477,6 @@ class MainController:
             end_time = time.time()
             print('spent time for slicing: ', end_time - start_time, 's')
             
-            # goosli sends everything to stdout, returncode is 1 when fatal is called
-            # print(p.stdout, p.stderr, p.returncode)
-            print(f"return code: '{p.returncode}'")
-            print(f"stdout: '{p.stdout}'")
-            print(f"stderr: '{p.stderr}'")
-
             if p.returncode == 2:
                 # panic
                 return p.stderr
