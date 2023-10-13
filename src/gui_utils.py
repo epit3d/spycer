@@ -1,6 +1,7 @@
 from typing import Tuple, List, Dict
 
 import vtk
+import numpy
 from PyQt5.QtWidgets import QMessageBox
 from vtkmodules.vtkCommonColor import vtkNamedColors
 from vtkmodules.vtkCommonMath import vtkMatrix4x4
@@ -405,6 +406,8 @@ class StlActorMixin:
 
         self.findBounds()
         self.findCenter()
+        self.findNormals()
+        self.findEdges()
 
     def findBounds(self):
         self.bound = getBounds(self)
@@ -414,6 +417,74 @@ class StlActorMixin:
         y_mid = (self.bound[2] + self.bound[3]) / 2
         z_mid = (self.bound[4] + self.bound[5]) / 2
         self.center = x_mid, y_mid, z_mid
+
+    def findNormals(self):
+        # poly_data = self.GetMapper().GetInput()
+        # normals_filter = vtk.vtkPolyDataNormals()
+        # normals_filter.SetInputData(poly_data)
+        # normals_filter.ComputePointNormalsOn()
+        # normals_filter.ComputeCellNormalsOff()
+        # normals_filter.Update()
+
+        # self.normals = normals_filter.GetOutput().GetPointData().GetNormals()
+
+        poly_data = self.GetMapper().GetInput()
+
+        triangles = poly_data.GetPolys()
+        points = poly_data.GetPoints()
+
+        triangles.InitTraversal()
+        triangle = vtk.vtkIdList()
+
+        normals = []
+        while triangles.GetNextCell(triangle):
+            v0 = points.GetPoint(triangle.GetId(0))
+            v1 = points.GetPoint(triangle.GetId(1))
+            v2 = points.GetPoint(triangle.GetId(2))
+
+            side1 = numpy.array(v1) - numpy.array(v0)
+            side2 = numpy.array(v2) - numpy.array(v0)
+
+            normal = numpy.cross(side1, side2)
+            normal /= numpy.linalg.norm(normal)
+            normals.append(normal)
+
+        self.normals = normals
+
+    def findEdges(self):
+        poly_data = self.GetMapper().GetInput()
+
+        # -------------------------------------------
+        scalar_product_threshold = 0.95  # !!!
+
+        triangle_groups = {}
+
+        for triangle_id in range(poly_data.GetNumberOfCells()):
+            # normal1 = self.normals.GetTuple(triangle_id)
+            normal1 = self.normals[triangle_id]
+
+            current_group = {triangle_id}
+
+            for other_triangle_id in range(poly_data.GetNumberOfCells()):
+                if other_triangle_id == triangle_id:
+                    continue
+
+                normal2 = self.normals[other_triangle_id]
+                dot_product = numpy.dot(normal1, normal2)
+
+                if dot_product > scalar_product_threshold:
+                    current_group.add(other_triangle_id)
+
+            triangle_groups[triangle_id] = current_group
+        # -------------------------------------------
+
+        self.edges = triangle_groups
+
+    def calculateAngle(self, normal1, normal2):
+        # almostZeroNumber = 1e-5
+        almostZeroNumber = 1
+        dot_product = numpy.dot(normal1, normal2)
+        return numpy.arccos(numpy.clip(dot_product, -almostZeroNumber, almostZeroNumber))
 
     def addUserTransformUpdateCallback(self, *methods):
         self.tfUpdateMethods += methods

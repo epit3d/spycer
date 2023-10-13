@@ -109,12 +109,14 @@ class InteractionAroundActivePlane:
                 normals_filter.ComputeCellNormalsOff()
                 normals_filter.Update()
 
-                normals = normals_filter.GetOutput().GetPointData().GetNormals()
+                normals0 = normals_filter.GetOutput().GetPointData().GetNormals()
                 # -------------------------------------------------
 
                 triangle_id = picker1.GetCellId()
 
-                # poly_data = picker.GetActor().GetMapper().GetInput()
+
+
+                poly_data = picker.GetActor().GetMapper().GetInput()
 
                 # poly_data1 = vtk.vtkPolyData()
                 # poly_data1.DeepCopy(picker.GetActor().GetMapper().GetInput())
@@ -125,34 +127,37 @@ class InteractionAroundActivePlane:
                 triangles.InitTraversal()
                 triangle = vtk.vtkIdList()
 
-                # normals = []
-                # while triangles.GetNextCell(triangle):
-                #     v0 = points.GetPoint(triangle.GetId(0))
-                #     v1 = points.GetPoint(triangle.GetId(1))
-                #     v2 = points.GetPoint(triangle.GetId(2))
+                normals1 = []
+                while triangles.GetNextCell(triangle):
+                    v0 = points.GetPoint(triangle.GetId(0))
+                    v1 = points.GetPoint(triangle.GetId(1))
+                    v2 = points.GetPoint(triangle.GetId(2))
 
-                #     side1 = np.array(v1) - np.array(v0)
-                #     side2 = np.array(v2) - np.array(v0)
+                    side1 = np.array(v1) - np.array(v0)
+                    side2 = np.array(v2) - np.array(v0)
 
-                #     normal = np.cross(side1, side2)
-                #     normal /= np.linalg.norm(normal)
-                #     normals.append(normal)
+                    normal = np.cross(side1, side2)
+                    normal /= np.linalg.norm(normal)
+                    normals1.append(normal)
 
-                if normals:
-                    # selected_triangle_normal = normals[triangle_id]
-                    selected_triangle_normal = normals.GetTuple(triangle_id)
+                # if normals:
+                # selected_triangle_normal = picker.GetActor().normals.GetTuple(triangle_id)
+                selected_triangle_normal = normals1[triangle_id] # !
 
-                    theta = np.arccos(np.dot(selected_triangle_normal, [0, 0, -1]) / (np.linalg.norm(selected_triangle_normal) * np.linalg.norm([0, 0, -1])))
+                theta = np.arccos(np.dot(selected_triangle_normal, [0, 0, -1]) / (np.linalg.norm(selected_triangle_normal) * np.linalg.norm([0, 0, -1])))
+                rotation_angle = np.degrees(theta)
+                if np.array_equal(selected_triangle_normal, [0, 0, 1]):
+                    rotation_axis = [1, 0, 0]
+                else:
                     rotation_axis = np.cross(selected_triangle_normal, [0, 0, -1])
-                    rotation_angle = np.degrees(theta)
 
-                    rotation_matrix = vtk.vtkTransform()
-                    rotation_matrix.Identity()
-                    rotation_matrix.RotateWXYZ(rotation_angle, rotation_axis)
+                rotation_matrix = vtk.vtkTransform()
+                rotation_matrix.Identity()
+                rotation_matrix.RotateWXYZ(rotation_angle, rotation_axis)
 
-                    picker.GetActor().SetUserTransform(rotation_matrix)
+                picker.GetActor().SetUserTransform(rotation_matrix)
 
-                    view.model_centering()
+                view.model_centering()
 
                 view.reload_scene()
             # -------------------------------------------------
@@ -272,7 +277,9 @@ class InteractionAroundActivePlane:
                         colors = poly_data.GetCellData().GetScalars()
                         colors.SetNumberOfComponents(3)
                         colors.SetNumberOfTuples(num_triangles)
-                        colors.SetTuple(triangle_id, (255, 0, 0))
+                        for triangle in picker.GetActor().edges[triangle_id]:
+                            colors.SetTuple(triangle, (255, 0, 0)) # To Do
+                        # colors.SetTuple(triangle_id, (255, 0, 0)) # To Do
                         poly_data.GetCellData().SetScalars(colors)
 
                         mapper = picker.GetActor().GetMapper()
