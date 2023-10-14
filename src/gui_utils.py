@@ -1,7 +1,7 @@
 from typing import Tuple, List, Dict
 
 import vtk
-import numpy
+import numpy as np
 from PyQt5.QtWidgets import QMessageBox
 from vtkmodules.vtkCommonColor import vtkNamedColors
 from vtkmodules.vtkCommonMath import vtkMatrix4x4
@@ -407,6 +407,7 @@ class StlActorMixin:
         self.findBounds()
         self.findCenter()
         self.findNormals()
+        self.findTriangles()
         self.findEdges()
 
     def findBounds(self):
@@ -442,14 +443,30 @@ class StlActorMixin:
             v1 = points.GetPoint(triangle.GetId(1))
             v2 = points.GetPoint(triangle.GetId(2))
 
-            side1 = numpy.array(v1) - numpy.array(v0)
-            side2 = numpy.array(v2) - numpy.array(v0)
+            side1 = np.array(v1) - np.array(v0)
+            side2 = np.array(v2) - np.array(v0)
 
-            normal = numpy.cross(side1, side2)
-            normal /= numpy.linalg.norm(normal)
+            normal = np.cross(side1, side2)
+            normal /= np.linalg.norm(normal)
             normals.append(normal)
 
         self.normals = normals
+
+    def findTriangles(self):
+        poly_data = self.GetMapper().GetInput()
+        triangles = poly_data.GetPolys()
+        points = poly_data.GetPoints()
+
+        triangles.InitTraversal()
+        triangle = vtk.vtkIdList()
+
+        self.triangles = []
+        while triangles.GetNextCell(triangle):
+            p1 = points.GetPoint(triangle.GetId(0))
+            p2 = points.GetPoint(triangle.GetId(1))
+            p3 = points.GetPoint(triangle.GetId(2))
+
+            self.triangles.append((p1, p2, p3))
 
     def findEdges(self):
         poly_data = self.GetMapper().GetInput()
@@ -464,15 +481,17 @@ class StlActorMixin:
             normal1 = self.normals[triangle_id]
 
             current_group = {triangle_id}
+            triangle = self.triangles[triangle_id]
 
             for other_triangle_id in range(poly_data.GetNumberOfCells()):
                 if other_triangle_id == triangle_id:
                     continue
 
                 normal2 = self.normals[other_triangle_id]
-                dot_product = numpy.dot(normal1, normal2)
+                dot_product = np.dot(normal1, normal2)
+                other_triangle = self.triangles[other_triangle_id]
 
-                if dot_product > scalar_product_threshold:
+                if dot_product > scalar_product_threshold and self.triangleOnPlane(other_triangle, normal1, triangle[0]):
                     current_group.add(other_triangle_id)
 
             triangle_groups[triangle_id] = current_group
@@ -480,11 +499,28 @@ class StlActorMixin:
 
         self.edges = triangle_groups
 
+    def triangleOnPlane(self, triangle, plane_normal, plane_point):
+        for point in triangle:
+            if not self.pointOnPlane(point, plane_normal, plane_point):
+                return False
+
+        return True
+
+    def pointOnPlane(self, point, plane_normal, plane_point):
+        tolerance=1e-6 # TODO
+
+        x, y, z = point
+        x_normal, y_normal, z_normal = plane_normal
+        x0, y0, z0 = plane_point
+        
+        distance = x_normal * x + y_normal * y + z_normal * z - (x_normal * x0 + y_normal * y0 + z_normal * z0)
+        return np.abs(distance) < tolerance
+
     def calculateAngle(self, normal1, normal2):
         # almostZeroNumber = 1e-5
         almostZeroNumber = 1
-        dot_product = numpy.dot(normal1, normal2)
-        return numpy.arccos(numpy.clip(dot_product, -almostZeroNumber, almostZeroNumber))
+        dot_product = np.dot(normal1, normal2)
+        return np.arccos(np.clip(dot_product, -almostZeroNumber, almostZeroNumber))
 
     def addUserTransformUpdateCallback(self, *methods):
         self.tfUpdateMethods += methods
