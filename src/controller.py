@@ -33,8 +33,8 @@ try:
     import src.hardware.service as service
     import src.hardware.calibration as calibration
     import src.hardware.printer as printer
-except:
-    print('hardware module is unavailable')
+except Exception as e:
+    print(f'hardware module is unavailable: {e}')
 
 class MainController:
     def __init__(self, view, model):
@@ -75,6 +75,7 @@ class MainController:
         self.view.save_sett_action.triggered.connect(self.save_settings_file)
         self.view.load_sett_action.triggered.connect(self.load_settings_file)
         self.view.slicing_info_action.triggered.connect(self.get_slicer_version)
+        self.view.check_updates_action.triggered.connect(self.open_updater)
 
         try:
             self.view.calibration_action.triggered.connect(
@@ -477,8 +478,15 @@ class MainController:
             end_time = time.time()
             print('spent time for slicing: ', end_time - start_time, 's')
             
-            # goosli sends everything to stdout, returncode is 1 when fatal is called
-            return p.stdout if p.returncode else ""
+            if p.returncode == 2:
+                # panic
+                return p.stderr
+            elif p.returncode == 1:
+                # fatal, the error is in the latest line
+                return p.stdout.splitlines()[-1]
+
+            # no errors            
+            return ""
 
         error = qt_utils.progress_dialog(
             locales.getLocale().SlicingTitle, 
@@ -780,3 +788,6 @@ class MainController:
             self.view.warning_nozzle_and_table_collision.setText(self.view.locale.WarningNozzleAndTableCollision + s.slicing.planes_contact_with_nozzle)
         else:
             self.view.warning_nozzle_and_table_collision.setText("")
+
+    def open_updater(self):
+        subprocess.Popen("./updater")

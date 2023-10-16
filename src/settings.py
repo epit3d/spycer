@@ -93,6 +93,31 @@ def save_splanes_to_file(splanes, filename):
         for p in splanes:
             out.write(p.toFile() + '\n')
 
+def get_version(settings_filename):
+    try:
+        with open(settings_filename, "r") as settings_file:
+            settings = yaml.safe_load(settings_file)
+
+        version = settings["common"]["version"]
+        return version
+    except Exception as e:
+        print("Error reading version")
+        return ""
+
+def paths_transfer_in_settings(initial_settings_filename, final_settings_filename):
+    with open(initial_settings_filename, "r") as settings_file:
+        initial_settings = yaml.safe_load(settings_file)
+
+    with open(final_settings_filename, "r") as settings_file:
+        final_settings = yaml.safe_load(settings_file)
+
+        for k, v in initial_settings.items():
+            if k in final_settings:
+                final_settings[k] = v
+
+        with open(final_settings_filename, "w") as settings_file:
+            yaml.dump(final_settings, settings_file, default_flow_style=False)
+
 class Settings(object):
     def __init__(self, d):
         for a, b in d.items():
@@ -120,6 +145,14 @@ class PathBuilder:
     @staticmethod
     def settings_file():
         return path.join(PathBuilder.project_path(), "settings.yaml")
+    
+    @staticmethod
+    def settings_file_default():
+        return "settings.yaml"
+
+    @staticmethod
+    def settings_file_old():
+        return path.join(PathBuilder.project_path(), "settings_old.yaml")
 
     @staticmethod
     def colorizer_cmd():
