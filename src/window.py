@@ -54,7 +54,7 @@ class LineEdit(QLineEdit):
         super().__init__(parent)
         self.returnPressed.connect(self.value_formatting)
         self.textChanged.connect(self.input_validation)
-        self.textChanged.connect(self.coloryze_field)
+        self.textChanged.connect(self.colorize_field)
 
     def setValidator(self, validator, colorize_invalid_value = False):
         self.colorize_invalid_value = colorize_invalid_value
@@ -62,7 +62,7 @@ class LineEdit(QLineEdit):
 
     def focusOutEvent(self, event):
         self.value_formatting()
-        self.coloryze_field()
+        self.colorize_field()
         super().focusOutEvent(event)
 
     def fill_empty(self):
@@ -92,7 +92,7 @@ class LineEdit(QLineEdit):
                 self.setText(str(min_value))
         self.setCursorPosition(cursor_position)
 
-    def coloryze_field(self):
+    def colorize_field(self):
         default_background_color = "#0e1621"
         invalid_value_background_color = "#ff6e00"
 

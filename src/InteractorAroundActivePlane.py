@@ -101,48 +101,20 @@ class InteractionAroundActivePlane:
             picker1.Pick(clickPos[0], clickPos[1], 0, self.render)
 
             if (picker1.GetCellId() >= 0) and (isinstance(picker.GetActor(), src.gui_utils.StlActor)) and view:
-                # -------------------------------------------------
-                poly_data = picker.GetActor().GetMapper().GetInput()
-                normals_filter = vtk.vtkPolyDataNormals()
-                normals_filter.SetInputData(poly_data)
-                normals_filter.ComputePointNormalsOn()
-                normals_filter.ComputeCellNormalsOff()
-                normals_filter.Update()
-
-                normals0 = normals_filter.GetOutput().GetPointData().GetNormals()
-                # -------------------------------------------------
-
                 triangle_id = picker1.GetCellId()
 
-
-
                 poly_data = picker.GetActor().GetMapper().GetInput()
 
-                # poly_data1 = vtk.vtkPolyData()
-                # poly_data1.DeepCopy(picker.GetActor().GetMapper().GetInput())
+                triangle = poly_data.GetCell(triangle_id)
+                v0 = triangle.GetPoints().GetPoint(0)
+                v1 = triangle.GetPoints().GetPoint(1)
+                v2 = triangle.GetPoints().GetPoint(2)
 
-                triangles = poly_data.GetPolys()
-                points = poly_data.GetPoints()
+                side1 = np.array(v1) - np.array(v0)
+                side2 = np.array(v2) - np.array(v0)
 
-                triangles.InitTraversal()
-                triangle = vtk.vtkIdList()
-
-                normals1 = []
-                while triangles.GetNextCell(triangle):
-                    v0 = points.GetPoint(triangle.GetId(0))
-                    v1 = points.GetPoint(triangle.GetId(1))
-                    v2 = points.GetPoint(triangle.GetId(2))
-
-                    side1 = np.array(v1) - np.array(v0)
-                    side2 = np.array(v2) - np.array(v0)
-
-                    normal = np.cross(side1, side2)
-                    normal /= np.linalg.norm(normal)
-                    normals1.append(normal)
-
-                # if normals:
-                # selected_triangle_normal = picker.GetActor().normals.GetTuple(triangle_id)
-                selected_triangle_normal = normals1[triangle_id] # !
+                selected_triangle_normal = np.cross(side1, side2)
+                selected_triangle_normal /= np.linalg.norm(selected_triangle_normal)
 
                 theta = np.arccos(np.dot(selected_triangle_normal, [0, 0, -1]) / (np.linalg.norm(selected_triangle_normal) * np.linalg.norm([0, 0, -1])))
                 rotation_angle = np.degrees(theta)
@@ -277,9 +249,9 @@ class InteractionAroundActivePlane:
                         colors = poly_data.GetCellData().GetScalars()
                         colors.SetNumberOfComponents(3)
                         colors.SetNumberOfTuples(num_triangles)
-                        for triangle in picker.GetActor().edges[triangle_id]:
-                            colors.SetTuple(triangle, (255, 0, 0)) # To Do
-                        # colors.SetTuple(triangle_id, (255, 0, 0)) # To Do
+                        # for triangle in picker.GetActor().edges[triangle_id]:
+                        #     colors.SetTuple(triangle, (255, 0, 0)) # To Do
+                        colors.SetTuple(triangle_id, (255, 0, 0)) # To Do
                         poly_data.GetCellData().SetScalars(colors)
 
                         mapper = picker.GetActor().GetMapper()
@@ -288,4 +260,11 @@ class InteractionAroundActivePlane:
                         view.reload_scene()
                 except Exception as e:
                     test = 1
+
+            else:
+                try:
+                    view.stlActor.ResetColorize()
+                except Exception as e:
+                    test = 1
+
         # -------------------------------------------------

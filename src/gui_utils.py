@@ -406,9 +406,6 @@ class StlActorMixin:
 
         self.findBounds()
         self.findCenter()
-        self.findNormals()
-        self.findTriangles()
-        self.findEdges()
 
     def findBounds(self):
         self.bound = getBounds(self)
@@ -418,109 +415,6 @@ class StlActorMixin:
         y_mid = (self.bound[2] + self.bound[3]) / 2
         z_mid = (self.bound[4] + self.bound[5]) / 2
         self.center = x_mid, y_mid, z_mid
-
-    def findNormals(self):
-        # poly_data = self.GetMapper().GetInput()
-        # normals_filter = vtk.vtkPolyDataNormals()
-        # normals_filter.SetInputData(poly_data)
-        # normals_filter.ComputePointNormalsOn()
-        # normals_filter.ComputeCellNormalsOff()
-        # normals_filter.Update()
-
-        # self.normals = normals_filter.GetOutput().GetPointData().GetNormals()
-
-        poly_data = self.GetMapper().GetInput()
-
-        triangles = poly_data.GetPolys()
-        points = poly_data.GetPoints()
-
-        triangles.InitTraversal()
-        triangle = vtk.vtkIdList()
-
-        normals = []
-        while triangles.GetNextCell(triangle):
-            v0 = points.GetPoint(triangle.GetId(0))
-            v1 = points.GetPoint(triangle.GetId(1))
-            v2 = points.GetPoint(triangle.GetId(2))
-
-            side1 = np.array(v1) - np.array(v0)
-            side2 = np.array(v2) - np.array(v0)
-
-            normal = np.cross(side1, side2)
-            normal /= np.linalg.norm(normal)
-            normals.append(normal)
-
-        self.normals = normals
-
-    def findTriangles(self):
-        poly_data = self.GetMapper().GetInput()
-        triangles = poly_data.GetPolys()
-        points = poly_data.GetPoints()
-
-        triangles.InitTraversal()
-        triangle = vtk.vtkIdList()
-
-        self.triangles = []
-        while triangles.GetNextCell(triangle):
-            p1 = points.GetPoint(triangle.GetId(0))
-            p2 = points.GetPoint(triangle.GetId(1))
-            p3 = points.GetPoint(triangle.GetId(2))
-
-            self.triangles.append((p1, p2, p3))
-
-    def findEdges(self):
-        poly_data = self.GetMapper().GetInput()
-
-        # -------------------------------------------
-        scalar_product_threshold = 0.95  # !!!
-
-        triangle_groups = {}
-
-        for triangle_id in range(poly_data.GetNumberOfCells()):
-            # normal1 = self.normals.GetTuple(triangle_id)
-            normal1 = self.normals[triangle_id]
-
-            current_group = {triangle_id}
-            triangle = self.triangles[triangle_id]
-
-            for other_triangle_id in range(poly_data.GetNumberOfCells()):
-                if other_triangle_id == triangle_id:
-                    continue
-
-                normal2 = self.normals[other_triangle_id]
-                dot_product = np.dot(normal1, normal2)
-                other_triangle = self.triangles[other_triangle_id]
-
-                if dot_product > scalar_product_threshold and self.triangleOnPlane(other_triangle, normal1, triangle[0]):
-                    current_group.add(other_triangle_id)
-
-            triangle_groups[triangle_id] = current_group
-        # -------------------------------------------
-
-        self.edges = triangle_groups
-
-    def triangleOnPlane(self, triangle, plane_normal, plane_point):
-        for point in triangle:
-            if not self.pointOnPlane(point, plane_normal, plane_point):
-                return False
-
-        return True
-
-    def pointOnPlane(self, point, plane_normal, plane_point):
-        tolerance=1e-6 # TODO
-
-        x, y, z = point
-        x_normal, y_normal, z_normal = plane_normal
-        x0, y0, z0 = plane_point
-        
-        distance = x_normal * x + y_normal * y + z_normal * z - (x_normal * x0 + y_normal * y0 + z_normal * z0)
-        return np.abs(distance) < tolerance
-
-    def calculateAngle(self, normal1, normal2):
-        # almostZeroNumber = 1e-5
-        almostZeroNumber = 1
-        dot_product = np.dot(normal1, normal2)
-        return np.arccos(np.clip(dot_product, -almostZeroNumber, almostZeroNumber))
 
     def addUserTransformUpdateCallback(self, *methods):
         self.tfUpdateMethods += methods
