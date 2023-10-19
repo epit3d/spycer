@@ -229,11 +229,9 @@ class MainWindow(QMainWindow):
         self.interactor.AddObserver("MouseWheelForwardEvent", self.customInteractor.middleBtnPress)
         self.interactor.AddObserver("RightButtonPressEvent", self.customInteractor.rightBtnPress)
         self.interactor.AddObserver("RightButtonReleaseEvent", self.customInteractor.rightBtnPress)
-        lambda_func = lambda obj, event: self.customInteractor.leftBtnPress(obj, event, self)
-        self.interactor.AddObserver("LeftButtonPressEvent", lambda_func)
+        self.interactor.AddObserver("LeftButtonPressEvent", lambda obj, event: self.customInteractor.leftBtnPress(obj, event, self))
         self.interactor.AddObserver("LeftButtonReleaseEvent", self.customInteractor.leftBtnPress)
-        lambda_func = lambda obj, event: self.customInteractor.mouseMove(obj, event, self)
-        self.interactor.AddObserver("MouseMoveEvent", lambda_func)
+        self.interactor.AddObserver("MouseMoveEvent", lambda obj, event: self.customInteractor.mouseMove(obj, event, self))
 
         # self.actor_interactor_style = interactor_style.ActorInteractorStyle(self.updateTransform)
         # self.actor_interactor_style.SetDefaultRenderer(self.render)

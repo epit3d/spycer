@@ -36,6 +36,16 @@ def get_color(key):
     _colors[key] = val
     return val
 
+def get_color_rgb(color_name):
+    color_rgba = get_color(color_name)
+
+    r = int(color_rgba[0] * 255)
+    g = int(color_rgba[1] * 255)
+    b = int(color_rgba[2] * 255)
+
+    rgb = (r, g, b)
+
+    return rgb
 
 def copy_project_files(project_path: str):
     load_settings()
