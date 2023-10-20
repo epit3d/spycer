@@ -10,6 +10,8 @@ colors:
   layer: DarkSlateGray
   plane: Cyan
   splane: Cyan
+  edge: Orange
+  model: Silver
 common:
   lang: ru
   opacity_current_plane: 0.8

@@ -1,6 +1,7 @@
 from typing import Tuple, List, Dict
 
 import vtk
+import numpy as np
 from PyQt5.QtWidgets import QMessageBox
 from vtkmodules.vtkCommonColor import vtkNamedColors
 from vtkmodules.vtkCommonMath import vtkMatrix4x4
@@ -8,7 +9,7 @@ from vtkmodules.vtkCommonTransforms import vtkTransform
 from vtkmodules.vtkFiltersSources import vtkLineSource, vtkConeSource
 from vtkmodules.vtkRenderingCore import vtkActor, vtkPolyDataMapper, vtkAssembly
 
-from src.settings import sett, get_color, PathBuilder
+from src.settings import sett, get_color, get_color_rgb, PathBuilder
 
 
 def findStlOrigin(vtkBlock):
@@ -405,6 +406,7 @@ class StlActorMixin:
 
         self.findBounds()
         self.findCenter()
+        self.ResetColorize()
 
     def findBounds(self):
         self.bound = getBounds(self)
@@ -436,6 +438,56 @@ class StlActorMixin:
         for method in self.tfUpdateMethods:
             method(center, tf.GetOrientation(), tf.GetScale())
 
+    def ResetColorize(self):
+        poly_data = self.GetMapper().GetInput()
+        number_triangles = poly_data.GetNumberOfCells()
+
+        model_color = get_color_rgb(sett().colors.model)
+
+        colors = vtk.vtkUnsignedCharArray()
+        colors.SetNumberOfComponents(3)
+        colors.SetNumberOfTuples(number_triangles)
+
+        for i in range(number_triangles):
+            colors.SetTuple(i, model_color)
+
+        poly_data.GetCellData().SetScalars(colors)
+
+    def GetTriangleNormal(self, triangle_id):
+        poly_data = self.GetMapper().GetInput()
+        triangle = poly_data.GetCell(triangle_id)
+
+        v0 = triangle.GetPoints().GetPoint(0)
+        v1 = triangle.GetPoints().GetPoint(1)
+        v2 = triangle.GetPoints().GetPoint(2)
+
+        side1 = np.array(v1) - np.array(v0)
+        side2 = np.array(v2) - np.array(v0)
+
+        normal = np.cross(side1, side2)
+        normal /= np.linalg.norm(normal)
+
+        return normal
+
+    def RotateByVector(self, vector):
+        v = [0, 0, 1]
+        theta = np.arccos(np.dot(vector, v) / (np.linalg.norm(vector) * np.linalg.norm(v)))
+        rotation_angle = np.degrees(theta)
+
+        if np.array_equal(vector, [0, 0, -1]):
+            rotation_axis = [-1, 0, 0]
+        else:
+            rotation_axis = np.cross(vector, v)
+
+        rotation_matrix = self.GetUserTransform()
+
+        scale = [0.0, 0.0, 0.0]
+        rotation_matrix.GetScale(scale)
+        rotation_matrix.Identity()
+        rotation_matrix.RotateWXYZ(rotation_angle, rotation_axis)
+        rotation_matrix.Scale(scale)
+
+        self.SetUserTransform(rotation_matrix)
 
 class StlActor(StlActorMixin, ActorFromPolyData):
 
