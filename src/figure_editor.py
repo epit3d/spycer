@@ -2,12 +2,12 @@
 Provides a class creating a new window to edit parameters of custom figures
 """
 import sys
-from typing import List, Callable, Dict, Tuple, Optional
+from typing import List, Callable, Dict, Tuple, Optional, Union
 from functools import partial
 
 from PyQt5 import QtCore, sip
 from PyQt5.QtWidgets import (QSlider, QLineEdit, QApplication, QGridLayout, QWidget, QLabel, QSizePolicy,
-                             QPushButton, QHBoxLayout)
+                             QPushButton, QHBoxLayout, QCheckBox)
 
 
 class FigureEditor(QWidget):
@@ -16,10 +16,13 @@ class FigureEditor(QWidget):
     and on each change of any of parameters `onChange` is invoked with changed values of parameters
     """
 
+    _checkboxes = []
+
     def __init__(self, tabs, params: List[str], constrains: List[Tuple[int, int]],
                  on_change: Callable[[Dict[str, float]], None] = None,
                  initial_params: Optional[Dict[str, float]] = None):
         super().__init__()
+        self.on_change = on_change
         self.setWindowTitle("Parameters tooling")
 
         self.layout = QGridLayout()
@@ -29,7 +32,8 @@ class FigureEditor(QWidget):
         self.params_widgets = []
         # TODO add implementation of True/False parameters
         self.params_dict: Dict[str, float] = dict(
-            (el, initial_params[el] if initial_params and initial_params[el] else 0) for el in params)
+            (el, initial_params[el] if initial_params and initial_params[el] else 0)
+            for el in params + self._checkboxes)
 
         for param_idx, param in enumerate(params):
             # add label for parameter name
@@ -107,9 +111,31 @@ class FigureEditor(QWidget):
             edit.textChanged.connect(pass_updated_value_edit(param, slider, edit))
             self.setLayout(self.layout)
 
+        for param in self._checkboxes:
+            param_idx += 1
+
+            checkbox = QCheckBox(param, self)
+            checkbox.setChecked(initial_params.get(param, False))
+
+            self.params_widgets.append(checkbox)
+            self.layout.addWidget(checkbox, param_idx, 0)
+
+            checkbox.stateChanged.connect(self.pass_updated_value_checkbox(param))
+
         if not tabs.widget(1).layout() is None:
             self.deleteLayout(tabs.widget(1).layout())
         tabs.widget(1).setLayout(self.layout)
+
+    def pass_updated_value_checkbox(self, param_name: str):
+        # return a function to be called from QCheckBox callback
+        def emmit_value(state: int):
+            self.params_dict[param_name] = state == QtCore.Qt.Checked
+
+            # pass to function accepting parameters, if exists
+            if self.on_change:
+                self.on_change(self.params_dict)
+
+        return emmit_value
 
     def deleteLayout(self, cur_lay):
         if cur_lay is not None:
@@ -126,9 +152,10 @@ class FigureEditor(QWidget):
 class PlaneEditor(FigureEditor):
     __params = ["X", "Y", "Z", "Rotation", "Tilt"]
     __constrains = [(-100, 100), (-100, 100), (0, 200), (-180, 180), (-90, 0)]
+    _checkboxes = ["Smooth"]
 
     def __init__(self, tabs, on_change: Callable[[Dict[str, float]], None],
-                 initial_params: Optional[Dict[str, float]] = None):
+                 initial_params: Optional[Dict[str, Union[float, bool]]] = None):
         super().__init__(tabs, self.__params, self.__constrains, on_change, initial_params)
 
     def params(self):

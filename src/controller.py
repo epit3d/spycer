@@ -9,7 +9,7 @@ from functools import partial
 from pathlib import Path
 import shutil
 from shutil import copy2
-from typing import Dict, List
+from typing import Dict, List, Union
 from vtkmodules.vtkCommonMath import vtkMatrix4x4
 
 import vtk
@@ -723,12 +723,17 @@ class MainController:
             if len(self.model.splanes) > ind:
                     self.view.change_combo_select(self.model.splanes[ind], ind)
 
-    def update_plane_common(self, values: Dict[str, float]):
+    def update_plane_common(self, values: Dict[str, Union[float, bool]]):
         center = [values.get("X", 0), values.get("Y", 0), values.get("Z", 0)]
         ind = self.view.splanes_tree.currentIndex().row()
         if ind == -1:
             return
-        self.model.splanes[ind] = gui_utils.Plane(values.get("Tilt", 0), values.get("Rotation", 0), center)
+        self.model.splanes[ind] = gui_utils.Plane(
+            values.get("Tilt", 0),
+            values.get("Rotation", 0),
+            center,
+            values.get("Smooth", False),
+        )
         self.view.update_splane(self.model.splanes[ind], ind)
 
         for i in range(len(self.model.splanes)):
