@@ -54,7 +54,7 @@ class LineEdit(QLineEdit):
         super().__init__(parent)
         self.returnPressed.connect(self.value_formatting)
         self.textChanged.connect(self.input_validation)
-        self.textChanged.connect(self.coloryze_field)
+        self.textChanged.connect(self.colorize_field)
 
     def setValidator(self, validator, colorize_invalid_value = False):
         self.colorize_invalid_value = colorize_invalid_value
@@ -62,7 +62,7 @@ class LineEdit(QLineEdit):
 
     def focusOutEvent(self, event):
         self.value_formatting()
-        self.coloryze_field()
+        self.colorize_field()
         super().focusOutEvent(event)
 
     def fill_empty(self):
@@ -92,7 +92,7 @@ class LineEdit(QLineEdit):
                 self.setText(str(min_value))
         self.setCursorPosition(cursor_position)
 
-    def coloryze_field(self):
+    def colorize_field(self):
         default_background_color = "#0e1621"
         invalid_value_background_color = "#ff6e00"
 
@@ -163,6 +163,11 @@ class MainWindow(QMainWindow):
         self.move_button.setFixedWidth(190)
         page_layout.addWidget(self.move_button, 1, 1)
 
+        self.place_button = QPushButton(self.locale.PlaceModelOnEdge)
+        self.place_button.setCheckable(True)
+        self.place_button.setFixedWidth(240)
+        page_layout.addWidget(self.place_button, 1, 2)
+
         page_layout.addWidget(self.init_stl_move_panel(), 2, 0, 1, 5)
         page_layout.setColumnStretch(0, 0)
         page_layout.setRowStretch(0, 0)
@@ -227,9 +232,9 @@ class MainWindow(QMainWindow):
         self.interactor.AddObserver("MouseWheelForwardEvent", self.customInteractor.middleBtnPress)
         self.interactor.AddObserver("RightButtonPressEvent", self.customInteractor.rightBtnPress)
         self.interactor.AddObserver("RightButtonReleaseEvent", self.customInteractor.rightBtnPress)
-        self.interactor.AddObserver("LeftButtonPressEvent", self.customInteractor.leftBtnPress)
+        self.interactor.AddObserver("LeftButtonPressEvent", lambda obj, event: self.customInteractor.leftBtnPress(obj, event, self))
         self.interactor.AddObserver("LeftButtonReleaseEvent", self.customInteractor.leftBtnPress)
-        self.interactor.AddObserver("MouseMoveEvent", self.customInteractor.mouseMove)
+        self.interactor.AddObserver("MouseMoveEvent", lambda obj, event: self.customInteractor.mouseMove(obj, event, self))
 
         # self.actor_interactor_style = interactor_style.ActorInteractorStyle(self.updateTransform)
         # self.actor_interactor_style.SetDefaultRenderer(self.render)
@@ -1118,6 +1123,7 @@ class MainWindow(QMainWindow):
         self.picture_slider.setEnabled(False)
         self.picture_slider.setSliderPosition(0)
         self.move_button.setEnabled(False)
+        self.place_button.setEnabled(False)
         self.load_model_button.setEnabled(True)
         self.slice3a_button.setEnabled(False)
         self.color_model_button.setEnabled(False)
@@ -1140,6 +1146,7 @@ class MainWindow(QMainWindow):
         self.picture_slider.setMaximum(layers_count)
         self.picture_slider.setSliderPosition(layers_count)
         self.move_button.setEnabled(False)
+        self.place_button.setEnabled(False)
         self.load_model_button.setEnabled(True)
         self.slice3a_button.setEnabled(False)
         self.color_model_button.setEnabled(False)
@@ -1161,6 +1168,7 @@ class MainWindow(QMainWindow):
         self.picture_slider.setEnabled(False)
         self.picture_slider.setSliderPosition(0)
         self.move_button.setEnabled(True)
+        self.place_button.setEnabled(True)
         self.load_model_button.setEnabled(True)
         self.slice3a_button.setEnabled(True)
         self.color_model_button.setEnabled(True)
@@ -1182,6 +1190,7 @@ class MainWindow(QMainWindow):
         self.picture_slider.setEnabled(False)
         self.picture_slider.setSliderPosition(0)
         self.move_button.setEnabled(True)
+        self.place_button.setEnabled(True)
         self.load_model_button.setEnabled(False)
         self.slice3a_button.setEnabled(False)
         self.color_model_button.setEnabled(False)
@@ -1204,6 +1213,7 @@ class MainWindow(QMainWindow):
         self.picture_slider.setMaximum(layers_count)
         self.picture_slider.setSliderPosition(layers_count)
         self.move_button.setEnabled(True)
+        self.place_button.setEnabled(True)
         self.load_model_button.setEnabled(True)
         self.slice3a_button.setEnabled(True)
         self.color_model_button.setEnabled(True)

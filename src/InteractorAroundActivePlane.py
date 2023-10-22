@@ -5,8 +5,10 @@ inspired by: https://fossies.org/linux/VTK/Examples/GUI/Python/CustomInteraction
 from typing import Tuple
 
 import numpy as np
+import vtk, src
 
 from src.gui_utils import createCustomXYaxis
+from src.settings import sett, get_color_rgb
 
 
 def unit(vector: np.array) -> np.array:
@@ -79,11 +81,21 @@ class InteractionAroundActivePlane:
             # actor.SetOrigin(1, 0, 1)
             # actor.SetOrientation(0, 0, 90)
 
-    def leftBtnPress(self, obj, event):
+    def leftBtnPress(self, obj, event, view = None):
         """
         These events are bind: "LeftButtonPressEvent" "LeftButtonReleaseEvent"
         """
         self.isRotating = event == "LeftButtonPressEvent"
+
+        if view and view.place_button.isChecked():
+            picker = self.getPicker()
+            actor = picker.GetActor()
+
+            if (picker.GetCellId() >= 0) and (isinstance(actor, src.gui_utils.StlActor)):
+                triangle_id = picker.GetCellId()
+                normal = actor.GetTriangleNormal(triangle_id)
+                actor.RotateByVector(-normal)
+                view.model_centering()
 
     def middleBtnPress(self, obj, event):
         if event == "MouseWheelForwardEvent":
@@ -103,7 +115,7 @@ class InteractionAroundActivePlane:
         """
         self.isMoving = event == "RightButtonPressEvent"
 
-    def mouseMove(self, obj, event):
+    def mouseMove(self, obj, event, view):
         xLast, yLast = self.interactor.GetLastEventPosition()
         xCur, yCur = self.interactor.GetEventPosition()
         angleSpeed = self.ROTATION_SPEED
@@ -163,3 +175,31 @@ class InteractionAroundActivePlane:
         self.render.GetActiveCamera().SetPosition(*self.pos[:3])
         self.render.GetActiveCamera().SetFocalPoint(*self.focalPoint[:3])
         self.interactor.ReInitialize()
+
+        if view and view.place_button.isChecked():
+            picker = self.getPicker()
+            actor = picker.GetActor()
+
+            if (picker.GetCellId() >= 0) and (isinstance(actor, src.gui_utils.StlActor)):
+                actor.ResetColorize()
+                poly_data = actor.GetMapper().GetInput()
+                triangle_id = picker.GetCellId()
+                number_triangles = poly_data.GetNumberOfCells()
+
+                if 0 <= triangle_id < number_triangles:
+                    edge_color = get_color_rgb(sett().colors.edge)
+                    colors = poly_data.GetCellData().GetScalars()
+                    # for triangle in actor.edges[triangle_id]:
+                    #     colors.SetTuple(triangle, edge_color)
+                    colors.SetTuple(triangle_id, edge_color)
+                    poly_data.GetCellData().SetScalars(colors)
+
+            else:
+                view.stlActor.ResetColorize()
+
+    def getPicker(self):
+        clickPos = self.interactor.GetEventPosition()
+        picker = vtk.vtkCellPicker()
+        picker.Pick(clickPos[0], clickPos[1], 0, self.render)
+
+        return picker
