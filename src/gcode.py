@@ -59,115 +59,162 @@ class Point:
         return res
 
 
-def parseArgs(args, x, y, z, a, b, cone_axis, rotationPoint, absolute=True):
-    xr, yr, zr, ar, br = 0, 0, 0, 0, 0
-    if absolute:
-        xr, yr, zr, ar, br = x, y, z, a, b
-
-    for arg in args:
-        if len(arg) == 0:
-            continue
-        if arg[0] == "X":
-            xr = float(arg[1:])
-        elif arg[0] == "Y":
-            yr = float(arg[1:])
-        elif arg[0] == "Z":
-            zr = float(arg[1:])
-        elif arg[0] == "A":
-            ar = float(arg[1:])
-        elif arg[0] == "B":
-            br = float(arg[1:])
-        elif arg[0] == ";":
-            break
-        elif arg[0] == "U":  # rotation around z of bed planer
-            import numpy as np
-
-            # convert from cylindrical coordinates to xyz
-            u = math.radians(float(arg[1:]))
-            r = yr
-            z = zr
-
-            xr, yr, zr = rotation_matrix(cone_axis, -u).dot(np.array([xr, r, z]) - rotationPoint) + rotationPoint
-    if absolute:
-        return xr, yr, zr, ar, br
-    return xr + x, yr + y, zr + z, ar + a, br + b
-
-
 class Position:
-    def __init__(self, X=None, Y=None, Z=None, U=None, V=None):
+    def __init__(self, X=None, Y=None, Z=None, U=None, V=None, E=None):
         self.X = X
         self.Y = Y
         self.Z = Z
         self.U = U
         self.V = V
+        self.E = E
 
     def apply(self, pos):
-        for key in "XYZUV":
+        for key in "XYZUVE":
             val = getattr(pos, key)
             if val is not None:
                 setattr(self, key, val)
 
+    def getCopy(self):
+        return Position(self.X, self.Y, self.Z, self.U, self.V, self.E)
+
 
 class Printer:
-    def __init__(self):
-        self.currPos = Position(0, 0, 0, 0, 0)
-        self.prevPos = Position(0, 0, 0, 0, 0)
+    def __init__(self, s):
+        self.currPos = Position(0, 0, 0, 0, 0, 0)
+        self.prevPos = Position(0, 0, 0, 0, 0, 0)
 
-    def updatePos(self, args):
-        # update previous position
-        self.prevPos.apply(self.currPos)
+        self.rotationPoint = np.array([s.hardware.rotation_center_x, s.hardware.rotation_center_y, s.hardware.rotation_center_z])
+        self.cone_axis = rotation_matrix([1, 0, 0], 0).dot([0, 0, 1])
 
+        self.path = []
+        self.layer = []
+        self.layers = []
+        self.rotations = []
+        self.rotations.append(Rotation(0, 0))
+        self.lays2rots = []
+        self.abs_pos = True  # absolute positioning
+
+        # add an empty layer in the beginning
+        self.layers.append(self.layer)
+        self.lays2rots.append(len(self.rotations) - 1)
+
+    def parseArgs(self, args):
         # convert text args to values
         res = {}
         for arg in args:
             if len(arg) == 0:
                 continue
             key, val = arg[0], arg[1:]
-            if key in "XYZUV":
+            if key in "XYZUVE":
                 res[key] = float(val)
             elif key == ";":
                 break
 
-        # apply values to the printer position
+        return res
+
+    def setAbsPos(self, args):
+        res = self.parseArgs(args)
+
         for key, val in res.items():
             setattr(self.currPos, key, val)
 
-        self.dU = self.prevPos.U - self.currPos.U
+    def setRelPos(self, args):
+        res = self.parseArgs(args)
 
-    def getPoints(self):
-        maxDeltaU = 5
-        numPoints = int(abs(self.dU) // maxDeltaU)
+        for key, val in res.items():
+            val += getattr(self.currPos, key)
+            setattr(self.currPos, key, val)
 
-        res = []
-        if numPoints > 0:
-            rangeU = list(np.linspace(
-                self.prevPos.U, self.currPos.U, numPoints + 2)[1:])
-            rangeX = list(np.linspace(
-                self.prevPos.X, self.currPos.X, numPoints + 2)[1:])
-            rangeY = list(np.linspace(
-                self.prevPos.Y, self.currPos.Y, numPoints + 2)[1:])
-            rangeZ = list(np.linspace(
-                self.prevPos.Z, self.currPos.Z, numPoints + 2)[1:])
+    def updatePos(self, args):
+        # update previous position
+        self.prevPos.apply(self.currPos)
 
-            for dU, dX, dY, dZ in zip(rangeU, rangeX, rangeY, rangeZ):
-                res.append(
-                    (
-                        f"X{dX}",
-                        f"Y{dY}",
-                        f"Z{dZ}",
-                        f"U{dU}",
-                    )
-                )
+        # apply values to the printer position
+        if self.abs_pos:
+            self.setAbsPos(args)
         else:
-            res.append(
-                (
-                    f"X{self.currPos.X}",
-                    f"Y{self.currPos.Y}",
-                    f"Z{self.currPos.Z}",
-                    f"U{self.currPos.U}",
-                )
-            )
+            self.setRelPos(args)
+
+        self.dX = self.prevPos.X - self.currPos.X
+        self.dY = self.prevPos.Y - self.currPos.Y
+        self.dZ = self.prevPos.Z - self.currPos.Z
+        self.dU = self.prevPos.U - self.currPos.U
+        self.dE = self.prevPos.E - self.currPos.E
+        noMove = self.dX == 0 and self.dY == 0 and self.dZ == 0 and self.dU == 0
+
+        if self.dE == 0 or noMove:
+            self.finishPath()
+        else:
+            if len(self.path) == 0:
+                self.path.append(self.prevPos.getCopy())
+            self.path.append(self.currPos.getCopy())
+
+    def pathSplit(self):
+        maxDeltaU = 5
+
+        lastPos = self.path[0]
+        res = [(lastPos.X, lastPos.Y, lastPos.Z, lastPos.U)]
+        for pos in self.path[1:]:
+            numPoints = int(abs(lastPos.U - pos.U) // maxDeltaU)
+            if numPoints > 0:
+                rangeU = list(np.linspace(
+                    lastPos.U, pos.U, numPoints + 2)[1:])
+                rangeX = list(np.linspace(
+                    lastPos.X, pos.X, numPoints + 2)[1:])
+                rangeY = list(np.linspace(
+                    lastPos.Y, pos.Y, numPoints + 2)[1:])
+                rangeZ = list(np.linspace(
+                    lastPos.Z, pos.Z, numPoints + 2)[1:])
+
+                for dU, dX, dY, dZ in zip(rangeU, rangeX, rangeY, rangeZ):
+                    res.append((dX, dY, dZ, dU))
+            else:
+                res.append(
+                    (pos.X, pos.Y, pos.Z, pos.U))
+            lastPos = pos
+
         return res
+
+    def finishPath(self):
+        # finish path and start new
+        if len(self.path) < 2:
+            return
+
+        # U coordinate of cone path differs from current bed plane Z rotation
+        pathIsCone = False
+        for pos in self.path:
+            if pos.U != self.rotations[-1].z_rot:
+                pathIsCone = True
+                break
+
+        points = []
+        if pathIsCone:
+            rotationPoint = self.rotationPoint
+            cone_axis = self.cone_axis
+
+            for xr, yr, zr, ur in self.pathSplit():
+                # convert from cylindrical coordinates to xyz
+                u = math.radians(ur)
+                r = yr
+                z = zr
+
+                xr, yr, zr = rotation_matrix(cone_axis, -u).dot(np.array([xr, r, z]) - rotationPoint) + rotationPoint
+
+                points.append(Point(xr, yr, zr, 0, 0))
+        else:
+            for pos in self.path:
+                points.append(Point(pos.X, pos.Y, pos.Z, 0, 0))
+
+        self.layer.append(points)
+        self.path = []
+
+    def finishLayer(self):
+        self.finishPath()
+        if len(self.layer) > 0:
+            self.layers.append(self.layer)
+            self.lays2rots.append(len(self.rotations) - 1)
+
+        self.layer = []
 
 
 def parseRotation(args: List[str]):
@@ -189,40 +236,16 @@ def readGCode(filename):
 
 
 def parseGCode(lines):
-    path = []
     layer = []
-    layers = []
-    rotations = []
-    lays2rots = []
     planes = []
 
-    rotations.append(Rotation(0, 0))
-    x, y, z, a, b = 0, 0, 0, 0, 0
-    abs_pos = True  # absolute positioning
-
     s = src.settings.sett()
-    rotationPoint = np.array([s.hardware.rotation_center_x, s.hardware.rotation_center_y, s.hardware.rotation_center_z])
-
-    cone_axis = rotation_matrix([1, 0, 0], 0).dot([0, 0, 1])
 
     current_layer = 0
 
-    def finishLayer():
-        nonlocal path, layer
-        if len(path) > 1:
-            layer.append(path)
-
-        path = [Point(x, y, z, a, b)]
-        if len(layer) > 0:
-            layers.append(layer)
-            if a != 0:  # TODO: fixme
-                rotations.append(Rotation(layer[-1][-1].a, layer[-1][-1].b))
-            lays2rots.append(len(rotations) - 1)
-
-        layer = []
-
     t = 0  # select extruder (t==0) or incline (t==2) or rotate (t==1)
-    printer = Printer()
+    printer = Printer(src.settings.sett())
+
     for line in lines:
         line = line.strip()
         if len(line) == 0:
@@ -230,7 +253,7 @@ def parseGCode(lines):
         if line[0] == ';':  # comment
             if line.startswith(";LAYER:"):
                 current_layer = int(line[7:])
-                finishLayer()
+                printer.finishLayer()
             elif line.startswith(";Estimated print time:"):
                 print_time = float(line[23:])
                 s.slicing.print_time = print_time
@@ -253,50 +276,38 @@ def parseGCode(lines):
             args, comment = line.split(";")[:2]
             args = args.split(" ")
             if comment.lower() == "rotation":  # we have either rotation or incline
-                finishLayer()
+                printer.finishLayer()
                 # if any(a.lower().startswith('u') for a in args):  # rotation
-                rotations.append(Rotation(rotations[-1].x_rot, parseRotation(args[1:])))
+                printer.rotations.append(Rotation(printer.rotations[-1].x_rot, parseRotation(args[1:])))
+                printer.currPos.U = printer.rotations[-1].z_rot
             elif comment.lower() == "incline":
-                finishLayer()
+                printer.finishLayer()
                 # if any(a.lower().startswith('v') for a in args):  # incline
-                rotations.append(Rotation(parseRotation(args[1:]), rotations[-1].z_rot))
+                printer.rotations.append(Rotation(parseRotation(args[1:]), printer.rotations[-1].z_rot))
 
-                cone_axis = rotation_matrix([1, 0, 0], np.radians(rotations[-1].x_rot)).dot([0, 0, 1])
+                printer.cone_axis = rotation_matrix([1, 0, 0], np.radians(printer.rotations[-1].x_rot)).dot([0, 0, 1])
+                printer.currPos.V = printer.rotations[-1].x_rot
             elif args[0] == "G0":  # move to (or rotate)
                 pos = args[1:]
 
                 printer.updatePos(pos)
-
-                if len(path) > 1:  # finish path and start new
-                    layer.append(path)
-                x, y, z, a, b = parseArgs(pos, x, y, z, a, b, cone_axis, rotationPoint, abs_pos)
-                path = [Point(x, y, z, a, b)]
             elif args[0] == "G1":  # draw to
                 pos = args[1:]
 
                 printer.updatePos(pos)
-
-                # check U coordinate change
-                if printer.dU == 0:
-                    # U not changed, do noraml arguments parsing
-                    x, y, z, a, b = parseArgs(pos, x, y, z, a, b, cone_axis, rotationPoint, abs_pos)
-                    path.append(Point(x, y, z, a, b))
-                else:
-                    # U changed, get interpolated points
-                    for point in printer.getPoints():
-                        x, y, z, a, b = parseArgs(point, x, y, z, a, b, cone_axis, rotationPoint, abs_pos)
-                        path.append(Point(x, y, z, a, b))
-
             elif args[0] == "G90":  # absolute positioning
-                abs_pos = True
+                printer.abs_pos = True
             elif args[0] == "G91":  # relative positioning
-                abs_pos = False
+                printer.abs_pos = False
+            elif args[0] == "G92":  # set position
+                printer.setAbsPos(args[1:])
+                printer.finishPath()
             else:
                 pass  # skip
 
-    finishLayer()  # not forget about last layer
+    printer.finishLayer()  # not forget about last layer
     src.settings.save_settings()
 
-    layers.append(layer)  # add dummy layer for back rotations
-    lays2rots.append(len(rotations) - 1)
-    return GCode(layers, rotations, lays2rots)
+    printer.layers.append(layer)  # add dummy layer for back rotations
+    printer.lays2rots.append(len(printer.rotations) - 1)
+    return GCode(printer.layers, printer.rotations, printer.lays2rots)
