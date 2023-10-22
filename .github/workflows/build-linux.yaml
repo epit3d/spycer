@@ -1,4 +1,4 @@
-name: Build executable
+name: Build executable for linux
 on:
   workflow_dispatch:
     inputs:
@@ -15,7 +15,8 @@ jobs:
       - name: Get current branch
         run: echo current branch ${{ github.ref }}
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
+    container: node:16-buster
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -23,15 +24,18 @@ jobs:
           ref: ${{ github.ref }}
           submodules: recursive
           token: ${{ secrets.PAT_TOKEN }}
-      - name: Set up python 3.10 for windows
+      - name: Set lsb_release
+        run: |
+          apt-get update && apt-get install -y lsb-release && cat lsb_entry > /etc/lsb-release
+      - name: Set up python 3.8.16 for Linux
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
-          cache: "pip"
+          python-version: "3.8.16"
+          # cache: "pip"
       - name: Install dependencies
         run: |
           python3 -m pip install --upgrade pip setuptools wheel flake8 pyinstaller
-          python3 -m pip install -r win-req.txt
+          python3 -m pip install -r linux-req.txt
       - name: Lint with flake8
         run: |
           # stop the build if there are Python syntax errors or undefined names
@@ -46,6 +50,6 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
-          name: "spycer-windows"
+          name: "spycer-linux"
           path: |
             dist/

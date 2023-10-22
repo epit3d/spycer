@@ -1,6 +1,6 @@
 import sys
 from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, \
-    QPushButton, QLabel, QListWidget, QDesktopWidget, QLineEdit, QFileDialog
+    QPushButton, QLabel, QListWidget, QLineEdit, QFileDialog, QMessageBox
 from PyQt5.QtCore import QSettings
 
 # import aligntop
@@ -9,8 +9,9 @@ from PyQt5 import QtGui
 from typing import List
 
 from src.gui_utils import showErrorDialog
+from src.settings import sett, get_version, paths_transfer_in_settings, PathBuilder
 import src.locales as locales
-
+import shutil
 
 class EntryWindow(QWidget):
     # entry window is a window that is shown before main window
@@ -27,6 +28,16 @@ class EntryWindow(QWidget):
         self.setWindowTitle(locales.getLocale().ProjectManager)
         self.setWindowIcon(QtGui.QIcon("icon.png"))
         self.init_ui()
+
+    def showEvent(self, e):
+        # showEvent is run when we first open and when we close project
+        # when we close project and entry window pops up we need to update
+        # list of projects because new project will not be included
+
+        # update list of recent projects
+        self.reload_recent_projects_list()
+        
+        super().showEvent(e)
 
     def init_ui(self):
         self.setFixedSize(600, 300)
@@ -85,8 +96,7 @@ class EntryWindow(QWidget):
             self.open_existing_project)
 
         # Add recent projects to list widget
-        self.recent_projects = self.load_recent_projects()
-        self.recent_projects_list_widget.addItems(self.recent_projects)
+        self.reload_recent_projects_list()
         existing_proj_layout.addWidget(self.recent_projects_label)
         existing_proj_layout.addWidget(self.recent_projects_list_widget)
 
@@ -99,6 +109,12 @@ class EntryWindow(QWidget):
 
         self.setLayout(layout)
         self.show()
+
+    def reload_recent_projects_list(self):
+        # Add recent projects to list widget
+        self.recent_projects = self.load_recent_projects()
+        self.recent_projects_list_widget.clear()
+        self.recent_projects_list_widget.addItems(self.recent_projects)
 
     def choose_project_location(self):
         file = str(QFileDialog.getExistingDirectory(self, locales.getLocale().ChooseFolder))
@@ -158,15 +174,22 @@ class EntryWindow(QWidget):
             return
 
         # add current project to recent projects
-        self.recent_projects.append(str(full_path))
-        settings = QSettings('Epit3D', 'Spycer')
-        settings.setValue('recent_projects', self.recent_projects)
-
+        self.add_recent_project(full_path)
+        
         # create project directory
         full_path.mkdir(parents=True, exist_ok=True)
 
         # emit signal with path to project file
         self.create_project_signal.emit(str(full_path))
+
+    def add_recent_project(self, project_path):
+        # adds recent project to system settings
+        if project_path in self.recent_projects:
+            return
+        
+        self.recent_projects.append(str(project_path))
+        settings = QSettings('Epit3D', 'Spycer')
+        settings.setValue('recent_projects', self.recent_projects)
 
     def open_existing_project(self):
         if self.recent_projects_list_widget.currentItem() is None:
@@ -179,5 +202,35 @@ class EntryWindow(QWidget):
             selected_project = self.recent_projects_list_widget.currentItem().text()
         print(f"Opening {selected_project}...")
 
+        # add existing project to recent projects
+        self.add_recent_project(selected_project)
+
+        self.сheck_project_version(selected_project)
+
         # emit signal with path to project file
         self.open_project_signal.emit(selected_project)
+
+    def сheck_project_version(self, project_path):
+        sett().project_path = project_path
+        project_settings_filename = PathBuilder.settings_file()
+
+        build_version = get_version(PathBuilder.settings_file_default())
+        project_version = get_version(project_settings_filename)
+
+        if build_version != project_version:
+            locale = locales.getLocale()
+            message_box = QMessageBox()
+            message_box.setWindowTitle(locale.ProjectUpdate)
+            message_box.setText(locale.SettingsUpdate)
+            message_box.addButton(QMessageBox.Yes)
+            message_box.addButton(QMessageBox.No)
+            message_box.button(QMessageBox.Yes).setText(locale.Update)
+            message_box.button(QMessageBox.No).setText(locale.ContinueWithoutUpdating)
+
+            reply = message_box.exec()
+
+            if reply == QMessageBox.Yes:
+                project_settings_old_filename = PathBuilder.settings_file_old()
+                shutil.copyfile(project_settings_filename, project_settings_old_filename)
+                shutil.copyfile("settings.yaml", project_settings_filename)
+                paths_transfer_in_settings(project_settings_old_filename, project_settings_filename)

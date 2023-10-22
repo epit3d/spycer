@@ -49,7 +49,7 @@ class Locale:
     SkirtLineCount = "Skirt lines count:"
     FanSpeed = "Airflow amount, %:"
     Plane = "Plane"
-    AddOnePlaneError = "Add at least one plane"
+    AddOnePlaneError = "Add at least one figure"
     AddOneConeError = "Add at least one cone (it should be first in the list)"
     # SmoothSlice = "Non planar 5d (Beta)"
     # SmoothFlatSlice = "Non planar (Beta)"
@@ -58,8 +58,8 @@ class Locale:
     StlMoveScale = "Scale"
     ModelCentering = "Center model"
     AlignModelHeight = "Attachment to the table"
-    SavePlanes = "Save planes"
-    DownloadPlanes = "Download planes"
+    SavePlanes = "Save figures"
+    DownloadPlanes = "Download figures"
     NamePlanes = "Name"
     PrintTime = "Print time:"
     ConsumptionMaterial = "Consumption of material:"
@@ -103,6 +103,30 @@ class Locale:
     NoProjectSelected = "No project selected"
     Tools = "Tools"
     Calibration = "Calibration"
+    SubmitBugReport = "Submit a bug report"
+    SubmittingBugReport = "Submitting a bug report"
+    ErrorDescription = "Error description:"
+    AddImage = "Add image"
+    Send = "Send"
+    Cancel = "Cancel"
+    AddingImage = "Adding an image"
+    ReportSubmitSuccessfully = "Report submit successfully. \nYou will be notified as soon as the problem is resolved. If necessary, our specialists will contact you for additional information. Thank you for helping us make the product better!"
+    ErrorReport = "An error occurred while submitting the report"
+    PlaceModelOnEdge = "Place the model on the edge"
+
+    ErrorHardwareModule = "Hardware module is unavailable in public"
+    ErrorBugModule = "Bug reporting is unavailable in public"
+
+    PrinterName = "Printer name:"
+    ChoosePrinterDirectory = "Choose printer name"
+    AddNewPrinter = "Add new printer"
+    DefaultPrinterWarn = "Be aware that you are using default printer. New data might be removed after update. We recommend to create new printer and calibrate it."
+    CheckUpdates = "Check for updates"
+    ProjectUpdate = "Project update"
+    SettingsUpdate = "The current project's settings are outdated. This may lead to errors in the program. Do you want to update? New setting's fields will be set to default values, please recheck."
+    Update = "Update"
+    ContinueWithoutUpdating = "Continue without updating"
+    EmptyDescription = "The error description cannot be empty"
 
     def __init__(self, **entries):
         self.__dict__.update(entries)
@@ -159,7 +183,7 @@ dicts = {
         SkirtLineCount="Количество линий юбки:",
         FanSpeed="Величина обдува детали, %:",
         Plane="Плоскость",
-        AddOnePlaneError="Добавьте хотя бы одну плоскость",
+        AddOnePlaneError="Добавьте хотя бы одну фигуру",
         AddOneConeError="Первой фигурой должен быть конус",
         # SmoothSlice="Непланарная 5d (Beta)",
         # SmoothFlatSlice="Непланарная (Beta)",
@@ -168,8 +192,8 @@ dicts = {
         StlMoveScale="Масштабирование",
         ModelCentering = "Поместить модель в центр",
         AlignModelHeight = "Привязка к столу",
-        SavePlanes = "Сохранить плоскости",
-        DownloadPlanes = "Загрузить плоскости",
+        SavePlanes = "Сохранить фигуры",
+        DownloadPlanes = "Загрузить фигуры",
         NamePlanes = "Название",
         PrintTime = "Время печати:",
         ConsumptionMaterial = "Расход материала:",
@@ -211,8 +235,32 @@ dicts = {
         ProjectDirectoryCannotBeEmpty = "Директория проекта не может быть пустой",
         ProjectAlreadyExists = "Проект с таким именем уже существует",
         NoProjectSelected = "Проект не выбран",
-        Tools="Инструменты",
-        Calibration="Калибровка",
+        Tools = "Инструменты",
+        Calibration = "Калибровка",
+        SubmitBugReport = "Отправить сообщение об ошибке",
+        SubmittingBugReport = "Отправка сообщения об ошибке",
+        ErrorDescription = "Описание ошибки:",
+        AddImage = "Добавить изображение",
+        Send = "Отправить",
+        Cancel = "Отмена",
+        AddingImage = "Выбрать изображение",
+        ReportSubmitSuccessfully = "Отчет успешно отправлен. \nВы будете уведомлены, как только проблема будет устранена. При необходимости, наши специалисты свяжутся с вами для получения дополнительной информации. Благодарим Вас, что помогаете нам сделать продукт лучше!",
+        ErrorReport = "Произошла ошибка при отправке отчета",
+        PlaceModelOnEdge = "Положить модель на грань",
+
+        ErrorHardwareModule = "Модуль калибровки недоступен публично",
+        ErrorBugModule = "Модуль отправки багов недоступен публично",
+
+        PrinterName = "Конфигурация принтера:",
+        ChoosePrinterDirectory = "Выберите название принтера",
+        AddNewPrinter = "Добавить новый принтер",
+        DefaultPrinterWarn = "Будьте внимательны, Вы используете принтер по умолчанию. Данные этого принтера будут перезаписываться при обновлениях. Мы рекомендуем создать и использовать свою конфигурацию принтера.",
+        CheckUpdates = "Проверить наличие обновлений",
+        ProjectUpdate = "Обновление проекта",
+        SettingsUpdate = "Настройки текущего проекта устарели. Это может привести к ошибкам в работе программы. Хотите обновить? Новые поля настроек будут выставлены в значения по умолчанию, пожалуйста проверьте.",
+        Update = "Обновить",
+        ContinueWithoutUpdating = "Продолжить без обновления",
+        EmptyDescription = "Описание ошибки не может быть пустым",
     ),
 }
 

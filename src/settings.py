@@ -9,6 +9,17 @@ import vtk
 
 _sett = None  # do not forget to load_settings() at start
 
+# setup app path
+if getattr(sys, 'frozen', False):
+    APP_PATH = path.dirname(sys.executable)
+    # uncomment if you want some protection that nothing would be broken
+    # if not path.exists(path.join(app_path, settings_filename)):
+    #     bundle_path = sys._MEIPASS
+    #     shutil.copyfile(path.join(bundle_path, settings_filename), path.join(app_path, settings_filename))
+else:
+    # have to add .. because settings.py is under src folder
+    APP_PATH = path.join(path.dirname(__file__), "..")
+
 
 def sett():
     return _sett
@@ -25,6 +36,16 @@ def get_color(key):
     _colors[key] = val
     return val
 
+def get_color_rgb(color_name):
+    color_rgba = get_color(color_name)
+
+    r = int(color_rgba[0] * 255)
+    g = int(color_rgba[1] * 255)
+    b = int(color_rgba[2] * 255)
+
+    rgb = (r, g, b)
+
+    return rgb
 
 def copy_project_files(project_path: str):
     load_settings()
@@ -77,6 +98,35 @@ def save_settings(filename=""):
     with open(filename, 'w') as f:
         f.write(temp)
 
+def save_splanes_to_file(splanes, filename):
+    with open(filename, 'w') as out:
+        for p in splanes:
+            out.write(p.toFile() + '\n')
+
+def get_version(settings_filename):
+    try:
+        with open(settings_filename, "r") as settings_file:
+            settings = yaml.safe_load(settings_file)
+
+        version = settings["common"]["version"]
+        return version
+    except Exception as e:
+        print("Error reading version")
+        return ""
+
+def paths_transfer_in_settings(initial_settings_filename, final_settings_filename):
+    with open(initial_settings_filename, "r") as settings_file:
+        initial_settings = yaml.safe_load(settings_file)
+
+    with open(final_settings_filename, "r") as settings_file:
+        final_settings = yaml.safe_load(settings_file)
+
+        for k, v in initial_settings.items():
+            if k in final_settings:
+                final_settings[k] = v
+
+        with open(final_settings_filename, "w") as settings_file:
+            yaml.dump(final_settings, settings_file, default_flow_style=False)
 
 class Settings(object):
     def __init__(self, d):
@@ -105,6 +155,14 @@ class PathBuilder:
     @staticmethod
     def settings_file():
         return path.join(PathBuilder.project_path(), "settings.yaml")
+    
+    @staticmethod
+    def settings_file_default():
+        return "settings.yaml"
+
+    @staticmethod
+    def settings_file_old():
+        return path.join(PathBuilder.project_path(), "settings_old.yaml")
 
     @staticmethod
     def colorizer_cmd():
@@ -130,3 +188,10 @@ class PathBuilder:
     def gcode_file():
         return path.join(PathBuilder.project_path(), sett().slicing.gcode_file)
     
+    @staticmethod
+    def printer_dir():
+        return sett().hardware.printer_dir
+
+    @staticmethod
+    def calibration_file():
+        return path.join(PathBuilder.printer_dir(), sett().hardware.calibration_file)

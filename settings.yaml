@@ -10,6 +10,8 @@ colors:
   layer: DarkSlateGray
   plane: Cyan
   splane: Cyan
+  edge: Orange
+  model: Silver
 common:
   lang: ru
   opacity_current_plane: 0.8
@@ -18,9 +20,11 @@ common:
   opacity_plane: 0.3
   opacity_table: 0.3
   splane_diameter: 150
+  version: v1.0.0
 hardware:
+  printer_dir: ""
   bar_diameter: 1.75
-  calibration_file: data/calibration_data.csv
+  calibration_file: calibration_data.csv
   calibration_file_zero: data/calibration_data_zero.csv
   calibration_x:
     a0: 0
@@ -74,6 +78,7 @@ slicing:
   fan_speed: 95
   fill_density: 20
   filling_type: Triangles
+  filter_tolerance: 0.01
   flat_5d: 0
   ftetwild_cmd: ./lib/FloatTetwild_bin.exe -i sett.slicing.stl_file -o lib/goosli_middle.msh
   gcode_file: goosli_out.gcode
