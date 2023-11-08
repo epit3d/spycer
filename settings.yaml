@@ -98,6 +98,7 @@ slicing:
   magic_epsilon: 40
   material_shrinkage: 1.5
   mesh_file: lib/goosli_middle.msh
+  minimum_path_area: 0.001
   model_centering: false
   originx: 0.0
   originy: 0.0
