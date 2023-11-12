@@ -229,10 +229,10 @@ def createStlActorInOrigin(filename, colorize=False):
     actor, reader = createStlActor(filename)
     output = reader.GetOutput()
 
+    actor = StlActor(output)
+
     if colorize:
-        actor = ColorizedStlActor(output)
-    else:
-        actor = StlActor(output)
+        actor.ColorizeCriticalOverhangs()
 
     actor = setTransformFromSettings(actor)
     return actor
@@ -437,6 +437,26 @@ class StlActorMixin:
         center = ox, oy, oz - (cz - bnz)
         for method in self.tfUpdateMethods:
             method(center, tf.GetOrientation(), tf.GetScale())
+
+    def ColorizeCriticalOverhangs(self):
+        with open(PathBuilder.colorizer_result(), "rb") as f:
+            content = f.read()
+
+            model_color = get_color_rgb(sett().colors.model)
+            critical_color = get_color_rgb(sett().colors.last_layer)
+
+            colors = vtk.vtkUnsignedCharArray()
+            colors.SetNumberOfComponents(3)
+            colors.SetNumberOfTuples(len(content))
+
+            for i, b in enumerate(content):
+                if b == 1:
+                    colors.SetTuple(i, critical_color)
+                else:
+                    colors.SetTuple(i, model_color)
+
+            poly_data = self.GetMapper().GetInput()
+            poly_data.GetCellData().SetScalars(colors)
 
     def ResetColorize(self):
         poly_data = self.GetMapper().GetInput()

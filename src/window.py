@@ -786,7 +786,7 @@ class MainWindow(QMainWindow):
         s = sett()
         s.slicing.model_centering = self.model_centering_box.isChecked()
         save_settings()
-        self.hide_colorize()
+        self.reset_colorize()
 
         origin = gui_utils.findStlOrigin(self.stlActor)
         bound = gui_utils.getBounds(self.stlActor)
@@ -921,7 +921,7 @@ class MainWindow(QMainWindow):
             if self.model_align_height.isChecked():
                 tf.Translate(0, 0, -zmin)
             tf.PreMultiply()
-            self.hide_colorize()
+            self.reset_colorize()
             self.stlActor.SetUserTransform(tf)
             self.boxWidget.SetTransform(tf)
             self.updateTransform()
@@ -971,7 +971,7 @@ class MainWindow(QMainWindow):
         self.reload_scene()
 
     def reload_splanes(self, splanes):
-        self.hide_colorize()
+        self.reset_colorize()
         self._recreate_splanes(splanes)
         self.splanes_tree.clear()
         for i in range(len(splanes)):
@@ -1009,7 +1009,7 @@ class MainWindow(QMainWindow):
             self.render.AddActor(act)
 
     def update_splane(self, sp, ind):
-        self.hide_colorize()
+        self.reset_colorize()
         settableVisibility = self.splanes_actors[ind].GetVisibility() and not self.hide_checkbox.isChecked()
         self.render.RemoveActor(self.splanes_actors[ind])
         # TODO update to pass values as self.splanes_actors[ind], and only then destruct object
@@ -1049,7 +1049,7 @@ class MainWindow(QMainWindow):
         self.reload_scene()
 
     def load_gcode(self, actors, is_from_stl, plane_tf):
-        self.hide_colorize()
+        self.reset_colorize()
         self.clear_scene()
         if is_from_stl:
             self.stlActor.VisibilityOff()
@@ -1224,16 +1224,9 @@ class MainWindow(QMainWindow):
         self.stl_move_panel.setEnabled(False)
         self.state = BothState
 
-    def hide_colorize(self):
-        if isinstance(self.stlActor, src.gui_utils.ColorizedStlActor):
-            stl_actor = gui_utils.createStlActorInOrigin(PathBuilder().stl_model())
-            stl_actor.lastMove = self.stlActor.lastMove
-            boxWidget = self.boxWidget
-            axesWidget = self.axesWidget
-
-            self.load_stl(stl_actor)
-            self.boxWidget = boxWidget
-            self.axesWidget = axesWidget
+    def reset_colorize(self):
+        if self.stlActor:
+            self.stlActor.ResetColorize()
 
 def strF(v):  # cut 3 numbers after the point in float
     s = str(v)
