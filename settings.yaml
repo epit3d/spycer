@@ -40,6 +40,14 @@ hardware:
   plane_center_z: 0
   plane_diameter: 250
   maximum_height: 240
+  minimum_planner_speed: 0.05
+  nozzle_contact_points:
+    x0: 0.5
+    x1: 2.8
+    x2: 30.0
+    y0: 0.0
+    y1: 3.3
+    y2: 53.7
   rotation_center_x: 0
   rotation_center_y: 0
   rotation_center_z: 63.5
@@ -90,6 +98,7 @@ slicing:
   magic_epsilon: 40
   material_shrinkage: 1.5
   mesh_file: lib/goosli_middle.msh
+  minimum_path_area: 0.001
   model_centering: false
   originx: 0.0
   originy: 0.0
