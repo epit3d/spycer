@@ -329,7 +329,18 @@ class MainController:
         self.view.reload_splanes(self.model.splanes)
 
     def change_layer_view(self):
-        self.model.current_slider_value = self.view.change_layer_view(self.model.current_slider_value, self.model.gcode)
+        if not self.model.current_slider_value:
+            self.model.current_slider_value = self.view.picture_slider.value()
+
+        if self.view.picture_slider.value() == self.model.current_slider_value:
+            return
+
+        step = 1 if self.view.picture_slider.value() > self.model.current_slider_value else -1
+
+        for i in range(self.model.current_slider_value, self.view.picture_slider.value(), step):
+            self.model.current_slider_value = self.view.change_layer_view(i + step, self.model.current_slider_value, self.model.gcode)
+
+        self.view.reload_scene()
         self.view.hide_checkbox.setChecked(True)
         self.view.model_switch_box.setChecked(False)
 

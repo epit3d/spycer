@@ -826,9 +826,8 @@ class MainWindow(QMainWindow):
         self.render.Modified()
         self.interactor.Render()
 
-    def change_layer_view(self, prev_value, gcd):  # shows +1 layer to preview finish
+    def change_layer_view(self, new_slider_value, prev_value, gcd):  # shows +1 layer to preview finish
 
-        new_slider_value = self.picture_slider.value()
         if prev_value is None:
             return new_slider_value
 
@@ -866,7 +865,6 @@ class MainWindow(QMainWindow):
             self.rotate_plane(plane_tf(curr_rotation))
             # for i in range(len(self.planes)):
             #     self.rotateAnyPlane(self.planesActors[i], self.planes[i], currRotation)
-        self.reload_scene()
         return new_slider_value
 
     def move_stl2(self):
