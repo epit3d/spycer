@@ -229,10 +229,10 @@ def createStlActorInOrigin(filename, colorize=False):
     actor, reader = createStlActor(filename)
     output = reader.GetOutput()
 
+    actor = StlActor(output)
+
     if colorize:
-        actor = ColorizedStlActor(output)
-    else:
-        actor = StlActor(output)
+        actor.ColorizeCriticalOverhangs()
 
     actor = setTransformFromSettings(actor)
     return actor
@@ -438,6 +438,26 @@ class StlActorMixin:
         for method in self.tfUpdateMethods:
             method(center, tf.GetOrientation(), tf.GetScale())
 
+    def ColorizeCriticalOverhangs(self):
+        with open(PathBuilder.colorizer_result(), "rb") as f:
+            content = f.read()
+
+            model_color = get_color_rgb(sett().colors.model)
+            critical_color = get_color_rgb(sett().colors.last_layer)
+
+            colors = vtk.vtkUnsignedCharArray()
+            colors.SetNumberOfComponents(3)
+            colors.SetNumberOfTuples(len(content))
+
+            for i, b in enumerate(content):
+                if b == 1:
+                    colors.SetTuple(i, critical_color)
+                else:
+                    colors.SetTuple(i, model_color)
+
+            poly_data = self.GetMapper().GetInput()
+            poly_data.GetCellData().SetScalars(colors)
+
     def ResetColorize(self):
         poly_data = self.GetMapper().GetInput()
         number_triangles = poly_data.GetNumberOfCells()
@@ -502,15 +522,19 @@ class ColorizedStlActor(StlActorMixin, ActorWithColor):
 
 
 class Plane:
-    def __init__(self, incl, rot, point):
+    def __init__(self, incl, rot, point, smooth=False):
         self.incline = incl
         self.x = point[0]
         self.y = point[1]
         self.z = point[2]
         self.rot = rot
+        self.smooth = smooth
 
     def toFile(self):
-        return f"plane X{self.x} Y{self.y} Z{self.z} T{self.incline} R{self.rot}"
+        plane = f"plane X{self.x} Y{self.y} Z{self.z} T{self.incline} R{self.rot}"
+        if self.smooth:
+            plane += " S"
+        return plane
 
     def params(self) -> Dict[str, float]:
         return {
@@ -518,7 +542,8 @@ class Plane:
             "Y": self.y,
             "Z": self.z,
             "Rotation": self.rot,
-            "Tilt": self.incline
+            "Tilt": self.incline,
+            "Smooth": self.smooth,
         }
 
 
@@ -545,7 +570,12 @@ def read_planes(filename):
             if v[0] == 'plane':
                 #plane X10 Y10 Z10 T-60 R0 - Plane string format
                 planes.append(
-                    Plane(float(v[4][1:]), float(v[5][1:]), (float(v[1][1:]), float(v[2][1:]), float(v[3][1:]))))
+                    Plane(
+                        float(v[4][1:]),
+                        float(v[5][1:]),
+                        (float(v[1][1:]), float(v[2][1:]), float(v[3][1:])),
+                        len(v) > 6 and v[6] == "S",
+                    ))
             else:
                 #cone X0 Y0 Z10 A60 H10 H50 - Cone string format
                 planes.append(Cone(float(v[4][1:]), (float(v[1][1:]), float(v[2][1:]), float(v[3][1:])), float(v[5][1:]), float(v[6][1:])))

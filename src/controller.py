@@ -9,7 +9,7 @@ from functools import partial
 from pathlib import Path
 import shutil
 from shutil import copy2
-from typing import Dict, List
+from typing import Dict, List, Union
 from vtkmodules.vtkCommonMath import vtkMatrix4x4
 
 import vtk
@@ -278,6 +278,7 @@ class MainController:
         self.change_figure_parameters()
 
     def change_figure_parameters(self):
+        self.view.picture_slider.setValue(0)
         self.view.model_switch_box.setChecked(True)
         self.view.hide_checkbox.setChecked(False)
         ind = self.view.splanes_tree.currentIndex().row()
@@ -328,7 +329,20 @@ class MainController:
         self.view.reload_splanes(self.model.splanes)
 
     def change_layer_view(self):
-        self.model.current_slider_value = self.view.change_layer_view(self.model.current_slider_value, self.model.gcode)
+        if not self.model.current_slider_value:
+            self.model.current_slider_value = 0
+
+        if self.view.picture_slider.value() == self.model.current_slider_value:
+            return
+
+        step = 1 if self.view.picture_slider.value() > self.model.current_slider_value else -1
+
+        for i in range(self.model.current_slider_value, self.view.picture_slider.value(), step):
+            self.model.current_slider_value = self.view.change_layer_view(i + step, self.model.current_slider_value, self.model.gcode)
+
+        self.view.reload_scene()
+        self.view.hide_checkbox.setChecked(True)
+        self.view.model_switch_box.setChecked(False)
 
     def update_wall_thickness(self):
         self.update_dependent_fields(self.view.number_wall_lines_value, self.view.line_width_value, self.view.wall_thickness_value)
@@ -682,7 +696,6 @@ class MainController:
     def add_splane(self):
         self.view.model_switch_box.setChecked(True)
         self.view.hide_checkbox.setChecked(False)
-        self.view.hide_checkbox.setChecked(False)
         self.model.add_splane()
         self.view.reload_splanes(self.model.splanes)
         self.change_figure_parameters()
@@ -690,14 +703,12 @@ class MainController:
     def add_cone(self):
         self.view.model_switch_box.setChecked(True)
         self.view.hide_checkbox.setChecked(False)
-        self.view.hide_checkbox.setChecked(False)
         self.model.add_cone()
         self.view.reload_splanes(self.model.splanes)
         self.change_figure_parameters()
 
     def remove_splane(self):
         self.view.model_switch_box.setChecked(True)
-        self.view.hide_checkbox.setChecked(False)
         self.view.hide_checkbox.setChecked(False)
         ind = self.view.splanes_tree.currentIndex().row()
         if ind == -1:
@@ -723,12 +734,17 @@ class MainController:
             if len(self.model.splanes) > ind:
                     self.view.change_combo_select(self.model.splanes[ind], ind)
 
-    def update_plane_common(self, values: Dict[str, float]):
+    def update_plane_common(self, values: Dict[str, Union[float, bool]]):
         center = [values.get("X", 0), values.get("Y", 0), values.get("Z", 0)]
         ind = self.view.splanes_tree.currentIndex().row()
         if ind == -1:
             return
-        self.model.splanes[ind] = gui_utils.Plane(values.get("Tilt", 0), values.get("Rotation", 0), center)
+        self.model.splanes[ind] = gui_utils.Plane(
+            values.get("Tilt", 0),
+            values.get("Rotation", 0),
+            center,
+            values.get("Smooth", False),
+        )
         self.view.update_splane(self.model.splanes[ind], ind)
 
         for i in range(len(self.model.splanes)):
