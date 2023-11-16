@@ -278,6 +278,7 @@ class MainController:
         self.change_figure_parameters()
 
     def change_figure_parameters(self):
+        self.view.picture_slider.setValue(0)
         self.view.model_switch_box.setChecked(True)
         self.view.hide_checkbox.setChecked(False)
         ind = self.view.splanes_tree.currentIndex().row()
@@ -328,7 +329,20 @@ class MainController:
         self.view.reload_splanes(self.model.splanes)
 
     def change_layer_view(self):
-        self.model.current_slider_value = self.view.change_layer_view(self.model.current_slider_value, self.model.gcode)
+        if not self.model.current_slider_value:
+            self.model.current_slider_value = 0
+
+        if self.view.picture_slider.value() == self.model.current_slider_value:
+            return
+
+        step = 1 if self.view.picture_slider.value() > self.model.current_slider_value else -1
+
+        for i in range(self.model.current_slider_value, self.view.picture_slider.value(), step):
+            self.model.current_slider_value = self.view.change_layer_view(i + step, self.model.current_slider_value, self.model.gcode)
+
+        self.view.reload_scene()
+        self.view.hide_checkbox.setChecked(True)
+        self.view.model_switch_box.setChecked(False)
 
     def update_wall_thickness(self):
         self.update_dependent_fields(self.view.number_wall_lines_value, self.view.line_width_value, self.view.wall_thickness_value)
@@ -682,7 +696,6 @@ class MainController:
     def add_splane(self):
         self.view.model_switch_box.setChecked(True)
         self.view.hide_checkbox.setChecked(False)
-        self.view.hide_checkbox.setChecked(False)
         self.model.add_splane()
         self.view.reload_splanes(self.model.splanes)
         self.change_figure_parameters()
@@ -690,14 +703,12 @@ class MainController:
     def add_cone(self):
         self.view.model_switch_box.setChecked(True)
         self.view.hide_checkbox.setChecked(False)
-        self.view.hide_checkbox.setChecked(False)
         self.model.add_cone()
         self.view.reload_splanes(self.model.splanes)
         self.change_figure_parameters()
 
     def remove_splane(self):
         self.view.model_switch_box.setChecked(True)
-        self.view.hide_checkbox.setChecked(False)
         self.view.hide_checkbox.setChecked(False)
         ind = self.view.splanes_tree.currentIndex().row()
         if ind == -1:
