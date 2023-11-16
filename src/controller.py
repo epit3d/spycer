@@ -330,7 +330,7 @@ class MainController:
 
     def change_layer_view(self):
         if not self.model.current_slider_value:
-            self.model.current_slider_value = self.view.picture_slider.value()
+            self.model.current_slider_value = 0
 
         if self.view.picture_slider.value() == self.model.current_slider_value:
             return

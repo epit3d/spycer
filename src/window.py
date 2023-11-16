@@ -773,6 +773,8 @@ class MainWindow(QMainWindow):
 
     def switch_stl_gcode(self):
         if self.model_switch_box.isChecked():
+            self.picture_slider.setValue(0)
+            self.model_switch_box.setChecked(True)
             for actor in self.actors:
                 actor.VisibilityOff()
             self.stlActor.VisibilityOn()
