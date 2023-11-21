@@ -140,12 +140,13 @@ def paths_transfer_in_settings(initial_settings_filename, final_settings_filenam
             yaml.dump(final_settings, settings_file, default_flow_style=False)
 
 def compare_settings(settings1, settings2):
-    for key in set(settings1) & set(settings2):
-        if isinstance(settings1[key], dict) and isinstance(settings2[key], dict):
+    for key in set(settings2):
+        if isinstance(settings2[key], dict):
             compare_settings(settings1[key], settings2[key])
         else:
-            if key in settings2:
-                settings2[key] = settings1[key]
+            if key in settings1:
+                if not settings1[key] is None:
+                    settings2[key] = settings1[key]
 
 class Settings(object):
     def __init__(self, d):
