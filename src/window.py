@@ -206,6 +206,8 @@ class MainWindow(QMainWindow):
         self.close_signal.emit()
         event.accept()
 
+        self.centralWidget().layout().itemAtPosition(0, 0).widget().Finalize()
+
     def init3d_widget(self):
         widget3d = QVTKRenderWindowInteractor(self)
 
