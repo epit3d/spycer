@@ -14,7 +14,7 @@ from vtkmodules.vtkCommonMath import vtkMatrix4x4
 
 import vtk
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import QFileDialog, QInputDialog
+from PyQt5.QtWidgets import QFileDialog, QInputDialog, QMessageBox
 
 from src import gui_utils, locales, qt_utils
 from src.figure_editor import PlaneEditor, ConeEditor
@@ -73,6 +73,8 @@ class MainController:
         self.view.open_action.triggered.connect(self.open_file)
         self.view.save_gcode_action.triggered.connect(partial(self.save_gcode_file))
         self.view.save_sett_action.triggered.connect(self.save_settings_file)
+        self.view.save_project_action.triggered.connect(self.save_project)
+        self.view.save_project_as_action.triggered.connect(self.save_project_as)
         self.view.load_sett_action.triggered.connect(self.load_settings_file)
         self.view.slicing_info_action.triggered.connect(self.get_slicer_version)
         self.view.check_updates_action.triggered.connect(self.open_updater)
@@ -606,6 +608,45 @@ class MainController:
                 self.save_settings("vip", filename)
         except IOError as e:
             showErrorDialog("Error during file saving:" + str(e))
+
+    def save_project(self):
+        try:
+            save_splanes_to_file(self.model.splanes, PathBuilder.splanes_file())
+            self.save_settings("vip", PathBuilder.settings_file())
+
+            self.successful_saving_project()
+        except IOError as e:
+            showErrorDialog("Error during project saving: " + str(e))
+
+    def save_project_as(self):
+        try:
+            save_directory = str(QFileDialog.getExistingDirectory(self.view, locales.getLocale().SavingProject))
+
+            if not save_directory:
+                return
+
+            project_path = PathBuilder.project_path()
+
+            for root, _, files in os.walk(project_path):
+                target_root = os.path.join(save_directory, os.path.relpath(root, project_path))
+                os.makedirs(target_root, exist_ok=True)
+
+                for file in files:
+                    source_file = os.path.join(root, file)
+                    target_file = os.path.join(target_root, file)
+                    shutil.copy2(source_file, target_file)
+
+            self.successful_saving_project()
+
+        except IOError as e:
+            showErrorDialog("Error during project saving: " + str(e))
+
+    def successful_saving_project(self):
+        message_box = QMessageBox(parent=self.view)
+        message_box.setWindowTitle(locales.getLocale().SavingProject)
+        message_box.setText(locales.getLocale().ProjectSaved)
+        message_box.setIcon(QMessageBox.Information)
+        message_box.exec_()
 
     def load_settings_file(self):
         try:

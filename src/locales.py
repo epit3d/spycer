@@ -81,6 +81,8 @@ class Locale:
     Open = "Open"
     SaveSettings = "Save settings"
     LoadSettings = "Load settings"
+    SaveProject = "Save project"
+    SaveProjectAs = "Save project as..."
     SlicerInfo = "Slicer info"
     SlicerVersion = "Slicer version: "
     SlicingTitle = "Slicing"
@@ -113,6 +115,8 @@ class Locale:
     ReportSubmitSuccessfully = "Report submit successfully. \nYou will be notified as soon as the problem is resolved. If necessary, our specialists will contact you for additional information. Thank you for helping us make the product better!"
     ErrorReport = "An error occurred while submitting the report"
     PlaceModelOnEdge = "Place the model on the edge"
+    SavingProject = "Saving the project"
+    ProjectSaved = "The project was successfully saved"
 
     ErrorHardwareModule = "Hardware module is unavailable in public"
     ErrorBugModule = "Bug reporting is unavailable in public"
@@ -215,6 +219,8 @@ dicts = {
         Open = "Открыть",
         SaveSettings = "Сохранить настройки",
         LoadSettings = "Загрузить настройки",
+        SaveProject = "Сохранить проект",
+        SaveProjectAs = "Сохранить проект как...",
         SlicerInfo = "Информация о слайсере",
         SlicerVersion = "Версия слайсера: ",
         SlicingTitle = "Слайсинг",
@@ -247,6 +253,8 @@ dicts = {
         ReportSubmitSuccessfully = "Отчет успешно отправлен. \nВы будете уведомлены, как только проблема будет устранена. При необходимости, наши специалисты свяжутся с вами для получения дополнительной информации. Благодарим Вас, что помогаете нам сделать продукт лучше!",
         ErrorReport = "Произошла ошибка при отправке отчета",
         PlaceModelOnEdge = "Положить модель на грань",
+        SavingProject = "Сохранение проекта",
+        ProjectSaved = "Проект успешно сохранен",
 
         ErrorHardwareModule = "Модуль калибровки недоступен публично",
         ErrorBugModule = "Модуль отправки багов недоступен публично",

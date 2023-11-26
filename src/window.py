@@ -126,6 +126,10 @@ class MainWindow(QMainWindow):
         # file_menu.addAction(close_action)
 
         self.save_gcode_action = QAction(self.locale.SaveGCode, self)
+        self.save_project_action = QAction(self.locale.SaveProject, self)
+        file_menu.addAction(self.save_project_action)
+        self.save_project_as_action = QAction(self.locale.SaveProjectAs, self)
+        file_menu.addAction(self.save_project_as_action)
         file_menu.addAction(self.save_gcode_action)
         self.save_sett_action = QAction(self.locale.SaveSettings, self)
         file_menu.addAction(self.save_sett_action)
