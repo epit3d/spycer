@@ -609,17 +609,21 @@ class MainController:
         except IOError as e:
             showErrorDialog("Error during file saving:" + str(e))
 
+    def save_project_files(self):
+        save_splanes_to_file(self.model.splanes, PathBuilder.splanes_file())
+        self.save_settings("vip", PathBuilder.settings_file())
+
     def save_project(self):
         try:
-            save_splanes_to_file(self.model.splanes, PathBuilder.splanes_file())
-            self.save_settings("vip", PathBuilder.settings_file())
-
+            self.save_project_files()
             self.successful_saving_project()
         except IOError as e:
             showErrorDialog("Error during project saving: " + str(e))
 
     def save_project_as(self):
         try:
+            self.save_project_files()
+
             save_directory = str(QFileDialog.getExistingDirectory(self.view, locales.getLocale().SavingProject))
 
             if not save_directory:
