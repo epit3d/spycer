@@ -147,7 +147,8 @@ class MainWindow(QMainWindow):
         # main parts
         central_widget = QWidget()
         main_grid = QGridLayout()
-        main_grid.addWidget(self.init3d_widget(), 0, 0, 20, 5)
+        self.widget3d = self.init3d_widget()
+        main_grid.addWidget(self.widget3d, 0, 0, 20, 5)
         main_grid.addWidget(self.init_right_panel(), 0, 5, 21, 2)
 
         # Tabs
@@ -206,7 +207,7 @@ class MainWindow(QMainWindow):
         self.close_signal.emit()
         event.accept()
 
-        self.centralWidget().layout().itemAtPosition(0, 0).widget().Finalize()
+        self.widget3d.Finalize()
 
     def init3d_widget(self):
         widget3d = QVTKRenderWindowInteractor(self)
