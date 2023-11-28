@@ -14,6 +14,7 @@ from vtkmodules.vtkCommonMath import vtkMatrix4x4
 
 import vtk
 from PyQt5 import QtCore
+from PyQt5.QtCore import QSettings
 from PyQt5.QtWidgets import QFileDialog, QInputDialog, QMessageBox
 
 from src import gui_utils, locales, qt_utils
@@ -621,15 +622,17 @@ class MainController:
             showErrorDialog("Error during project saving: " + str(e))
 
     def save_project_as(self):
-        try:
-            self.save_project_files()
+        project_path = PathBuilder.project_path()
 
+        try:
             save_directory = str(QFileDialog.getExistingDirectory(self.view, locales.getLocale().SavingProject))
 
             if not save_directory:
                 return
 
-            project_path = PathBuilder.project_path()
+            sett().project_path = save_directory
+            self.save_settings("vip")
+            self.save_project_files()
 
             for root, _, files in os.walk(project_path):
                 target_root = os.path.join(save_directory, os.path.relpath(root, project_path))
@@ -640,10 +643,31 @@ class MainController:
                     target_file = os.path.join(target_root, file)
                     shutil.copy2(source_file, target_file)
 
+            self.add_recent_project(save_directory)
             self.successful_saving_project()
 
         except IOError as e:
+            sett().project_path = project_path
+            self.save_settings("vip")
             showErrorDialog("Error during project saving: " + str(e))
+
+    def add_recent_project(self, project_path):
+        settings = QSettings('Epit3D', 'Spycer')
+
+        if settings.contains('recent_projects'):
+            recent_projects = settings.value('recent_projects', type=list)
+
+            # filter projects which do not exist
+            import pathlib
+            recent_projects = [p for p in recent_projects if pathlib.Path(p).exists()]
+
+        # adds recent project to system settings
+        if project_path in recent_projects:
+            return
+
+        recent_projects.append(str(project_path))
+        settings = QSettings('Epit3D', 'Spycer')
+        settings.setValue('recent_projects', recent_projects)
 
     def successful_saving_project(self):
         message_box = QMessageBox(parent=self.view)
