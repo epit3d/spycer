@@ -125,7 +125,6 @@ class Locale:
     ProjectUpdate = "Project update"
     SettingsUpdate = "The current project's settings are outdated. This may lead to errors in the program. Do you want to update? New setting's fields will be set to default values, please recheck."
     Update = "Update"
-    ContinueWithoutUpdating = "Continue without updating"
     EmptyDescription = "The error description cannot be empty"
 
     def __init__(self, **entries):
@@ -259,7 +258,6 @@ dicts = {
         ProjectUpdate = "Обновление проекта",
         SettingsUpdate = "Настройки текущего проекта устарели. Это может привести к ошибкам в работе программы. Хотите обновить? Новые поля настроек будут выставлены в значения по умолчанию, пожалуйста проверьте.",
         Update = "Обновить",
-        ContinueWithoutUpdating = "Продолжить без обновления",
         EmptyDescription = "Описание ошибки не может быть пустым",
     ),
 }
