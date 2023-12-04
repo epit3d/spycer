@@ -123,7 +123,7 @@ class Locale:
     DefaultPrinterWarn = "Be aware that you are using default printer. New data might be removed after update. We recommend to create new printer and calibrate it."
     CheckUpdates = "Check for updates"
     ProjectUpdate = "Project update"
-    SettingsUpdate = "The current project's settings are outdated. This may lead to errors in the program. Do you want to update? New setting's fields will be set to default values, please recheck."
+    SettingsUpdate = "We want to update the project settings. Please check the values of the new fields. They will be set to default values."
     Update = "Update"
     EmptyDescription = "The error description cannot be empty"
 
@@ -256,7 +256,7 @@ dicts = {
         DefaultPrinterWarn = "Будьте внимательны, Вы используете принтер по умолчанию. Данные этого принтера будут перезаписываться при обновлениях. Мы рекомендуем создать и использовать свою конфигурацию принтера.",
         CheckUpdates = "Проверить наличие обновлений",
         ProjectUpdate = "Обновление проекта",
-        SettingsUpdate = "Настройки текущего проекта устарели. Это может привести к ошибкам в работе программы. Хотите обновить? Новые поля настроек будут выставлены в значения по умолчанию, пожалуйста проверьте.",
+        SettingsUpdate = "Мы хотим обновить настройки проекта. Пожалуйста, проверьте значения новых полей. Они будут выставлены в значения по умолчанию.",
         Update = "Обновить",
         EmptyDescription = "Описание ошибки не может быть пустым",
     ),
