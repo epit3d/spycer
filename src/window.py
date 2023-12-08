@@ -126,6 +126,10 @@ class MainWindow(QMainWindow):
         # file_menu.addAction(close_action)
 
         self.save_gcode_action = QAction(self.locale.SaveGCode, self)
+        self.save_project_action = QAction(self.locale.SaveProject, self)
+        file_menu.addAction(self.save_project_action)
+        self.save_project_as_action = QAction(self.locale.SaveProjectAs, self)
+        file_menu.addAction(self.save_project_as_action)
         file_menu.addAction(self.save_gcode_action)
         self.save_sett_action = QAction(self.locale.SaveSettings, self)
         file_menu.addAction(self.save_sett_action)
@@ -147,7 +151,8 @@ class MainWindow(QMainWindow):
         # main parts
         central_widget = QWidget()
         main_grid = QGridLayout()
-        main_grid.addWidget(self.init3d_widget(), 0, 0, 20, 5)
+        self.widget3d = self.init3d_widget()
+        main_grid.addWidget(self.widget3d, 0, 0, 20, 5)
         main_grid.addWidget(self.init_right_panel(), 0, 5, 21, 2)
 
         # Tabs
@@ -205,6 +210,8 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event):
         self.close_signal.emit()
         event.accept()
+
+        self.widget3d.Finalize()
 
     def init3d_widget(self):
         widget3d = QVTKRenderWindowInteractor(self)

@@ -114,6 +114,19 @@ def get_version(settings_filename):
         print("Error reading version")
         return ""
 
+def set_version(settings_filename, version):
+    try:
+        with open(settings_filename, "r") as settings_file:
+            settings = yaml.safe_load(settings_file)
+
+        settings["common"]["version"] = version
+
+        with open(settings_filename, "w") as settings_file:
+            yaml.dump(settings, settings_file, default_flow_style=False)
+
+    except Exception as e:
+        print("Error writing version")
+
 def paths_transfer_in_settings(initial_settings_filename, final_settings_filename):
     with open(initial_settings_filename, "r") as settings_file:
         initial_settings = yaml.safe_load(settings_file)
@@ -121,12 +134,19 @@ def paths_transfer_in_settings(initial_settings_filename, final_settings_filenam
     with open(final_settings_filename, "r") as settings_file:
         final_settings = yaml.safe_load(settings_file)
 
-        for k, v in initial_settings.items():
-            if k in final_settings:
-                final_settings[k] = v
+        compare_settings(initial_settings, final_settings)
 
         with open(final_settings_filename, "w") as settings_file:
             yaml.dump(final_settings, settings_file, default_flow_style=False)
+
+def compare_settings(initial_settings, final_settings):
+    for key in set(final_settings):
+        if key in initial_settings:
+            if isinstance(final_settings[key], dict):
+                compare_settings(initial_settings[key], final_settings[key])
+            else:
+                if not initial_settings[key] is None:
+                    final_settings[key] = initial_settings[key]
 
 class Settings(object):
     def __init__(self, d):

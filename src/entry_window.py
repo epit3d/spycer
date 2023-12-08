@@ -9,7 +9,7 @@ from PyQt5 import QtGui
 from typing import List
 
 from src.gui_utils import showErrorDialog
-from src.settings import sett, get_version, paths_transfer_in_settings, PathBuilder
+from src.settings import sett, get_version, set_version, paths_transfer_in_settings, PathBuilder
 import src.locales as locales
 import shutil
 
@@ -205,7 +205,8 @@ class EntryWindow(QWidget):
         # add existing project to recent projects
         self.add_recent_project(selected_project)
 
-        self.сheck_project_version(selected_project)
+        if not self.сheck_project_version(selected_project):
+            return
 
         # emit signal with path to project file
         self.open_project_signal.emit(selected_project)
@@ -225,7 +226,7 @@ class EntryWindow(QWidget):
             message_box.addButton(QMessageBox.Yes)
             message_box.addButton(QMessageBox.No)
             message_box.button(QMessageBox.Yes).setText(locale.Update)
-            message_box.button(QMessageBox.No).setText(locale.ContinueWithoutUpdating)
+            message_box.button(QMessageBox.No).setText(locale.Cancel)
 
             reply = message_box.exec()
 
@@ -234,3 +235,9 @@ class EntryWindow(QWidget):
                 shutil.copyfile(project_settings_filename, project_settings_old_filename)
                 shutil.copyfile("settings.yaml", project_settings_filename)
                 paths_transfer_in_settings(project_settings_old_filename, project_settings_filename)
+                set_version(project_settings_filename, build_version)
+                return True
+
+            return False
+
+        return True

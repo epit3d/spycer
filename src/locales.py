@@ -81,6 +81,8 @@ class Locale:
     Open = "Open"
     SaveSettings = "Save settings"
     LoadSettings = "Load settings"
+    SaveProject = "Save project"
+    SaveProjectAs = "Save project as..."
     SlicerInfo = "Slicer info"
     SlicerVersion = "Slicer version: "
     SlicingTitle = "Slicing"
@@ -113,6 +115,8 @@ class Locale:
     ReportSubmitSuccessfully = "Report submit successfully. \nYou will be notified as soon as the problem is resolved. If necessary, our specialists will contact you for additional information. Thank you for helping us make the product better!"
     ErrorReport = "An error occurred while submitting the report"
     PlaceModelOnEdge = "Place the model on the edge"
+    SavingProject = "Saving the project"
+    ProjectSaved = "The project was successfully saved"
 
     ErrorHardwareModule = "Hardware module is unavailable in public"
     ErrorBugModule = "Bug reporting is unavailable in public"
@@ -123,9 +127,8 @@ class Locale:
     DefaultPrinterWarn = "Be aware that you are using default printer. New data might be removed after update. We recommend to create new printer and calibrate it."
     CheckUpdates = "Check for updates"
     ProjectUpdate = "Project update"
-    SettingsUpdate = "The current project's settings are outdated. This may lead to errors in the program. Do you want to update? New setting's fields will be set to default values, please recheck."
+    SettingsUpdate = "We want to update the project settings. Please check the values of the new fields. They will be set to default values."
     Update = "Update"
-    ContinueWithoutUpdating = "Continue without updating"
     EmptyDescription = "The error description cannot be empty"
 
     def __init__(self, **entries):
@@ -215,6 +218,8 @@ dicts = {
         Open = "Открыть",
         SaveSettings = "Сохранить настройки",
         LoadSettings = "Загрузить настройки",
+        SaveProject = "Сохранить проект",
+        SaveProjectAs = "Сохранить проект как...",
         SlicerInfo = "Информация о слайсере",
         SlicerVersion = "Версия слайсера: ",
         SlicingTitle = "Слайсинг",
@@ -247,6 +252,8 @@ dicts = {
         ReportSubmitSuccessfully = "Отчет успешно отправлен. \nВы будете уведомлены, как только проблема будет устранена. При необходимости, наши специалисты свяжутся с вами для получения дополнительной информации. Благодарим Вас, что помогаете нам сделать продукт лучше!",
         ErrorReport = "Произошла ошибка при отправке отчета",
         PlaceModelOnEdge = "Положить модель на грань",
+        SavingProject = "Сохранение проекта",
+        ProjectSaved = "Проект успешно сохранен",
 
         ErrorHardwareModule = "Модуль калибровки недоступен публично",
         ErrorBugModule = "Модуль отправки багов недоступен публично",
@@ -257,9 +264,8 @@ dicts = {
         DefaultPrinterWarn = "Будьте внимательны, Вы используете принтер по умолчанию. Данные этого принтера будут перезаписываться при обновлениях. Мы рекомендуем создать и использовать свою конфигурацию принтера.",
         CheckUpdates = "Проверить наличие обновлений",
         ProjectUpdate = "Обновление проекта",
-        SettingsUpdate = "Настройки текущего проекта устарели. Это может привести к ошибкам в работе программы. Хотите обновить? Новые поля настроек будут выставлены в значения по умолчанию, пожалуйста проверьте.",
+        SettingsUpdate = "Мы хотим обновить настройки проекта. Пожалуйста, проверьте значения новых полей. Они будут выставлены в значения по умолчанию.",
         Update = "Обновить",
-        ContinueWithoutUpdating = "Продолжить без обновления",
         EmptyDescription = "Описание ошибки не может быть пустым",
     ),
 }
