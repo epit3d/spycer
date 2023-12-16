@@ -521,6 +521,7 @@ class MainController:
             return
 
         # load gcode without calibration
+        self.view.picture_slider.setValue(0)
         self.load_gcode(PathBuilder.gcodevis_file(), True)
         print("loaded gcode")
         self.update_interface()
