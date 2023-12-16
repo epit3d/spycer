@@ -272,7 +272,7 @@ dicts = {
         Update = "Обновить",
         EmptyDescription = "Описание ошибки не может быть пустым",
         CalibrationDataWarning= "Вы не выбрали калибровочные данные принтера. Продолжить с данными по умолчанию?",
-        SelectingCalibrationData = "Выбор калибровачных данных",
+        SelectingCalibrationData = "Выбор калибровочных данных",
     ),
 }
 
