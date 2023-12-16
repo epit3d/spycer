@@ -111,6 +111,7 @@ class Locale:
     AddImage = "Add image"
     Send = "Send"
     Cancel = "Cancel"
+    Continue = "Continue"
     AddingImage = "Adding an image"
     ReportSubmitSuccessfully = "Report submit successfully. \nYou will be notified as soon as the problem is resolved. If necessary, our specialists will contact you for additional information. Thank you for helping us make the product better!"
     ErrorReport = "An error occurred while submitting the report"
@@ -130,6 +131,8 @@ class Locale:
     SettingsUpdate = "We want to update the project settings. Please check the values of the new fields. They will be set to default values."
     Update = "Update"
     EmptyDescription = "The error description cannot be empty"
+    CalibrationDataWarning= "You have not selected printer calibration data. Continue with default data?"
+    SelectingCalibrationData = "Selecting calibration data"
 
     UninterruptedPrint = "Uninterrupted print"
 
@@ -250,6 +253,7 @@ dicts = {
         AddImage = "Добавить изображение",
         Send = "Отправить",
         Cancel = "Отмена",
+        Continue = "Продолжить",
         AddingImage = "Выбрать изображение",
         ReportSubmitSuccessfully = "Отчет успешно отправлен. \nВы будете уведомлены, как только проблема будет устранена. При необходимости, наши специалисты свяжутся с вами для получения дополнительной информации. Благодарим Вас, что помогаете нам сделать продукт лучше!",
         ErrorReport = "Произошла ошибка при отправке отчета",
@@ -271,6 +275,8 @@ dicts = {
         EmptyDescription = "Описание ошибки не может быть пустым",
 
         UninterruptedPrint = "Печать непрерывным волокном",
+        CalibrationDataWarning= "Вы не выбрали калибровочные данные принтера. Продолжить с данными по умолчанию?",
+        SelectingCalibrationData = "Выбор калибровочных данных",
     ),
 }
 
