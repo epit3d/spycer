@@ -138,10 +138,16 @@ class MainController:
 
     def calibration_action_show(self):
         # check that printer is not default, otherwise show information with warning
-        if os.path.basename(sett().hardware.printer_dir) == "default":
+        if self.current_printer_is_default():
             showInfoDialog(locales.getLocale().DefaultPrinterWarn)
-        
+
         self.calibrationPanel.show()
+
+    def current_printer_is_default(self):
+        if os.path.basename(sett().hardware.printer_dir) == "default":
+            return True
+
+        return False
 
     def save_planes_on_close(self):
         splanes_full_pth = PathBuilder.splanes_file()
@@ -484,6 +490,9 @@ class MainController:
             showErrorDialog(locales.getLocale().AddOnePlaneError)
             return
 
+        if not self.check_calibration_data_catalog():
+            return
+
         s = sett()
         splanes_full_path = PathBuilder.splanes_file()
         save_splanes_to_file(self.model.splanes, splanes_full_path)
@@ -525,6 +534,25 @@ class MainController:
         self.load_gcode(PathBuilder.gcodevis_file(), True)
         print("loaded gcode")
         self.update_interface()
+
+    def check_calibration_data_catalog(self):
+        if self.current_printer_is_default():
+            locale = locales.getLocale()
+
+            message_box = QMessageBox()
+            message_box.setWindowTitle(locale.SelectingCalibrationData)
+            message_box.setText(locale.CalibrationDataWarning)
+            message_box.addButton(QMessageBox.Yes)
+            message_box.addButton(QMessageBox.No)
+            message_box.button(QMessageBox.Yes).setText(locale.Continue)
+            message_box.button(QMessageBox.No).setText(locale.Cancel)
+
+            reply = message_box.exec()
+
+            if reply == QMessageBox.No:
+                return False
+
+        return True
 
     def get_slicer_version(self):
         proc = Process(sett().slicing.cmd_version).wait()
