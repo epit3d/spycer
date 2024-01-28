@@ -17,7 +17,7 @@ class Locale:
     NumberOfLidLayers='Number of lid layers:'
     LineWidth = 'Extruder diameter, mm:'
     FillingType = 'Filling type:'
-    FillingTypeValues = ["Lines", "Squares", "Triangles", "Cross"]
+    FillingTypeValues = ["Lines", "Squares", "Triangles", "Cross", "ZigZag"]
     ShowStl = "Show stl"
     LayersCount = "Layers count:"
     OpenModel = "Open model"
@@ -158,7 +158,7 @@ dicts = {
         ShowStl='Отображение STL модели',
         LayersCount='Отображаемые слои:',
         FillingType='Тип заполнения:',
-        FillingTypeValues=["Линии", "Квадраты", "Треугольники", "Перекрёстное"],
+        FillingTypeValues=["Линии", "Квадраты", "Треугольники", "Перекрёстное", "Зигзаг"],
         OpenModel='Открыть модель',
         ColorModel='Выделить критические свесы',
         MoveModel='Передвинуть модель',
