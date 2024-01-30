@@ -22,8 +22,8 @@ def prepare_bug(filename, error_description):
         info=srv_bug_pb2.BugInfo(
             message=error_description,
             creds=srv_bug_pb2.Credentials(
-                login=auth_data.get('login'),
-                passw=auth_data.get('password')),
+                login=str(auth_data.get('login')),
+                passw=str(auth_data.get('password'))),
         )
     )
     yield req
