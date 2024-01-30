@@ -94,11 +94,19 @@ class bugReportDialog(QWidget):
             sett().slicing.splanes_file = path.basename(splanes_full_path)
             controller.save_settings("vip")
 
+            if not os.path.exists("temp"):
+                os.makedirs("temp")
+
             current_datetime = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
             self.archive_path = os.path.join("temp", f"{current_datetime}.zip")
 
             self.addFolderToArchive(self.archive_path, PathBuilder.project_path(), "project")
             self.addFolderToArchive(self.archive_path, self.temp_images_folder, "images")
+
+
+            if os.path.exists("interface.log"):
+                with zipfile.ZipFile(self.archive_path, 'a') as archive:
+                    archive.write("interface.log")
 
             with zipfile.ZipFile(self.archive_path, 'a') as archive:
                 archive.writestr("error_description.txt", error_description)
