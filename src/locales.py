@@ -131,6 +131,8 @@ class Locale:
     Update = "Update"
     EmptyDescription = "The error description cannot be empty"
 
+    UninterruptedPrint = "Uninterrupted print"
+
     def __init__(self, **entries):
         self.__dict__.update(entries)
 
@@ -267,6 +269,8 @@ dicts = {
         SettingsUpdate = "Мы хотим обновить настройки проекта. Пожалуйста, проверьте значения новых полей. Они будут выставлены в значения по умолчанию.",
         Update = "Обновить",
         EmptyDescription = "Описание ошибки не может быть пустым",
+
+        UninterruptedPrint = "Печать непрерывным волокном",
     ),
 }
 

@@ -338,6 +338,23 @@ class MainWindow(QMainWindow):
         right_panel.addWidget(self.printer_add_btn, get_cur_row(), 2)
         right_panel.addWidget(self.printer_path_edit, get_cur_row(), 3, 1, сolumn2_number_of_cells)
 
+        uninterrupted_print = QLabel(self.locale.UninterruptedPrint)
+        self.uninterrupted_print_box = QCheckBox()
+        if sett().uninterrupted_print:
+            self.uninterrupted_print_box.setCheckState(QtCore.Qt.Checked)
+        right_panel.addWidget(uninterrupted_print, get_next_row(), 1)
+        right_panel.addWidget(self.uninterrupted_print_box, get_cur_row(), 2, 1, сolumn2_number_of_cells)
+        # on check on this box, we should restrict fill type to zigzag only
+        def on_uninterrupted_print_change():
+            if self.uninterrupted_print_box.isChecked():
+                zigzag_idx = locales.getLocaleByLang("en").FillingTypeValues.index("ZigZag")
+                self.filling_type_values.setCurrentIndex(zigzag_idx)
+                self.filling_type_values.setEnabled(False)
+            else:
+                self.filling_type_values.setEnabled(True)
+
+        self.uninterrupted_print_box.stateChanged.connect(on_uninterrupted_print_change)
+
         line_width_label = QLabel(self.locale.LineWidth)
         self.line_width_value = LineEdit(str(sett().slicing.line_width))
         self.line_width_value.setValidator(doubleValidator, True)
