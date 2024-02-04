@@ -277,6 +277,8 @@ dicts = {
         UninterruptedPrint = "Печать непрерывным волокном",
         CalibrationDataWarning= "Вы не выбрали калибровочные данные принтера. Продолжить с данными по умолчанию?",
         SelectingCalibrationData = "Выбор калибровочных данных",
+
+        UninterruptedPrint = "Печать непрерывным волокном",
     ),
 }
 
