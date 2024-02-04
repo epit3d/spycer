@@ -123,6 +123,7 @@ slicing:
   smooth_cmd: ./smooth_FASP.exe
   splanes_file: lib/planes_file.txt
   stl_file: example.stl
+  stl_filename:
   t_geodesic: 0.0
   transformation_matrix:
     m00: 1.0

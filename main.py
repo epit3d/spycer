@@ -71,6 +71,8 @@ if __name__ == "__main__":
 
         window.showMaximized()
         window.show()
+        cntrl.reset_settings()
+        cntrl.update_interface(sett().slicing.stl_filename)
         entry_window.close()
 
     def create_project(project_path: str):
