@@ -569,6 +569,7 @@ class MainController:
         tf = vtk.vtkTransform()
         if self.view.stlActor is not None:
             tf = self.view.stlActor.GetUserTransform()
+        s.uninterrupted_print = bool(self.view.uninterrupted_print_box.isChecked())
         s.slicing.originx, s.slicing.originy, s.slicing.originz = tf.GetPosition()
         s.slicing.rotationx, s.slicing.rotationy, s.slicing.rotationz = tf.GetOrientation()
         s.slicing.scalex, s.slicing.scaley, s.slicing.scalez = tf.GetScale()

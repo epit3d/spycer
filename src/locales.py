@@ -134,6 +134,8 @@ class Locale:
     CalibrationDataWarning= "You have not selected printer calibration data. Continue with default data?"
     SelectingCalibrationData = "Selecting calibration data"
 
+    UninterruptedPrint = "Uninterrupted print"
+
     def __init__(self, **entries):
         self.__dict__.update(entries)
 
@@ -273,6 +275,8 @@ dicts = {
         EmptyDescription = "Описание ошибки не может быть пустым",
         CalibrationDataWarning= "Вы не выбрали калибровочные данные принтера. Продолжить с данными по умолчанию?",
         SelectingCalibrationData = "Выбор калибровочных данных",
+
+        UninterruptedPrint = "Печать непрерывным волокном",
     ),
 }
 
