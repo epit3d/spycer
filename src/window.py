@@ -346,12 +346,17 @@ class MainWindow(QMainWindow):
         right_panel.addWidget(self.uninterrupted_print_box, get_cur_row(), 2, 1, сolumn2_number_of_cells)
         # on check on this box, we should restrict fill type to zigzag only
         def on_uninterrupted_print_change():
-            if self.uninterrupted_print_box.isChecked():
+            isUninterrupted = self.uninterrupted_print_box.isChecked()
+            
+            self.filling_type_values.setEnabled(not isUninterrupted)
+            self.retraction_on_box.setEnabled(not isUninterrupted)
+            self.retraction_distance_value.setEnabled(not isUninterrupted)
+            self.retraction_speed_value.setEnabled(not isUninterrupted)
+            self.retract_compensation_amount_value.setEnabled(not isUninterrupted)                
+
+            if isUninterrupted:
                 zigzag_idx = locales.getLocaleByLang("en").FillingTypeValues.index("ZigZag")
                 self.filling_type_values.setCurrentIndex(zigzag_idx)
-                self.filling_type_values.setEnabled(False)
-            else:
-                self.filling_type_values.setEnabled(True)
 
         self.uninterrupted_print_box.stateChanged.connect(on_uninterrupted_print_change)
 
