@@ -403,7 +403,8 @@ class MainController:
                     stl_full_path = PathBuilder.stl_model()
                     shutil.copyfile(filename, stl_full_path)
                     # relative path inside project
-                    s.slicing.stl_file = path.basename(stl_full_path) 
+                    s.slicing.stl_filename = path.basename(filename)
+                    s.slicing.stl_file = path.basename(stl_full_path)
 
                     save_settings()
                     self.update_interface(filename)
