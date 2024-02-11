@@ -1,6 +1,6 @@
-import sys
-from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, \
-    QPushButton, QLabel, QListWidget, QLineEdit, QFileDialog, QMessageBox
+import os
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, \
+    QPushButton, QLabel, QListWidget, QListWidgetItem, QLineEdit, QFileDialog, QMessageBox
 from PyQt5.QtCore import QSettings
 
 # import aligntop
@@ -40,7 +40,7 @@ class EntryWindow(QWidget):
         super().showEvent(e)
 
     def init_ui(self):
-        self.setFixedSize(600, 300)
+        self.setBaseSize(600, 300)
 
         # create layout for creating new project
         new_proj_layout = QVBoxLayout()
@@ -83,7 +83,7 @@ class EntryWindow(QWidget):
 
         # Create "Open Project" button
         self.open_project_button = QPushButton(locales.getLocale().OpenProject, self)
-        self.open_project_button.clicked.connect(self.open_existing_project)
+        self.open_project_button.clicked.connect(self.open_existing_project_via_directory)
 
         existing_proj_layout.addWidget(self.open_project_button)
 
@@ -92,8 +92,8 @@ class EntryWindow(QWidget):
 
         # Create list widget for recent projects
         self.recent_projects_list_widget = QListWidget(self)
-        self.recent_projects_list_widget.itemDoubleClicked.connect(
-            self.open_existing_project)
+        self.recent_projects_list_widget.itemActivated.connect(
+            self.open_existing_project_in_list)
 
         # Add recent projects to list widget
         self.reload_recent_projects_list()
@@ -102,7 +102,12 @@ class EntryWindow(QWidget):
 
         layout = QHBoxLayout()
         # left part is to create new project
-        layout.addLayout(new_proj_layout)
+        new_proj_layout.setContentsMargins(0, 0, 0, 0)
+        new_proj_layout_widget = QWidget()
+        new_proj_layout_widget.setMaximumWidth(300)
+        new_proj_layout_widget.setLayout(new_proj_layout)
+
+        layout.addWidget(new_proj_layout_widget)
 
         # right part is to open existing project
         layout.addLayout(existing_proj_layout)
@@ -114,7 +119,20 @@ class EntryWindow(QWidget):
         # Add recent projects to list widget
         self.recent_projects = self.load_recent_projects()
         self.recent_projects_list_widget.clear()
-        self.recent_projects_list_widget.addItems(self.recent_projects)
+        self.add_recent_projects_in_list()
+
+    def add_recent_projects_in_list(self):
+        for _, p in enumerate(self.recent_projects):
+            text = "<b>" + os.path.basename(p) + "</b><br>" + p
+            item_label = QLabel(text)
+            item_label.setStyleSheet("background-color: rgba(255, 255, 255, 0);")
+            item_label.setWordWrap(True)
+
+            item = QListWidgetItem()
+            item.setSizeHint(QtCore.QSize(185, 35))
+
+            self.recent_projects_list_widget.addItem(item)
+            self.recent_projects_list_widget.setItemWidget(item, item_label)
 
     def choose_project_location(self):
         file = str(QFileDialog.getExistingDirectory(self, locales.getLocale().ChooseFolder))
@@ -191,15 +209,19 @@ class EntryWindow(QWidget):
         settings = QSettings('Epit3D', 'Spycer')
         settings.setValue('recent_projects', self.recent_projects)
 
-    def open_existing_project(self):
-        if self.recent_projects_list_widget.currentItem() is None:
-            if directory := str(QFileDialog.getExistingDirectory(self, locales.getLocale().ChooseFolder)):
-                selected_project = directory
-            else:
-                # didn't choose any project, release
-                return
+    def open_existing_project_in_list(self):
+        selected_project = self.recent_projects_list_widget.currentItem().text()
+        self.open_existing_project(selected_project)
+
+    def open_existing_project_via_directory(self):
+        if directory := str(QFileDialog.getExistingDirectory(self, locales.getLocale().ChooseFolder)):
+            selected_project = directory
         else:
-            selected_project = self.recent_projects_list_widget.currentItem().text()
+            # didn't choose any project, release
+            return
+        self.open_existing_project(selected_project)
+
+    def open_existing_project(self, selected_project):
         print(f"Opening {selected_project}...")
 
         # add existing project to recent projects
