@@ -135,6 +135,7 @@ class Locale:
     SelectingCalibrationData = "Selecting calibration data"
 
     UninterruptedPrint = "Uninterrupted print"
+    M10CutDistance = "Filament cut distance, mm:"
 
     def __init__(self, **entries):
         self.__dict__.update(entries)
@@ -277,6 +278,7 @@ dicts = {
         SelectingCalibrationData = "Выбор калибровочных данных",
 
         UninterruptedPrint = "Печать непрерывным волокном",
+        M10CutDistance = "Дистанция отреза филамента, мм:",
     ),
 }
 
