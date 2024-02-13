@@ -340,7 +340,7 @@ class MainWindow(QMainWindow):
 
         uninterrupted_print = QLabel(self.locale.UninterruptedPrint)
         self.uninterrupted_print_box = QCheckBox()
-        if sett().uninterrupted_print:
+        if sett().uninterrupted_print.enabled:
             self.uninterrupted_print_box.setCheckState(QtCore.Qt.Checked)
         right_panel.addWidget(uninterrupted_print, get_next_row(), 1)
         right_panel.addWidget(self.uninterrupted_print_box, get_cur_row(), 2, 1, сolumn2_number_of_cells)
