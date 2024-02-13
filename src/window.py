@@ -338,6 +338,36 @@ class MainWindow(QMainWindow):
         right_panel.addWidget(self.printer_add_btn, get_cur_row(), 2)
         right_panel.addWidget(self.printer_path_edit, get_cur_row(), 3, 1, сolumn2_number_of_cells)
 
+        uninterrupted_print = QLabel(self.locale.UninterruptedPrint)
+        self.uninterrupted_print_box = QCheckBox()
+        if sett().uninterrupted_print:
+            self.uninterrupted_print_box.setCheckState(QtCore.Qt.Checked)
+        right_panel.addWidget(uninterrupted_print, get_next_row(), 1)
+        right_panel.addWidget(self.uninterrupted_print_box, get_cur_row(), 2, 1, сolumn2_number_of_cells)
+        # on check on this box, we should restrict fill type to zigzag only
+        def on_uninterrupted_print_change():
+            isUninterrupted = self.uninterrupted_print_box.isChecked()
+            
+            self.filling_type_values.setEnabled(not isUninterrupted)
+            self.retraction_on_box.setEnabled(not isUninterrupted)
+            self.retraction_distance_value.setEnabled(not isUninterrupted)
+            self.retraction_speed_value.setEnabled(not isUninterrupted)
+            self.retract_compensation_amount_value.setEnabled(not isUninterrupted)                
+
+            if isUninterrupted:
+                zigzag_idx = locales.getLocaleByLang("en").FillingTypeValues.index("ZigZag")
+                self.filling_type_values.setCurrentIndex(zigzag_idx)
+                self.retraction_on_box.setChecked(False)
+
+        self.uninterrupted_print_box.stateChanged.connect(on_uninterrupted_print_change)
+
+        # M10 cut distance setting
+        m10_cut_distance_label = QLabel(self.locale.M10CutDistance)
+        self.m10_cut_distance_value = LineEdit(str(sett().uninterrupted_print.cut_distance))
+        self.m10_cut_distance_value.setValidator(doubleValidator)
+        right_panel.addWidget(m10_cut_distance_label, get_next_row(), 1)
+        right_panel.addWidget(self.m10_cut_distance_value, get_cur_row(), 2, 1, сolumn2_number_of_cells)
+
         line_width_label = QLabel(self.locale.LineWidth)
         self.line_width_value = LineEdit(str(sett().slicing.line_width))
         self.line_width_value.setValidator(doubleValidator, True)

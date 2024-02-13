@@ -17,7 +17,7 @@ class Locale:
     NumberOfLidLayers='Number of lid layers:'
     LineWidth = 'Extruder diameter, mm:'
     FillingType = 'Filling type:'
-    FillingTypeValues = ["Lines", "Squares", "Triangles", "Cross"]
+    FillingTypeValues = ["Lines", "Squares", "Triangles", "Cross", "ZigZag"]
     ShowStl = "Show stl"
     LayersCount = "Layers count:"
     OpenModel = "Open model"
@@ -134,6 +134,9 @@ class Locale:
     CalibrationDataWarning= "You have not selected printer calibration data. Continue with default data?"
     SelectingCalibrationData = "Selecting calibration data"
 
+    UninterruptedPrint = "Uninterrupted print"
+    M10CutDistance = "Filament cut distance, mm:"
+
     def __init__(self, **entries):
         self.__dict__.update(entries)
 
@@ -158,7 +161,7 @@ dicts = {
         ShowStl='Отображение STL модели',
         LayersCount='Отображаемые слои:',
         FillingType='Тип заполнения:',
-        FillingTypeValues=["Линии", "Квадраты", "Треугольники", "Перекрёстное"],
+        FillingTypeValues=["Линии", "Квадраты", "Треугольники", "Перекрёстное", "Зигзаг"],
         OpenModel='Открыть модель',
         ColorModel='Выделить критические свесы',
         MoveModel='Передвинуть модель',
@@ -273,6 +276,9 @@ dicts = {
         EmptyDescription = "Описание ошибки не может быть пустым",
         CalibrationDataWarning= "Вы не выбрали калибровочные данные принтера. Продолжить с данными по умолчанию?",
         SelectingCalibrationData = "Выбор калибровочных данных",
+
+        UninterruptedPrint = "Печать непрерывным волокном",
+        M10CutDistance = "Дистанция отреза филамента, мм:",
     ),
 }
 
