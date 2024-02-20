@@ -1,7 +1,8 @@
-import sys
-from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, \
-    QPushButton, QLabel, QListWidget, QLineEdit, QFileDialog, QMessageBox
+import os, math
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, \
+    QPushButton, QLabel, QListWidget, QListWidgetItem, QLineEdit, QFileDialog, QMessageBox, QShortcut
 from PyQt5.QtCore import QSettings
+from PyQt5.QtGui import QKeySequence
 
 # import aligntop
 from PyQt5 import QtCore
@@ -29,6 +30,21 @@ class EntryWindow(QWidget):
         self.setWindowIcon(QtGui.QIcon("icon.png"))
         self.init_ui()
 
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        for i in range(self.recent_projects_list_widget.count()):
+            item = self.recent_projects_list_widget.item(i)
+            self.adjust_item_height(item)
+
+    def adjust_item_height(self, item):
+        widget = self.recent_projects_list_widget.itemWidget(item)
+        list_width = self.recent_projects_list_widget.viewport().width()
+        widget.setFixedWidth(list_width)
+        widget.setWordWrap(True)
+        widget.adjustSize()
+
+        item.setSizeHint(QtCore.QSize(widget.width(), widget.height()))
+
     def showEvent(self, e):
         # showEvent is run when we first open and when we close project
         # when we close project and entry window pops up we need to update
@@ -40,7 +56,7 @@ class EntryWindow(QWidget):
         super().showEvent(e)
 
     def init_ui(self):
-        self.setFixedSize(600, 300)
+        self.setBaseSize(600, 300)
 
         # create layout for creating new project
         new_proj_layout = QVBoxLayout()
@@ -83,7 +99,7 @@ class EntryWindow(QWidget):
 
         # Create "Open Project" button
         self.open_project_button = QPushButton(locales.getLocale().OpenProject, self)
-        self.open_project_button.clicked.connect(self.open_existing_project)
+        self.open_project_button.clicked.connect(self.open_existing_project_via_directory)
 
         existing_proj_layout.addWidget(self.open_project_button)
 
@@ -92,8 +108,10 @@ class EntryWindow(QWidget):
 
         # Create list widget for recent projects
         self.recent_projects_list_widget = QListWidget(self)
-        self.recent_projects_list_widget.itemDoubleClicked.connect(
-            self.open_existing_project)
+        self.recent_projects_list_widget.itemActivated.connect(
+            self.open_existing_project_in_list)
+        delete_shortcut = QShortcut(QKeySequence(QtCore.Qt.Key_Delete), self.recent_projects_list_widget)
+        delete_shortcut.activated.connect(self.delete_selected_item)
 
         # Add recent projects to list widget
         self.reload_recent_projects_list()
@@ -102,7 +120,12 @@ class EntryWindow(QWidget):
 
         layout = QHBoxLayout()
         # left part is to create new project
-        layout.addLayout(new_proj_layout)
+        new_proj_layout.setContentsMargins(0, 0, 0, 0)
+        new_proj_layout_widget = QWidget()
+        new_proj_layout_widget.setMaximumWidth(300)
+        new_proj_layout_widget.setLayout(new_proj_layout)
+
+        layout.addWidget(new_proj_layout_widget)
 
         # right part is to open existing project
         layout.addLayout(existing_proj_layout)
@@ -114,7 +137,27 @@ class EntryWindow(QWidget):
         # Add recent projects to list widget
         self.recent_projects = self.load_recent_projects()
         self.recent_projects_list_widget.clear()
-        self.recent_projects_list_widget.addItems(self.recent_projects)
+        self.add_recent_projects_in_list()
+
+    def delete_selected_item(self):
+        selected_item = self.recent_projects_list_widget.currentItem()
+        if selected_item:
+            row = self.recent_projects_list_widget.row(selected_item)
+            del self.recent_projects[row]
+
+            self.save_recent_projects()
+            self.reload_recent_projects_list()
+
+    def add_recent_projects_in_list(self):
+        for _, p in enumerate(self.recent_projects):
+            text = "<b>" + os.path.basename(p) + "</b><br>" + p
+            label = QLabel(text)
+            label.setStyleSheet("background-color: rgba(255, 255, 255, 0);")
+
+            item = QListWidgetItem()
+            self.recent_projects_list_widget.addItem(item)
+            self.recent_projects_list_widget.setItemWidget(item, label)
+            self.adjust_item_height(item)
 
     def choose_project_location(self):
         file = str(QFileDialog.getExistingDirectory(self, locales.getLocale().ChooseFolder))
@@ -137,7 +180,8 @@ class EntryWindow(QWidget):
             import pathlib
             projects = [p for p in projects if pathlib.Path(p).exists()]
 
-            return projects
+            number_of_recent_projects = 10
+            return projects[:number_of_recent_projects]
 
         return []
     
@@ -183,30 +227,43 @@ class EntryWindow(QWidget):
         self.create_project_signal.emit(str(full_path))
 
     def add_recent_project(self, project_path):
-        # adds recent project to system settings
-        if project_path in self.recent_projects:
-            return
-        
-        self.recent_projects.append(str(project_path))
+        self.recent_projects.insert(0, str(project_path))
+        self.save_recent_projects()
+
+    def save_recent_projects(self):
         settings = QSettings('Epit3D', 'Spycer')
         settings.setValue('recent_projects', self.recent_projects)
 
-    def open_existing_project(self):
-        if self.recent_projects_list_widget.currentItem() is None:
-            if directory := str(QFileDialog.getExistingDirectory(self, locales.getLocale().ChooseFolder)):
-                selected_project = directory
-            else:
-                # didn't choose any project, release
-                return
+    def open_existing_project_in_list(self):
+        selected_project = self.recent_projects[self.recent_projects_list_widget.currentRow()]
+        self.open_existing_project(selected_project)
+
+    def open_existing_project_via_directory(self):
+        if directory := str(QFileDialog.getExistingDirectory(self, locales.getLocale().ChooseFolder)):
+            selected_project = directory
         else:
-            selected_project = self.recent_projects_list_widget.currentItem().text()
+            # didn't choose any project, release
+            return
+        self.open_existing_project(selected_project)
+
+    def open_existing_project(self, selected_project):
         print(f"Opening {selected_project}...")
 
-        # add existing project to recent projects
-        self.add_recent_project(selected_project)
+        # adds recent project to system settings
+        if selected_project in self.recent_projects:
+            # move the project to the beginning of the list
+            last_opened_project_index = self.recent_projects.index(selected_project)
+            last_opened_project = self.recent_projects.pop(last_opened_project_index)
+            self.recent_projects.insert(0, last_opened_project)
+        else:
+            # add existing project to recent projects
+            self.add_recent_project(selected_project)
 
         if not self.сheck_project_version(selected_project):
             return
+
+        self.save_recent_projects()
+        self.reload_recent_projects_list()
 
         # emit signal with path to project file
         self.open_project_signal.emit(selected_project)
