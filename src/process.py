@@ -3,6 +3,7 @@ import shlex
 import signal
 import subprocess
 import tempfile
+import src.settings as settings
 
 #Process(f'xdotool search --all --name {name}').wait().stdout
 
@@ -27,6 +28,7 @@ class Process:
         kw = dict(shell=shell, close_fds=True)
         if not shell:
             cmd = shlex.split(cmd)
+            cmd.append("--data=" + f'{settings.prepare_temp_settings(settings.sett())}')
         if env:
             kw.update(env={**os.environ.copy(), **env})
         if capture:

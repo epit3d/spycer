@@ -90,13 +90,18 @@ def save_settings(filename=""):
         settings_filename = "settings.yaml"
         filename = path.join(app_path, settings_filename)
 
-    temp = yaml.dump(_sett)
-    temp = temp.replace("!!python/object:src.settings.Settings", "").strip()
-    temp = temp.replace("!!python/object/apply:pathlib.PosixPath", "").strip()
+    temp = prepare_temp_settings(_sett)
 
     print(f'saving settings to {filename}')
     with open(filename, 'w') as f:
         f.write(temp)
+
+def prepare_temp_settings(_sett):
+    temp = yaml.dump(_sett)
+    temp = temp.replace("!!python/object:src.settings.Settings", "").strip()
+    temp = temp.replace("!!python/object/apply:pathlib.PosixPath", "").strip()
+
+    return temp
 
 def save_splanes_to_file(splanes, filename):
     with open(filename, 'w') as out:
