@@ -21,7 +21,8 @@ from src import gui_utils, locales, qt_utils
 from src.figure_editor import PlaneEditor, ConeEditor
 from src.gui_utils import showErrorDialog, plane_tf, read_planes, Plane, Cone, showInfoDialog
 from src.process import Process
-from src.settings import sett, save_settings, save_splanes_to_file, load_settings, get_color, PathBuilder
+from src.settings import (sett, save_settings, save_splanes_to_file, load_settings, get_color, PathBuilder,
+                          overwrite_project_file, create_temporary_project_files)
 import src.settings as settings
 
 try:
@@ -134,7 +135,8 @@ class MainController:
         self.view.hide_checkbox.stateChanged.connect(self.view.hide_splanes)
 
         # on close of window we save current planes to project file
-        self.view.close_signal.connect(self.save_planes_on_close)
+        self.view.before_closing_signal.connect(self.save_planes_on_close)
+        self.view.save_project_signal.connect(self.save_project)
 
     def calibration_action_show(self):
         # check that printer is not default, otherwise show information with warning
@@ -150,10 +152,10 @@ class MainController:
         return False
 
     def save_planes_on_close(self):
-        splanes_full_pth = PathBuilder.splanes_file()
+        splanes_full_pth = PathBuilder.splanes_file_temp()
         save_splanes_to_file(self.model.splanes, splanes_full_pth)
         sett().slicing.splanes_file = path.basename(splanes_full_pth)
-        save_settings()
+        self.save_settings("vip")
 
     def create_printer(self):
         # query user for printer name and create directory in data/printers/<name> relative to FASP root
@@ -400,7 +402,7 @@ class MainController:
                     s = sett()
                     # copy stl file to project directory
 
-                    stl_full_path = PathBuilder.stl_model()
+                    stl_full_path = PathBuilder.stl_model_temp()
                     shutil.copyfile(filename, stl_full_path)
                     # relative path inside project
                     s.slicing.stl_filename = path.basename(filename)
@@ -444,7 +446,7 @@ class MainController:
                 else:
                     setattr(s.slicing.transformation_matrix, f"m{i}{j}", 0.0)
 
-        save_settings()
+        self.save_settings("vip")
 
     def load_stl(self, filename, colorize=False):
         if filename is None or filename == "":
@@ -494,8 +496,7 @@ class MainController:
         if not self.check_calibration_data_catalog():
             return
 
-        s = sett()
-        splanes_full_path = PathBuilder.splanes_file()
+        splanes_full_path = PathBuilder.splanes_file_temp()
         save_splanes_to_file(self.model.splanes, splanes_full_path)
         sett().slicing.splanes_file = path.basename(splanes_full_path)
         self.save_settings(slicing_type)
@@ -619,7 +620,8 @@ class MainController:
             for j in range(4):
                 setattr(s.slicing.transformation_matrix, f"m{i}{j}", m.GetElement(i, j))
 
-        save_settings(filename)
+        if filename != "":
+            save_settings(filename)
 
     def save_gcode_file(self):
         try:
@@ -645,10 +647,12 @@ class MainController:
     def save_project_files(self):
         save_splanes_to_file(self.model.splanes, PathBuilder.splanes_file())
         self.save_settings("vip", PathBuilder.settings_file())
+        overwrite_project_file("model.stl")
 
     def save_project(self):
         try:
             self.save_project_files()
+            create_temporary_project_files()
             self.successful_saving_project()
         except IOError as e:
             showErrorDialog("Error during project saving: " + str(e))

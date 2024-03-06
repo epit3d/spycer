@@ -3,6 +3,7 @@ import sys
 import tempfile as tmp
 from os import path
 import shutil
+import pathlib
 
 import yaml
 import vtk
@@ -53,7 +54,88 @@ def copy_project_files(project_path: str):
     _sett.project_path = project_path
     save_settings()
 
+def project_change_check():
+    save_settings("vip")
+    saved_settings = Settings(read_settings(str(pathlib.Path(sett().project_path, "settings.yaml"))))
+    if sett() != saved_settings:
+        return False
+    if not compare_project_file("model.stl"):
+        return False
+    if not compare_project_file("planes.txt"):
+        return False
+
+    return True
+
+def compare_project_file(filename):
+    filename = pathlib.Path(sett().project_path, filename)
+    filename_temp = get_temp_path(filename)
+    return compare_files(filename, filename_temp)
+
+def compare_files(file1_path, file2_path):
+    try:
+        with open(file1_path, 'r', encoding='utf-8') as file1:
+            data1 = file1.read()
+        with open(file2_path, 'r', encoding='utf-8') as file2:
+            data2 = file2.read()
+        
+        if data1 == data2:
+            return True
+        else:
+            return False
+
+    except FileNotFoundError:
+        print("Error during file comparison!")
+        return True
+
+def create_temporary_project_files():
+    create_temporary_project_file("settings.yaml")
+    sett().slicing.stl_file = create_temporary_project_file("model.stl")
+    sett().slicing.splanes_file = create_temporary_project_file("planes.txt")
+
+def create_temporary_project_file(filename):
+    filename_temp = get_temp_path(filename)
+    filename_path = str(pathlib.Path(sett().project_path, filename))
+
+    if os.path.exists(filename_path):
+        model_temp_path = str(pathlib.Path(sett().project_path, filename_temp))
+        shutil.copy(filename_path, model_temp_path)
+        return filename_temp
+    else:
+        return ""
+
+def overwrite_project_file(filename):
+    filename_path = str(pathlib.Path(sett().project_path, filename))
+    filename_temp = get_temp_path(filename)
+    filename_temp_path = str(pathlib.Path(sett().project_path, filename_temp))
+
+    if os.path.exists(filename_path) and os.path.exists(filename_temp_path):
+        os.remove(filename_path)
+        os.rename(filename_temp_path, filename_path)
+
+def get_temp_path(filename):
+    basename, extension = os.path.splitext(filename)
+    filename_temp = basename + "_temp" + extension
+    return filename_temp
+
+def delete_project_files():
+    delete_project_file("settings_temp.yaml")
+    delete_project_file("model_temp.stl")
+    delete_project_file("planes_temp.txt")
+
+def delete_project_file(filename):
+    filename_path = str(pathlib.Path(sett().project_path, filename))
+    if os.path.exists(filename_path):
+        os.remove(filename_path)
+
 def load_settings(filename=""):
+    data = read_settings(filename)
+    if data != None:
+        global _sett
+        _sett = Settings(data)
+
+    print(f'after loading stl_file is {_sett.slicing.stl_file}')
+
+def read_settings(filename=""):
     if not filename:
         print('retrieving settings')
         if getattr(sys, 'frozen', False):
@@ -71,11 +153,9 @@ def load_settings(filename=""):
 
     with open(filename) as f:
         data = yaml.safe_load(f)
-        global _sett
-        _sett = Settings(data)
+        return data
 
-    print(f'after loading stl_file is {_sett.slicing.stl_file}')
-
+    return None
 
 def save_settings(filename=""):
     if not filename:
@@ -162,6 +242,12 @@ class Settings(object):
             else:
                 setattr(self, a, Settings(b) if isinstance(b, dict) else b)
 
+    def __eq__(self, other):
+        if not isinstance(other, Settings):
+            return False
+        ignore_attributes = ['splanes_file']
+        return all(getattr(self, attr) == getattr(other, attr) for attr in self.__dict__ if attr not in ignore_attributes)
+
 class PathBuilder:
     # class to build paths to files and folders
 
@@ -174,9 +260,17 @@ class PathBuilder:
         return path.join(PathBuilder.project_path(), "model.stl")
     
     @staticmethod
+    def stl_model_temp():
+        return path.join(PathBuilder.project_path(), "model_temp.stl")
+
+    @staticmethod
     def splanes_file():
         return path.join(PathBuilder.project_path(), "planes.txt")
     
+    @staticmethod
+    def splanes_file_temp():
+        return path.join(PathBuilder.project_path(), "planes_temp.txt")
+
     @staticmethod
     def settings_file():
         return path.join(PathBuilder.project_path(), "settings.yaml")
