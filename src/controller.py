@@ -21,8 +21,8 @@ from src import gui_utils, locales, qt_utils
 from src.figure_editor import PlaneEditor, ConeEditor
 from src.gui_utils import showErrorDialog, plane_tf, read_planes, Plane, Cone, showInfoDialog
 from src.process import Process
-from src.settings import (sett, save_settings, save_splanes_to_file, load_settings, get_color, PathBuilder,
-                          overwrite_project_file, create_temporary_project_files)
+from src.settings import (sett, save_settings, save_splanes_to_file, load_settings, get_color, PathBuilder, 
+                          create_temporary_project_files, update_last_open_project, get_recent_projects, delete_temporary_project_files)
 import src.settings as settings
 
 try:
@@ -152,10 +152,11 @@ class MainController:
         return False
 
     def save_planes_on_close(self):
-        splanes_full_pth = PathBuilder.splanes_file_temp()
-        save_splanes_to_file(self.model.splanes, splanes_full_pth)
-        sett().slicing.splanes_file = path.basename(splanes_full_pth)
-        self.save_settings("vip")
+        if len(self.model.splanes) > 0:
+            splanes_full_pth = PathBuilder.splanes_file_temp()
+            save_splanes_to_file(self.model.splanes, splanes_full_pth)
+            sett().slicing.splanes_file = path.basename(splanes_full_pth)
+            self.save_settings("vip")
 
     def create_printer(self):
         # query user for printer name and create directory in data/printers/<name> relative to FASP root
@@ -408,7 +409,7 @@ class MainController:
                     s.slicing.stl_filename = path.basename(filename)
                     s.slicing.stl_file = path.basename(stl_full_path)
 
-                    save_settings()
+                    self.save_settings("vip")
                     self.update_interface(filename)
 
                     self.view.model_centering_box.setChecked(False)
@@ -420,7 +421,7 @@ class MainController:
                 elif file_ext == ".GCODE":
                     s = sett()
                     # s.slicing.stl_file = filename # TODO optimize
-                    save_settings()
+                    self.save_settings("vip")
                     self.load_gcode(filename, False)
                     self.update_interface(filename)
                 else:
@@ -644,10 +645,17 @@ class MainController:
         except IOError as e:
             showErrorDialog("Error during file saving:" + str(e))
 
-    def save_project_files(self):
-        save_splanes_to_file(self.model.splanes, PathBuilder.splanes_file())
-        self.save_settings("vip", PathBuilder.settings_file())
-        overwrite_project_file("model.stl")
+    def save_project_files(self, save_path = ""):
+        if save_path == "":
+            sett().slicing.splanes_file = path.basename(PathBuilder.splanes_file())
+            save_splanes_to_file(self.model.splanes, PathBuilder.splanes_file())
+            self.save_settings("vip", PathBuilder.settings_file())
+            shutil.copy2(PathBuilder.stl_model_temp(), PathBuilder.stl_model())
+        else:
+            sett().slicing.splanes_file = path.basename(PathBuilder.splanes_file_temp())
+            save_splanes_to_file(self.model.splanes, path.join(save_path, "planes.txt"))
+            self.save_settings("vip", path.join(save_path, "settings.yaml"))
+            shutil.copy2(PathBuilder.stl_model_temp(), path.join(save_path, "model.stl"))
 
     def save_project(self):
         try:
@@ -666,44 +674,21 @@ class MainController:
             if not save_directory:
                 return
 
+            self.save_project_files(save_directory)
             sett().project_path = save_directory
-            self.save_settings("vip")
-            self.save_project_files()
+            self.save_settings("vip", PathBuilder.settings_file())
+            create_temporary_project_files()
+            delete_temporary_project_files(project_path)
 
-            for root, _, files in os.walk(project_path):
-                target_root = os.path.join(save_directory, os.path.relpath(root, project_path))
-                os.makedirs(target_root, exist_ok=True)
+            recent_projects = get_recent_projects()
+            update_last_open_project(recent_projects, save_directory)
 
-                for file in files:
-                    source_file = os.path.join(root, file)
-                    target_file = os.path.join(target_root, file)
-                    shutil.copy2(source_file, target_file)
-
-            self.add_recent_project(save_directory)
             self.successful_saving_project()
 
         except IOError as e:
             sett().project_path = project_path
             self.save_settings("vip")
             showErrorDialog("Error during project saving: " + str(e))
-
-    def add_recent_project(self, project_path):
-        settings = QSettings('Epit3D', 'Spycer')
-
-        if settings.contains('recent_projects'):
-            recent_projects = settings.value('recent_projects', type=list)
-
-            # filter projects which do not exist
-            import pathlib
-            recent_projects = [p for p in recent_projects if pathlib.Path(p).exists()]
-
-        # adds recent project to system settings
-        if project_path in recent_projects:
-            return
-
-        recent_projects.append(str(project_path))
-        settings = QSettings('Epit3D', 'Spycer')
-        settings.setValue('recent_projects', recent_projects)
 
     def successful_saving_project(self):
         message_box = QMessageBox(parent=self.view)

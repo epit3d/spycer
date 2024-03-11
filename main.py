@@ -79,6 +79,7 @@ if __name__ == "__main__":
     def create_project(project_path: str):
         copy_project_files(project_path)
         load_settings(str(pathlib.Path(project_path, "settings.yaml")))
+        create_temporary_project_files()
 
         window = MainWindow()
         window.close_signal.connect(entry_window.show)

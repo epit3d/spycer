@@ -2,6 +2,7 @@ import os
 import sys
 import tempfile as tmp
 from os import path
+from PyQt5.QtCore import QSettings
 import shutil
 import pathlib
 
@@ -52,6 +53,8 @@ def copy_project_files(project_path: str):
     load_settings()
     global _sett
     _sett.project_path = project_path
+    _sett.slicing.stl_file = ""
+    _sett.slicing.splanes_file = ""
     save_settings()
 
 def project_change_check():
@@ -73,9 +76,9 @@ def compare_project_file(filename):
 
 def compare_files(file1_path, file2_path):
     try:
-        with open(file1_path, 'r', encoding='utf-8') as file1:
+        with open(file1_path, 'rb') as file1:
             data1 = file1.read()
-        with open(file2_path, 'r', encoding='utf-8') as file2:
+        with open(file2_path, 'rb') as file2:
             data2 = file2.read()
         
         if data1 == data2:
@@ -97,35 +100,67 @@ def create_temporary_project_file(filename):
     filename_path = str(pathlib.Path(sett().project_path, filename))
 
     if os.path.exists(filename_path):
-        model_temp_path = str(pathlib.Path(sett().project_path, filename_temp))
-        shutil.copy(filename_path, model_temp_path)
+        filename_temp_path = str(pathlib.Path(sett().project_path, filename_temp))
+        shutil.copy(filename_path, filename_temp_path)
         return filename_temp
     else:
         return ""
-
-def overwrite_project_file(filename):
-    filename_path = str(pathlib.Path(sett().project_path, filename))
-    filename_temp = get_temp_path(filename)
-    filename_temp_path = str(pathlib.Path(sett().project_path, filename_temp))
-
-    if os.path.exists(filename_path) and os.path.exists(filename_temp_path):
-        os.remove(filename_path)
-        os.rename(filename_temp_path, filename_path)
 
 def get_temp_path(filename):
     basename, extension = os.path.splitext(filename)
     filename_temp = basename + "_temp" + extension
     return filename_temp
 
-def delete_project_files():
-    delete_project_file("settings_temp.yaml")
-    delete_project_file("model_temp.stl")
-    delete_project_file("planes_temp.txt")
+def delete_temporary_project_files(project_path = ""):
+    delete_project_file("settings_temp.yaml", project_path)
+    delete_project_file("model_temp.stl", project_path)
+    delete_project_file("planes_temp.txt", project_path)
 
-def delete_project_file(filename):
-    filename_path = str(pathlib.Path(sett().project_path, filename))
+def delete_project_file(filename, project_path = ""):
+    if project_path == "":
+        project_path = sett().project_path
+
+    filename_path = str(pathlib.Path(project_path, filename))
     if os.path.exists(filename_path):
         os.remove(filename_path)
+
+def get_recent_projects():
+    settings = QSettings('Epit3D', 'Spycer')
+
+    recent_projects = list()
+
+    if settings.contains('recent_projects'):
+        recent_projects = settings.value('recent_projects', type=list)
+
+        # filter projects which do not exist
+        import pathlib
+        recent_projects = [p for p in recent_projects if pathlib.Path(p).exists()]
+
+    return recent_projects
+
+def save_recent_projects(recent_projects):
+    settings = QSettings('Epit3D', 'Spycer')
+    settings.setValue('recent_projects', recent_projects)
+
+def update_last_open_project(recent_projects, project_path):
+    project_path = str(project_path)
+    # adds recent project to system settings
+    if project_path in recent_projects:
+        # move the project to the beginning of the list
+        move_project_to_top(recent_projects, project_path)
+    else:
+        # add new project to recent projects
+        add_recent_project(recent_projects, project_path)
+
+def move_project_to_top(recent_projects, project_path):
+    last_opened_project_index = recent_projects.index(project_path)
+    last_opened_project = recent_projects.pop(last_opened_project_index)
+    recent_projects.insert(0, last_opened_project)
+    save_recent_projects(recent_projects)
+
+def add_recent_project(recent_projects, project_path):
+    recent_projects.insert(0, str(project_path))
+    save_recent_projects(recent_projects)
 
 def load_settings(filename=""):
     data = read_settings(filename)

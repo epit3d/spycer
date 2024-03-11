@@ -13,7 +13,7 @@ from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 from src import locales, gui_utils, interactor_style
 from src.InteractorAroundActivePlane import InteractionAroundActivePlane
 from src.gui_utils import plane_tf, Plane, Cone
-from src.settings import sett, get_color, save_settings, delete_project_files, project_change_check
+from src.settings import sett, get_color, save_settings, delete_temporary_project_files, project_change_check
 import src.settings as settings
 from src.figure_editor import StlMovePanel
 from src.qt_utils import ClickableLineEdit
@@ -217,10 +217,10 @@ class MainWindow(QMainWindow):
 
             if reply == QMessageBox.Save:
                 self.save_project_signal.emit()
-                delete_project_files()
+                delete_temporary_project_files()
                 event.accept()
             elif reply == QMessageBox.Discard:
-                delete_project_files()
+                delete_temporary_project_files()
                 event.accept()
             else:
                 event.ignore()
