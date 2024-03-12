@@ -311,6 +311,10 @@ class PathBuilder:
         return path.join(PathBuilder.project_path(), "settings.yaml")
     
     @staticmethod
+    def settings_file_temp():
+        return path.join(PathBuilder.project_path(), "settings_temp.yaml")
+    
+    @staticmethod
     def settings_file_default():
         return "settings.yaml"
 
@@ -332,7 +336,7 @@ class PathBuilder:
     
     @staticmethod
     def slicing_cmd():
-        return sett().slicing.cmd + f'"{PathBuilder.settings_file()}"'
+        return sett().slicing.cmd + f'"{PathBuilder.settings_file_temp()}"'
     
     @staticmethod
     def gcodevis_file():

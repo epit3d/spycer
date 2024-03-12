@@ -500,7 +500,7 @@ class MainController:
         splanes_full_path = PathBuilder.splanes_file_temp()
         save_splanes_to_file(self.model.splanes, splanes_full_path)
         sett().slicing.splanes_file = path.basename(splanes_full_path)
-        self.save_settings(slicing_type)
+        self.save_settings(slicing_type, PathBuilder.settings_file_temp())
 
         def work():
             start_time = time.time()
