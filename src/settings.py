@@ -169,10 +169,6 @@ class PathBuilder:
         return path.join(PathBuilder.project_path(), "model.stl")
     
     @staticmethod
-    def splanes_file():
-        return path.join(PathBuilder.project_path(), "planes.txt")
-    
-    @staticmethod
     def settings_file():
         return path.join(PathBuilder.project_path(), "settings.yaml")
     

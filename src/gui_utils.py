@@ -565,23 +565,24 @@ def read_planes(filename):
     planes = []
     with open(filename) as fp:
         for line in fp:
-            v = line.strip().split(' ')
-
-            if v[0] == 'plane':
-                #plane X10 Y10 Z10 T-60 R0 - Plane string format
-                planes.append(
-                    Plane(
-                        float(v[4][1:]),
-                        float(v[5][1:]),
-                        (float(v[1][1:]), float(v[2][1:]), float(v[3][1:])),
-                        len(v) > 6 and v[6] == "S",
-                    ))
-            else:
-                #cone X0 Y0 Z10 A60 H10 H50 - Cone string format
-                planes.append(Cone(float(v[4][1:]), (float(v[1][1:]), float(v[2][1:]), float(v[3][1:])), float(v[5][1:]), float(v[6][1:])))
+            planes.append(read_plane(line))
 
     return planes
 
+def read_plane(line: str):
+    v = line.strip().split(' ')
+
+    if v[0] == 'plane':
+        #plane X10 Y10 Z10 T-60 R0 - Plane string format
+        return Plane(
+            float(v[4][1:]),
+            float(v[5][1:]),
+            (float(v[1][1:]), float(v[2][1:]), float(v[3][1:])),
+            len(v) > 6 and v[6] == "S",
+        )
+    else:
+        #cone X0 Y0 Z10 A60 H10 H50 - Cone string format
+        return Cone(float(v[4][1:]), (float(v[1][1:]), float(v[2][1:]), float(v[3][1:])), float(v[5][1:]), float(v[6][1:]))
 
 def isfloat(value):
     try:

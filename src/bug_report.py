@@ -89,9 +89,6 @@ class bugReportDialog(QWidget):
                 message_box.exec_()
                 return
 
-            splanes_full_path = PathBuilder.splanes_file()
-            save_splanes_to_file(controller.model.splanes, splanes_full_path)
-            sett().slicing.splanes_file = path.basename(splanes_full_path)
             controller.save_settings("vip")
 
             if not os.path.exists("temp"):
