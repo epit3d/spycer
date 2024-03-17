@@ -7,13 +7,13 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QLabel, QLineEdit, QComboBox, QGridLayout, QSlider,
                              QCheckBox, QVBoxLayout,
                              QPushButton, QFileDialog, QScrollArea, QGroupBox, QAction, QDialog,
-                             QTreeWidget, QTreeWidgetItem, QAbstractItemView, QTabWidget)
+                             QTreeWidget, QTreeWidgetItem, QAbstractItemView, QTabWidget, QMessageBox)
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
 from src import locales, gui_utils, interactor_style
 from src.InteractorAroundActivePlane import InteractionAroundActivePlane
 from src.gui_utils import plane_tf, Plane, Cone
-from src.settings import sett, get_color, save_settings, PathBuilder
+from src.settings import sett, get_color, save_settings, delete_temporary_project_files, project_change_check
 import src.settings as settings
 from src.figure_editor import StlMovePanel
 from src.qt_utils import ClickableLineEdit
@@ -108,6 +108,8 @@ class MainWindow(QMainWindow):
     parameters_tooling: Optional[FigureEditor] = None
 
     close_signal = QtCore.pyqtSignal()
+    save_project_signal = QtCore.pyqtSignal()
+    before_closing_signal = QtCore.pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -208,10 +210,41 @@ class MainWindow(QMainWindow):
         ####################
 
     def closeEvent(self, event):
+        self.before_closing_signal.emit()
+
+        if not project_change_check():
+            reply = self.projectChangeDialog()
+
+            if reply == QMessageBox.Save:
+                self.save_project_signal.emit()
+                delete_temporary_project_files()
+                event.accept()
+            elif reply == QMessageBox.Discard:
+                delete_temporary_project_files()
+                event.accept()
+            else:
+                event.ignore()
+                return
+
         self.close_signal.emit()
         event.accept()
 
         self.widget3d.Finalize()
+
+    def projectChangeDialog(self):
+        message_box = QMessageBox()
+        message_box.setWindowTitle(self.locale.SavingProject)
+        message_box.setText(self.locale.ProjectChange)
+
+        message_box.addButton(QMessageBox.Save)
+        message_box.addButton(QMessageBox.Discard)
+        message_box.addButton(QMessageBox.Cancel)
+
+        message_box.button(QMessageBox.Save).setText(self.locale.Save)
+        message_box.button(QMessageBox.Discard).setText(self.locale.DontSave)
+        message_box.button(QMessageBox.Cancel).setText(self.locale.Cancel)
+
+        return message_box.exec()
 
     def init3d_widget(self):
         widget3d = QVTKRenderWindowInteractor(self)

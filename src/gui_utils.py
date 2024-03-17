@@ -531,7 +531,7 @@ class Plane:
         self.smooth = smooth
 
     def toFile(self):
-        plane = f"plane X{self.x} Y{self.y} Z{self.z} T{self.incline} R{self.rot}"
+        plane = f"plane X{self.x:.2f} Y{self.y:.2f} Z{self.z:.2f} T{self.incline:.2f} R{self.rot:.2f}"
         if self.smooth:
             plane += " S"
         return plane
@@ -555,7 +555,7 @@ class Cone:
         self.h2 = h2
 
     def toFile(self) -> str:
-        return f"cone X{self.x} Y{self.y} Z{self.z} A{self.cone_angle} H{self.h1} H{self.h2}"
+        return f"cone X{self.x:.2f} Y{self.y:.2f} Z{self.z:.2f} A{self.cone_angle:.2f} H{self.h1:.2f} H{self.h2:.2f}"
 
     def params(self) -> Dict[str, float]:
         return {"X": self.x, "Y": self.y, "Z": self.z, "A": self.cone_angle, "H1": self.h1, "H2": self.h2}

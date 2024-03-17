@@ -2,7 +2,10 @@ import os
 import sys
 import tempfile as tmp
 from os import path
+from PyQt5.QtCore import QSettings
 import shutil
+import pathlib
+import base64
 
 import yaml
 import vtk
@@ -51,9 +54,137 @@ def copy_project_files(project_path: str):
     load_settings()
     global _sett
     _sett.project_path = project_path
+    _sett.slicing.stl_file = ""
     save_settings()
 
+def project_change_check():
+    save_settings("vip")
+    saved_settings = Settings(read_settings(str(pathlib.Path(sett().project_path, "settings.yaml"))))
+    if sett() != saved_settings:
+        return False
+    if not compare_project_file("model.stl"):
+        return False
+    if not compare_figures(saved_settings):
+        return False
+
+    return True
+
+def compare_figures(settings):
+    current_figures = getattr(sett(), "figures")
+    if hasattr(settings, "figures"):
+        figures_from_settings = getattr(settings, "figures")
+    else:
+        figures_from_settings = []
+
+    if len(current_figures) != len(figures_from_settings):
+        return False
+
+    for i in range(len(current_figures)):
+        if current_figures[i]['description'] != figures_from_settings[i].description:
+            return False
+
+    return True
+
+def compare_project_file(filename):
+    filename = pathlib.Path(sett().project_path, filename)
+    filename_temp = get_temp_path(filename)
+    return compare_files(filename, filename_temp)
+
+def compare_files(file1_path, file2_path):
+    try:
+        with open(file1_path, 'rb') as file1:
+            data1 = file1.read()
+        with open(file2_path, 'rb') as file2:
+            data2 = file2.read()
+        
+        if data1 == data2:
+            return True
+        else:
+            return False
+
+    except FileNotFoundError:
+        print("Error during file comparison!")
+        return True
+
+def create_temporary_project_files():
+    create_temporary_project_file("settings.yaml")
+    sett().slicing.stl_file = create_temporary_project_file("model.stl")
+
+def create_temporary_project_file(filename):
+    filename_temp = get_temp_path(filename)
+    filename_path = str(pathlib.Path(sett().project_path, filename))
+
+    if os.path.exists(filename_path):
+        filename_temp_path = str(pathlib.Path(sett().project_path, filename_temp))
+        shutil.copy(filename_path, filename_temp_path)
+        return filename_temp
+    else:
+        return ""
+
+def get_temp_path(filename):
+    basename, extension = os.path.splitext(filename)
+    filename_temp = basename + "_temp" + extension
+    return filename_temp
+
+def delete_temporary_project_files(project_path = ""):
+    delete_project_file("settings_temp.yaml", project_path)
+    delete_project_file("model_temp.stl", project_path)
+
+def delete_project_file(filename, project_path = ""):
+    if project_path == "":
+        project_path = sett().project_path
+
+    filename_path = str(pathlib.Path(project_path, filename))
+    if os.path.exists(filename_path):
+        os.remove(filename_path)
+
+def get_recent_projects():
+    settings = QSettings('Epit3D', 'Spycer')
+
+    recent_projects = list()
+
+    if settings.contains('recent_projects'):
+        recent_projects = settings.value('recent_projects', type=list)
+
+        # filter projects which do not exist
+        import pathlib
+        recent_projects = [p for p in recent_projects if pathlib.Path(p).exists()]
+
+    return recent_projects
+
+def save_recent_projects(recent_projects):
+    settings = QSettings('Epit3D', 'Spycer')
+    settings.setValue('recent_projects', recent_projects)
+
+def update_last_open_project(recent_projects, project_path):
+    project_path = str(project_path)
+    # adds recent project to system settings
+    if project_path in recent_projects:
+        # move the project to the beginning of the list
+        move_project_to_top(recent_projects, project_path)
+    else:
+        # add new project to recent projects
+        add_recent_project(recent_projects, project_path)
+
+def move_project_to_top(recent_projects, project_path):
+    last_opened_project_index = recent_projects.index(project_path)
+    last_opened_project = recent_projects.pop(last_opened_project_index)
+    recent_projects.insert(0, last_opened_project)
+    save_recent_projects(recent_projects)
+
+def add_recent_project(recent_projects, project_path):
+    recent_projects.insert(0, str(project_path))
+    save_recent_projects(recent_projects)
+
 def load_settings(filename=""):
+    data = read_settings(filename)
+    if data != None:
+        global _sett
+        _sett = Settings(data)
+
+    print(f'after loading stl_file is {_sett.slicing.stl_file}')
+
+def read_settings(filename=""):
     if not filename:
         print('retrieving settings')
         if getattr(sys, 'frozen', False):
@@ -71,11 +202,9 @@ def load_settings(filename=""):
 
     with open(filename) as f:
         data = yaml.safe_load(f)
-        global _sett
-        _sett = Settings(data)
+        return data
 
-    print(f'after loading stl_file is {_sett.slicing.stl_file}')
-
+    return None
 
 def save_settings(filename=""):
     if not filename:
@@ -90,13 +219,18 @@ def save_settings(filename=""):
         settings_filename = "settings.yaml"
         filename = path.join(app_path, settings_filename)
 
-    temp = yaml.dump(_sett)
-    temp = temp.replace("!!python/object:src.settings.Settings", "").strip()
-    temp = temp.replace("!!python/object/apply:pathlib.PosixPath", "").strip()
+    temp = prepare_temp_settings(_sett)
 
     print(f'saving settings to {filename}')
     with open(filename, 'w') as f:
         f.write(temp)
+
+def prepare_temp_settings(_sett):
+    temp = yaml.dump(_sett)
+    temp = temp.replace("!!python/object:src.settings.Settings", "").strip()
+    temp = temp.replace("!!python/object/apply:pathlib.PosixPath", "").strip()
+
+    return temp
 
 def save_splanes_to_file(splanes, filename):
     with open(filename, 'w') as out:
@@ -157,6 +291,20 @@ class Settings(object):
             else:
                 setattr(self, a, Settings(b) if isinstance(b, dict) else b)
 
+    def __eq__(self, other):
+        if not isinstance(other, Settings):
+            return False
+        ignore_attributes = ["splanes_file", "print_time", "consumption_material", "planes_contact_with_nozzle", "figures"]
+
+        for attr in self.__dict__:
+            if attr in ignore_attributes:
+                continue
+            if not hasattr(other, attr):
+                return False
+            if getattr(self, attr) != getattr(other, attr):
+                return False
+        return True
+
 class PathBuilder:
     # class to build paths to files and folders
 
@@ -169,8 +317,16 @@ class PathBuilder:
         return path.join(PathBuilder.project_path(), "model.stl")
     
     @staticmethod
+    def stl_model_temp():
+        return path.join(PathBuilder.project_path(), "model_temp.stl")
+
+    @staticmethod
     def settings_file():
         return path.join(PathBuilder.project_path(), "settings.yaml")
+    
+    @staticmethod
+    def settings_file_temp():
+        return path.join(PathBuilder.project_path(), "settings_temp.yaml")
     
     @staticmethod
     def settings_file_default():
@@ -194,7 +350,9 @@ class PathBuilder:
     
     @staticmethod
     def slicing_cmd():
-        return sett().slicing.cmd + f'"{PathBuilder.settings_file()}"'
+        temp_settings = prepare_temp_settings(sett())
+        encoded_temp_settings = base64.b64encode(temp_settings.encode('utf-8')).decode('utf-8')
+        return sett().slicing.cmd + f'"{PathBuilder.settings_file_temp()}"' + " --data=" + f'{encoded_temp_settings}'
     
     @staticmethod
     def gcodevis_file():

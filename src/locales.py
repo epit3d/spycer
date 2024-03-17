@@ -111,6 +111,8 @@ class Locale:
     AddImage = "Add image"
     Send = "Send"
     Cancel = "Cancel"
+    Save = "Save"
+    DontSave = "Don't save"
     Continue = "Continue"
     AddingImage = "Adding an image"
     ReportSubmitSuccessfully = "Report submit successfully. \nYou will be notified as soon as the problem is resolved. If necessary, our specialists will contact you for additional information. Thank you for helping us make the product better!"
@@ -118,6 +120,7 @@ class Locale:
     PlaceModelOnEdge = "Place the model on the edge"
     SavingProject = "Saving the project"
     ProjectSaved = "The project was successfully saved"
+    ProjectChange = "The project has been changed. Save changes?"
 
     ErrorHardwareModule = "Hardware module is unavailable in public"
     ErrorBugModule = "Bug reporting is unavailable in public"
@@ -254,6 +257,8 @@ dicts = {
         AddImage = "Добавить изображение",
         Send = "Отправить",
         Cancel = "Отмена",
+        Save = "Сохранить",
+        DontSave = "Не сохранять",
         Continue = "Продолжить",
         AddingImage = "Выбрать изображение",
         ReportSubmitSuccessfully = "Отчет успешно отправлен. \nВы будете уведомлены, как только проблема будет устранена. При необходимости, наши специалисты свяжутся с вами для получения дополнительной информации. Благодарим Вас, что помогаете нам сделать продукт лучше!",
@@ -261,6 +266,7 @@ dicts = {
         PlaceModelOnEdge = "Положить модель на грань",
         SavingProject = "Сохранение проекта",
         ProjectSaved = "Проект успешно сохранен",
+        ProjectChange = "Проект был изменен. Сохранить изменения?",
 
         ErrorHardwareModule = "Модуль калибровки недоступен публично",
         ErrorBugModule = "Модуль отправки багов недоступен публично",

@@ -10,7 +10,8 @@ from PyQt5 import QtGui
 from typing import List
 
 from src.gui_utils import showErrorDialog
-from src.settings import sett, get_version, set_version, paths_transfer_in_settings, PathBuilder
+from src.settings import (sett, get_version, set_version, paths_transfer_in_settings, PathBuilder,
+                          update_last_open_project, save_recent_projects)
 import src.locales as locales
 import shutil
 
@@ -145,7 +146,7 @@ class EntryWindow(QWidget):
             row = self.recent_projects_list_widget.row(selected_item)
             del self.recent_projects[row]
 
-            self.save_recent_projects()
+            save_recent_projects(self.recent_projects)
             self.reload_recent_projects_list()
 
     def add_recent_projects_in_list(self):
@@ -218,21 +219,13 @@ class EntryWindow(QWidget):
             return
 
         # add current project to recent projects
-        self.add_recent_project(full_path)
-        
+        update_last_open_project(self.recent_projects, full_path)
+
         # create project directory
         full_path.mkdir(parents=True, exist_ok=True)
 
         # emit signal with path to project file
         self.create_project_signal.emit(str(full_path))
-
-    def add_recent_project(self, project_path):
-        self.recent_projects.insert(0, str(project_path))
-        self.save_recent_projects()
-
-    def save_recent_projects(self):
-        settings = QSettings('Epit3D', 'Spycer')
-        settings.setValue('recent_projects', self.recent_projects)
 
     def open_existing_project_in_list(self):
         selected_project = self.recent_projects[self.recent_projects_list_widget.currentRow()]
@@ -249,20 +242,11 @@ class EntryWindow(QWidget):
     def open_existing_project(self, selected_project):
         print(f"Opening {selected_project}...")
 
-        # adds recent project to system settings
-        if selected_project in self.recent_projects:
-            # move the project to the beginning of the list
-            last_opened_project_index = self.recent_projects.index(selected_project)
-            last_opened_project = self.recent_projects.pop(last_opened_project_index)
-            self.recent_projects.insert(0, last_opened_project)
-        else:
-            # add existing project to recent projects
-            self.add_recent_project(selected_project)
+        update_last_open_project(self.recent_projects, selected_project)
 
         if not self.сheck_project_version(selected_project):
             return
 
-        self.save_recent_projects()
         self.reload_recent_projects_list()
 
         # emit signal with path to project file

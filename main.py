@@ -22,7 +22,7 @@ import os
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QApplication
 import pathlib
-from src.settings import copy_project_files, load_settings, sett, get_color
+from src.settings import copy_project_files, load_settings, sett, create_temporary_project_files
 from src.window import MainWindow
 from src.model import MainModel
 from src.controller import MainController
@@ -50,6 +50,7 @@ if __name__ == "__main__":
 
     def open_project(project_path: str):
         load_settings(str(pathlib.Path(project_path, "settings.yaml")))
+        create_temporary_project_files()
 
         # update project_path in settings, because it originally might be in another place
         sett().project_path = project_path
@@ -91,6 +92,7 @@ if __name__ == "__main__":
     def create_project(project_path: str):
         copy_project_files(project_path)
         load_settings(str(pathlib.Path(project_path, "settings.yaml")))
+        create_temporary_project_files()
 
         window = MainWindow()
         window.close_signal.connect(entry_window.show)

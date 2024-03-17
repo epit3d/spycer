@@ -306,7 +306,6 @@ def parseGCode(lines):
                 pass  # skip
 
     printer.finishLayer()  # not forget about last layer
-    src.settings.save_settings()
 
     printer.layers.append(layer)  # add dummy layer for back rotations
     printer.lays2rots.append(len(printer.rotations) - 1)
