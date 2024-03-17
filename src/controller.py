@@ -657,7 +657,7 @@ class MainController:
             shutil.copy2(PathBuilder.stl_model_temp(), PathBuilder.stl_model())
         else:
             self.save_settings("vip", path.join(save_path, "settings.yaml"))
-            shutil.copy2(PathBuilder.stl_model_temp(), path.join(save_path, "model.stl"))
+            shutil.copy2(PathBuilder.stl_model_temp(), path.join(save_path, "model.stl
 
     def save_project(self):
         try:
