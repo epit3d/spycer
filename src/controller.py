@@ -534,7 +534,7 @@ class MainController:
         self.view.picture_slider.setValue(0)
         self.load_gcode(PathBuilder.gcodevis_file(), True)
         print("loaded gcode")
-        self.update_interface()
+        self.update_interface(sett().slicing.stl_filename)
 
     def check_calibration_data_catalog(self):
         if self.current_printer_is_default():
