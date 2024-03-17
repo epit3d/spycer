@@ -50,13 +50,16 @@ renWin.SetSize(300, 300)
 # As the box widget is interacted with, it produces a transformation
 # matrix that is set on the actor.
 t = vtk.vtkTransform()
+
+
 def TransformActor(obj, event):
     global t, maceActor
     obj.GetTransform(t)
-    #print(t.GetScale())
+    # print(t.GetScale())
     print(t.GetPosition())
 
     maceActor.SetUserTransform(t)
+
 
 # Place the interactor initially. The actor is used to place and scale
 # the interactor. An observer is added to the box widget to watch for
@@ -70,7 +73,7 @@ cylinder = vtk.vtkCylinderSource()
 cylinder.SetResolution(50)
 cylinder.SetRadius(2)
 cylinder.SetHeight(0.1)
-cylinder.SetCenter(0,0,0)  # WHAT? vtk :(
+cylinder.SetCenter(0, 0, 0)  # WHAT? vtk :(
 mapper = vtk.vtkPolyDataMapper()
 mapper.SetInputConnection(cylinder.GetOutputPort())
 actor = vtk.vtkActor()

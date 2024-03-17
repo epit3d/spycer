@@ -58,7 +58,9 @@ def readFile(render, file, size):
         if vals[0] == "line":
             block = drawLine(toPoint(vals[2:5]), toPoint(vals[5:8]))
         else:  # vals[0] == "triangle"
-            block = drawTriangle(toPoint(vals[2:5]), toPoint(vals[5:8]), toPoint(vals[8:11]))
+            block = drawTriangle(
+                toPoint(vals[2:5]), toPoint(vals[5:8]), toPoint(vals[8:11])
+            )
         vtkColor = vtk.vtkNamedColors().GetColor3d(vals[1])
         render.AddActor(makeActor(block, vtkColor, size))
 

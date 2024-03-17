@@ -1,6 +1,17 @@
 import os, math
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, \
-    QPushButton, QLabel, QListWidget, QListWidgetItem, QLineEdit, QFileDialog, QMessageBox, QShortcut
+from PyQt5.QtWidgets import (
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QPushButton,
+    QLabel,
+    QListWidget,
+    QListWidgetItem,
+    QLineEdit,
+    QFileDialog,
+    QMessageBox,
+    QShortcut,
+)
 from PyQt5.QtCore import QSettings
 from PyQt5.QtGui import QKeySequence
 
@@ -10,10 +21,18 @@ from PyQt5 import QtGui
 from typing import List
 
 from src.gui_utils import showErrorDialog
-from src.settings import (sett, get_version, set_version, paths_transfer_in_settings, PathBuilder,
-                          update_last_open_project, save_recent_projects)
+from src.settings import (
+    sett,
+    get_version,
+    set_version,
+    paths_transfer_in_settings,
+    PathBuilder,
+    update_last_open_project,
+    save_recent_projects,
+)
 import src.locales as locales
 import shutil
+
 
 class EntryWindow(QWidget):
     # entry window is a window that is shown before main window
@@ -53,7 +72,7 @@ class EntryWindow(QWidget):
 
         # update list of recent projects
         self.reload_recent_projects_list()
-        
+
         super().showEvent(e)
 
     def init_ui(self):
@@ -69,22 +88,27 @@ class EntryWindow(QWidget):
         new_proj_layout.addWidget(self.new_project_button)
 
         # create project directory label
-        self.project_directory_label = QLabel(locales.getLocale().ProjectDirectory, self)
+        self.project_directory_label = QLabel(
+            locales.getLocale().ProjectDirectory, self
+        )
         new_proj_layout.addWidget(self.project_directory_label)
 
         # create project location label with current folder
         self.project_directory_edit = QLineEdit(self.load_recent_projects_root(), self)
         self.project_directory_edit.setPlaceholderText(
-            locales.getLocale().ChooseProjectDirectory)
+            locales.getLocale().ChooseProjectDirectory
+        )
         self.project_directory_edit.setReadOnly(True)
         new_proj_layout.addWidget(self.project_directory_edit)
 
         # create project location folder dialog
         self.project_location_folder_dialog = QPushButton(
-            locales.getLocale().ChooseProjectDirectory, self)
+            locales.getLocale().ChooseProjectDirectory, self
+        )
         new_proj_layout.addWidget(self.project_location_folder_dialog)
         self.project_location_folder_dialog.clicked.connect(
-            self.choose_project_location)
+            self.choose_project_location
+        )
 
         # create "project name" label
         self.project_name_label = QLabel(locales.getLocale().ProjectName, self)
@@ -100,7 +124,9 @@ class EntryWindow(QWidget):
 
         # Create "Open Project" button
         self.open_project_button = QPushButton(locales.getLocale().OpenProject, self)
-        self.open_project_button.clicked.connect(self.open_existing_project_via_directory)
+        self.open_project_button.clicked.connect(
+            self.open_existing_project_via_directory
+        )
 
         existing_proj_layout.addWidget(self.open_project_button)
 
@@ -110,8 +136,11 @@ class EntryWindow(QWidget):
         # Create list widget for recent projects
         self.recent_projects_list_widget = QListWidget(self)
         self.recent_projects_list_widget.itemActivated.connect(
-            self.open_existing_project_in_list)
-        delete_shortcut = QShortcut(QKeySequence(QtCore.Qt.Key_Delete), self.recent_projects_list_widget)
+            self.open_existing_project_in_list
+        )
+        delete_shortcut = QShortcut(
+            QKeySequence(QtCore.Qt.Key_Delete), self.recent_projects_list_widget
+        )
         delete_shortcut.activated.connect(self.delete_selected_item)
 
         # Add recent projects to list widget
@@ -161,38 +190,41 @@ class EntryWindow(QWidget):
             self.adjust_item_height(item)
 
     def choose_project_location(self):
-        file = str(QFileDialog.getExistingDirectory(self, locales.getLocale().ChooseFolder))
+        file = str(
+            QFileDialog.getExistingDirectory(self, locales.getLocale().ChooseFolder)
+        )
         if not file:
             return
-        
+
         # update latest project root
-        settings = QSettings('Epit3D', 'Spycer')
-        settings.setValue('latest-project-root', file)
+        settings = QSettings("Epit3D", "Spycer")
+        settings.setValue("latest-project-root", file)
 
         self.project_directory_edit.setText(file)
 
     def load_recent_projects(self) -> List[str]:
-        settings = QSettings('Epit3D', 'Spycer')
+        settings = QSettings("Epit3D", "Spycer")
 
-        if settings.contains('recent_projects'):
-            projects = settings.value('recent_projects', type=list)
+        if settings.contains("recent_projects"):
+            projects = settings.value("recent_projects", type=list)
 
             # filter projects which do not exist
             import pathlib
+
             projects = [p for p in projects if pathlib.Path(p).exists()]
 
             number_of_recent_projects = 10
             return projects[:number_of_recent_projects]
 
         return []
-    
+
     def load_recent_projects_root(self) -> str:
         # returns latest directory for projects
-        settings = QSettings('Epit3D', 'Spycer')
+        settings = QSettings("Epit3D", "Spycer")
 
-        if settings.contains('latest-project-root'):
-            return settings.value('latest-project-root', type=str)
-        
+        if settings.contains("latest-project-root"):
+            return settings.value("latest-project-root", type=str)
+
         return ""
 
     def create_new_project(self):
@@ -210,7 +242,8 @@ class EntryWindow(QWidget):
         import pathlib
 
         full_path = pathlib.Path(
-            self.project_directory_edit.text(), self.project_name_text_edit.text())
+            self.project_directory_edit.text(), self.project_name_text_edit.text()
+        )
         print(full_path)
 
         # check if project already exists
@@ -228,11 +261,15 @@ class EntryWindow(QWidget):
         self.create_project_signal.emit(str(full_path))
 
     def open_existing_project_in_list(self):
-        selected_project = self.recent_projects[self.recent_projects_list_widget.currentRow()]
+        selected_project = self.recent_projects[
+            self.recent_projects_list_widget.currentRow()
+        ]
         self.open_existing_project(selected_project)
 
     def open_existing_project_via_directory(self):
-        if directory := str(QFileDialog.getExistingDirectory(self, locales.getLocale().ChooseFolder)):
+        if directory := str(
+            QFileDialog.getExistingDirectory(self, locales.getLocale().ChooseFolder)
+        ):
             selected_project = directory
         else:
             # didn't choose any project, release
@@ -273,9 +310,13 @@ class EntryWindow(QWidget):
 
             if reply == QMessageBox.Yes:
                 project_settings_old_filename = PathBuilder.settings_file_old()
-                shutil.copyfile(project_settings_filename, project_settings_old_filename)
+                shutil.copyfile(
+                    project_settings_filename, project_settings_old_filename
+                )
                 shutil.copyfile("settings.yaml", project_settings_filename)
-                paths_transfer_in_settings(project_settings_old_filename, project_settings_filename)
+                paths_transfer_in_settings(
+                    project_settings_old_filename, project_settings_filename
+                )
                 set_version(project_settings_filename, build_version)
                 return True
 

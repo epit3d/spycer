@@ -6,8 +6,18 @@ from typing import List, Callable, Dict, Tuple, Optional, Union
 from functools import partial
 
 from PyQt5 import QtCore, sip
-from PyQt5.QtWidgets import (QSlider, QLineEdit, QApplication, QGridLayout, QWidget, QLabel, QSizePolicy,
-                             QPushButton, QHBoxLayout, QCheckBox)
+from PyQt5.QtWidgets import (
+    QSlider,
+    QLineEdit,
+    QApplication,
+    QGridLayout,
+    QWidget,
+    QLabel,
+    QSizePolicy,
+    QPushButton,
+    QHBoxLayout,
+    QCheckBox,
+)
 
 
 class FigureEditor(QWidget):
@@ -18,9 +28,14 @@ class FigureEditor(QWidget):
 
     _checkboxes = []
 
-    def __init__(self, tabs, params: List[str], constrains: List[Tuple[int, int]],
-                 on_change: Callable[[Dict[str, float]], None] = None,
-                 initial_params: Optional[Dict[str, float]] = None):
+    def __init__(
+        self,
+        tabs,
+        params: List[str],
+        constrains: List[Tuple[int, int]],
+        on_change: Callable[[Dict[str, float]], None] = None,
+        initial_params: Optional[Dict[str, float]] = None,
+    ):
         super().__init__()
         self.on_change = on_change
         self.setWindowTitle("Parameters tooling")
@@ -33,7 +48,8 @@ class FigureEditor(QWidget):
         # TODO add implementation of True/False parameters
         self.params_dict: Dict[str, float] = dict(
             (el, initial_params[el] if initial_params and initial_params[el] else 0)
-            for el in params + self._checkboxes)
+            for el in params + self._checkboxes
+        )
 
         for param_idx, param in enumerate(params):
             # add label for parameter name
@@ -41,7 +57,9 @@ class FigureEditor(QWidget):
             self.params_widgets.append(label)
             self.layout.addWidget(label, param_idx, 0)
 
-            def pass_updated_value_edit(param_name: str, qslider: QSlider, qlineedit: QLineEdit):
+            def pass_updated_value_edit(
+                param_name: str, qslider: QSlider, qlineedit: QLineEdit
+            ):
                 # return a function to be called from QLineEdit callback
                 def emmit_value(state: str):
                     try:
@@ -58,11 +76,11 @@ class FigureEditor(QWidget):
 
                     if value < minimumValue:
                         value = minimumValue
-                        qlineedit.setText(str(int(value))) # TODO: use validator
+                        qlineedit.setText(str(int(value)))  # TODO: use validator
 
                     elif value > maximumValue:
                         value = maximumValue
-                        qlineedit.setText(str(int(value))) # TODO: use validator
+                        qlineedit.setText(str(int(value)))  # TODO: use validator
 
                     self.params_dict[param_name] = float(value)
 
@@ -149,14 +167,21 @@ class FigureEditor(QWidget):
 
             sip.delete(cur_lay)
 
+
 class PlaneEditor(FigureEditor):
     __params = ["X", "Y", "Z", "Rotation", "Tilt"]
     __constrains = [(-100, 100), (-100, 100), (0, 200), (-180, 180), (-90, 0)]
     _checkboxes = ["Smooth"]
 
-    def __init__(self, tabs, on_change: Callable[[Dict[str, float]], None],
-                 initial_params: Optional[Dict[str, Union[float, bool]]] = None):
-        super().__init__(tabs, self.__params, self.__constrains, on_change, initial_params)
+    def __init__(
+        self,
+        tabs,
+        on_change: Callable[[Dict[str, float]], None],
+        initial_params: Optional[Dict[str, Union[float, bool]]] = None,
+    ):
+        super().__init__(
+            tabs, self.__params, self.__constrains, on_change, initial_params
+        )
 
     def params(self):
         return self.__params
@@ -166,16 +191,21 @@ class ConeEditor(FigureEditor):
     __params = ["Z", "A", "H1", "H2"]
     __constrains = [(-100, 200), (-80, 80), (0, 150), (1, 150)]
 
-    def __init__(self, tabs, on_change: Callable[[Dict[str, float]], None],
-                 initial_params: Optional[Dict[str, float]] = None):
-        super().__init__(tabs, self.__params, self.__constrains, on_change, initial_params)
+    def __init__(
+        self,
+        tabs,
+        on_change: Callable[[Dict[str, float]], None],
+        initial_params: Optional[Dict[str, float]] = None,
+    ):
+        super().__init__(
+            tabs, self.__params, self.__constrains, on_change, initial_params
+        )
 
     def params(self):
         return self.__params
 
 
 class StlMovePanel(QWidget):
-
     def __init__(self, methods, captions):
         super().__init__()
 
@@ -192,10 +222,10 @@ class StlMovePanel(QWidget):
             label.setAlignment(QtCore.Qt.AlignCenter)
             gridLayout.addWidget(label, 0, 0, 1, 3)
             for row, param in enumerate(["X", "Y", "Z"], start=1):
-                btn_pos = QPushButton(str(param) + '+')
+                btn_pos = QPushButton(str(param) + "+")
                 gridLayout.addWidget(btn_pos, row, 0)
 
-                btn_neg = QPushButton(str(param) + '-')
+                btn_neg = QPushButton(str(param) + "-")
                 gridLayout.addWidget(btn_neg, row, 1)
 
                 edit = QLineEdit()
@@ -238,13 +268,12 @@ class StlMovePanel(QWidget):
 
 
 if __name__ == "__main__":
+
     def handle1(d):
         print(1, d)
 
-
     def handle2(d):
         print(2, d)
-
 
     app = QApplication(sys.argv)
     f1 = PlaneEditor(handle1, None)

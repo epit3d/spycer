@@ -26,11 +26,13 @@ def RZ(rotRadian: float):
     :param rotRadian: angle of rotations in radians
     :return: numpy matrix of 3 by 3 size
     """
-    return np.array([
-        [np.cos(rotRadian), -np.sin(rotRadian), 0],
-        [np.sin(rotRadian), np.cos(rotRadian), 0],
-        [0, 0, 1]
-    ])
+    return np.array(
+        [
+            [np.cos(rotRadian), -np.sin(rotRadian), 0],
+            [np.sin(rotRadian), np.cos(rotRadian), 0],
+            [0, 0, 1],
+        ]
+    )
 
 
 def Raxis(axis: Tuple[float, float, float], a: float, origin=np.array([0, 0, 0])):
@@ -45,15 +47,29 @@ def Raxis(axis: Tuple[float, float, float], a: float, origin=np.array([0, 0, 0])
     oneminuscos = 1 - np.cos(a)
     x, y, z = axis
 
-    return np.array([
-        [np.cos(a) + (x ** 2) * oneminuscos, x * y * oneminuscos - z * np.sin(a), x * z * oneminuscos + y * np.sin(a),
-         origin[0]],
-        [y * x * oneminuscos + z * np.sin(a), np.cos(a) + (y ** 2) * oneminuscos, y * z * oneminuscos - x * np.sin(a),
-         origin[1]],
-        [z * x * oneminuscos - y * np.sin(a), z * y * oneminuscos + x * np.sin(a), np.cos(a) + (z ** 2) * oneminuscos,
-         origin[2]],
-        [0, 0, 0, 1]
-    ])
+    return np.array(
+        [
+            [
+                np.cos(a) + (x**2) * oneminuscos,
+                x * y * oneminuscos - z * np.sin(a),
+                x * z * oneminuscos + y * np.sin(a),
+                origin[0],
+            ],
+            [
+                y * x * oneminuscos + z * np.sin(a),
+                np.cos(a) + (y**2) * oneminuscos,
+                y * z * oneminuscos - x * np.sin(a),
+                origin[1],
+            ],
+            [
+                z * x * oneminuscos - y * np.sin(a),
+                z * y * oneminuscos + x * np.sin(a),
+                np.cos(a) + (z**2) * oneminuscos,
+                origin[2],
+            ],
+            [0, 0, 0, 1],
+        ]
+    )
 
 
 class InteractionAroundActivePlane:
@@ -77,11 +93,11 @@ class InteractionAroundActivePlane:
 
         self.axes = []
 
-            # real ability
-            # actor.SetOrigin(1, 0, 1)
-            # actor.SetOrientation(0, 0, 90)
+        # real ability
+        # actor.SetOrigin(1, 0, 1)
+        # actor.SetOrientation(0, 0, 90)
 
-    def leftBtnPress(self, obj, event, view = None):
+    def leftBtnPress(self, obj, event, view=None):
         """
         These events are bind: "LeftButtonPressEvent" "LeftButtonReleaseEvent"
         """
@@ -91,7 +107,9 @@ class InteractionAroundActivePlane:
             picker = self.getPicker()
             actor = picker.GetActor()
 
-            if (picker.GetCellId() >= 0) and (isinstance(actor, src.gui_utils.StlActor)):
+            if (picker.GetCellId() >= 0) and (
+                isinstance(actor, src.gui_utils.StlActor)
+            ):
                 triangle_id = picker.GetCellId()
                 normal = actor.GetTriangleNormal(triangle_id)
                 actor.RotateByVector(-normal)
@@ -127,7 +145,9 @@ class InteractionAroundActivePlane:
             # that means if we are close to critical points, we may allow to move in opposite direction
 
             # apply rotation around Z-axis
-            self.pos = Raxis((0, 0, 1), np.deg2rad(-deltaOnYaw * angleSpeed), self.focalPoint).dot(np.array(self.pos))
+            self.pos = Raxis(
+                (0, 0, 1), np.deg2rad(-deltaOnYaw * angleSpeed), self.focalPoint
+            ).dot(np.array(self.pos))
 
             # float in range (-1, 1) where if abs == 1 means camera view is on the z-axis
             # 1 - we are facing in opposite direction than z-axis
@@ -135,22 +155,38 @@ class InteractionAroundActivePlane:
             viewGoesAlongZ = np.dot(np.array([0, 0, 1]), unit(self.pos[:3]))
             # normalize value
             maxv = 2  # normalizing range for deltaOnPitchRoll
-            deltaOnPitchRoll = maxv if deltaOnPitchRoll > maxv else -maxv if deltaOnPitchRoll < -maxv else deltaOnPitchRoll
+            deltaOnPitchRoll = (
+                maxv
+                if deltaOnPitchRoll > maxv
+                else -maxv
+                if deltaOnPitchRoll < -maxv
+                else deltaOnPitchRoll
+            )
 
             # do not allow camera go too along with z-axis
             threshold = 0.95
 
-            if abs(viewGoesAlongZ) < threshold or (viewGoesAlongZ < threshold and deltaOnPitchRoll < 0) or (
-                    viewGoesAlongZ > threshold and deltaOnPitchRoll > 0):
-                self.pos = Raxis((self.pos[1], -self.pos[0], 0), np.deg2rad(-deltaOnPitchRoll / self.distanceToFocal / 2),
-                                 self.focalPoint).dot(np.array(self.pos))
+            if (
+                abs(viewGoesAlongZ) < threshold
+                or (viewGoesAlongZ < threshold and deltaOnPitchRoll < 0)
+                or (viewGoesAlongZ > threshold and deltaOnPitchRoll > 0)
+            ):
+                self.pos = Raxis(
+                    (self.pos[1], -self.pos[0], 0),
+                    np.deg2rad(-deltaOnPitchRoll / self.distanceToFocal / 2),
+                    self.focalPoint,
+                ).dot(np.array(self.pos))
 
         if self.isMoving:
             # in this type we will have to move only on 2 axis
             # if we move mouse up-down we will move along projection of line connecting the camera with the origin
             # if we move mouse left-right we will move along perpendicular line to the previous one, also in xy plane
 
-            projVector = unit(np.array([self.pos[0] - self.focalPoint[0], self.pos[1] - self.focalPoint[1]]))
+            projVector = unit(
+                np.array(
+                    [self.pos[0] - self.focalPoint[0], self.pos[1] - self.focalPoint[1]]
+                )
+            )
             perpVector = unit(np.array([projVector[1], -projVector[0]]))
 
             deltaOnProjection: float = xCur - xLast
@@ -180,7 +216,9 @@ class InteractionAroundActivePlane:
             picker = self.getPicker()
             actor = picker.GetActor()
 
-            if (picker.GetCellId() >= 0) and (isinstance(actor, src.gui_utils.StlActor)):
+            if (picker.GetCellId() >= 0) and (
+                isinstance(actor, src.gui_utils.StlActor)
+            ):
                 actor.ResetColorize()
                 poly_data = actor.GetMapper().GetInput()
                 triangle_id = picker.GetCellId()
