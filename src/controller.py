@@ -152,11 +152,7 @@ class MainController:
         return False
 
     def save_planes_on_close(self):
-        if len(self.model.splanes) > 0:
-            splanes_full_pth = PathBuilder.splanes_file_temp()
-            save_splanes_to_file(self.model.splanes, splanes_full_pth)
-            sett().slicing.splanes_file = path.basename(splanes_full_pth)
-            self.save_settings("vip")
+        self.save_settings("vip")
 
     def create_printer(self):
         # query user for printer name and create directory in data/printers/<name> relative to FASP root
@@ -326,7 +322,7 @@ class MainController:
                 filename = str(Path(filename))
                 if file_ext == ".TXT":
                     try:
-                        self.load_planes(filename)
+                        self.load_planes_from_file(filename)
                     except:
                         showErrorDialog("Error during reading planes file")
                 else:
@@ -335,8 +331,13 @@ class MainController:
         except IOError as e:
             showErrorDialog("Error during file opening:" + str(e))
 
-    def load_planes(self, filename):
+    def load_planes_from_file(self, filename):
         self.model.splanes = read_planes(filename)
+        self.view.hide_checkbox.setChecked(False)
+        self.view.reload_splanes(self.model.splanes)
+
+    def load_planes(self, splanes):
+        self.model.splanes = splanes
         self.view.hide_checkbox.setChecked(False)
         self.view.reload_splanes(self.model.splanes)
 
@@ -497,9 +498,6 @@ class MainController:
         if not self.check_calibration_data_catalog():
             return
 
-        splanes_full_path = PathBuilder.splanes_file_temp()
-        save_splanes_to_file(self.model.splanes, splanes_full_path)
-        sett().slicing.splanes_file = path.basename(splanes_full_path)
         self.save_settings(slicing_type, PathBuilder.settings_file_temp())
 
         def work():
@@ -621,6 +619,14 @@ class MainController:
             for j in range(4):
                 setattr(s.slicing.transformation_matrix, f"m{i}{j}", m.GetElement(i, j))
 
+        # save planes to settings
+        s.figures = []
+        for idx, plane in enumerate(self.model.splanes):
+            s.figures.append(dict(
+                index=idx,
+                description=plane.toFile(),
+            ))
+
         if filename != "":
             save_settings(filename)
 
@@ -647,13 +653,9 @@ class MainController:
 
     def save_project_files(self, save_path = ""):
         if save_path == "":
-            sett().slicing.splanes_file = path.basename(PathBuilder.splanes_file())
-            save_splanes_to_file(self.model.splanes, PathBuilder.splanes_file())
             self.save_settings("vip", PathBuilder.settings_file())
             shutil.copy2(PathBuilder.stl_model_temp(), PathBuilder.stl_model())
         else:
-            sett().slicing.splanes_file = path.basename(PathBuilder.splanes_file_temp())
-            save_splanes_to_file(self.model.splanes, path.join(save_path, "planes.txt"))
             self.save_settings("vip", path.join(save_path, "settings.yaml"))
             shutil.copy2(PathBuilder.stl_model_temp(), path.join(save_path, "model.stl"))
 
@@ -765,9 +767,6 @@ class MainController:
 
     def colorize_model(self):
         shutil.copyfile(PathBuilder.stl_model(),PathBuilder.colorizer_stl())
-        splanes_full_path = PathBuilder.splanes_file()
-        save_splanes_to_file(self.model.splanes, splanes_full_path)
-        sett().slicing.splanes_file = path.basename(splanes_full_path)
         self.save_settings("vip")
 
         p = Process(PathBuilder.colorizer_cmd()).wait()

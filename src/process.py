@@ -3,7 +3,6 @@ import shlex
 import signal
 import subprocess
 import tempfile
-import src.settings as settings
 
 #Process(f'xdotool search --all --name {name}').wait().stdout
 

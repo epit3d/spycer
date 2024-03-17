@@ -89,9 +89,6 @@ class bugReportDialog(QWidget):
                 message_box.exec_()
                 return
 
-            splanes_full_path = PathBuilder.splanes_file()
-            save_splanes_to_file(controller.model.splanes, splanes_full_path)
-            sett().slicing.splanes_file = path.basename(splanes_full_path)
             controller.save_settings("vip")
 
             if not os.path.exists("temp"):
@@ -125,7 +122,7 @@ class bugReportDialog(QWidget):
             self.cleaningTempFiles()
             self.close()
 
-            self.failedSendWindow(controller)
+            self.failedSendWindow(controller, str(e))
 
     def addFolderToArchive(self, archive_path, folder_path, subfolder = ""):
         with zipfile.ZipFile(archive_path, 'a') as archive:
@@ -145,10 +142,10 @@ class bugReportDialog(QWidget):
         message_box.setIcon(QMessageBox.Information)
         message_box.exec_()
 
-    def failedSendWindow(self, controller):
+    def failedSendWindow(self, controller, error_msg: str = ""):
         message_box = QMessageBox(parent=self)
         message_box.setWindowTitle(controller.view.locale.SubmittingBugReport)
-        message_box.setText(controller.view.locale.ErrorReport)
+        message_box.setText(controller.view.locale.ErrorReport + f"\nError message: {error_msg}")
         message_box.setIcon(QMessageBox.Critical)
         message_box.exec_()
 

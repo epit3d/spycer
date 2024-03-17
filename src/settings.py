@@ -55,7 +55,6 @@ def copy_project_files(project_path: str):
     global _sett
     _sett.project_path = project_path
     _sett.slicing.stl_file = ""
-    _sett.slicing.splanes_file = ""
     save_settings()
 
 def project_change_check():
@@ -65,8 +64,24 @@ def project_change_check():
         return False
     if not compare_project_file("model.stl"):
         return False
-    if not compare_project_file("planes.txt"):
+    if not compare_figures(saved_settings):
         return False
+
+    return True
+
+def compare_figures(settings):
+    current_figures = getattr(sett(), "figures")
+    if hasattr(settings, "figures"):
+        figures_from_settings = getattr(settings, "figures")
+    else:
+        figures_from_settings = []
+
+    if len(current_figures) != len(figures_from_settings):
+        return False
+
+    for i in range(len(current_figures)):
+        if current_figures[i]['description'] != figures_from_settings[i].description:
+            return False
 
     return True
 
@@ -94,7 +109,6 @@ def compare_files(file1_path, file2_path):
 def create_temporary_project_files():
     create_temporary_project_file("settings.yaml")
     sett().slicing.stl_file = create_temporary_project_file("model.stl")
-    sett().slicing.splanes_file = create_temporary_project_file("planes.txt")
 
 def create_temporary_project_file(filename):
     filename_temp = get_temp_path(filename)
@@ -115,7 +129,6 @@ def get_temp_path(filename):
 def delete_temporary_project_files(project_path = ""):
     delete_project_file("settings_temp.yaml", project_path)
     delete_project_file("model_temp.stl", project_path)
-    delete_project_file("planes_temp.txt", project_path)
 
 def delete_project_file(filename, project_path = ""):
     if project_path == "":
@@ -281,8 +294,16 @@ class Settings(object):
     def __eq__(self, other):
         if not isinstance(other, Settings):
             return False
-        ignore_attributes = ['splanes_file']
-        return all(getattr(self, attr) == getattr(other, attr) for attr in self.__dict__ if attr not in ignore_attributes)
+        ignore_attributes = ["splanes_file", "print_time", "consumption_material", "planes_contact_with_nozzle", "figures"]
+
+        for attr in self.__dict__:
+            if attr in ignore_attributes:
+                continue
+            if not hasattr(other, attr):
+                return False
+            if getattr(self, attr) != getattr(other, attr):
+                return False
+        return True
 
 class PathBuilder:
     # class to build paths to files and folders
@@ -298,14 +319,6 @@ class PathBuilder:
     @staticmethod
     def stl_model_temp():
         return path.join(PathBuilder.project_path(), "model_temp.stl")
-
-    @staticmethod
-    def splanes_file():
-        return path.join(PathBuilder.project_path(), "planes.txt")
-    
-    @staticmethod
-    def splanes_file_temp():
-        return path.join(PathBuilder.project_path(), "planes_temp.txt")
 
     @staticmethod
     def settings_file():
