@@ -1,6 +1,7 @@
 """
 Module contains logic behind the cone slicing
 """
+
 from typing import Tuple
 
 import numpy as np

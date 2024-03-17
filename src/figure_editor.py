@@ -1,6 +1,7 @@
 """
 Provides a class creating a new window to edit parameters of custom figures
 """
+
 import sys
 from typing import List, Callable, Dict, Tuple, Optional, Union
 from functools import partial

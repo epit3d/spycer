@@ -2,6 +2,7 @@
 Module contains custom interactor for vtk
 inspired by: https://fossies.org/linux/VTK/Examples/GUI/Python/CustomInteraction.py
 """
+
 from typing import Tuple
 
 import numpy as np
