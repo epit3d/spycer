@@ -4,11 +4,11 @@ import vtk, src
 from PyQt5 import QtCore
 from PyQt5 import QtGui
 from PyQt5.QtCore import Qt
+from src.line_edit import LineEdit
 from PyQt5.QtWidgets import (
     QMainWindow,
     QWidget,
     QLabel,
-    QLineEdit,
     QComboBox,
     QGridLayout,
     QSlider,
@@ -73,64 +73,6 @@ class TreeWidget(QTreeWidget):
     def dragMoveEvent(self, event):
         self.itemIsMoving = True
         super().dragMoveEvent(event)
-
-
-class LineEdit(QLineEdit):
-    colorize_invalid_value = False
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.returnPressed.connect(self.value_formatting)
-        self.textChanged.connect(self.input_validation)
-        self.textChanged.connect(self.colorize_field)
-
-    def setValidator(self, validator, colorize_invalid_value=False):
-        self.colorize_invalid_value = colorize_invalid_value
-        super().setValidator(validator)
-
-    def focusOutEvent(self, event):
-        self.value_formatting()
-        self.colorize_field()
-        super().focusOutEvent(event)
-
-    def fill_empty(self):
-        if (not self.text()) or (self.text() == "."):
-            self.setText("0")
-
-    def value_formatting(self):
-        self.fill_empty()
-        if isinstance(self.validator(), QtGui.QDoubleValidator):
-            cursor_position = self.cursorPosition()
-            self.setText(str(float(self.text())))
-            self.setCursorPosition(cursor_position)
-
-    def input_validation(self):
-        cursor_position = self.cursorPosition()
-        self.setText(self.text().replace(",", "."))
-
-        if (not self.colorize_invalid_value) and self.validator():
-            value = float(self.text()) if self.text() else 0
-
-            max_value = self.validator().top()
-            min_value = self.validator().bottom()
-
-            if value > max_value:
-                self.setText(str(max_value))
-            if value < min_value:
-                self.setText(str(min_value))
-        self.setCursorPosition(cursor_position)
-
-    def colorize_field(self):
-        default_background_color = "#0e1621"
-        invalid_value_background_color = "#ff6e00"
-
-        if self.colorize_invalid_value:
-            if self.hasAcceptableInput() or (not self.text()):
-                self.setStyleSheet(f"background-color: {default_background_color}")
-            else:
-                self.setStyleSheet(
-                    f"background-color: {invalid_value_background_color}"
-                )
 
 
 class MainWindow(QMainWindow):
