@@ -98,6 +98,39 @@ class SettingsWidget(QWidget):
         self.__current_row += 1
         return self.__current_row
 
+    def edit(self, name: str):
+        """
+        Return editable element associated with the given name
+        """
+        assert name in self.__elements, f"There is no LineEdit for {name}"
+
+        return self.__elements[name]["edit"]
+
+    def checkbox(self, name: str):
+        """
+        Return checkbox element associated with the given name
+        """
+        assert name in self.__elements, f"There is no checkbox for {name}"
+
+        return self.__elements[name]["checkbox"]
+
+    def values(self, name: str):
+        """
+        Return combobox element associated with the given name
+        """
+        assert name in self.__elements, f"There is no combobox for {name}"
+
+        return self.__elements[name]["values"]
+
+    def get_element(self, name: str, key: str):
+        """
+        Return element associated with the given name and key
+        """
+        assert name in self.__elements, f"There is no element for {name}"
+        assert key in self.__elements[name], f"There is no element for {key}"
+
+        return self.__elements[name][key]
+
     def with_all(self):
         for param in self.parameters:
             self.with_sett(param)

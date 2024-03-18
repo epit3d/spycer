@@ -115,7 +115,9 @@ class MainController:
             )
 
         # right panel
-        self.view.printer_add_btn.clicked.connect(self.create_printer)
+        self.view.setts.get_element("printer_path", "add_btn").clicked.connect(
+            self.create_printer
+        )
         self.view.printer_path_edit.clicked.connect(self.choose_printer_path)
         self.view.number_wall_lines_value.textChanged.connect(
             self.update_wall_thickness
