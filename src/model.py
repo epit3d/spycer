@@ -2,7 +2,6 @@ from src import gui_utils, gcode
 
 
 class MainModel:
-
     def __init__(self):
         self.current_slider_value = None
         self.opened_stl = ""

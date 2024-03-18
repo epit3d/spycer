@@ -8,13 +8,27 @@ class TestParseGCode(unittest.TestCase):
         self.assertEqual((0, 0, 0, None), parseArgs([], 0, 0, 0))
         self.assertEqual((1, 3, 4, None), parseArgs(["X1"], 0, 3, 4))
         self.assertEqual((1.11, 2.22, 4, None), parseArgs(["Y2.22"], 1.11, 3, 4))
-        self.assertEqual((1.11, 2.22, 3.33, None), parseArgs(["Y2.22", "Z3.33"], 1.11, 8, 9))
-        self.assertEqual((4.44, 2.22, 3.33, None), parseArgs(["Y2.22", "Z3.33", "X4.44"], 1.11, 8, 9))
-        self.assertEqual((1.11, 2.22, 53.3299999999999983, None), parseArgs(["Y2.22", "Z53.33"], 1.11, 8, 9))
-        self.assertEqual((1.11, 2.22, 9, None), parseArgs(["Y2.22", ";comment", "about", "smtg"], 1.11, 8, 9))
+        self.assertEqual(
+            (1.11, 2.22, 3.33, None), parseArgs(["Y2.22", "Z3.33"], 1.11, 8, 9)
+        )
+        self.assertEqual(
+            (4.44, 2.22, 3.33, None), parseArgs(["Y2.22", "Z3.33", "X4.44"], 1.11, 8, 9)
+        )
+        self.assertEqual(
+            (1.11, 2.22, 53.3299999999999983, None),
+            parseArgs(["Y2.22", "Z53.33"], 1.11, 8, 9),
+        )
+        self.assertEqual(
+            (1.11, 2.22, 9, None),
+            parseArgs(["Y2.22", ";comment", "about", "smtg"], 1.11, 8, 9),
+        )
 
-        self.assertEqual((1.11, 10.22, 9, None), parseArgs(["Y2.22"], 1.11, 8, 9, False))
-        self.assertEqual((4.11, 8, 11.22, None), parseArgs(["Z+2.22", "X-1"], 5.11, 8, 9, False))
+        self.assertEqual(
+            (1.11, 10.22, 9, None), parseArgs(["Y2.22"], 1.11, 8, 9, False)
+        )
+        self.assertEqual(
+            (4.11, 8, 11.22, None), parseArgs(["Z+2.22", "X-1"], 5.11, 8, 9, False)
+        )
 
     def testParseRotation(self):
         compare = {
@@ -45,18 +59,25 @@ class TestParseGCode(unittest.TestCase):
             "G1 X23.3 Z4.45",
             "G0 F1800 X85.188 Y66.146",
             ";End gcode ",
-            "G1 X23.3 Z4.45"
+            "G1 X23.3 Z4.45",
         ]
         gode = parseGCode(gcode)
         layers = gode.layers
         self.assertEqual(4, len(layers))  # one dummy layer
-        self.assertSequenceEqual(layers[0],
-                                 [[[81.848, 55.873, 0.2], [83.547, 53.478, 1.5], [83.756, 53.208, 1.5]],
-                                  [[56.78, 12.34, 0.5], [5, 7, 6]]])
-        self.assertSequenceEqual(layers[1],
-                                 [[[84.696, 66.058, 2.3], [85.223, 65.95, 2.3]]])
-        self.assertSequenceEqual(layers[2],
-                                 [[[85.223, 65.95, 2.3], [89.223, 67.95, 2.3], [23.3, 67.95, 4.45]]])
+        self.assertSequenceEqual(
+            layers[0],
+            [
+                [[81.848, 55.873, 0.2], [83.547, 53.478, 1.5], [83.756, 53.208, 1.5]],
+                [[56.78, 12.34, 0.5], [5, 7, 6]],
+            ],
+        )
+        self.assertSequenceEqual(
+            layers[1], [[[84.696, 66.058, 2.3], [85.223, 65.95, 2.3]]]
+        )
+        self.assertSequenceEqual(
+            layers[2],
+            [[[85.223, 65.95, 2.3], [89.223, 67.95, 2.3], [23.3, 67.95, 4.45]]],
+        )
 
         rotations = gode.rotations
         self.assertEqual(2, len(rotations))
@@ -68,5 +89,5 @@ class TestParseGCode(unittest.TestCase):
         self.assertSequenceEqual([0, 0, 1, 1], gode.lays2rots)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -2,16 +2,15 @@ import vtk
 
 
 class ActorInteractorStyle(vtk.vtkInteractorStyleTrackballActor):
-
     def __init__(self, onChange, parent=None):
         self.WorkingActor = None
         self.onChange = onChange
         self.AddObserver("LeftButtonPressEvent", self.onPressEvent)
-        self.AddObserver('MiddleButtonPressEvent', self.onPressEvent)
-        self.AddObserver('RightButtonPressEvent', self.onPressEvent)
-        self.AddObserver('LeftButtonReleaseEvent', self.onReleaseEvent)
-        self.AddObserver('MiddleButtonReleaseEvent', self.onReleaseEvent)
-        self.AddObserver('RightButtonReleaseEvent', self.onReleaseEvent)
+        self.AddObserver("MiddleButtonPressEvent", self.onPressEvent)
+        self.AddObserver("RightButtonPressEvent", self.onPressEvent)
+        self.AddObserver("LeftButtonReleaseEvent", self.onReleaseEvent)
+        self.AddObserver("MiddleButtonReleaseEvent", self.onReleaseEvent)
+        self.AddObserver("RightButtonReleaseEvent", self.onReleaseEvent)
         # self.AddObserver('MouseWheelForwardEvent', self.bimodal_mouse_handler)
         # self.AddObserver('MouseWheelBackwardEvent', self.bimodal_mouse_handler)
 
@@ -32,20 +31,20 @@ class ActorInteractorStyle(vtk.vtkInteractorStyleTrackballActor):
 
         print("BEFORE ON LEFT")
 
-        if event == 'LeftButtonPressEvent':
+        if event == "LeftButtonPressEvent":
             self.OnLeftButtonDown()
-        elif event == 'MiddleButtonPressEvent':
+        elif event == "MiddleButtonPressEvent":
             self.OnMiddleButtonDown()
-        elif event == 'RightButtonPressEvent':
+        elif event == "RightButtonPressEvent":
             self.OnRightButtonDown()
         return
 
     def onReleaseEvent(self, obj, event):
-        if event == 'LeftButtonReleaseEvent':
+        if event == "LeftButtonReleaseEvent":
             self.OnLeftButtonUp()
-        elif event == 'MiddleButtonReleaseEvent':
+        elif event == "MiddleButtonReleaseEvent":
             self.OnMiddleButtonUp()
-        elif event == 'RightButtonReleaseEvent':
+        elif event == "RightButtonReleaseEvent":
             self.OnRightButtonUp()
         self.onChange()
         return
@@ -55,7 +54,6 @@ class ActorInteractorStyle(vtk.vtkInteractorStyleTrackballActor):
 
 
 class CameraInteractorStyle(vtk.vtkInteractorStyleTrackballCamera):
-
     def __init__(self, parent=None):
         # self.__init__()
         pass

@@ -19,16 +19,33 @@ from PyQt5.QtWidgets import QFileDialog, QInputDialog, QMessageBox
 
 from src import gui_utils, locales, qt_utils
 from src.figure_editor import PlaneEditor, ConeEditor
-from src.gui_utils import showErrorDialog, plane_tf, read_planes, Plane, Cone, showInfoDialog
+from src.gui_utils import (
+    showErrorDialog,
+    plane_tf,
+    read_planes,
+    Plane,
+    Cone,
+    showInfoDialog,
+)
 from src.process import Process
-from src.settings import (sett, save_settings, save_splanes_to_file, load_settings, get_color, PathBuilder, 
-                          create_temporary_project_files, update_last_open_project, get_recent_projects, delete_temporary_project_files)
+from src.settings import (
+    sett,
+    save_settings,
+    save_splanes_to_file,
+    load_settings,
+    get_color,
+    PathBuilder,
+    create_temporary_project_files,
+    update_last_open_project,
+    get_recent_projects,
+    delete_temporary_project_files,
+)
 import src.settings as settings
 
 try:
     from src.bug_report import bugReportDialog
 except:
-    print('bug reporting is unavailable')
+    print("bug reporting is unavailable")
 
 # try import of private hardware module
 try:
@@ -36,7 +53,8 @@ try:
     import src.hardware.calibration as calibration
     import src.hardware.printer as printer
 except Exception as e:
-    print(f'hardware module is unavailable: {e}')
+    print(f"hardware module is unavailable: {e}")
+
 
 class MainController:
     def __init__(self, view, model):
@@ -50,8 +68,7 @@ class MainController:
             self.servicePanel = service.ServicePanel(view)
             self.servicePanel.setModal(True)
             self.serviceController = service.ServiceController(
-                self.servicePanel,
-                service.ServiceModel(self.printer)
+                self.servicePanel, service.ServiceModel(self.printer)
             )
 
             # embed calibration tool
@@ -59,7 +76,9 @@ class MainController:
             self.calibrationPanel.setModal(True)
             self.calibrationController = calibration.CalibrationController(
                 self.calibrationPanel,
-                calibration.CalibrationModel(self.printer, PathBuilder.calibration_file())
+                calibration.CalibrationModel(
+                    self.printer, PathBuilder.calibration_file()
+                ),
             )
         except:
             print("printer is not initialized")
@@ -82,18 +101,14 @@ class MainController:
         self.view.check_updates_action.triggered.connect(self.open_updater)
 
         try:
-            self.view.calibration_action.triggered.connect(
-                self.calibration_action_show
-            )
+            self.view.calibration_action.triggered.connect(self.calibration_action_show)
         except:
             self.view.calibration_action.triggered.connect(
                 lambda: showInfoDialog(locales.getLocale().ErrorHardwareModule)
             )
 
         try:
-            self.view.bug_report.triggered.connect(
-                self.bugReportDialog.show
-            )
+            self.view.bug_report.triggered.connect(self.bugReportDialog.show)
         except:
             self.view.bug_report.triggered.connect(
                 lambda: showInfoDialog(locales.getLocale().ErrorBugModule)
@@ -102,13 +117,23 @@ class MainController:
         # right panel
         self.view.printer_add_btn.clicked.connect(self.create_printer)
         self.view.printer_path_edit.clicked.connect(self.choose_printer_path)
-        self.view.number_wall_lines_value.textChanged.connect(self.update_wall_thickness)
+        self.view.number_wall_lines_value.textChanged.connect(
+            self.update_wall_thickness
+        )
         self.view.line_width_value.textChanged.connect(self.update_wall_thickness)
         self.view.layer_height_value.textChanged.connect(self.change_layer_height)
-        self.view.number_of_bottom_layers_value.textChanged.connect(self.update_bottom_thickness)
-        self.view.number_of_lid_layers_value.textChanged.connect(self.update_lid_thickness)
-        self.view.supports_number_of_bottom_layers_value.textChanged.connect(self.update_supports_bottom_thickness)
-        self.view.supports_number_of_lid_layers_value.textChanged.connect(self.update_supports_lid_thickness)
+        self.view.number_of_bottom_layers_value.textChanged.connect(
+            self.update_bottom_thickness
+        )
+        self.view.number_of_lid_layers_value.textChanged.connect(
+            self.update_lid_thickness
+        )
+        self.view.supports_number_of_bottom_layers_value.textChanged.connect(
+            self.update_supports_bottom_thickness
+        )
+        self.view.supports_number_of_lid_layers_value.textChanged.connect(
+            self.update_supports_lid_thickness
+        )
         self.view.model_switch_box.stateChanged.connect(self.view.switch_stl_gcode)
         self.view.model_centering_box.stateChanged.connect(self.view.model_centering)
         self.view.picture_slider.valueChanged.connect(self.change_layer_view)
@@ -156,27 +181,33 @@ class MainController:
 
     def create_printer(self):
         # query user for printer name and create directory in data/printers/<name> relative to FASP root
-        text, ok = QInputDialog.getText(self.view, locales.getLocale().AddNewPrinter, locales.getLocale().ChoosePrinterDirectory)
+        text, ok = QInputDialog.getText(
+            self.view,
+            locales.getLocale().AddNewPrinter,
+            locales.getLocale().ChoosePrinterDirectory,
+        )
         if not ok:
             return
-        
+
         printer_name = text.strip()
         if not printer_name:
             return
 
         # create directory in data/printers/<name> relative to FASP root
         printer_path = path.join(settings.APP_PATH, "data", "printers", printer_name)
-        
+
         # check if directory already exists
         if path.exists(printer_path):
             showErrorDialog("Printer with this name already exists")
             return
-        
+
         # create directory
         os.makedirs(printer_path)
 
         # copy calibration data from default directory to new printer directory
-        default_calibration_file = path.join(settings.APP_PATH, "data", "printers", "default", "calibration_data.csv")
+        default_calibration_file = path.join(
+            settings.APP_PATH, "data", "printers", "default", "calibration_data.csv"
+        )
         target_calibration_file = path.join(printer_path, "calibration_data.csv")
 
         shutil.copyfile(default_calibration_file, target_calibration_file)
@@ -191,32 +222,37 @@ class MainController:
 
         # update path in calibration model
         try:
-            self.calibrationController.updateCalibrationFilepath(PathBuilder.calibration_file())
+            self.calibrationController.updateCalibrationFilepath(
+                PathBuilder.calibration_file()
+            )
         except AttributeError:
             print("hardware module is unavailable, skip")
 
         # show info dialog
-        showInfoDialog("Printer created successfully, please calibrate before first use")
-
+        showInfoDialog(
+            "Printer created successfully, please calibrate before first use"
+        )
 
     def choose_printer_path(self):
         printer_path = QFileDialog.getExistingDirectory(
             self.view,
             locales.getLocale().ChoosePrinterDirectory,
-            sett().hardware.printer_dir
+            sett().hardware.printer_dir,
         )
 
         if printer_path:
             # check if directory contains calibration file
             calibration_file = path.join(printer_path, "calibration_data.csv")
             if not path.exists(calibration_file):
-                showErrorDialog("Directory doesn't contain calibration file. Please choose another directory.")
+                showErrorDialog(
+                    "Directory doesn't contain calibration file. Please choose another directory."
+                )
                 return
 
             sett().hardware.printer_dir = printer_path
             # calibration file will be at default location
             sett().hardware.calibration_file = "calibration_data.csv"
-            
+
             # save settings
             save_settings()
 
@@ -225,7 +261,9 @@ class MainController:
 
             # update path in calibration model
             try:
-                self.calibrationController.updateCalibrationFilepath(PathBuilder.calibration_file())
+                self.calibrationController.updateCalibrationFilepath(
+                    PathBuilder.calibration_file()
+                )
             except AttributeError:
                 print("hardware module is unavailable, skip")
 
@@ -249,24 +287,34 @@ class MainController:
             if previousItemNumber > 0:
                 currentRow = previousItemNumber - 1
 
-            self.view.splanes_tree.setCurrentItem(self.view.splanes_tree.topLevelItem(previousRow))
+            self.view.splanes_tree.setCurrentItem(
+                self.view.splanes_tree.topLevelItem(previousRow)
+            )
 
             if previousRow != currentRow:
-                if previousRow > currentRow: #Down
-                    self.model.splanes.insert(previousRow + 1, self.model.splanes[currentRow])
+                if previousRow > currentRow:  # Down
+                    self.model.splanes.insert(
+                        previousRow + 1, self.model.splanes[currentRow]
+                    )
                     del self.model.splanes[currentRow]
 
-                if previousRow < currentRow: #Up
-                    self.model.splanes.insert(previousRow, self.model.splanes[currentRow])
+                if previousRow < currentRow:  # Up
+                    self.model.splanes.insert(
+                        previousRow, self.model.splanes[currentRow]
+                    )
                     del self.model.splanes[currentRow + 1]
 
                 for i in range(len(self.model.splanes)):
                     self.view.splanes_tree.topLevelItem(i).setText(1, str(i + 1))
-                    self.view.splanes_tree.topLevelItem(i).setText(2, self.model.splanes[i].toFile())
+                    self.view.splanes_tree.topLevelItem(i).setText(
+                        2, self.model.splanes[i].toFile()
+                    )
 
                 self.view._recreate_splanes(self.model.splanes)
                 self.view.splanes_tree.itemIsMoving = False
-                self.view.change_combo_select(self.model.splanes[previousRow], previousRow)
+                self.view.change_combo_select(
+                    self.model.splanes[previousRow], previousRow
+                )
 
     def change_figure_check_state(self, item, column):
         ind = self.view.splanes_tree.indexFromItem(item).row()
@@ -299,14 +347,28 @@ class MainController:
         self.view.tabs.setTabEnabled(1, True)
 
         if isinstance(self.model.splanes[ind], Plane):
-            self.view.parameters_tooling = PlaneEditor(self.view.tabs, self.update_plane_common, self.model.splanes[ind].params())
+            self.view.parameters_tooling = PlaneEditor(
+                self.view.tabs,
+                self.update_plane_common,
+                self.model.splanes[ind].params(),
+            )
         elif isinstance(self.model.splanes[ind], Cone):
-            self.view.parameters_tooling = ConeEditor(self.view.tabs, self.update_cone_common, self.model.splanes[ind].params())
+            self.view.parameters_tooling = ConeEditor(
+                self.view.tabs,
+                self.update_cone_common,
+                self.model.splanes[ind].params(),
+            )
 
     def save_planes(self):
         try:
-            directory = "Planes_" + os.path.basename(sett().slicing.stl_file).split('.')[0]
-            filename = str(self.view.save_dialog(self.view.locale.SavePlanes, "TXT (*.txt *.TXT)", directory))
+            directory = (
+                "Planes_" + os.path.basename(sett().slicing.stl_file).split(".")[0]
+            )
+            filename = str(
+                self.view.save_dialog(
+                    self.view.locale.SavePlanes, "TXT (*.txt *.TXT)", directory
+                )
+            )
             if filename != "":
                 if not (filename.endswith(".txt") or filename.endswith(".TXT")):
                     filename += ".txt"
@@ -316,7 +378,11 @@ class MainController:
 
     def download_planes(self):
         try:
-            filename = str(self.view.open_dialog(self.view.locale.DownloadPlanes,"TXT (*.txt *.TXT)"))
+            filename = str(
+                self.view.open_dialog(
+                    self.view.locale.DownloadPlanes, "TXT (*.txt *.TXT)"
+                )
+            )
             if filename != "":
                 file_ext = os.path.splitext(filename)[1].upper()
                 filename = str(Path(filename))
@@ -326,8 +392,7 @@ class MainController:
                     except:
                         showErrorDialog("Error during reading planes file")
                 else:
-                    showErrorDialog(
-                        "This file format isn't supported:" + file_ext)
+                    showErrorDialog("This file format isn't supported:" + file_ext)
         except IOError as e:
             showErrorDialog("Error during file opening:" + str(e))
 
@@ -348,17 +413,29 @@ class MainController:
         if self.view.picture_slider.value() == self.model.current_slider_value:
             return
 
-        step = 1 if self.view.picture_slider.value() > self.model.current_slider_value else -1
+        step = (
+            1
+            if self.view.picture_slider.value() > self.model.current_slider_value
+            else -1
+        )
 
-        for i in range(self.model.current_slider_value, self.view.picture_slider.value(), step):
-            self.model.current_slider_value = self.view.change_layer_view(i + step, self.model.current_slider_value, self.model.gcode)
+        for i in range(
+            self.model.current_slider_value, self.view.picture_slider.value(), step
+        ):
+            self.model.current_slider_value = self.view.change_layer_view(
+                i + step, self.model.current_slider_value, self.model.gcode
+            )
 
         self.view.reload_scene()
         self.view.hide_checkbox.setChecked(True)
         self.view.model_switch_box.setChecked(False)
 
     def update_wall_thickness(self):
-        self.update_dependent_fields(self.view.number_wall_lines_value, self.view.line_width_value, self.view.wall_thickness_value)
+        self.update_dependent_fields(
+            self.view.number_wall_lines_value,
+            self.view.line_width_value,
+            self.view.wall_thickness_value,
+        )
 
     def change_layer_height(self):
         self.update_bottom_thickness()
@@ -367,25 +444,45 @@ class MainController:
         self.update_supports_lid_thickness()
 
     def update_bottom_thickness(self):
-        self.update_dependent_fields(self.view.number_of_bottom_layers_value, self.view.layer_height_value, self.view.bottom_thickness_value)
+        self.update_dependent_fields(
+            self.view.number_of_bottom_layers_value,
+            self.view.layer_height_value,
+            self.view.bottom_thickness_value,
+        )
 
     def update_lid_thickness(self):
-        self.update_dependent_fields(self.view.number_of_lid_layers_value, self.view.layer_height_value, self.view.lid_thickness_value)
+        self.update_dependent_fields(
+            self.view.number_of_lid_layers_value,
+            self.view.layer_height_value,
+            self.view.lid_thickness_value,
+        )
 
     def update_supports_bottom_thickness(self):
-        self.update_dependent_fields(self.view.supports_number_of_bottom_layers_value, self.view.layer_height_value, self.view.supports_bottom_thickness_value)
-    
+        self.update_dependent_fields(
+            self.view.supports_number_of_bottom_layers_value,
+            self.view.layer_height_value,
+            self.view.supports_bottom_thickness_value,
+        )
+
     def update_supports_lid_thickness(self):
-        self.update_dependent_fields(self.view.supports_number_of_lid_layers_value, self.view.layer_height_value, self.view.supports_lid_thickness_value)
+        self.update_dependent_fields(
+            self.view.supports_number_of_lid_layers_value,
+            self.view.layer_height_value,
+            self.view.supports_lid_thickness_value,
+        )
 
     def update_dependent_fields(self, entry_field_1, entry_field_2, output_field):
-        entry_field_1_text = entry_field_1.text().replace(',', '.')
-        entry_field_2_text = entry_field_2.text().replace(',', '.')
+        entry_field_1_text = entry_field_1.text().replace(",", ".")
+        entry_field_2_text = entry_field_2.text().replace(",", ".")
 
-        if ((not entry_field_1_text) or entry_field_1_text == "." ) or ((not entry_field_2_text) or entry_field_2_text == "."):
+        if ((not entry_field_1_text) or entry_field_1_text == ".") or (
+            (not entry_field_2_text) or entry_field_2_text == "."
+        ):
             output_field.setText("0.0")
         else:
-            output_field.setText(str(round(float(entry_field_1_text) * float(entry_field_2_text), 2)))
+            output_field.setText(
+                str(round(float(entry_field_1_text) * float(entry_field_2_text), 2))
+            )
 
     def move_model(self):
         self.view.move_stl2()
@@ -464,15 +561,15 @@ class MainController:
             print("start parsing gcode")
             start_time = time.time()
             gc = self.model.load_gcode(filename)
-            print('finish parsing gcode')
+            print("finish parsing gcode")
             end_time = time.time()
-            print('spent time for gcode loading: ', end_time - start_time, 's')
+            print("spent time for gcode loading: ", end_time - start_time, "s")
 
             return gc
 
         gc = qt_utils.progress_dialog(
-            locales.getLocale().GCodeLoadingTitle, 
-            locales.getLocale().GCodeLoadingProgress, 
+            locales.getLocale().GCodeLoadingTitle,
+            locales.getLocale().GCodeLoadingProgress,
             work,
         )
         blocks = gui_utils.makeBlocks(gc.layers, gc.rotations, gc.lays2rots)
@@ -487,8 +584,12 @@ class MainController:
 
         if len(self.model.splanes) > 0:
             self.view._recreate_splanes(self.model.splanes)
-            self.view.splanes_actors[currentItem].GetProperty().SetColor(get_color(sett().colors.last_layer))
-            self.view.splanes_actors[currentItem].GetProperty().SetOpacity(sett().common.opacity_last_layer) 
+            self.view.splanes_actors[currentItem].GetProperty().SetColor(
+                get_color(sett().colors.last_layer)
+            )
+            self.view.splanes_actors[currentItem].GetProperty().SetOpacity(
+                sett().common.opacity_last_layer
+            )
 
     def slice_stl(self, slicing_type):
         if slicing_type == "vip" and len(self.model.splanes) == 0:
@@ -507,8 +608,8 @@ class MainController:
             p.wait()
             print("finished command")
             end_time = time.time()
-            print('spent time for slicing: ', end_time - start_time, 's')
-            
+            print("spent time for slicing: ", end_time - start_time, "s")
+
             if p.returncode == 2:
                 # panic
                 return p.stderr
@@ -516,11 +617,11 @@ class MainController:
                 # fatal, the error is in the latest line
                 return p.stdout.splitlines()[-1]
 
-            # no errors            
+            # no errors
             return ""
 
         error = qt_utils.progress_dialog(
-            locales.getLocale().SlicingTitle, 
+            locales.getLocale().SlicingTitle,
             locales.getLocale().SlicingProgress,
             work,
         )
@@ -557,23 +658,33 @@ class MainController:
 
     def get_slicer_version(self):
         proc = Process(sett().slicing.cmd_version).wait()
-        
+
         if proc.returncode:
             showErrorDialog("Error during getting slicer version:" + str(proc.stdout))
         else:
             showInfoDialog(locales.getLocale().SlicerVersion + proc.stdout)
 
-    def save_settings(self, slicing_type, filename = ""):
+    def save_settings(self, slicing_type, filename=""):
         s = sett()
-        print(f"saving settings of stl file {self.model.opened_stl} {s.slicing.stl_file}")
+        print(
+            f"saving settings of stl file {self.model.opened_stl} {s.slicing.stl_file}"
+        )
         # s.slicing.stl_file = self.model.opened_stl
         tf = vtk.vtkTransform()
         if self.view.stlActor is not None:
             tf = self.view.stlActor.GetUserTransform()
-        s.uninterrupted_print.enabled = bool(self.view.uninterrupted_print_box.isChecked())
-        s.uninterrupted_print.cut_distance = float(self.view.m10_cut_distance_value.text())
+        s.uninterrupted_print.enabled = bool(
+            self.view.uninterrupted_print_box.isChecked()
+        )
+        s.uninterrupted_print.cut_distance = float(
+            self.view.m10_cut_distance_value.text()
+        )
         s.slicing.originx, s.slicing.originy, s.slicing.originz = tf.GetPosition()
-        s.slicing.rotationx, s.slicing.rotationy, s.slicing.rotationz = tf.GetOrientation()
+        (
+            s.slicing.rotationx,
+            s.slicing.rotationy,
+            s.slicing.rotationz,
+        ) = tf.GetOrientation()
         s.slicing.scalex, s.slicing.scaley, s.slicing.scalez = tf.GetScale()
         s.slicing.layer_height = float(self.view.layer_height_value.text())
         s.slicing.print_speed = float(self.view.print_speed_value.text())
@@ -585,30 +696,46 @@ class MainController:
         s.slicing.wall_thickness = float(self.view.wall_thickness_value.text())
         s.slicing.line_width = float(self.view.line_width_value.text())
         s.slicing.filling_type = locales.getLocaleByLang("en").FillingTypeValues[
-            self.view.filling_type_values.currentIndex()]
+            self.view.filling_type_values.currentIndex()
+        ]
         s.slicing.retraction_on = self.view.retraction_on_box.isChecked()
-        s.slicing.retraction_distance = float(self.view.retraction_distance_value.text())
+        s.slicing.retraction_distance = float(
+            self.view.retraction_distance_value.text()
+        )
         s.slicing.retraction_speed = float(self.view.retraction_speed_value.text())
-        s.slicing.retract_compensation_amount = float(self.view.retract_compensation_amount_value.text())
+        s.slicing.retract_compensation_amount = float(
+            self.view.retract_compensation_amount_value.text()
+        )
         s.slicing.skirt_line_count = int(self.view.skirt_line_count_value.text())
         s.slicing.fan_off_layer1 = self.view.fan_off_layer1_box.isChecked()
         s.slicing.fan_speed = float(self.view.fan_speed_value.text())
         s.slicing.angle = float(self.view.colorize_angle_value.text())
-        
+
         s.slicing.lids_depth = int(self.view.number_of_lid_layers_value.text())
         s.slicing.bottoms_depth = int(self.view.number_of_bottom_layers_value.text())
-        
+
         s.supports.enabled = self.view.supports_on_box.isChecked()
         s.supports.xy_offset = float(self.view.support_xy_offset_value.text())
-        s.supports.z_offset_layers = int(float(self.view.support_z_offset_layers_value.text()))
+        s.supports.z_offset_layers = int(
+            float(self.view.support_z_offset_layers_value.text())
+        )
         s.supports.fill_density = float(self.view.support_density_value.text())
         s.supports.fill_type = locales.getLocaleByLang("en").FillingTypeValues[
-            self.view.support_fill_type_values.currentIndex()]
-        s.supports.priority_z_offset = bool(self.view.support_priority_z_offset_box.isChecked())
-        s.supports.lids_depth = int(self.view.supports_number_of_lid_layers_value.text())
-        s.supports.bottoms_depth = int(self.view.supports_number_of_bottom_layers_value.text())
+            self.view.support_fill_type_values.currentIndex()
+        ]
+        s.supports.priority_z_offset = bool(
+            self.view.support_priority_z_offset_box.isChecked()
+        )
+        s.supports.lids_depth = int(
+            self.view.supports_number_of_lid_layers_value.text()
+        )
+        s.supports.bottoms_depth = int(
+            self.view.supports_number_of_bottom_layers_value.text()
+        )
 
-        s.slicing.overlapping_infill_percentage = float(self.view.overlapping_infill_value.text())
+        s.slicing.overlapping_infill_percentage = float(
+            self.view.overlapping_infill_value.text()
+        )
         s.slicing.material_shrinkage = float(self.view.material_shrinkage_value.text())
 
         s.slicing.slicing_type = slicing_type
@@ -622,10 +749,12 @@ class MainController:
         # save planes to settings
         s.figures = []
         for idx, plane in enumerate(self.model.splanes):
-            s.figures.append(dict(
-                index=idx,
-                description=plane.toFile(),
-            ))
+            s.figures.append(
+                dict(
+                    index=idx,
+                    description=plane.toFile(),
+                )
+            )
 
         if filename != "":
             save_settings(filename)
@@ -642,8 +771,14 @@ class MainController:
 
     def save_settings_file(self):
         try:
-            directory = "Settings_" + os.path.basename(sett().slicing.stl_file).split('.')[0]
-            filename = str(self.view.save_dialog(self.view.locale.SaveSettings, "YAML (*.yaml *.YAML)", directory))
+            directory = (
+                "Settings_" + os.path.basename(sett().slicing.stl_file).split(".")[0]
+            )
+            filename = str(
+                self.view.save_dialog(
+                    self.view.locale.SaveSettings, "YAML (*.yaml *.YAML)", directory
+                )
+            )
             if filename != "":
                 if not (filename.endswith(".yaml") or filename.endswith(".YAML")):
                     filename += ".yaml"
@@ -651,13 +786,15 @@ class MainController:
         except IOError as e:
             showErrorDialog("Error during file saving:" + str(e))
 
-    def save_project_files(self, save_path = ""):
+    def save_project_files(self, save_path=""):
         if save_path == "":
             self.save_settings("vip", PathBuilder.settings_file())
             shutil.copy2(PathBuilder.stl_model_temp(), PathBuilder.stl_model())
         else:
             self.save_settings("vip", path.join(save_path, "settings.yaml"))
-            shutil.copy2(PathBuilder.stl_model_temp(), path.join(save_path, "model.stl
+            shutil.copy2(
+                PathBuilder.stl_model_temp(), path.join(save_path, "model.stl")
+            )
 
     def save_project(self):
         try:
@@ -671,7 +808,11 @@ class MainController:
         project_path = PathBuilder.project_path()
 
         try:
-            save_directory = str(QFileDialog.getExistingDirectory(self.view, locales.getLocale().SavingProject))
+            save_directory = str(
+                QFileDialog.getExistingDirectory(
+                    self.view, locales.getLocale().SavingProject
+                )
+            )
 
             if not save_directory:
                 return
@@ -701,7 +842,11 @@ class MainController:
 
     def load_settings_file(self):
         try:
-            filename = str(self.view.open_dialog(self.view.locale.LoadSettings,"YAML (*.yaml *.YAML)"))
+            filename = str(
+                self.view.open_dialog(
+                    self.view.locale.LoadSettings, "YAML (*.yaml *.YAML)"
+                )
+            )
             if filename != "":
                 file_ext = os.path.splitext(filename)[1].upper()
                 filename = str(Path(filename))
@@ -712,8 +857,7 @@ class MainController:
                     except:
                         showErrorDialog("Error during reading settings file")
                 else:
-                    showErrorDialog(
-                        "This file format isn't supported:" + file_ext)
+                    showErrorDialog("This file format isn't supported:" + file_ext)
         except IOError as e:
             showErrorDialog("Error during file opening:" + str(e))
 
@@ -735,23 +879,31 @@ class MainController:
         self.view.print_speed_value.setText(str(s.slicing.print_speed))
         self.view.print_speed_layer1_value.setText(str(s.slicing.print_speed_layer1))
         self.view.print_speed_wall_value.setText(str(s.slicing.print_speed_wall))
-        ind = locales.getLocaleByLang("en").FillingTypeValues.index(s.slicing.filling_type)
+        ind = locales.getLocaleByLang("en").FillingTypeValues.index(
+            s.slicing.filling_type
+        )
         self.view.filling_type_values.setCurrentIndex(ind)
         self.view.fill_density_value.setText(str(s.slicing.fill_density))
-        self.view.overlapping_infill_value.setText(str(s.slicing.overlapping_infill_percentage))
+        self.view.overlapping_infill_value.setText(
+            str(s.slicing.overlapping_infill_percentage)
+        )
         if s.slicing.retraction_on:
             self.view.retraction_on_box.setCheckState(QtCore.Qt.Checked)
         else:
             self.view.retraction_on_box.setCheckState(QtCore.Qt.Unchecked)
         self.view.retraction_distance_value.setText(str(s.slicing.retraction_distance))
         self.view.retraction_speed_value.setText(str(s.slicing.retraction_speed))
-        self.view.retract_compensation_amount_value.setText(str(s.slicing.retract_compensation_amount))
+        self.view.retract_compensation_amount_value.setText(
+            str(s.slicing.retract_compensation_amount)
+        )
         if s.supports.enabled:
             self.view.supports_on_box.setCheckState(QtCore.Qt.Checked)
         else:
             self.view.supports_on_box.setCheckState(QtCore.Qt.Unchecked)
         self.view.support_density_value.setText(str(s.supports.fill_density))
-        ind = locales.getLocaleByLang("en").FillingTypeValues.index(s.supports.fill_type)
+        ind = locales.getLocaleByLang("en").FillingTypeValues.index(
+            s.supports.fill_type
+        )
         self.view.support_fill_type_values.setCurrentIndex(ind)
         self.view.support_xy_offset_value.setText(str(s.supports.xy_offset))
         self.view.support_z_offset_layers_value.setText(str(s.supports.z_offset_layers))
@@ -759,14 +911,22 @@ class MainController:
             self.view.support_priority_z_offset_box.setCheckState(QtCore.Qt.Checked)
         else:
             self.view.support_priority_z_offset_box.setCheckState(QtCore.Qt.Unchecked)
-        self.view.supports_number_of_bottom_layers_value.setText(str(s.supports.bottoms_depth))
-        self.view.supports_bottom_thickness_value.setText(str(round(s.slicing.layer_height*s.supports.bottoms_depth,2)))
-        self.view.supports_number_of_lid_layers_value.setText(str(int(s.supports.lids_depth)))
-        self.view.supports_lid_thickness_value.setText(str(round(s.slicing.layer_height*s.supports.lids_depth,2)))
+        self.view.supports_number_of_bottom_layers_value.setText(
+            str(s.supports.bottoms_depth)
+        )
+        self.view.supports_bottom_thickness_value.setText(
+            str(round(s.slicing.layer_height * s.supports.bottoms_depth, 2))
+        )
+        self.view.supports_number_of_lid_layers_value.setText(
+            str(int(s.supports.lids_depth))
+        )
+        self.view.supports_lid_thickness_value.setText(
+            str(round(s.slicing.layer_height * s.supports.lids_depth, 2))
+        )
         self.view.colorize_angle_value.setText(str(s.slicing.angle))
 
     def colorize_model(self):
-        shutil.copyfile(PathBuilder.stl_model(),PathBuilder.colorizer_stl())
+        shutil.copyfile(PathBuilder.stl_model(), PathBuilder.colorizer_stl())
         self.save_settings("vip")
 
         p = Process(PathBuilder.colorizer_cmd()).wait()
@@ -774,7 +934,7 @@ class MainController:
             logging.error(f"error: <{p.stdout}>")
             gui_utils.showErrorDialog(p.stdout)
             return
-        
+
         lastMove = self.view.stlActor.lastMove
         self.load_stl(PathBuilder.colorizer_stl(), colorize=True)
         self.view.stlActor.lastMove = lastMove
@@ -806,7 +966,10 @@ class MainController:
         self.view.splanes_tree.takeTopLevelItem(ind)
         self.view.reload_splanes(self.model.splanes)
         if len(self.model.splanes) == 0:
-            if self.view.parameters_tooling and not self.view.parameters_tooling.isHidden():
+            if (
+                self.view.parameters_tooling
+                and not self.view.parameters_tooling.isHidden()
+            ):
                 self.view.parameters_tooling.close()
 
         self.change_figure_parameters()
@@ -817,11 +980,14 @@ class MainController:
             return
 
         if not self.view.splanes_tree.itemIsMoving:
-            if self.view.parameters_tooling and not self.view.parameters_tooling.isHidden():
+            if (
+                self.view.parameters_tooling
+                and not self.view.parameters_tooling.isHidden()
+            ):
                 self.change_figure_parameters()
 
             if len(self.model.splanes) > ind:
-                    self.view.change_combo_select(self.model.splanes[ind], ind)
+                self.view.change_combo_select(self.model.splanes[ind], ind)
 
     def update_plane_common(self, values: Dict[str, Union[float, bool]]):
         center = [values.get("X", 0), values.get("Y", 0), values.get("Z", 0)]
@@ -838,21 +1004,27 @@ class MainController:
 
         for i in range(len(self.model.splanes)):
             self.view.splanes_tree.topLevelItem(i).setText(1, str(i + 1))
-            self.view.splanes_tree.topLevelItem(i).setText(2, self.model.splanes[i].toFile())
+            self.view.splanes_tree.topLevelItem(i).setText(
+                2, self.model.splanes[i].toFile()
+            )
 
     def update_cone_common(self, values: Dict[str, float]):
         center: List[float] = [0, 0, values.get("Z", 0)]
         ind = self.view.splanes_tree.currentIndex().row()
         if ind == -1:
             return
-        self.model.splanes[ind] = gui_utils.Cone(values.get("A", 0), tuple(center), values.get("H1", 0), values.get("H2", 15))
+        self.model.splanes[ind] = gui_utils.Cone(
+            values.get("A", 0), tuple(center), values.get("H1", 0), values.get("H2", 15)
+        )
         self.view.update_cone(self.model.splanes[ind], ind)
 
         for i in range(len(self.model.splanes)):
             self.view.splanes_tree.topLevelItem(i).setText(1, str(i + 1))
-            self.view.splanes_tree.topLevelItem(i).setText(2, self.model.splanes[i].toFile())
+            self.view.splanes_tree.topLevelItem(i).setText(
+                2, self.model.splanes[i].toFile()
+            )
 
-    def update_interface(self, filename = ""):
+    def update_interface(self, filename=""):
         s = sett()
 
         if not filename:
@@ -863,21 +1035,29 @@ class MainController:
             file_ext = os.path.splitext(filename)[1].upper()
 
             self.view.setWindowTitle(name_stl_file + " - FASP")
-            self.view.name_stl_file.setText(self.view.locale.FileName + name_stl_file + file_ext)
+            self.view.name_stl_file.setText(
+                self.view.locale.FileName + name_stl_file + file_ext
+            )
 
         string_print_time = ""
 
         if s.slicing.print_time > 3600:
             hours = s.slicing.print_time / 3600
-            string_print_time += str(math.floor(hours)) + " " + self.view.locale.Hour + ", "
+            string_print_time += (
+                str(math.floor(hours)) + " " + self.view.locale.Hour + ", "
+            )
 
         if s.slicing.print_time > 60:
             minutes = (s.slicing.print_time % 3600) / 60
-            string_print_time += str(math.floor(minutes)) + " " + self.view.locale.Minute + ", "
+            string_print_time += (
+                str(math.floor(minutes)) + " " + self.view.locale.Minute + ", "
+            )
 
         if s.slicing.print_time > 0:
             seconds = (s.slicing.print_time % 3600) % 60
-            string_print_time += str(math.floor(seconds)) + " " + self.view.locale.Second
+            string_print_time += (
+                str(math.floor(seconds)) + " " + self.view.locale.Second
+            )
 
         self.view.print_time_value.setText(string_print_time)
 
@@ -887,14 +1067,31 @@ class MainController:
 
         string_consumption_material = ""
         if s.slicing.consumption_material > 0:
-            material_weight = (s.slicing.consumption_material * math.pow(s.hardware.bar_diameter/2, 2) * math.pi) * s.hardware.density / 1000
-            string_consumption_material += str(math.ceil(material_weight)) + " " + self.view.locale.Gram + ", "
-            string_consumption_material += str(float("{:.2f}".format(s.slicing.consumption_material/1000))) + " " + self.view.locale.Meter
+            material_weight = (
+                (
+                    s.slicing.consumption_material
+                    * math.pow(s.hardware.bar_diameter / 2, 2)
+                    * math.pi
+                )
+                * s.hardware.density
+                / 1000
+            )
+            string_consumption_material += (
+                str(math.ceil(material_weight)) + " " + self.view.locale.Gram + ", "
+            )
+            string_consumption_material += (
+                str(float("{:.2f}".format(s.slicing.consumption_material / 1000)))
+                + " "
+                + self.view.locale.Meter
+            )
 
         self.view.consumption_material_value.setText(string_consumption_material)
 
         if s.slicing.planes_contact_with_nozzle:
-            self.view.warning_nozzle_and_table_collision.setText(self.view.locale.WarningNozzleAndTableCollision + s.slicing.planes_contact_with_nozzle)
+            self.view.warning_nozzle_and_table_collision.setText(
+                self.view.locale.WarningNozzleAndTableCollision
+                + s.slicing.planes_contact_with_nozzle
+            )
         else:
             self.view.warning_nozzle_and_table_collision.setText("")
 

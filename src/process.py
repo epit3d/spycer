@@ -4,13 +4,14 @@ import signal
 import subprocess
 import tempfile
 
-#Process(f'xdotool search --all --name {name}').wait().stdout
+# Process(f'xdotool search --all --name {name}').wait().stdout
 
 # with Process(CMD, capture=False):
-        
+
 #     p = Process('roslaunch test test.launch')
 #     p.wait()
-        
+
+
 class Process:
     """
     Convenience wrapper for subprocess.Popen. Allows to:
@@ -33,9 +34,10 @@ class Process:
             self._files = dict(
                 stdout=tempfile.NamedTemporaryFile(mode="w", delete=False),
                 stderr=tempfile.NamedTemporaryFile(mode="w", delete=False),
-                stdin=tempfile.NamedTemporaryFile(mode="r", delete=False))
+                stdin=tempfile.NamedTemporaryFile(mode="r", delete=False),
+            )
             kw.update(**self._files)
-        if os.name == 'posix':
+        if os.name == "posix":
             kw.update(preexec_fn=os.setsid)
         self._process = subprocess.Popen(cmd, **kw)
 
@@ -69,17 +71,17 @@ class Process:
 
     @property
     def stdout(self):
-        with open(self._files['stdout'].name) as f:
+        with open(self._files["stdout"].name) as f:
             return f.read()
 
     @property
     def stderr(self):
-        with open(self._files['stderr'].name) as f:
+        with open(self._files["stderr"].name) as f:
             return f.read()
 
     def kill(self):
         if not self.done:
-            if os.name == 'posix':
+            if os.name == "posix":
                 os.killpg(os.getpgid(self.pid), signal.SIGINT)
             else:
                 os.kill(self.pid, signal.CTRL_BREAK_EVENT)

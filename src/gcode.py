@@ -18,13 +18,16 @@ def rotation_matrix(axis, theta):
     b, c, d = -axis * np.sin(theta / 2.0)
     aa, bb, cc, dd = a * a, b * b, c * c, d * d
     bc, ad, ac, ab, bd, cd = b * c, a * d, a * c, a * b, b * d, c * d
-    return np.array([[aa + bb - cc - dd, 2 * (bc + ad),
-                      2 * (bd - ac)], [2 * (bc - ad), aa + cc - bb - dd, 2 * (cd + ab)],
-                     [2 * (bd + ac), 2 * (cd - ab), aa + dd - bb - cc]])
+    return np.array(
+        [
+            [aa + bb - cc - dd, 2 * (bc + ad), 2 * (bd - ac)],
+            [2 * (bc - ad), aa + cc - bb - dd, 2 * (cd + ab)],
+            [2 * (bd + ac), 2 * (cd - ab), aa + dd - bb - cc],
+        ]
+    )
 
 
 class GCode:
-
     def __init__(self, layers, rotations, lays2rots):
         self.layers: List[List[Point]] = layers
         self.rotations: List[Rotation] = rotations
@@ -32,7 +35,6 @@ class GCode:
 
 
 class Rotation:
-
     def __init__(self, x, z):
         self.x_rot = x
         self.z_rot = z
@@ -42,7 +44,6 @@ class Rotation:
 
 
 class Point:
-
     def __init__(self, x, y, z, a, b):
         self.x = x
         self.y = y
@@ -83,7 +84,13 @@ class Printer:
         self.currPos = Position(0, 0, 0, 0, 0, 0)
         self.prevPos = Position(0, 0, 0, 0, 0, 0)
 
-        self.rotationPoint = np.array([s.hardware.rotation_center_x, s.hardware.rotation_center_y, s.hardware.rotation_center_z])
+        self.rotationPoint = np.array(
+            [
+                s.hardware.rotation_center_x,
+                s.hardware.rotation_center_y,
+                s.hardware.rotation_center_z,
+            ]
+        )
         self.cone_axis = rotation_matrix([1, 0, 0], 0).dot([0, 0, 1])
 
         self.path = []
@@ -157,20 +164,15 @@ class Printer:
         for pos in self.path[1:]:
             numPoints = int(abs(lastPos.U - pos.U) // maxDeltaU)
             if numPoints > 0:
-                rangeU = list(np.linspace(
-                    lastPos.U, pos.U, numPoints + 2)[1:])
-                rangeX = list(np.linspace(
-                    lastPos.X, pos.X, numPoints + 2)[1:])
-                rangeY = list(np.linspace(
-                    lastPos.Y, pos.Y, numPoints + 2)[1:])
-                rangeZ = list(np.linspace(
-                    lastPos.Z, pos.Z, numPoints + 2)[1:])
+                rangeU = list(np.linspace(lastPos.U, pos.U, numPoints + 2)[1:])
+                rangeX = list(np.linspace(lastPos.X, pos.X, numPoints + 2)[1:])
+                rangeY = list(np.linspace(lastPos.Y, pos.Y, numPoints + 2)[1:])
+                rangeZ = list(np.linspace(lastPos.Z, pos.Z, numPoints + 2)[1:])
 
                 for dU, dX, dY, dZ in zip(rangeU, rangeX, rangeY, rangeZ):
                     res.append((dX, dY, dZ, dU))
             else:
-                res.append(
-                    (pos.X, pos.Y, pos.Z, pos.U))
+                res.append((pos.X, pos.Y, pos.Z, pos.U))
             lastPos = pos
 
         return res
@@ -198,7 +200,12 @@ class Printer:
                 r = yr
                 z = zr
 
-                xr, yr, zr = rotation_matrix(cone_axis, -u).dot(np.array([xr, r, z]) - rotationPoint) + rotationPoint
+                xr, yr, zr = (
+                    rotation_matrix(cone_axis, -u).dot(
+                        np.array([xr, r, z]) - rotationPoint
+                    )
+                    + rotationPoint
+                )
 
                 points.append(Point(xr, yr, zr, 0, 0))
         else:
@@ -230,7 +237,7 @@ def parseRotation(args: List[str]):
 
 
 def readGCode(filename):
-    with open(filename, 'r', encoding="utf-8") as f:
+    with open(filename, "r", encoding="utf-8") as f:
         lines = [line.strip() for line in f]
     return parseGCode(lines)
 
@@ -250,7 +257,7 @@ def parseGCode(lines):
         line = line.strip()
         if len(line) == 0:
             continue
-        if line[0] == ';':  # comment
+        if line[0] == ";":  # comment
             if line.startswith(";LAYER:"):
                 current_layer = int(line[7:])
                 printer.finishLayer()
@@ -278,14 +285,20 @@ def parseGCode(lines):
             if comment.lower() == "rotation":  # we have either rotation or incline
                 printer.finishLayer()
                 # if any(a.lower().startswith('u') for a in args):  # rotation
-                printer.rotations.append(Rotation(printer.rotations[-1].x_rot, parseRotation(args[1:])))
+                printer.rotations.append(
+                    Rotation(printer.rotations[-1].x_rot, parseRotation(args[1:]))
+                )
                 printer.currPos.U = printer.rotations[-1].z_rot
             elif comment.lower() == "incline":
                 printer.finishLayer()
                 # if any(a.lower().startswith('v') for a in args):  # incline
-                printer.rotations.append(Rotation(parseRotation(args[1:]), printer.rotations[-1].z_rot))
+                printer.rotations.append(
+                    Rotation(parseRotation(args[1:]), printer.rotations[-1].z_rot)
+                )
 
-                printer.cone_axis = rotation_matrix([1, 0, 0], np.radians(printer.rotations[-1].x_rot)).dot([0, 0, 1])
+                printer.cone_axis = rotation_matrix(
+                    [1, 0, 0], np.radians(printer.rotations[-1].x_rot)
+                ).dot([0, 0, 1])
                 printer.currPos.V = printer.rotations[-1].x_rot
             elif args[0] == "G0":  # move to (or rotate)
                 pos = args[1:]

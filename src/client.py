@@ -6,30 +6,33 @@ import yaml
 
 CHUNK_SIZE = 1024 * 1024  # 1MB
 
+
 def get_file_chunks(filename):
-    with open(filename, 'rb') as f:
+    with open(filename, "rb") as f:
         while True:
-            piece = f.read(CHUNK_SIZE);
+            piece = f.read(CHUNK_SIZE)
             if len(piece) == 0:
                 return
             yield piece
 
+
 def prepare_bug(filename, error_description):
-    with open("auth.yaml", 'r') as file:
+    with open("auth.yaml", "r") as file:
         auth_data = yaml.safe_load(file)
 
     req = srv_bug_pb2.AddBugRequest(
         info=srv_bug_pb2.BugInfo(
             message=error_description,
             creds=srv_bug_pb2.Credentials(
-                login=str(auth_data.get('login')),
-                passw=str(auth_data.get('password'))),
+                login=str(auth_data.get("login")), passw=str(auth_data.get("password"))
+            ),
         )
     )
     yield req
 
     for piece in get_file_chunks(filename):
         yield srv_bug_pb2.AddBugRequest(content=piece)
+
 
 def send_bug_report(filename, error_description):
     with grpc.insecure_channel("app.epit3d.com:3456") as channel:
