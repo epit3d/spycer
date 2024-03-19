@@ -110,7 +110,8 @@ class SettingsWidget(QWidget):
         """
         Return checkbox element associated with the given name
         """
-        assert name in self.__elements, f"There is no checkbox for {name}"
+        if name not in self.__elements:
+            raise KeyError(f"There is no checkbox for {name}")
 
         return self.__elements[name]["checkbox"]
 
@@ -118,7 +119,8 @@ class SettingsWidget(QWidget):
         """
         Return combobox element associated with the given name
         """
-        assert name in self.__elements, f"There is no combobox for {name}"
+        if name not in self.__elements:
+            raise KeyError(f"There is no combobox for {name}")
 
         return self.__elements[name]["values"]
 
@@ -126,8 +128,11 @@ class SettingsWidget(QWidget):
         """
         Return element associated with the given name and key
         """
-        assert name in self.__elements, f"There is no element for {name}"
-        assert key in self.__elements[name], f"There is no element for {key}"
+        if name not in self.__elements:
+            raise KeyError(f"There is no element for {name}")
+
+        if key not in self.__elements[name]:
+            raise KeyError(f"There is no element for {key}")
 
         return self.__elements[name][key]
 
@@ -135,6 +140,19 @@ class SettingsWidget(QWidget):
         for param in self.parameters:
             self.with_sett(param)
         return self
+
+    def update_dependent_fields(self, entry_field_1, entry_field_2, output_field):
+        entry_field_1_text = entry_field_1.text().replace(",", ".")
+        entry_field_2_text = entry_field_2.text().replace(",", ".")
+
+        if ((not entry_field_1_text) or entry_field_1_text == ".") or (
+            (not entry_field_2_text) or entry_field_2_text == "."
+        ):
+            output_field.setText("0.0")
+        else:
+            output_field.setText(
+                str(round(float(entry_field_1_text) * float(entry_field_2_text), 2))
+            )
 
     def with_sett(self, name: str):
         # we match the given name with each setting and add it to the layout
@@ -244,6 +262,7 @@ class SettingsWidget(QWidget):
                 line_width_value = QLineEdit()
                 line_width_value.setText(str(self.sett().slicing.line_width))
                 line_width_value.setValidator(self.doubleValidator)
+                line_width_value.textChanged.connect(self.__update_wall_thickness)
                 self.panel.addWidget(line_width, self.next_row, 1)
                 self.panel.addWidget(
                     line_width_value, self.cur_row, 2, 1, self.col2_cells
@@ -259,6 +278,7 @@ class SettingsWidget(QWidget):
                 layer_height_value = QLineEdit()
                 layer_height_value.setText(str(self.sett().slicing.layer_height))
                 layer_height_value.setValidator(self.doubleValidator)
+                layer_height_value.textChanged.connect(self.__change_layer_height)
                 self.panel.addWidget(layer_height, self.next_row, 1)
                 self.panel.addWidget(
                     layer_height_value, self.cur_row, 2, 1, self.col2_cells
@@ -281,6 +301,10 @@ class SettingsWidget(QWidget):
 
                 number_wall_lines_value = LineEdit(str(number_wall_lines_value))
                 number_wall_lines_value.setValidator(self.intValidator)
+
+                number_wall_lines_value.textChanged.connect(
+                    self.__update_wall_thickness
+                )
 
                 self.panel.addWidget(number_wall_lines_label, self.next_row, 1)
                 self.panel.addWidget(number_wall_lines_value, self.cur_row, 2)
@@ -306,6 +330,10 @@ class SettingsWidget(QWidget):
                     str(self.sett().slicing.bottoms_depth)
                 )
                 number_of_bottom_layers_value.setValidator(self.intValidator)
+                number_of_bottom_layers_value.textChanged.connect(
+                    self.__update_bottom_thickness
+                )
+
                 self.panel.addWidget(number_of_bottom_layers_label, self.next_row, 1)
                 self.panel.addWidget(number_of_bottom_layers_value, self.cur_row, 2)
 
@@ -339,6 +367,10 @@ class SettingsWidget(QWidget):
                     str(self.sett().slicing.lids_depth)
                 )
                 number_of_lids_layers_value.setValidator(self.intValidator)
+                number_of_lids_layers_value.textChanged.connect(
+                    self.__update_lid_thickness
+                )
+
                 self.panel.addWidget(number_of_lids_layers_label, self.next_row, 1)
                 self.panel.addWidget(number_of_lids_layers_value, self.cur_row, 2)
 
@@ -727,6 +759,9 @@ class SettingsWidget(QWidget):
                     str(self.sett().supports.bottoms_depth)
                 )
                 support_number_of_bottom_layers_value.setValidator(self.intValidator)
+                support_number_of_bottom_layers_value.textChanged.connect(
+                    self.__update_supports_bottom_thickness
+                )
                 self.panel.addWidget(
                     support_number_of_bottom_layers_label, self.next_row, 1
                 )
@@ -766,6 +801,9 @@ class SettingsWidget(QWidget):
                     str(self.sett().supports.lids_depth)
                 )
                 support_number_of_lid_layers_value.setValidator(self.intValidator)
+                support_number_of_lid_layers_value.textChanged.connect(
+                    self.__update_supports_lid_thickness
+                )
                 self.panel.addWidget(
                     support_number_of_lid_layers_label, self.next_row, 1
                 )
@@ -798,3 +836,70 @@ class SettingsWidget(QWidget):
                 }
 
         return self
+
+    def __update_wall_thickness(self):
+        """Callback to update wall thickness when number of wall lines or line width changes."""
+        try:
+            self.update_dependent_fields(
+                self.edit("number_wall_lines"),
+                self.edit("line_width"),
+                self.get_element("number_wall_lines", "wall_thickness_value"),
+            )
+        except KeyError:
+            pass
+
+    def __update_bottom_thickness(self):
+        """Callback to update bottom thickness when number of bottom layers or layer height changes."""
+        try:
+            self.update_dependent_fields(
+                self.edit("number_of_bottom_layers"),
+                self.edit("layer_height"),
+                self.get_element("number_of_bottom_layers", "bottom_thickness_value"),
+            )
+        except KeyError:
+            pass
+
+    def __update_lid_thickness(self):
+        """Callback to update lid thickness when number of lid layers or layer height changes."""
+        try:
+            self.update_dependent_fields(
+                self.edit("number_of_lids_layers"),
+                self.edit("layer_height"),
+                self.get_element("number_of_lids_layers", "lid_thickness_value"),
+            )
+        except KeyError:
+            pass
+
+    def __update_supports_bottom_thickness(self):
+        """Callback to update bottom thickness when number of bottom layers or layer height changes."""
+        try:
+            self.update_dependent_fields(
+                self.edit("support_number_of_bottom_layers"),
+                self.edit("layer_height"),
+                self.get_element(
+                    "support_number_of_bottom_layers", "bottom_thickness_value"
+                ),
+            )
+        except KeyError:
+            pass
+
+    def __update_supports_lid_thickness(self):
+        """Callback to update lid thickness when number of lid layers or layer height changes."""
+        try:
+            self.update_dependent_fields(
+                self.edit("support_number_of_lid_layers"),
+                self.edit("layer_height"),
+                self.get_element("support_number_of_lid_layers", "lid_thickness_value"),
+            )
+        except KeyError:
+            pass
+
+    def __change_layer_height(self):
+        """Callback to update wall thickness, bottom thickness and lid thickness when layer height changes."""
+        try:
+            self.__update_bottom_thickness()
+            self.__update_lid_thickness()
+            self.__update_supports_bottom_thickness()
+            self.__update_supports_lid_thickness()
+        except KeyError:
+            pass

@@ -118,24 +118,8 @@ class MainController:
         self.view.setts.get_element("printer_path", "add_btn").clicked.connect(
             self.create_printer
         )
-        self.view.printer_path_edit.clicked.connect(self.choose_printer_path)
-        self.view.number_wall_lines_value.textChanged.connect(
-            self.update_wall_thickness
-        )
-        self.view.line_width_value.textChanged.connect(self.update_wall_thickness)
-        self.view.layer_height_value.textChanged.connect(self.change_layer_height)
-        self.view.number_of_bottom_layers_value.textChanged.connect(
-            self.update_bottom_thickness
-        )
-        self.view.number_of_lid_layers_value.textChanged.connect(
-            self.update_lid_thickness
-        )
-        self.view.supports_number_of_bottom_layers_value.textChanged.connect(
-            self.update_supports_bottom_thickness
-        )
-        self.view.supports_number_of_lid_layers_value.textChanged.connect(
-            self.update_supports_lid_thickness
-        )
+        self.view.setts.edit("printer_path").clicked.connect(self.choose_printer_path)
+
         self.view.model_switch_box.stateChanged.connect(self.view.switch_stl_gcode)
         self.view.model_centering_box.stateChanged.connect(self.view.model_centering)
         self.view.picture_slider.valueChanged.connect(self.change_layer_view)
@@ -676,10 +660,10 @@ class MainController:
         if self.view.stlActor is not None:
             tf = self.view.stlActor.GetUserTransform()
         s.uninterrupted_print.enabled = bool(
-            self.view.uninterrupted_print_box.isChecked()
+            self.view.setts.checkbox("uninterrupted_print").isChecked()
         )
         s.uninterrupted_print.cut_distance = float(
-            self.view.m10_cut_distance_value.text()
+            self.view.setts.edit("m10_cut_distance").text()
         )
         s.slicing.originx, s.slicing.originy, s.slicing.originz = tf.GetPosition()
         (
@@ -688,57 +672,77 @@ class MainController:
             s.slicing.rotationz,
         ) = tf.GetOrientation()
         s.slicing.scalex, s.slicing.scaley, s.slicing.scalez = tf.GetScale()
-        s.slicing.layer_height = float(self.view.layer_height_value.text())
-        s.slicing.print_speed = float(self.view.print_speed_value.text())
-        s.slicing.print_speed_layer1 = float(self.view.print_speed_layer1_value.text())
-        s.slicing.print_speed_wall = float(self.view.print_speed_wall_value.text())
-        s.slicing.extruder_temperature = float(self.view.extruder_temp_value.text())
-        s.slicing.bed_temperature = float(self.view.bed_temp_value.text())
-        s.slicing.fill_density = float(self.view.fill_density_value.text())
-        s.slicing.wall_thickness = float(self.view.wall_thickness_value.text())
-        s.slicing.line_width = float(self.view.line_width_value.text())
+        s.slicing.layer_height = float(self.view.setts.edit("layer_height").text())
+        s.slicing.print_speed = float(self.view.setts.edit("print_speed").text())
+        s.slicing.print_speed_layer1 = float(
+            self.view.setts.edit("print_speed_layer1").text()
+        )
+        s.slicing.print_speed_wall = float(
+            self.view.setts.edit("print_speed_wall").text()
+        )
+        s.slicing.extruder_temperature = float(
+            self.view.setts.edit("extruder_temp").text()
+        )
+        s.slicing.bed_temperature = float(self.view.setts.edit("bed_temp").text())
+        s.slicing.fill_density = float(self.view.setts.edit("fill_density").text())
+        s.slicing.wall_thickness = float(
+            self.view.setts.get_element(
+                "number_wall_lines", "wall_thickness_value"
+            ).text()
+        )
+        s.slicing.line_width = float(self.view.setts.edit("line_width").text())
         s.slicing.filling_type = locales.getLocaleByLang("en").FillingTypeValues[
-            self.view.filling_type_values.currentIndex()
+            self.view.setts.values("filling_type").currentIndex()
         ]
-        s.slicing.retraction_on = self.view.retraction_on_box.isChecked()
+        s.slicing.retraction_on = self.view.setts.checkbox("retraction_on").isChecked()
         s.slicing.retraction_distance = float(
-            self.view.retraction_distance_value.text()
+            self.view.setts.edit("retraction_distance").text()
         )
-        s.slicing.retraction_speed = float(self.view.retraction_speed_value.text())
+        s.slicing.retraction_speed = float(
+            self.view.setts.edit("retraction_speed").text()
+        )
         s.slicing.retract_compensation_amount = float(
-            self.view.retract_compensation_amount_value.text()
+            self.view.setts.edit("retraction_compensation").text()
         )
-        s.slicing.skirt_line_count = int(self.view.skirt_line_count_value.text())
-        s.slicing.fan_off_layer1 = self.view.fan_off_layer1_box.isChecked()
-        s.slicing.fan_speed = float(self.view.fan_speed_value.text())
+        s.slicing.skirt_line_count = int(
+            self.view.setts.edit("skirt_line_count").text()
+        )
+        s.slicing.fan_off_layer1 = self.view.setts.checkbox(
+            "fan_off_layer1"
+        ).isChecked()
+        s.slicing.fan_speed = float(self.view.setts.edit("fan_speed").text())
         s.slicing.angle = float(self.view.colorize_angle_value.text())
 
-        s.slicing.lids_depth = int(self.view.number_of_lid_layers_value.text())
-        s.slicing.bottoms_depth = int(self.view.number_of_bottom_layers_value.text())
-
-        s.supports.enabled = self.view.supports_on_box.isChecked()
-        s.supports.xy_offset = float(self.view.support_xy_offset_value.text())
-        s.supports.z_offset_layers = int(
-            float(self.view.support_z_offset_layers_value.text())
+        s.slicing.lids_depth = int(self.view.setts.edit("number_of_lids_layers").text())
+        s.slicing.bottoms_depth = int(
+            self.view.setts.edit("number_of_bottom_layers").text()
         )
-        s.supports.fill_density = float(self.view.support_density_value.text())
+
+        s.supports.enabled = self.view.setts.checkbox("supports_on").isChecked()
+        s.supports.xy_offset = float(self.view.setts.edit("support_xy_offset").text())
+        s.supports.z_offset_layers = int(
+            float(self.view.setts.edit("support_z_offset").text())
+        )
+        s.supports.fill_density = float(self.view.setts.edit("support_density").text())
         s.supports.fill_type = locales.getLocaleByLang("en").FillingTypeValues[
-            self.view.support_fill_type_values.currentIndex()
+            self.view.setts.values("support_fill_type").currentIndex()
         ]
         s.supports.priority_z_offset = bool(
-            self.view.support_priority_z_offset_box.isChecked()
+            self.view.setts.checkbox("support_priority_zoffset").isChecked()
         )
         s.supports.lids_depth = int(
-            self.view.supports_number_of_lid_layers_value.text()
+            self.view.setts.edit("support_number_of_lid_layers").text()
         )
         s.supports.bottoms_depth = int(
-            self.view.supports_number_of_bottom_layers_value.text()
+            self.view.setts.edit("support_number_of_bottom_layers").text()
         )
 
         s.slicing.overlapping_infill_percentage = float(
-            self.view.overlapping_infill_value.text()
+            self.view.setts.edit("overlap_infill").text()
         )
-        s.slicing.material_shrinkage = float(self.view.material_shrinkage_value.text())
+        s.slicing.material_shrinkage = float(
+            self.view.setts.edit("material_shrinkage").text()
+        )
 
         s.slicing.slicing_type = slicing_type
 
