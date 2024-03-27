@@ -18,7 +18,12 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QHBoxLayout,
     QCheckBox,
+    QScrollArea,
+    QVBoxLayout,
+    QComboBox,
 )
+from src.settings_widget import SettingsWidget
+from src.settings import sett
 
 
 class FigureEditor(QWidget):
@@ -41,8 +46,10 @@ class FigureEditor(QWidget):
         self.on_change = on_change
         self.setWindowTitle("Parameters tooling")
 
-        self.layout = QGridLayout()
-        self.layout.setSpacing(5)
+        self.__layout = QHBoxLayout()
+
+        self.__figure_params_layout = QGridLayout()
+        self.__figure_params_layout.setSpacing(5)
         # self.layout.setColumnStretch(7, 1)
 
         self.params_widgets = []
@@ -56,7 +63,7 @@ class FigureEditor(QWidget):
             # add label for parameter name
             label = QLabel(str(param))
             self.params_widgets.append(label)
-            self.layout.addWidget(label, param_idx, 0)
+            self.__figure_params_layout.addWidget(label, param_idx, 0)
 
             def pass_updated_value_edit(
                 param_name: str, qslider: QSlider, qlineedit: QLineEdit
@@ -111,7 +118,7 @@ class FigureEditor(QWidget):
             edit.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
             edit.setMinimumWidth(40)
             self.params_widgets.append(edit)
-            self.layout.addWidget(edit, param_idx, 1)
+            self.__figure_params_layout.addWidget(edit, param_idx, 1)
 
             # add a slider for parameter
             slider = QSlider()
@@ -124,11 +131,10 @@ class FigureEditor(QWidget):
             slider.setMinimumWidth(200)
 
             self.params_widgets.append(slider)
-            self.layout.addWidget(slider, param_idx, 2)
+            self.__figure_params_layout.addWidget(slider, param_idx, 2)
 
             slider.valueChanged.connect(pass_updated_value_slider(param, edit))
             edit.textChanged.connect(pass_updated_value_edit(param, slider, edit))
-            self.setLayout(self.layout)
 
         for param in self._checkboxes:
             param_idx += 1
@@ -137,13 +143,62 @@ class FigureEditor(QWidget):
             checkbox.setChecked(initial_params.get(param, False))
 
             self.params_widgets.append(checkbox)
-            self.layout.addWidget(checkbox, param_idx, 0)
+            self.__figure_params_layout.addWidget(checkbox, param_idx, 0)
 
             checkbox.stateChanged.connect(self.pass_updated_value_checkbox(param))
 
-        if not tabs.widget(1).layout() is None:
-            self.deleteLayout(tabs.widget(1).layout())
-        tabs.widget(1).setLayout(self.layout)
+        self.__figure_params_widget = QWidget()
+        self.__figure_params_widget.setLayout(self.__figure_params_layout)
+        self.__layout.addWidget(self.__figure_params_widget)
+
+        # part regarding additional settings per figure
+        self.__additional_settings_widget = (
+            SettingsWidget(settings_provider=sett)  # .with_all().with_delete()
+        )
+
+        self.__scroll = QScrollArea()
+        self.__scroll.setWidget(self.__additional_settings_widget)
+        self.__scroll.setWidgetResizable(True)
+
+        # self.__layout.addWidget(self.__scroll)
+
+        # widget with vertical layout:
+        # element to add settings to layout
+        # settings widget
+        self.__right_widget = QWidget()
+        self.__right_layout = QVBoxLayout()
+
+        self.__add_settings_widget = QWidget()
+        self.__add_settings_layout = QHBoxLayout()
+
+        # add combobox to choose settings
+        self.__add_settings_combobox = QComboBox()
+        for param in self.__additional_settings_widget.parameters:
+            self.__add_settings_combobox.addItem(param)
+        self.__add_settings_layout.addWidget(self.__add_settings_combobox)
+
+        # add button which adds selected setting to layout
+        self.__add_settings_button = QPushButton("Add")
+        self.__add_settings_layout.addWidget(self.__add_settings_button)
+
+        def add_sett():
+            self.__additional_settings_widget.with_sett(
+                self.__add_settings_combobox.currentText()
+            ).with_delete()
+
+        self.__add_settings_button.clicked.connect(add_sett)
+
+        self.__add_settings_widget.setLayout(self.__add_settings_layout)
+
+        self.__right_layout.addWidget(self.__add_settings_widget)
+        self.__right_layout.addWidget(self.__scroll)
+        self.__right_widget.setLayout(self.__right_layout)
+
+        self.__layout.addWidget(self.__right_widget)
+
+        # if tabs.widget(1).layout() is not None:
+        #     self.deleteLayout(tabs.widget(1).layout())
+        tabs.widget(1).setLayout(self.__layout)
 
     def pass_updated_value_checkbox(self, param_name: str):
         # return a function to be called from QCheckBox callback

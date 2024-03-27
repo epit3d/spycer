@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import (
     QCheckBox,
     QPushButton,
     QComboBox,
+    QStyle,
 )
 
 from src import locales
@@ -58,6 +59,7 @@ class SettingsWidget(QWidget):
         "retraction_speed",
         "retraction_compensation",
         "material_shrinkage",
+        # TODO: add separate dummy setting to mark the beginning of supports settings
         "supports_on",
         "support_density",
         "support_fill_type",
@@ -141,6 +143,59 @@ class SettingsWidget(QWidget):
             self.with_sett(param)
         return self
 
+    def with_delete(self):
+        """
+        Adds delete button to each setting on the right
+        """
+
+        self.btns = []
+
+        for key in self.__elements:
+            row_idx = self.__elements[key]["row_idx"]
+
+            # check whether this row already has delete button
+            if self.panel.itemAtPosition(row_idx, 6) is not None:
+                continue
+
+            delete_btn = QPushButton()
+            self.btns += [delete_btn]
+            # set icon
+            delete_btn.setIcon(self.style().standardIcon(QStyle.SP_DialogCloseButton))
+
+            def get_row_widgets(row_idx):
+                widgets = []
+                for i in range(7):  # TODO: move to constant
+                    item = self.panel.itemAtPosition(row_idx, i)
+                    if item is None:
+                        continue
+                    if len(widgets) != 0 and item.widget() == widgets[-1]:
+                        continue
+
+                    widgets.append((item.widget(), i))
+                return widgets
+
+            def remove_row(row_idx):
+                dlt_row = get_row_widgets(row_idx)
+                for _, col_idx in dlt_row:
+                    self.panel.itemAtPosition(row_idx, col_idx).widget().deleteLater()
+
+                # find key by row index
+                key = None
+                for k in self.__elements:
+                    if self.__elements[k]["row_idx"] == row_idx:
+                        key = k
+                        break
+
+                # remove key from elements
+                del self.__elements[key]
+
+            delete_btn.clicked.connect(lambda _, row_idx=row_idx: remove_row(row_idx))
+
+            # TODO: set btn index constant
+            self.panel.addWidget(delete_btn, row_idx, 6)
+
+        return self
+
     def update_dependent_fields(self, entry_field_1, entry_field_2, output_field):
         entry_field_1_text = entry_field_1.text().replace(",", ".")
         entry_field_2_text = entry_field_2.text().replace(",", ".")
@@ -189,9 +244,7 @@ class SettingsWidget(QWidget):
                 label = QLabel(self.locale.PrinterName)
                 self.panel.addWidget(label, self.next_row, 1)
                 self.panel.addWidget(printer_add_btn, self.cur_row, 2)
-                self.panel.addWidget(
-                    printer_path_edit, self.cur_row, 3, 1, self.col2_cells
-                )
+                self.panel.addWidget(printer_path_edit, self.cur_row, 3, 1, 3)
 
                 self.__elements[name] = {
                     "label": label,
@@ -650,7 +703,7 @@ class SettingsWidget(QWidget):
                 }
 
             case "supports_on":
-                supports_label = QLabel(self.locale.SupportsSettings)
+                # supports_label = QLabel(self.locale.SupportsSettings)
 
                 # supports on
                 supports_on_label = QLabel(self.locale.SupportsOn)
@@ -658,14 +711,14 @@ class SettingsWidget(QWidget):
                 if self.sett().supports.enabled:
                     supports_on_box.setCheckState(QtCore.Qt.Checked)
 
-                self.panel.addWidget(supports_label, self.next_row, 1)
+                # self.panel.addWidget(supports_label, self.next_row, 1)
 
                 self.panel.addWidget(supports_on_label, self.next_row, 1)
                 self.panel.addWidget(
                     supports_on_box, self.cur_row, 2, 1, self.col2_cells
                 )
                 self.__elements[name] = {
-                    "group_label": supports_label,
+                    # "group_label": supports_label,
                     "label": supports_on_label,
                     "checkbox": supports_on_box,
                 }
@@ -834,6 +887,9 @@ class SettingsWidget(QWidget):
                     "lid_thickness_label": lid_thickness_label,
                     "lid_thickness_value": lid_thickness_value,
                 }
+
+        # add row index for element
+        self.__elements[name]["row_idx"] = self.cur_row
 
         return self
 

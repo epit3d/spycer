@@ -13,7 +13,7 @@ if __name__ == "__main__":
 
     load_settings("settings.yaml")
 
-    widget = SettingsWidget(settings_provider=sett).with_all()
+    widget = SettingsWidget(settings_provider=sett).with_all().with_delete()
 
     widget.show()
 
