@@ -176,7 +176,7 @@ class FigureEditor(QWidget):
         # add combobox to choose settings
         self.__add_settings_combobox = QComboBox()
         self.__combobox_values = []
-        for param in self.__additional_settings_widget.parameters:
+        for param in self.__additional_settings_widget.extra_sett_parameters:
             self.__combobox_values.append(param)
             self.__add_settings_combobox.addItem(
                 self.__additional_settings_widget.translation[param]

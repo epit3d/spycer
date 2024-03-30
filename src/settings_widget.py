@@ -70,6 +70,12 @@ class SettingsWidget(QWidget):
         "support_number_of_lid_layers",
     ]
 
+    # extra parameters are only used for a small widget with parameters for each figure specifically
+    extra_sett_parameters = [
+        "filling_type",
+        "fill_density",
+    ]
+
     def __init__(self, parent=None, settings_provider: callable = None):
         super(SettingsWidget, self).__init__(parent)
 
@@ -246,6 +252,10 @@ class SettingsWidget(QWidget):
             )
 
     def with_sett(self, name: str):
+        # check whether the given name is already added
+        if name in self.__elements:
+            return self
+
         # we match the given name with each setting and add it to the layout
         match name:
             case "printer_path":
