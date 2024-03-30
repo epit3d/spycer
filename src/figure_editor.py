@@ -21,9 +21,11 @@ from PyQt5.QtWidgets import (
     QScrollArea,
     QVBoxLayout,
     QComboBox,
+    QStyle,
 )
 from src.settings_widget import SettingsWidget
 from src.settings import sett
+from src.locales import getLocale
 
 
 class FigureEditor(QWidget):
@@ -173,17 +175,24 @@ class FigureEditor(QWidget):
 
         # add combobox to choose settings
         self.__add_settings_combobox = QComboBox()
+        self.__combobox_values = []
         for param in self.__additional_settings_widget.parameters:
-            self.__add_settings_combobox.addItem(param)
+            self.__combobox_values.append(param)
+            self.__add_settings_combobox.addItem(
+                self.__additional_settings_widget.translation[param]
+            )
         self.__add_settings_layout.addWidget(self.__add_settings_combobox)
 
         # add button which adds selected setting to layout
-        self.__add_settings_button = QPushButton("Add")
+        self.__add_settings_button = QPushButton()
+        self.__add_settings_button.setIcon(
+            self.style().standardIcon(QStyle.SP_DialogApplyButton)
+        )
         self.__add_settings_layout.addWidget(self.__add_settings_button)
 
         def add_sett():
             self.__additional_settings_widget.with_sett(
-                self.__add_settings_combobox.currentText()
+                self.__combobox_values[self.__add_settings_combobox.currentIndex()]
             ).with_delete()
 
         self.__add_settings_button.clicked.connect(add_sett)

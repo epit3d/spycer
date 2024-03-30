@@ -91,6 +91,42 @@ class SettingsWidget(QWidget):
 
         self.__current_row = 1
 
+        self.translation = {
+            "printer_path": self.locale.PrinterName,
+            "uninterrupted_print": self.locale.UninterruptedPrint,
+            "m10_cut_distance": self.locale.M10CutDistance,
+            "line_width": self.locale.LineWidth,
+            "layer_height": self.locale.LayerHeight,
+            "number_wall_lines": self.locale.NumberWallLines,
+            "number_of_bottom_layers": self.locale.NumberOfBottomLayers,
+            "number_of_lids_layers": self.locale.NumberOfLidLayers,
+            "extruder_temp": self.locale.ExtruderTemp,
+            "bed_temp": self.locale.BedTemp,
+            "skirt_line_count": self.locale.SkirtLineCount,
+            "fan_speed": self.locale.FanSpeed,
+            "fan_off_layer1": self.locale.FanOffLayer1,
+            "print_speed": self.locale.PrintSpeed,
+            "print_speed_layer1": self.locale.PrintSpeedLayer1,
+            "print_speed_wall": self.locale.PrintSpeedWall,
+            "filling_type": self.locale.FillingType,
+            "fill_density": self.locale.FillDensity,
+            "overlap_infill": self.locale.OverlappingInfillPercentage,
+            "retraction_on": self.locale.Retraction,
+            "retraction_distance": self.locale.RetractionDistance,
+            "retraction_speed": self.locale.RetractionSpeed,
+            "retraction_compensation": self.locale.RetractCompensationAmount,
+            "material_shrinkage": self.locale.MaterialShrinkage,
+            # TODO: add separate dummy setting to mark the beginning of supports settings
+            "supports_on": self.locale.SupportsOn,
+            "support_density": self.locale.SupportDensity,
+            "support_fill_type": self.locale.FillingType,
+            "support_xy_offset": self.locale.SupportXYOffset,
+            "support_z_offset": self.locale.SupportZOffsetLayers,
+            "support_priority_zoffset": self.locale.SupportPriorityZOffset,
+            "support_number_of_bottom_layers": self.locale.NumberOfBottomLayers,
+            "support_number_of_lid_layers": self.locale.NumberOfLidLayers,
+        }
+
     @property
     def cur_row(self):
         return self.__current_row
