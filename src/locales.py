@@ -141,6 +141,7 @@ class Locale:
 
     UninterruptedPrint = "Uninterrupted print"
     M10CutDistance = "Filament cut distance, mm:"
+    WarningPathNotClosed = "When cutting the model, not closed areas were found! Check that the shapes are positioned correctly"
 
     def __init__(self, **entries):
         self.__dict__.update(entries)
@@ -290,6 +291,7 @@ dicts = {
         SelectingCalibrationData="Выбор калибровочных данных",
         UninterruptedPrint="Печать непрерывным волокном",
         M10CutDistance="Дистанция отреза филамента, мм:",
+        WarningPathNotClosed="При разрезании модели были обнаружены незамкнутые участки! Проверьте корректность расположения фигур",
     ),
 }
 
