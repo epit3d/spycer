@@ -337,12 +337,14 @@ class MainController:
                 self.view.tabs,
                 self.update_plane_common,
                 self.model.splanes[ind].params(),
+                settings_provider=lambda: self.model.figures_setts[ind],
             )
         elif isinstance(self.model.splanes[ind], Cone):
             self.view.parameters_tooling = ConeEditor(
                 self.view.tabs,
                 self.update_cone_common,
                 self.model.splanes[ind].params(),
+                settings_provider=lambda: self.model.figures_setts[ind],
             )
 
     def save_planes(self):
@@ -382,15 +384,30 @@ class MainController:
         except IOError as e:
             showErrorDialog("Error during file opening:" + str(e))
 
+    def load_figure_settings(self):
+        if len(self.model.splanes) == 0:
+            return
+
+        self.model.figures_setts = []
+
+        for idx in range(len(self.model.splanes)):
+            # check if we have specific settings for this figure
+            if not hasattr(sett().figures[idx], "settings"):
+                setattr(sett().figures[idx], "settings", settings.Settings({}))
+
+            self.model.figures_setts.append(sett().figures[idx].settings)
+
     def load_planes_from_file(self, filename):
         self.model.splanes = read_planes(filename)
         self.view.hide_checkbox.setChecked(False)
         self.view.reload_splanes(self.model.splanes)
+        self.load_figure_settings()
 
     def load_planes(self, splanes):
         self.model.splanes = splanes
         self.view.hide_checkbox.setChecked(False)
         self.view.reload_splanes(self.model.splanes)
+        self.load_figure_settings()
 
     def change_layer_view(self):
         if not self.model.current_slider_value:
@@ -659,12 +676,7 @@ class MainController:
         tf = vtk.vtkTransform()
         if self.view.stlActor is not None:
             tf = self.view.stlActor.GetUserTransform()
-        s.uninterrupted_print.enabled = bool(
-            self.view.setts.checkbox("uninterrupted_print").isChecked()
-        )
-        s.uninterrupted_print.cut_distance = float(
-            self.view.setts.edit("m10_cut_distance").text()
-        )
+
         s.slicing.originx, s.slicing.originy, s.slicing.originz = tf.GetPosition()
         (
             s.slicing.rotationx,
@@ -672,78 +684,7 @@ class MainController:
             s.slicing.rotationz,
         ) = tf.GetOrientation()
         s.slicing.scalex, s.slicing.scaley, s.slicing.scalez = tf.GetScale()
-        s.slicing.layer_height = float(self.view.setts.edit("layer_height").text())
-        s.slicing.print_speed = float(self.view.setts.edit("print_speed").text())
-        s.slicing.print_speed_layer1 = float(
-            self.view.setts.edit("print_speed_layer1").text()
-        )
-        s.slicing.print_speed_wall = float(
-            self.view.setts.edit("print_speed_wall").text()
-        )
-        s.slicing.extruder_temperature = float(
-            self.view.setts.edit("extruder_temp").text()
-        )
-        s.slicing.bed_temperature = float(self.view.setts.edit("bed_temp").text())
-        s.slicing.fill_density = float(self.view.setts.edit("fill_density").text())
-        s.slicing.wall_thickness = float(
-            self.view.setts.get_element(
-                "number_wall_lines", "wall_thickness_value"
-            ).text()
-        )
-        s.slicing.line_width = float(self.view.setts.edit("line_width").text())
-        s.slicing.filling_type = locales.getLocaleByLang("en").FillingTypeValues[
-            self.view.setts.values("filling_type").currentIndex()
-        ]
-        s.slicing.retraction_on = self.view.setts.checkbox("retraction_on").isChecked()
-        s.slicing.retraction_distance = float(
-            self.view.setts.edit("retraction_distance").text()
-        )
-        s.slicing.retraction_speed = float(
-            self.view.setts.edit("retraction_speed").text()
-        )
-        s.slicing.retract_compensation_amount = float(
-            self.view.setts.edit("retraction_compensation").text()
-        )
-        s.slicing.skirt_line_count = int(
-            self.view.setts.edit("skirt_line_count").text()
-        )
-        s.slicing.fan_off_layer1 = self.view.setts.checkbox(
-            "fan_off_layer1"
-        ).isChecked()
-        s.slicing.fan_speed = float(self.view.setts.edit("fan_speed").text())
         s.slicing.angle = float(self.view.colorize_angle_value.text())
-
-        s.slicing.lids_depth = int(self.view.setts.edit("number_of_lids_layers").text())
-        s.slicing.bottoms_depth = int(
-            self.view.setts.edit("number_of_bottom_layers").text()
-        )
-
-        s.supports.enabled = self.view.setts.checkbox("supports_on").isChecked()
-        s.supports.xy_offset = float(self.view.setts.edit("support_xy_offset").text())
-        s.supports.z_offset_layers = int(
-            float(self.view.setts.edit("support_z_offset").text())
-        )
-        s.supports.fill_density = float(self.view.setts.edit("support_density").text())
-        s.supports.fill_type = locales.getLocaleByLang("en").FillingTypeValues[
-            self.view.setts.values("support_fill_type").currentIndex()
-        ]
-        s.supports.priority_z_offset = bool(
-            self.view.setts.checkbox("support_priority_zoffset").isChecked()
-        )
-        s.supports.lids_depth = int(
-            self.view.setts.edit("support_number_of_lid_layers").text()
-        )
-        s.supports.bottoms_depth = int(
-            self.view.setts.edit("support_number_of_bottom_layers").text()
-        )
-
-        s.slicing.overlapping_infill_percentage = float(
-            self.view.setts.edit("overlap_infill").text()
-        )
-        s.slicing.material_shrinkage = float(
-            self.view.setts.edit("material_shrinkage").text()
-        )
-
         s.slicing.slicing_type = slicing_type
 
         m = vtkMatrix4x4()
@@ -759,6 +700,7 @@ class MainController:
                 dict(
                     index=idx,
                     description=plane.toFile(),
+                    settings=self.model.figures_setts[idx],
                 )
             )
 
@@ -969,6 +911,7 @@ class MainController:
         if ind == -1:
             return
         del self.model.splanes[ind]
+        del self.model.figures_setts[ind]
         self.view.splanes_tree.takeTopLevelItem(ind)
         self.view.reload_splanes(self.model.splanes)
         if len(self.model.splanes) == 0:

@@ -12,7 +12,7 @@ from PyQt5.QtWidgets import (
 )
 
 from src import locales
-from src.settings import sett, APP_PATH
+from src.settings import sett, APP_PATH, Settings
 from src.qt_utils import ClickableLineEdit, LineEdit
 
 import os.path as path
@@ -251,6 +251,49 @@ class SettingsWidget(QWidget):
                 str(round(float(entry_field_1_text) * float(entry_field_2_text), 2))
             )
 
+    def ensure_sett(self, name: str):
+        """
+        ensure_sett creates sufficient attributes for the given setting name
+
+        Args:
+            name (str): setting name separated by dots: e.g. hardware.printer_path
+
+        For the given name we update attributes of settings so that it becomes accessible by
+        the given name. If the name is already added, we return the current instance.
+
+        Example:
+            self.ensure_sett("hardware.printer_path")
+            self.sett().hardware.printer_path
+
+        """
+        attrs = name.split(".")
+
+        global_top = sett()
+        top_level = self.sett()
+        for idx, attr in enumerate(attrs):
+            print("work with attr", attr)
+            if not hasattr(top_level, attr):
+                print("set attr", attr, "to object()")
+
+                if idx != len(attrs) - 1:
+                    setattr(top_level, attr, Settings({}))
+                else:
+                    # we have to add default settings from the main ones
+                    default = getattr(global_top, attr)
+                    setattr(top_level, attr, default)
+
+            top_level = getattr(top_level, attr)
+            global_top = getattr(global_top, attr)
+
+    def __smart_float(self, value: str):
+        if not value:
+            return 0.0
+
+        try:
+            return float(value.replace(",", "."))
+        except ValueError:
+            return 0.0
+
     def with_sett(self, name: str):
         # check whether the given name is already added
         if name in self.__elements:
@@ -259,6 +302,8 @@ class SettingsWidget(QWidget):
         # we match the given name with each setting and add it to the layout
         match name:
             case "printer_path":
+                # self.ensure_sett("hardware.printer_path")
+
                 printer_basename = ""
                 try:
                     printer_basename = path.basename(self.sett().hardware.printer_dir)
@@ -298,19 +343,25 @@ class SettingsWidget(QWidget):
                     "add_btn": printer_add_btn,
                 }
             case "uninterrupted_print":
+                self.ensure_sett("uninterrupted_print.enabled")
+
                 uninterrupted_print = QLabel(self.locale.UninterruptedPrint)
-                self.uninterrupted_print_box = QCheckBox()
+                uninterrupted_print_box = QCheckBox()
                 if sett().uninterrupted_print.enabled:
-                    self.uninterrupted_print_box.setCheckState(QtCore.Qt.Checked)
+                    uninterrupted_print_box.setCheckState(QtCore.Qt.Checked)
                 self.panel.addWidget(
                     QLabel(self.locale.UninterruptedPrint), self.next_row, 1
                 )
                 self.panel.addWidget(
-                    self.uninterrupted_print_box, self.cur_row, 2, 1, self.col2_cells
+                    uninterrupted_print_box, self.cur_row, 2, 1, self.col2_cells
                 )
 
                 # on check on this box, we should restrict fill type to zigzag only
                 def on_uninterrupted_print_change():
+                    self.sett().uninterrupted_print.enabled = (
+                        uninterrupted_print_box.isChecked()
+                    )
+
                     # TODO:
                     return
                     # isUninterrupted = self.uninterrupted_print_box.isChecked()
@@ -330,16 +381,18 @@ class SettingsWidget(QWidget):
                     #     self.filling_type_values.setCurrentIndex(zigzag_idx)
                     #     self.retraction_on_box.setChecked(False)
 
-                self.uninterrupted_print_box.stateChanged.connect(
+                uninterrupted_print_box.stateChanged.connect(
                     on_uninterrupted_print_change
                 )
 
                 self.__elements[name] = {
                     "label": uninterrupted_print,
-                    "checkbox": self.uninterrupted_print_box,
+                    "checkbox": uninterrupted_print_box,
                 }
 
             case "m10_cut_distance":
+                self.ensure_sett("uninterrupted_print.cut_distance")
+
                 m10_cut_distance = QLabel(self.locale.M10CutDistance)
                 m10_cut_distance_value = QLineEdit()
                 m10_cut_distance_value.setText(
@@ -351,12 +404,21 @@ class SettingsWidget(QWidget):
                     m10_cut_distance_value, self.cur_row, 2, 1, self.col2_cells
                 )
 
+                def on_change():
+                    sett().uninterrupted_print.cut_distance = self.__smart_float(
+                        m10_cut_distance_value.text()
+                    )
+
+                m10_cut_distance_value.textChanged.connect(on_change)
+
                 self.__elements[name] = {
                     "label": m10_cut_distance,
                     "edit": m10_cut_distance_value,
                 }
 
             case "line_width":
+                self.ensure_sett("slicing.line_width")
+
                 line_width = QLabel(self.locale.LineWidth)
                 line_width_value = QLineEdit()
                 line_width_value.setText(str(self.sett().slicing.line_width))
@@ -367,12 +429,21 @@ class SettingsWidget(QWidget):
                     line_width_value, self.cur_row, 2, 1, self.col2_cells
                 )
 
+                def on_change():
+                    self.sett().slicing.line_width = self.__smart_float(
+                        line_width_value.text()
+                    )
+
+                line_width_value.textChanged.connect(on_change)
+
                 self.__elements[name] = {
                     "label": line_width,
                     "edit": line_width_value,
                 }
 
             case "layer_height":
+                self.ensure_sett("slicing.layer_height")
+
                 layer_height = QLabel(self.locale.LayerHeight)
                 layer_height_value = QLineEdit()
                 layer_height_value.setText(str(self.sett().slicing.layer_height))
@@ -383,12 +454,21 @@ class SettingsWidget(QWidget):
                     layer_height_value, self.cur_row, 2, 1, self.col2_cells
                 )
 
+                def on_change():
+                    self.sett().slicing.layer_height = self.__smart_float(
+                        layer_height_value.text()
+                    )
+
+                layer_height_value.textChanged.connect(on_change)
+
                 self.__elements[name] = {
                     "label": layer_height,
                     "edit": layer_height_value,
                 }
 
             case "number_wall_lines":
+                self.ensure_sett("slicing.wall_thickness")
+
                 number_wall_lines_label = QLabel(self.locale.NumberWallLines)
                 if self.sett().slicing.line_width > 0:
                     number_wall_lines_value = int(
@@ -416,6 +496,13 @@ class SettingsWidget(QWidget):
                 self.panel.addWidget(wall_thickness_value, self.cur_row, 4)
                 self.panel.addWidget(millimeter_label, self.cur_row, 5)
 
+                def on_change():
+                    self.sett().slicing.wall_thickness = self.__smart_float(
+                        wall_thickness_value.text()
+                    )
+
+                number_wall_lines_value.textChanged.connect(on_change)
+
                 self.__elements[name] = {
                     "label": number_wall_lines_label,
                     "edit": number_wall_lines_value,
@@ -424,6 +511,8 @@ class SettingsWidget(QWidget):
                 }
 
             case "number_of_bottom_layers":
+                self.ensure_sett("slicing.bottoms_depth")
+
                 number_of_bottom_layers_label = QLabel(self.locale.NumberOfBottomLayers)
                 number_of_bottom_layers_value = LineEdit(
                     str(self.sett().slicing.bottoms_depth)
@@ -453,6 +542,13 @@ class SettingsWidget(QWidget):
                 self.panel.addWidget(bottom_thickness_value, self.cur_row, 4)
                 self.panel.addWidget(millimeter_label, self.cur_row, 5)
 
+                def on_change():
+                    self.sett().slicing.bottoms_depth = self.__smart_float(
+                        bottom_thickness_value.text()
+                    )
+
+                number_of_bottom_layers_value.textChanged.connect(on_change)
+
                 self.__elements[name] = {
                     "label": number_of_bottom_layers_label,
                     "edit": number_of_bottom_layers_value,
@@ -461,6 +557,8 @@ class SettingsWidget(QWidget):
                 }
 
             case "number_of_lids_layers":
+                self.ensure_sett("slicing.lids_depth")
+
                 number_of_lids_layers_label = QLabel(self.locale.NumberOfLidLayers)
                 number_of_lids_layers_value = LineEdit(
                     str(self.sett().slicing.lids_depth)
@@ -490,6 +588,13 @@ class SettingsWidget(QWidget):
                 self.panel.addWidget(lid_thickness_value, self.cur_row, 4)
                 self.panel.addWidget(millimeter_label, self.cur_row, 5)
 
+                def on_change():
+                    self.sett().slicing.lids_depth = self.__smart_float(
+                        lid_thickness_value.text()
+                    )
+
+                number_of_lids_layers_value.textChanged.connect(on_change)
+
                 self.__elements[name] = {
                     "label": number_of_lids_layers_label,
                     "edit": number_of_lids_layers_value,
@@ -498,6 +603,8 @@ class SettingsWidget(QWidget):
                 }
 
             case "extruder_temp":
+                self.ensure_sett("slicing.extruder_temperature")
+
                 extruder_temp_label = QLabel(self.locale.ExtruderTemp)
                 extruder_temp_value = LineEdit(
                     str(self.sett().slicing.extruder_temperature)
@@ -508,12 +615,21 @@ class SettingsWidget(QWidget):
                     extruder_temp_value, self.cur_row, 2, 1, self.col2_cells
                 )
 
+                def on_change():
+                    self.sett().slicing.extruder_temperature = self.__smart_float(
+                        extruder_temp_value.text()
+                    )
+
+                extruder_temp_value.textChanged.connect(on_change)
+
                 self.__elements[name] = {
                     "label": extruder_temp_label,
                     "edit": extruder_temp_value,
                 }
 
             case "bed_temp":
+                self.ensure_sett("slicing.bed_temperature")
+
                 bed_temp_label = QLabel(self.locale.BedTemp)
                 bed_temp_value = LineEdit(str(self.sett().slicing.bed_temperature))
                 bed_temp_value.setValidator(self.intValidator)
@@ -522,12 +638,21 @@ class SettingsWidget(QWidget):
                     bed_temp_value, self.cur_row, 2, 1, self.col2_cells
                 )
 
+                def on_change():
+                    self.sett().slicing.bed_temperature = self.__smart_float(
+                        bed_temp_value.text()
+                    )
+
+                bed_temp_value.textChanged.connect(on_change)
+
                 self.__elements[name] = {
                     "label": bed_temp_label,
                     "edit": bed_temp_value,
                 }
 
             case "skirt_line_count":
+                self.ensure_sett("slicing.skirt_line_count")
+
                 skirt_line_count_label = QLabel(self.locale.SkirtLineCount)
                 skirt_line_count_value = LineEdit(
                     str(self.sett().slicing.skirt_line_count)
@@ -538,12 +663,21 @@ class SettingsWidget(QWidget):
                     skirt_line_count_value, self.cur_row, 2, 1, self.col2_cells
                 )
 
+                def on_change():
+                    self.sett().slicing.skirt_line_count = self.__smart_float(
+                        skirt_line_count_value.text()
+                    )
+
+                skirt_line_count_value.textChanged.connect(on_change)
+
                 self.__elements[name] = {
                     "label": skirt_line_count_label,
                     "edit": skirt_line_count_value,
                 }
 
             case "fan_speed":
+                self.ensure_sett("slicing.fan_speed")
+
                 fan_speed_label = QLabel(self.locale.FanSpeed)
                 fan_speed_value = LineEdit(str(self.sett().slicing.fan_speed))
                 fan_speed_value.setValidator(self.intValidator)
@@ -552,12 +686,21 @@ class SettingsWidget(QWidget):
                     fan_speed_value, self.cur_row, 2, 1, self.col2_cells
                 )
 
+                def on_change():
+                    self.sett().slicing.fan_speed = self.__smart_float(
+                        fan_speed_value.text()
+                    )
+
+                fan_speed_value.textChanged.connect(on_change)
+
                 self.__elements[name] = {
                     "label": fan_speed_label,
                     "edit": fan_speed_value,
                 }
 
             case "fan_off_layer1":
+                self.ensure_sett("slicing.fan_off_layer1")
+
                 fan_off_layer1_label = QLabel(self.locale.FanOffLayer1)
                 fan_off_layer1_box = QCheckBox()
                 if self.sett().slicing.fan_off_layer1:
@@ -567,12 +710,19 @@ class SettingsWidget(QWidget):
                     fan_off_layer1_box, self.cur_row, 2, 1, self.col2_cells
                 )
 
+                def on_change():
+                    self.sett().slicing.fan_off_layer1 = fan_off_layer1_box.isChecked()
+
+                fan_off_layer1_box.stateChanged.connect(on_change)
+
                 self.__elements[name] = {
                     "label": fan_off_layer1_label,
                     "checkbox": fan_off_layer1_box,
                 }
 
             case "print_speed":
+                self.ensure_sett("slicing.print_speed")
+
                 print_speed_label = QLabel(self.locale.PrintSpeed)
                 print_speed_value = LineEdit(str(self.sett().slicing.print_speed))
                 print_speed_value.setValidator(self.intValidator)
@@ -581,12 +731,21 @@ class SettingsWidget(QWidget):
                     print_speed_value, self.cur_row, 2, 1, self.col2_cells
                 )
 
+                def on_change():
+                    self.sett().slicing.print_speed = self.__smart_float(
+                        print_speed_value.text()
+                    )
+
+                print_speed_value.textChanged.connect(on_change)
+
                 self.__elements[name] = {
                     "label": print_speed_label,
                     "edit": print_speed_value,
                 }
 
             case "print_speed_layer1":
+                self.ensure_sett("slicing.print_speed_layer1")
+
                 print_speed_layer1_label = QLabel(self.locale.PrintSpeedLayer1)
                 print_speed_layer1_value = LineEdit(
                     str(self.sett().slicing.print_speed_layer1)
@@ -597,12 +756,21 @@ class SettingsWidget(QWidget):
                     print_speed_layer1_value, self.cur_row, 2, 1, self.col2_cells
                 )
 
+                def on_change():
+                    self.sett().slicing.print_speed_layer1 = self.__smart_float(
+                        print_speed_layer1_value.text()
+                    )
+
+                print_speed_layer1_value.textChanged.connect(on_change)
+
                 self.__elements[name] = {
                     "label": print_speed_layer1_label,
                     "edit": print_speed_layer1_value,
                 }
 
             case "print_speed_wall":
+                self.ensure_sett("slicing.print_speed_wall")
+
                 print_speed_wall_label = QLabel(self.locale.PrintSpeedWall)
                 print_speed_wall_value = LineEdit(
                     str(self.sett().slicing.print_speed_wall)
@@ -613,12 +781,21 @@ class SettingsWidget(QWidget):
                     print_speed_wall_value, self.cur_row, 2, 1, self.col2_cells
                 )
 
+                def on_change():
+                    self.sett().slicing.print_speed_wall = self.__smart_float(
+                        print_speed_wall_value.text()
+                    )
+
+                print_speed_wall_value.textChanged.connect(on_change)
+
                 self.__elements[name] = {
                     "label": print_speed_wall_label,
                     "edit": print_speed_wall_value,
                 }
 
             case "filling_type":
+                self.ensure_sett("slicing.filling_type")
+
                 filling_type_label = QLabel(self.locale.FillingType)
                 filling_type_values = QComboBox()
                 filling_type_values.addItems(self.locale.FillingTypeValues)
@@ -632,12 +809,21 @@ class SettingsWidget(QWidget):
                     filling_type_values, self.cur_row, 2, 1, self.col2_cells
                 )
 
+                def on_change():
+                    self.sett().slicing.filling_type = locales.getLocaleByLang(
+                        "en"
+                    ).FillingTypeValues[filling_type_values.currentIndex()]
+
+                filling_type_values.currentIndexChanged.connect(on_change)
+
                 self.__elements[name] = {
                     "label": filling_type_label,
                     "values": filling_type_values,
                 }
 
             case "fill_density":
+                self.ensure_sett("slicing.fill_density")
+
                 fill_density_label = QLabel(self.locale.FillDensity)
                 fill_density_value = LineEdit(str(self.sett().slicing.fill_density))
                 fill_density_value.setValidator(self.intValidator)
@@ -646,12 +832,21 @@ class SettingsWidget(QWidget):
                     fill_density_value, self.cur_row, 2, 1, self.col2_cells
                 )
 
+                def on_change():
+                    self.sett().slicing.fill_density = self.__smart_float(
+                        fill_density_value.text()
+                    )
+
+                fill_density_value.textChanged.connect(on_change)
+
                 self.__elements[name] = {
                     "label": fill_density_label,
                     "edit": fill_density_value,
                 }
 
             case "overlap_infill":
+                self.ensure_sett("slicing.overlapping_infill_percentage")
+
                 overlap_infill_label = QLabel(self.locale.OverlappingInfillPercentage)
                 overlap_infill_value = LineEdit(
                     str(self.sett().slicing.overlapping_infill_percentage)
@@ -662,12 +857,21 @@ class SettingsWidget(QWidget):
                     overlap_infill_value, self.cur_row, 2, 1, self.col2_cells
                 )
 
+                def on_change():
+                    self.sett().slicing.overlapping_infill_percentage = (
+                        self.__smart_float(overlap_infill_value.text())
+                    )
+
+                overlap_infill_value.textChanged.connect(on_change)
+
                 self.__elements[name] = {
                     "label": overlap_infill_label,
                     "edit": overlap_infill_value,
                 }
 
             case "retraction_on":
+                self.ensure_sett("slicing.retraction_on")
+
                 retraction_on_label = QLabel(self.locale.Retraction)
                 retraction_on_box = QCheckBox()
                 if self.sett().slicing.retraction_on:
@@ -677,12 +881,19 @@ class SettingsWidget(QWidget):
                     retraction_on_box, self.cur_row, 2, 1, self.col2_cells
                 )
 
+                def on_change():
+                    self.sett().slicing.retraction_on = retraction_on_box.isChecked()
+
+                retraction_on_box.stateChanged.connect(on_change)
+
                 self.__elements[name] = {
                     "label": retraction_on_label,
                     "checkbox": retraction_on_box,
                 }
 
             case "retraction_distance":
+                self.ensure_sett("slicing.retraction_distance")
+
                 retraction_distance_label = QLabel(self.locale.RetractionDistance)
                 retraction_distance_value = LineEdit(
                     str(self.sett().slicing.retraction_distance)
@@ -693,12 +904,21 @@ class SettingsWidget(QWidget):
                     retraction_distance_value, self.cur_row, 2, 1, self.col2_cells
                 )
 
+                def on_change():
+                    self.sett().slicing.retraction_distance = self.__smart_float(
+                        retraction_distance_value.text()
+                    )
+
+                retraction_distance_value.textChanged.connect(on_change)
+
                 self.__elements[name] = {
                     "label": retraction_distance_label,
                     "edit": retraction_distance_value,
                 }
 
             case "retraction_speed":
+                self.ensure_sett("slicing.retraction_speed")
+
                 retraction_speed_label = QLabel(self.locale.RetractionSpeed)
                 retraction_speed_value = LineEdit(
                     str(self.sett().slicing.retraction_speed)
@@ -709,12 +929,21 @@ class SettingsWidget(QWidget):
                     retraction_speed_value, self.cur_row, 2, 1, self.col2_cells
                 )
 
+                def on_change():
+                    self.sett().slicing.retraction_speed = self.__smart_float(
+                        retraction_speed_value.text()
+                    )
+
+                retraction_speed_value.textChanged.connect(on_change)
+
                 self.__elements[name] = {
                     "label": retraction_speed_label,
                     "edit": retraction_speed_value,
                 }
 
             case "retraction_compensation":
+                self.ensure_sett("slicing.retract_compensation_amount")
+
                 retraction_compensation_label = QLabel(
                     self.locale.RetractCompensationAmount
                 )
@@ -727,12 +956,21 @@ class SettingsWidget(QWidget):
                     retraction_compensation_value, self.cur_row, 2, 1, self.col2_cells
                 )
 
+                def on_change():
+                    self.sett().slicing.retract_compensation_amount = (
+                        self.__smart_float(retraction_compensation_value.text())
+                    )
+
+                retraction_compensation_value.textChanged.connect(on_change)
+
                 self.__elements[name] = {
                     "label": retraction_compensation_label,
                     "edit": retraction_compensation_value,
                 }
 
             case "material_shrinkage":
+                self.ensure_sett("slicing.material_shrinkage")
+
                 material_shrinkage_label = QLabel(self.locale.MaterialShrinkage)
                 material_shrinkage_value = LineEdit(
                     str(self.sett().slicing.material_shrinkage)
@@ -743,12 +981,20 @@ class SettingsWidget(QWidget):
                     material_shrinkage_value, self.cur_row, 2, 1, self.col2_cells
                 )
 
+                def on_change():
+                    self.sett().slicing.material_shrinkage = self.__smart_float(
+                        material_shrinkage_value.text()
+                    )
+
+                material_shrinkage_value.textChanged.connect(on_change)
+
                 self.__elements[name] = {
                     "label": material_shrinkage_label,
                     "edit": material_shrinkage_value,
                 }
 
             case "supports_on":
+                self.ensure_sett("supports.enabled")
                 # supports_label = QLabel(self.locale.SupportsSettings)
 
                 # supports on
@@ -763,6 +1009,12 @@ class SettingsWidget(QWidget):
                 self.panel.addWidget(
                     supports_on_box, self.cur_row, 2, 1, self.col2_cells
                 )
+
+                def on_change():
+                    self.sett().supports.enabled = supports_on_box.isChecked()
+
+                supports_on_box.stateChanged.connect(on_change)
+
                 self.__elements[name] = {
                     # "group_label": supports_label,
                     "label": supports_on_label,
@@ -770,6 +1022,8 @@ class SettingsWidget(QWidget):
                 }
 
             case "support_density":
+                self.ensure_sett("supports.fill_density")
+
                 support_density_label = QLabel(self.locale.SupportDensity)
                 support_density_value = LineEdit(str(self.sett().supports.fill_density))
                 support_density_value.setValidator(self.intValidator)
@@ -778,12 +1032,21 @@ class SettingsWidget(QWidget):
                     support_density_value, self.cur_row, 2, 1, self.col2_cells
                 )
 
+                def on_change():
+                    self.sett().supports.fill_density = self.__smart_float(
+                        support_density_value.text()
+                    )
+
+                support_density_value.textChanged.connect(on_change)
+
                 self.__elements[name] = {
                     "label": support_density_label,
                     "edit": support_density_value,
                 }
 
             case "support_fill_type":
+                self.ensure_sett("supports.fill_type")
+
                 support_fill_type_label = QLabel(self.locale.FillingType)
                 support_fill_type_values = QComboBox()
                 support_fill_type_values.addItems(self.locale.FillingTypeValues)
@@ -797,12 +1060,21 @@ class SettingsWidget(QWidget):
                     support_fill_type_values, self.cur_row, 2, 1, self.col2_cells
                 )
 
+                def on_change():
+                    self.sett().supports.fill_type = locales.getLocaleByLang(
+                        "en"
+                    ).FillingTypeValues[support_fill_type_values.currentIndex()]
+
+                support_fill_type_values.currentIndexChanged.connect(on_change)
+
                 self.__elements[name] = {
                     "label": support_fill_type_label,
                     "values": support_fill_type_values,
                 }
 
             case "support_xy_offset":
+                self.ensure_sett("supports.xy_offset")
+
                 support_xy_offset_label = QLabel(self.locale.SupportXYOffset)
                 support_xy_offset_value = LineEdit(str(self.sett().supports.xy_offset))
                 support_xy_offset_value.setValidator(self.intValidator)
@@ -811,12 +1083,21 @@ class SettingsWidget(QWidget):
                     support_xy_offset_value, self.cur_row, 2, 1, self.col2_cells
                 )
 
+                def on_change():
+                    self.sett().supports.xy_offset = self.__smart_float(
+                        support_xy_offset_value.text()
+                    )
+
+                support_xy_offset_value.textChanged.connect(on_change)
+
                 self.__elements[name] = {
                     "label": support_xy_offset_label,
                     "edit": support_xy_offset_value,
                 }
 
             case "support_z_offset":
+                self.ensure_sett("supports.z_offset_layers")
+
                 support_z_offset_label = QLabel(self.locale.SupportZOffsetLayers)
                 support_z_offset_value = LineEdit(
                     str(self.sett().supports.z_offset_layers)
@@ -827,12 +1108,21 @@ class SettingsWidget(QWidget):
                     support_z_offset_value, self.cur_row, 2, 1, self.col2_cells
                 )
 
+                def on_change():
+                    self.sett().supports.z_offset_layers = self.__smart_float(
+                        support_z_offset_value.text()
+                    )
+
+                support_z_offset_value.textChanged.connect(on_change)
+
                 self.__elements[name] = {
                     "label": support_z_offset_label,
                     "edit": support_z_offset_value,
                 }
 
             case "support_priority_zoffset":
+                self.ensure_sett("supports.priority_z_offset")
+
                 support_priority_zoffset_label = QLabel(
                     self.locale.SupportPriorityZOffset
                 )
@@ -845,12 +1135,21 @@ class SettingsWidget(QWidget):
                     support_priorityz_offset_box, self.cur_row, 2, 1, self.col2_cells
                 )
 
+                def on_change():
+                    self.sett().supports.priority_z_offset = (
+                        support_priorityz_offset_box.isChecked()
+                    )
+
+                support_priorityz_offset_box.stateChanged.connect(on_change)
+
                 self.__elements[name] = {
                     "label": support_priority_zoffset_label,
                     "checkbox": support_priorityz_offset_box,
                 }
 
             case "support_number_of_bottom_layers":
+                self.ensure_sett("supports.bottoms_depth")
+
                 support_number_of_bottom_layers_label = QLabel(
                     self.locale.NumberOfBottomLayers
                 )
@@ -885,6 +1184,13 @@ class SettingsWidget(QWidget):
                 self.panel.addWidget(bottom_thickness_value, self.cur_row, 4)
                 self.panel.addWidget(millimeter_label, self.cur_row, 5)
 
+                def on_change():
+                    self.sett().supports.bottoms_depth = self.__smart_float(
+                        bottom_thickness_value.text()
+                    )
+
+                support_number_of_bottom_layers_value.textChanged.connect(on_change)
+
                 self.__elements[name] = {
                     "label": support_number_of_bottom_layers_label,
                     "edit": support_number_of_bottom_layers_value,
@@ -893,6 +1199,8 @@ class SettingsWidget(QWidget):
                 }
 
             case "support_number_of_lid_layers":
+                self.ensure_sett("supports.lids_depth")
+
                 support_number_of_lid_layers_label = QLabel(
                     self.locale.NumberOfLidLayers
                 )
@@ -926,6 +1234,13 @@ class SettingsWidget(QWidget):
                 self.panel.addWidget(lid_thickness_label, self.cur_row, 3)
                 self.panel.addWidget(lid_thickness_value, self.cur_row, 4)
                 self.panel.addWidget(millimeter_label, self.cur_row, 5)
+
+                def on_change():
+                    self.sett().supports.lids_depth = self.__smart_float(
+                        lid_thickness_value.text()
+                    )
+
+                support_number_of_lid_layers_value.textChanged.connect(on_change)
 
                 self.__elements[name] = {
                     "label": support_number_of_lid_layers_label,

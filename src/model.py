@@ -1,4 +1,5 @@
 from src import gui_utils, gcode
+from src.settings import Settings
 
 
 class MainModel:
@@ -9,6 +10,8 @@ class MainModel:
         self.opened_gcode = ""
         self.splanes = []
         self.planesActors = []
+
+        self.figures_setts = []
 
     def load_gcode(self, filename):
         self.current_slider_value = None
@@ -26,5 +29,9 @@ class MainModel:
             path = [self.splanes[-1].x, self.splanes[-1].y, self.splanes[-1].z + 10]
             self.splanes.append(gui_utils.Plane(0, rot, path))
 
+        self.figures_setts.append(Settings())
+
     def add_cone(self):
         self.splanes.append(gui_utils.Cone(60, (0, 0, 10), 0, 100))
+
+        self.figures_setts.append(Settings())

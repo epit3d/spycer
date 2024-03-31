@@ -43,6 +43,7 @@ class FigureEditor(QWidget):
         constrains: List[Tuple[int, int]],
         on_change: Callable[[Dict[str, float]], None] = None,
         initial_params: Optional[Dict[str, float]] = None,
+        settings_provider: callable = None,
     ):
         super().__init__()
         self.on_change = on_change
@@ -155,7 +156,9 @@ class FigureEditor(QWidget):
 
         # part regarding additional settings per figure
         self.__additional_settings_widget = (
-            SettingsWidget(settings_provider=sett)  # .with_all().with_delete()
+            SettingsWidget(
+                settings_provider=settings_provider
+            )  # .with_all().with_delete()
         )
 
         self.__scroll = QScrollArea()
@@ -243,9 +246,10 @@ class PlaneEditor(FigureEditor):
         tabs,
         on_change: Callable[[Dict[str, float]], None],
         initial_params: Optional[Dict[str, Union[float, bool]]] = None,
+        **kwargs,
     ):
         super().__init__(
-            tabs, self.__params, self.__constrains, on_change, initial_params
+            tabs, self.__params, self.__constrains, on_change, initial_params, **kwargs
         )
 
     def params(self):
@@ -261,9 +265,10 @@ class ConeEditor(FigureEditor):
         tabs,
         on_change: Callable[[Dict[str, float]], None],
         initial_params: Optional[Dict[str, float]] = None,
+        **kwargs,
     ):
         super().__init__(
-            tabs, self.__params, self.__constrains, on_change, initial_params
+            tabs, self.__params, self.__constrains, on_change, initial_params, **kwargs
         )
 
     def params(self):
