@@ -142,6 +142,8 @@ class Locale:
     UninterruptedPrint = "Uninterrupted print"
     M10CutDistance = "Filament cut distance, mm:"
 
+    RemoveFirstPlaneError = "First figure cannot be removed"
+
     def __init__(self, **entries):
         self.__dict__.update(entries)
 
@@ -290,6 +292,7 @@ dicts = {
         SelectingCalibrationData="Выбор калибровочных данных",
         UninterruptedPrint="Печать непрерывным волокном",
         M10CutDistance="Дистанция отреза филамента, мм:",
+        RemoveFirstPlaneError="Первая фигура не может быть убрана",
     ),
 }
 

@@ -271,10 +271,7 @@ class SettingsWidget(QWidget):
         global_top = sett()
         top_level = self.sett()
         for idx, attr in enumerate(attrs):
-            print("work with attr", attr)
             if not hasattr(top_level, attr):
-                print("set attr", attr, "to object()")
-
                 if idx != len(attrs) - 1:
                     setattr(top_level, attr, Settings({}))
                 else:

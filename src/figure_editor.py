@@ -44,6 +44,7 @@ class FigureEditor(QWidget):
         on_change: Callable[[Dict[str, float]], None] = None,
         initial_params: Optional[Dict[str, float]] = None,
         settings_provider: callable = None,
+        figure_index=0,
     ):
         super().__init__()
         self.on_change = on_change
@@ -122,6 +123,8 @@ class FigureEditor(QWidget):
             edit.setMinimumWidth(40)
             self.params_widgets.append(edit)
             self.__figure_params_layout.addWidget(edit, param_idx, 1)
+            # we should disable slider for the first figure
+            edit.setReadOnly(figure_index == 0)
 
             # add a slider for parameter
             slider = QSlider()
@@ -132,6 +135,8 @@ class FigureEditor(QWidget):
             slider.setValue(int(initial_params.get(param, 0)))
             slider.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             slider.setMinimumWidth(200)
+            # we should disable slider for the first figure
+            slider.setEnabled(figure_index != 0)
 
             self.params_widgets.append(slider)
             self.__figure_params_layout.addWidget(slider, param_idx, 2)
@@ -160,6 +165,7 @@ class FigureEditor(QWidget):
                 settings_provider=settings_provider
             )  # .with_all().with_delete()
         )
+        # TODO: preload settings which are already given by settings_provider
 
         self.__scroll = QScrollArea()
         self.__scroll.setWidget(self.__additional_settings_widget)
@@ -208,8 +214,8 @@ class FigureEditor(QWidget):
 
         self.__layout.addWidget(self.__right_widget)
 
-        # if tabs.widget(1).layout() is not None:
-        #     self.deleteLayout(tabs.widget(1).layout())
+        if tabs.widget(1).layout() is not None:
+            self.deleteLayout(tabs.widget(1).layout())
         tabs.widget(1).setLayout(self.__layout)
 
     def pass_updated_value_checkbox(self, param_name: str):

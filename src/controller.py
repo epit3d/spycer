@@ -338,6 +338,7 @@ class MainController:
                 self.update_plane_common,
                 self.model.splanes[ind].params(),
                 settings_provider=lambda: self.model.figures_setts[ind],
+                figure_index=ind,
             )
         elif isinstance(self.model.splanes[ind], Cone):
             self.view.parameters_tooling = ConeEditor(
@@ -345,6 +346,7 @@ class MainController:
                 self.update_cone_common,
                 self.model.splanes[ind].params(),
                 settings_provider=lambda: self.model.figures_setts[ind],
+                figure_index=ind,
             )
 
     def save_planes(self):
@@ -392,18 +394,29 @@ class MainController:
 
         for idx in range(len(self.model.splanes)):
             # check if we have specific settings for this figure
+            if idx > len(sett().figures) - 1:
+                sett().figures.append(
+                    settings.Settings(
+                        {
+                            "index": idx,
+                            "description": self.model.splanes[idx].toFile(),
+                            "settings": settings.Settings({}),
+                        }
+                    )
+                )
+
             if not hasattr(sett().figures[idx], "settings"):
                 setattr(sett().figures[idx], "settings", settings.Settings({}))
 
             self.model.figures_setts.append(sett().figures[idx].settings)
 
     def load_planes_from_file(self, filename):
-        self.model.splanes = read_planes(filename)
-        self.view.hide_checkbox.setChecked(False)
-        self.view.reload_splanes(self.model.splanes)
-        self.load_figure_settings()
+        self.load_planes(read_planes(filename))
 
     def load_planes(self, splanes):
+        if len(splanes) == 0:
+            splanes = [Plane(0, 0, [0, 0, 0])] + splanes
+
         self.model.splanes = splanes
         self.view.hide_checkbox.setChecked(False)
         self.view.reload_splanes(self.model.splanes)
@@ -910,6 +923,11 @@ class MainController:
         ind = self.view.splanes_tree.currentIndex().row()
         if ind == -1:
             return
+
+        if ind == 0:
+            showErrorDialog(locales.getLocale().RemoveFirstPlaneError)
+            return
+
         del self.model.splanes[ind]
         del self.model.figures_setts[ind]
         self.view.splanes_tree.takeTopLevelItem(ind)
