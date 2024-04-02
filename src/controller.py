@@ -74,6 +74,7 @@ class MainController:
             # embed calibration tool
             self.calibrationPanel = calibration.CalibrationPanel(view)
             self.calibrationPanel.setModal(True)
+            self.calibrationPanel.closedSignal.connect(self.calibration_action_closed)
             self.calibrationController = calibration.CalibrationController(
                 self.calibrationPanel,
                 calibration.CalibrationModel(
@@ -169,6 +170,18 @@ class MainController:
             showInfoDialog(locales.getLocale().DefaultPrinterWarn)
 
         self.calibrationPanel.show()
+
+    def calibration_action_closed(self, printer_type):
+        if printer_type == "E240":
+            sett().hardware.printer_type = printer_type
+            sett().hardware.plane_diameter = 250
+        elif printer_type == "M600":
+            sett().hardware.printer_type = printer_type
+            sett().hardware.plane_diameter = 590
+        else:
+            return
+
+        self.view.update_plane_diameter()
 
     def current_printer_is_default(self):
         if os.path.basename(sett().hardware.printer_dir) == "default":

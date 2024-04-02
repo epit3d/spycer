@@ -350,6 +350,12 @@ class MainWindow(QMainWindow):
 
         return widget3d
 
+    def update_plane_diameter(self):
+        self.render.RemoveActor(self.planeActor)
+        self.planeActor = gui_utils.createPlaneActorCircle()
+        self.render.AddActor(self.planeActor)
+        self.reload_scene()
+
     def add_legend(self):
         hackData = vtk.vtkPolyData()  # it is hack to pass value to legend
         hackData.SetPoints(vtk.vtkPoints())
