@@ -15,8 +15,9 @@ from vtkmodules.vtkCommonMath import vtkMatrix4x4
 import vtk
 from PyQt5 import QtCore
 from PyQt5.QtCore import QSettings
-from PyQt5.QtWidgets import QFileDialog, QInputDialog, QMessageBox
+from PyQt5.QtWidgets import QFileDialog, QMessageBox
 
+from src.window import AddNewPrinterDialog
 from src import gui_utils, locales, qt_utils
 from src.figure_editor import PlaneEditor, ConeEditor
 from src.gui_utils import (
@@ -172,16 +173,7 @@ class MainController:
         self.calibrationPanel.show()
 
     def calibration_action_closed(self, printer_type):
-        if printer_type == "E240":
-            sett().hardware.printer_type = printer_type
-            sett().hardware.plane_diameter = 250
-        elif printer_type == "M600":
-            sett().hardware.printer_type = printer_type
-            sett().hardware.plane_diameter = 590
-        else:
-            return
-
-        self.view.update_plane_diameter()
+        self.view.update_plane_diameter_by_printer_type(printer_type)
 
     def current_printer_is_default(self):
         if os.path.basename(sett().hardware.printer_dir) == "default":
@@ -194,17 +186,11 @@ class MainController:
 
     def create_printer(self):
         # query user for printer name and create directory in data/printers/<name> relative to FASP root
-        text, ok = QInputDialog.getText(
-            self.view,
-            locales.getLocale().AddNewPrinter,
-            locales.getLocale().ChoosePrinterDirectory,
-        )
-        if not ok:
+        dialog = AddNewPrinterDialog(self.view)
+        if not dialog.exec_():
             return
 
-        printer_name = text.strip()
-        if not printer_name:
-            return
+        printer_name, printer_type = dialog.get_result()
 
         # create directory in data/printers/<name> relative to FASP root
         printer_path = path.join(settings.APP_PATH, "data", "printers", printer_name)
@@ -221,13 +207,16 @@ class MainController:
         default_calibration_file = path.join(
             settings.APP_PATH, "data", "printers", "default", "calibration_data.csv"
         )
-        target_calibration_file = path.join(printer_path, "calibration_data.csv")
+        calibration_filename = "calibration_data.csv"
+        calibration_filename = calibration_filename.replace(".csv", "_{}.csv".format(printer_type))
+        target_calibration_file = path.join(printer_path, calibration_filename)
 
         shutil.copyfile(default_calibration_file, target_calibration_file)
 
         # update settings
+        self.view.update_plane_diameter_by_printer_type(printer_type)
         sett().hardware.printer_dir = printer_path
-        sett().hardware.calibration_file = "calibration_data.csv"
+        sett().hardware.calibration_file = calibration_filename
         save_settings()
 
         # update label with printer path
@@ -246,6 +235,16 @@ class MainController:
             "Printer created successfully, please calibrate before first use"
         )
 
+    def get_printer_type_from_filename(self, filename):
+        words = filename.split("_")
+
+        if len(words) == 3:
+            printer_type = filename.split("_")[2].split(".")[0]
+        else:
+            printer_type = "E240"
+
+        return printer_type
+
     def choose_printer_path(self):
         printer_path = QFileDialog.getExistingDirectory(
             self.view,
@@ -255,12 +254,19 @@ class MainController:
 
         if printer_path:
             # check if directory contains calibration file
-            calibration_file = path.join(printer_path, "calibration_data.csv")
-            if not path.exists(calibration_file):
+            files = os.listdir(printer_path)
+            for file in files:
+                if file.startswith("calibration_data") and file.endswith(".csv"):
+                    calibration_file = os.path.join(printer_path, file)
+                    break
+            else:
                 showErrorDialog(
                     "Directory doesn't contain calibration file. Please choose another directory."
                 )
                 return
+
+            printer_type = self.get_printer_type_from_filename(calibration_file)
+            self.view.update_plane_diameter_by_printer_type(printer_type)
 
             sett().hardware.printer_dir = printer_path
             # calibration file will be at default location

@@ -25,6 +25,7 @@ from PyQt5.QtWidgets import (
     QAbstractItemView,
     QTabWidget,
     QMessageBox,
+    QHBoxLayout,
 )
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
@@ -349,6 +350,20 @@ class MainWindow(QMainWindow):
         widget3d.Start()
 
         return widget3d
+
+    def update_plane_diameter_by_printer_type(self, printer_type):
+        if printer_type == "E240":
+            sett().hardware.printer_type = printer_type
+            sett().hardware.plane_diameter = 250
+            sett().hardware.maximum_height = 240
+        elif printer_type == "M600":
+            sett().hardware.printer_type = printer_type
+            sett().hardware.plane_diameter = 600
+            sett().hardware.maximum_height = 600
+        else:
+            return
+
+        self.update_plane_diameter()
 
     def update_plane_diameter(self):
         self.render.RemoveActor(self.planeActor)
@@ -1530,6 +1545,49 @@ class MainWindow(QMainWindow):
         if self.stlActor:
             self.stlActor.ResetColorize()
 
+class AddNewPrinterDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle(locales.getLocale().AddNewPrinter)
+        self.setFixedSize(350, 190)
+
+        self.printer_directory_label = QLabel(locales.getLocale().ChoosePrinterDirectory)
+        self.printer_directory = QLineEdit()
+
+        self.printer_type_label = QLabel(locales.getLocale().ChoosePrinterType)
+        self.printer_type = QComboBox()
+        self.printer_type.addItem("E240")
+        self.printer_type.addItem("M600")
+
+        self.continue_button = QPushButton(locales.getLocale().Continue)
+        self.continue_button.clicked.connect(self.accept_dialog)
+        self.cancel_button = QPushButton(locales.getLocale().Cancel)
+        self.cancel_button.clicked.connect(self.reject)
+
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(self.continue_button)
+        button_layout.addWidget(self.cancel_button)
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.printer_directory_label)
+        layout.addWidget(self.printer_directory)
+        layout.addWidget(self.printer_type_label)
+        layout.addWidget(self.printer_type)
+        layout.addLayout(button_layout)
+
+        self.setLayout(layout)
+
+    def accept_dialog(self):
+        self.printer_directory_text = self.printer_directory.text().strip()
+
+        if self.printer_directory_text == "":
+            QMessageBox.warning(self, locales.getLocale().AddNewPrinter, locales.getLocale().ChoosePrinterDirectory)
+            return
+
+        self.accept()
+
+    def get_result(self):
+        return self.printer_directory_text, self.printer_type.currentText()
 
 def strF(v):  # cut 3 numbers after the point in float
     s = str(v)
