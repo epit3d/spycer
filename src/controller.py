@@ -208,7 +208,9 @@ class MainController:
             settings.APP_PATH, "data", "printers", "default", "calibration_data.csv"
         )
         calibration_filename = "calibration_data.csv"
-        calibration_filename = calibration_filename.replace(".csv", "_{}.csv".format(printer_type))
+        calibration_filename = calibration_filename.replace(
+            ".csv", "_{}.csv".format(printer_type)
+        )
         target_calibration_file = path.join(printer_path, calibration_filename)
 
         shutil.copyfile(default_calibration_file, target_calibration_file)

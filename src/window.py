@@ -1545,13 +1545,16 @@ class MainWindow(QMainWindow):
         if self.stlActor:
             self.stlActor.ResetColorize()
 
+
 class AddNewPrinterDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle(locales.getLocale().AddNewPrinter)
         self.setFixedSize(350, 190)
 
-        self.printer_directory_label = QLabel(locales.getLocale().ChoosePrinterDirectory)
+        self.printer_directory_label = QLabel(
+            locales.getLocale().ChoosePrinterDirectory
+        )
         self.printer_directory = QLineEdit()
 
         self.printer_type_label = QLabel(locales.getLocale().ChoosePrinterType)
@@ -1581,13 +1584,18 @@ class AddNewPrinterDialog(QDialog):
         self.printer_directory_text = self.printer_directory.text().strip()
 
         if self.printer_directory_text == "":
-            QMessageBox.warning(self, locales.getLocale().AddNewPrinter, locales.getLocale().ChoosePrinterDirectory)
+            QMessageBox.warning(
+                self,
+                locales.getLocale().AddNewPrinter,
+                locales.getLocale().ChoosePrinterDirectory,
+            )
             return
 
         self.accept()
 
     def get_result(self):
         return self.printer_directory_text, self.printer_type.currentText()
+
 
 def strF(v):  # cut 3 numbers after the point in float
     s = str(v)
