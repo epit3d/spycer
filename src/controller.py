@@ -631,7 +631,11 @@ class MainController:
                 return p.stderr
             elif p.returncode == 1:
                 # fatal, the error is in the latest line
-                return p.stdout.splitlines()[-1]
+                error_message = p.stdout.splitlines()[-1]
+                if "path is not closed before triangulation" in error_message:
+                    return locales.getLocale().WarningPathNotClosed
+                else:
+                    return error_message
 
             # no errors
             return ""

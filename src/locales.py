@@ -141,6 +141,7 @@ class Locale:
 
     UninterruptedPrint = "Uninterrupted print"
     M10CutDistance = "Filament cut distance, mm:"
+    WarningPathNotClosed = "When cutting the model, not closed areas were found! Check that the shapes are positioned correctly"
 
     RemoveFirstPlaneError = "First figure cannot be removed"
 
@@ -293,6 +294,7 @@ dicts = {
         UninterruptedPrint="Печать непрерывным волокном",
         M10CutDistance="Дистанция отреза филамента, мм:",
         RemoveFirstPlaneError="Первая фигура не может быть убрана",
+        WarningPathNotClosed="При разрезании модели были обнаружены незамкнутые участки! Проверьте корректность расположения фигур",
     ),
 }
 

@@ -61,10 +61,10 @@ if __name__ == "__main__":
 
     def open_project(project_path: str):
         load_settings(str(pathlib.Path(project_path, "settings.yaml")))
-        create_temporary_project_files()
 
         # update project_path in settings, because it originally might be in another place
         sett().project_path = project_path
+        create_temporary_project_files()
 
         window = MainWindow()
         window.close_signal.connect(entry_window.show)
