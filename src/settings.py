@@ -327,7 +327,6 @@ class Settings(object):
             "print_time",
             "consumption_material",
             "planes_contact_with_nozzle",
-            "figures",
         ]
 
         for attr in self.__dict__:

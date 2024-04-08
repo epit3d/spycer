@@ -161,17 +161,14 @@ class FigureEditor(QWidget):
 
         # part regarding additional settings per figure
         self.__additional_settings_widget = (
-            SettingsWidget(
-                settings_provider=settings_provider
-            )  # .with_all().with_delete()
+            SettingsWidget(settings_provider=settings_provider)
+            .from_settings(settings_provider())
+            .with_delete()
         )
-        # TODO: preload settings which are already given by settings_provider
 
         self.__scroll = QScrollArea()
         self.__scroll.setWidget(self.__additional_settings_widget)
         self.__scroll.setWidgetResizable(True)
-
-        # self.__layout.addWidget(self.__scroll)
 
         # widget with vertical layout:
         # element to add settings to layout

@@ -190,6 +190,17 @@ class SettingsWidget(QWidget):
         Adds delete button to each setting on the right
         """
 
+        def del_sett(name: str):
+            # given name with dot separation, remove from settings
+            attrs = name.split(".")
+            top_level = self.sett()
+            for attr in attrs[:-1]:
+                if not hasattr(top_level, attr):
+                    return
+                top_level = getattr(top_level, attr)
+
+            delattr(top_level, attrs[-1])
+
         self.btns = []
 
         for key in self.__elements:
@@ -229,6 +240,7 @@ class SettingsWidget(QWidget):
                         break
 
                 # remove key from elements
+                del_sett(self.__elements[key]["setting"])
                 del self.__elements[key]
 
             delete_btn.clicked.connect(lambda _, row_idx=row_idx: remove_row(row_idx))
@@ -276,7 +288,10 @@ class SettingsWidget(QWidget):
                     setattr(top_level, attr, Settings({}))
                 else:
                     # we have to add default settings from the main ones
-                    default = getattr(global_top, attr)
+                    try:
+                        default = getattr(global_top, attr)
+                    except AttributeError:
+                        default = None
                     setattr(top_level, attr, default)
 
             top_level = getattr(top_level, attr)
@@ -290,6 +305,31 @@ class SettingsWidget(QWidget):
             return float(value.replace(",", "."))
         except ValueError:
             return 0.0
+
+    def from_settings(self, setts: Settings):
+        # given settings structure, create a widget with its parameters
+        # currently works with limited number of settings
+
+        if not setts:
+            return self
+
+        def has_setting(name: str):
+            attrs = name.split(".")
+            top_level = setts
+            for attr in attrs:
+                if not hasattr(top_level, attr):
+                    return False
+                top_level = getattr(top_level, attr)
+
+            return True
+
+        if has_setting("slicing.filling_type"):
+            self.with_sett("filling_type")
+        if has_setting("slicing.fill_density"):
+            self.with_sett("fill_density")
+        # TODO: this list should be increased with the growth of extra parameters
+
+        return self
 
     def with_sett(self, name: str):
         # check whether the given name is already added
@@ -816,6 +856,7 @@ class SettingsWidget(QWidget):
                 self.__elements[name] = {
                     "label": filling_type_label,
                     "values": filling_type_values,
+                    "setting": "slicing.filling_type",
                 }
 
             case "fill_density":
@@ -839,6 +880,7 @@ class SettingsWidget(QWidget):
                 self.__elements[name] = {
                     "label": fill_density_label,
                     "edit": fill_density_value,
+                    "setting": "slicing.fill_density",
                 }
 
             case "overlap_infill":

@@ -91,7 +91,7 @@ if __name__ == "__main__":
 
             del sett().slicing.splanes_file
 
-            cntrl.save_settings("vip", str(pathlib.Path(project_path, "settings.yaml")))
+            cntrl.save_settings("vip")
         else:
             # load splanes from settings
             cntrl.load_planes(
