@@ -399,24 +399,20 @@ class SettingsWidget(QWidget):
                         uninterrupted_print_box.isChecked()
                     )
 
-                    # TODO:
-                    return
-                    # isUninterrupted = self.uninterrupted_print_box.isChecked()
+                    isUninterrupted = uninterrupted_print_box.isChecked()
 
-                    # self.filling_type_values.setEnabled(not isUninterrupted)
-                    # self.retraction_on_box.setEnabled(not isUninterrupted)
-                    # self.retraction_distance_value.setEnabled(not isUninterrupted)
-                    # self.retraction_speed_value.setEnabled(not isUninterrupted)
-                    # self.retract_compensation_amount_value.setEnabled(
-                    #     not isUninterrupted
-                    # )
+                    self.values("filling_type").setEnabled(not isUninterrupted)
+                    self.checkbox("retraction_on").setEnabled(not isUninterrupted)
+                    self.edit("retraction_distance").setEnabled(not isUninterrupted)
+                    self.edit("retraction_speed").setEnabled(not isUninterrupted)
+                    self.edit("retraction_compensation").setEnabled(not isUninterrupted)
 
-                    # if isUninterrupted:
-                    #     zigzag_idx = locales.getLocaleByLang(
-                    #         "en"
-                    #     ).FillingTypeValues.index("ZigZag")
-                    #     self.filling_type_values.setCurrentIndex(zigzag_idx)
-                    #     self.retraction_on_box.setChecked(False)
+                    if isUninterrupted:
+                        zigzag_idx = locales.getLocaleByLang(
+                            "en"
+                        ).FillingTypeValues.index("ZigZag")
+                        self.values("filling_type").setCurrentIndex(zigzag_idx)
+                        self.checkbox("retraction_on").setChecked(False)
 
                 uninterrupted_print_box.stateChanged.connect(
                     on_uninterrupted_print_change
