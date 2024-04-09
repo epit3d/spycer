@@ -2,17 +2,17 @@
 import os, sys
 
 # check whether we are in pyinstaller bundle and on linux
-if getattr(sys, 'frozen', False) and sys.platform.startswith('linux'):
+if getattr(sys, "frozen", False) and sys.platform.startswith("linux"):
     app_path = os.path.dirname(sys.executable)
 
-    prev_ld_path = os.environ.get('LD_LIBRARY_PATH', '')
-    
+    prev_ld_path = os.environ.get("LD_LIBRARY_PATH", "")
+
     # shared libraries are located at lib/
-    shared_libs = os.path.join(app_path, 'lib')
+    shared_libs = os.path.join(app_path, "lib")
 
     # add shared libraries to LD_LIBRARY_PATH
-    os.environ['LD_LIBRARY_PATH'] = shared_libs + ':' + prev_ld_path
-    print("LD_LIBRARY_PATH:", os.environ['LD_LIBRARY_PATH'])
+    os.environ["LD_LIBRARY_PATH"] = shared_libs + ":" + prev_ld_path
+    print("LD_LIBRARY_PATH:", os.environ["LD_LIBRARY_PATH"])
 
 
 import logging
@@ -22,14 +22,25 @@ import os
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QApplication
 import pathlib
-from src.settings import copy_project_files, load_settings, sett, get_color
+from src.settings import (
+    copy_project_files,
+    load_settings,
+    sett,
+    create_temporary_project_files,
+)
 from src.window import MainWindow
 from src.model import MainModel
 from src.controller import MainController
 from src.interface_style_sheet import getStyleSheet
 from src.entry_window import EntryWindow
+from src.gui_utils import read_plane
 
-logging.basicConfig(filename='interface.log', filemode='a+', level=logging.INFO, format='%(asctime)s %(message)s')
+logging.basicConfig(
+    filename="interface.log",
+    filemode="a+",
+    level=logging.INFO,
+    format="%(asctime)s %(message)s",
+)
 
 
 def excepthook(exc_type, exc_value, exc_tb):
@@ -38,6 +49,7 @@ def excepthook(exc_type, exc_value, exc_tb):
     print("error message:\n", tb)
     logging.error(tb)
     QtWidgets.QApplication.quit()
+
 
 if __name__ == "__main__":
     load_settings()
@@ -52,10 +64,11 @@ if __name__ == "__main__":
 
         # update project_path in settings, because it originally might be in another place
         sett().project_path = project_path
+        create_temporary_project_files()
 
         window = MainWindow()
         window.close_signal.connect(entry_window.show)
-        
+
         model = MainModel()
         cntrl = MainController(window, model)
 
@@ -64,22 +77,41 @@ if __name__ == "__main__":
         if os.path.isfile(stlpath):
             cntrl.load_stl(stlpath)
 
-        # try to open figures file
-        figpath = pathlib.Path(project_path, sett().slicing.splanes_file)
-        if os.path.isfile(figpath):
-            cntrl.load_planes(figpath)
+        if hasattr(sett().slicing, "splanes_file"):
+            # we have kinda old settings which point to separate file with planes
+            # load planes as it is, but remove this parameter and save settings
+            # TODO: we can remove this condition after one release
+
+            # try to open figures file
+            figpath = pathlib.Path(project_path, sett().slicing.splanes_file)
+            if os.path.isfile(figpath):
+                cntrl.load_planes_from_file(figpath)
+            else:
+                cntrl.load_planes([])
+
+            del sett().slicing.splanes_file
+
+            cntrl.save_settings("vip")
+        else:
+            # load splanes from settings
+            cntrl.load_planes(
+                [read_plane(figure.description) for figure in sett().figures]
+            )
 
         window.showMaximized()
         window.show()
+        cntrl.reset_settings()
+        cntrl.update_interface(sett().slicing.stl_filename)
         entry_window.close()
 
     def create_project(project_path: str):
         copy_project_files(project_path)
         load_settings(str(pathlib.Path(project_path, "settings.yaml")))
+        create_temporary_project_files()
 
         window = MainWindow()
         window.close_signal.connect(entry_window.show)
-        
+
         model = MainModel()
         cntrl = MainController(window, model)
         window.showMaximized()

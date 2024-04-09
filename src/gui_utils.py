@@ -85,7 +85,9 @@ def create_splane_actor(center, x_rot, z_rot):
     return actor
 
 
-def create_cone_actor(vertex: Tuple[float, float, float], bending_angle: float, h1: float, h2: float):
+def create_cone_actor(
+    vertex: Tuple[float, float, float], bending_angle: float, h1: float, h2: float
+):
     # TODO maybe it is not good to pass cone object destructed (hard to add new parameters)
     """
     :param bending_angle: angle of triangles relative Z axis we want to compensate (in degrees)
@@ -108,12 +110,12 @@ def create_cone_actor(vertex: Tuple[float, float, float], bending_angle: float, 
     coneSource.SetResolution(120)
     # coneSource.SetHeight(vertex[2])
     import math
+
     coneSource.SetRadius(h2 * math.tan(math.radians(math.fabs(cone_angle))))
     coneSource.SetCenter(vertex[0], vertex[1], vertex[2] - sign(cone_angle) * h2 / 2)
     coneSource.SetDirection(0, 0, 1 * sign(cone_angle))
     coneSource.Update()
     # update parameters
-
 
     # plane to cut from h1
     clipPlane = vtk.vtkPlane()
@@ -161,8 +163,11 @@ def createBoxActors():
     cylinder.SetResolution(50)
     cylinder.SetRadius(3)
     cylinder.SetHeight(200)
-    cylinder.SetCenter(s.hardware.plane_center_x - 100, s.hardware.plane_center_z,
-                       s.hardware.plane_center_y + 100)  # WHAT? vtk :(
+    cylinder.SetCenter(
+        s.hardware.plane_center_x - 100,
+        s.hardware.plane_center_z,
+        s.hardware.plane_center_y + 100,
+    )  # WHAT? vtk :(
     mapper = vtk.vtkPolyDataMapper()
     mapper.SetInputConnection(cylinder.GetOutputPort())
     actor = vtk.vtkActor()
@@ -176,8 +181,11 @@ def createBoxActors():
     cylinder.SetRadius(3)
     cylinder.SetHeight(200)
 
-    cylinder.SetCenter(s.hardware.plane_center_x + 100, s.hardware.plane_center_z,
-                       s.hardware.plane_center_y - 100)  # WHAT? vtk :(
+    cylinder.SetCenter(
+        s.hardware.plane_center_x + 100,
+        s.hardware.plane_center_z,
+        s.hardware.plane_center_y - 100,
+    )  # WHAT? vtk :(
     mapper = vtk.vtkPolyDataMapper()
     mapper.SetInputConnection(cylinder.GetOutputPort())
     actor = vtk.vtkActor()
@@ -191,8 +199,11 @@ def createBoxActors():
     cylinder.SetResolution(50)
     cylinder.SetRadius(3)
     cylinder.SetHeight(200)
-    cylinder.SetCenter(s.hardware.plane_center_x - 100, s.hardware.plane_center_z,
-                       s.hardware.plane_center_y - 100)  # WHAT? vtk :(
+    cylinder.SetCenter(
+        s.hardware.plane_center_x - 100,
+        s.hardware.plane_center_z,
+        s.hardware.plane_center_y - 100,
+    )  # WHAT? vtk :(
     mapper = vtk.vtkPolyDataMapper()
     mapper.SetInputConnection(cylinder.GetOutputPort())
     actor = vtk.vtkActor()
@@ -237,6 +248,7 @@ def createStlActorInOrigin(filename, colorize=False):
     actor = setTransformFromSettings(actor)
     return actor
 
+
 def setTransformFromSettings(actor):
     s = sett()
     transform = vtk.vtkTransform()
@@ -250,6 +262,7 @@ def setTransformFromSettings(actor):
     actor.SetUserTransform(transform)
 
     return actor
+
 
 def makeBlocks(layers, rotations, lays2rots):
     blocks = []
@@ -265,7 +278,9 @@ def makeBlocks(layers, rotations, lays2rots):
                 line.GetPointIds().SetId(0, points_count + k)
                 line.GetPointIds().SetId(1, points_count + k + 1)
                 lines.InsertNextCell(line)
-            points.InsertNextPoint(path[-1].xyz(rotations[lays2rots[i]]))  # not forget to add last point
+            points.InsertNextPoint(
+                path[-1].xyz(rotations[lays2rots[i]])
+            )  # not forget to add last point
             points_count += len(path)
         block.SetPoints(points)
         block.SetLines(lines)
@@ -333,7 +348,6 @@ def plane_tf(rotation):
 
 
 class ActorFromPolyData(vtkActor):
-
     def __init__(self, output):
         super().__init__()
         mapper = vtkPolyDataMapper()
@@ -342,7 +356,6 @@ class ActorFromPolyData(vtkActor):
 
 
 class ActorWithColor(vtkAssembly):
-
     def __init__(self, output):
         polys = output.GetPolys()
         allpoints = output.GetPoints()
@@ -491,7 +504,9 @@ class StlActorMixin:
 
     def RotateByVector(self, vector):
         v = [0, 0, 1]
-        theta = np.arccos(np.dot(vector, v) / (np.linalg.norm(vector) * np.linalg.norm(v)))
+        theta = np.arccos(
+            np.dot(vector, v) / (np.linalg.norm(vector) * np.linalg.norm(v))
+        )
         rotation_angle = np.degrees(theta)
 
         if np.array_equal(vector, [0, 0, -1]):
@@ -509,14 +524,13 @@ class StlActorMixin:
 
         self.SetUserTransform(rotation_matrix)
 
-class StlActor(StlActorMixin, ActorFromPolyData):
 
+class StlActor(StlActorMixin, ActorFromPolyData):
     def __init__(self, output):
         super().__init__(output)
 
 
 class ColorizedStlActor(StlActorMixin, ActorWithColor):
-
     def __init__(self, output):
         super().__init__(output)
 
@@ -531,7 +545,7 @@ class Plane:
         self.smooth = smooth
 
     def toFile(self):
-        plane = f"plane X{self.x} Y{self.y} Z{self.z} T{self.incline} R{self.rot}"
+        plane = f"plane X{self.x:.2f} Y{self.y:.2f} Z{self.z:.2f} T{self.incline:.2f} R{self.rot:.2f}"
         if self.smooth:
             plane += " S"
         return plane
@@ -546,41 +560,74 @@ class Plane:
             "Smooth": self.smooth,
         }
 
+    def __eq__(self, value: object) -> bool:
+        if not isinstance(value, Plane):
+            return False
+        return (
+            self.x == value.x
+            and self.y == value.y
+            and self.z == value.z
+            and self.incline == value.incline
+            and self.rot == value.rot
+            and self.smooth == value.smooth
+        )
+
 
 class Cone:
-    def __init__(self, cone_angle: float, point: Tuple[float, float, float], h1: float = 0, h2: float = 100):
+    def __init__(
+        self,
+        cone_angle: float,
+        point: Tuple[float, float, float],
+        h1: float = 0,
+        h2: float = 100,
+    ):
         self.cone_angle = cone_angle
         self.x, self.y, self.z = point
         self.h1 = h1
         self.h2 = h2
 
     def toFile(self) -> str:
-        return f"cone X{self.x} Y{self.y} Z{self.z} A{self.cone_angle} H{self.h1} H{self.h2}"
+        return f"cone X{self.x:.2f} Y{self.y:.2f} Z{self.z:.2f} A{self.cone_angle:.2f} H{self.h1:.2f} H{self.h2:.2f}"
 
     def params(self) -> Dict[str, float]:
-        return {"X": self.x, "Y": self.y, "Z": self.z, "A": self.cone_angle, "H1": self.h1, "H2": self.h2}
+        return {
+            "X": self.x,
+            "Y": self.y,
+            "Z": self.z,
+            "A": self.cone_angle,
+            "H1": self.h1,
+            "H2": self.h2,
+        }
 
 
 def read_planes(filename):
     planes = []
     with open(filename) as fp:
         for line in fp:
-            v = line.strip().split(' ')
-
-            if v[0] == 'plane':
-                #plane X10 Y10 Z10 T-60 R0 - Plane string format
-                planes.append(
-                    Plane(
-                        float(v[4][1:]),
-                        float(v[5][1:]),
-                        (float(v[1][1:]), float(v[2][1:]), float(v[3][1:])),
-                        len(v) > 6 and v[6] == "S",
-                    ))
-            else:
-                #cone X0 Y0 Z10 A60 H10 H50 - Cone string format
-                planes.append(Cone(float(v[4][1:]), (float(v[1][1:]), float(v[2][1:]), float(v[3][1:])), float(v[5][1:]), float(v[6][1:])))
+            planes.append(read_plane(line))
 
     return planes
+
+
+def read_plane(line: str):
+    v = line.strip().split(" ")
+
+    if v[0] == "plane":
+        # plane X10 Y10 Z10 T-60 R0 - Plane string format
+        return Plane(
+            float(v[4][1:]),
+            float(v[5][1:]),
+            (float(v[1][1:]), float(v[2][1:]), float(v[3][1:])),
+            len(v) > 6 and v[6] == "S",
+        )
+    else:
+        # cone X0 Y0 Z10 A60 H10 H50 - Cone string format
+        return Cone(
+            float(v[4][1:]),
+            (float(v[1][1:]), float(v[2][1:]), float(v[3][1:])),
+            float(v[5][1:]),
+            float(v[6][1:]),
+        )
 
 
 def isfloat(value):
@@ -605,6 +652,7 @@ def showErrorDialog(text_msg):
     retval = msg.exec_()
     # print "value of pressed message box button:", retval
 
+
 def showInfoDialog(text_msg):
     msg = QMessageBox()
     msg.setIcon(QMessageBox.Information)
@@ -616,8 +664,9 @@ def showInfoDialog(text_msg):
     retval = msg.exec_()
 
 
-def createCustomXYaxis(origin: Tuple[float, float, float], endPoints: List[Tuple[float, float, float]]) -> List[
-    vtkActor]:
+def createCustomXYaxis(
+    origin: Tuple[float, float, float], endPoints: List[Tuple[float, float, float]]
+) -> List[vtkActor]:
     """
     Function creates 4 ended axes which describe position of focal point
     :param origin:
@@ -656,7 +705,6 @@ def createLine(point1: tuple, point2: tuple, color: str = "Black") -> vtkActor:
 
 
 class StlMover:
-
     def __init__(self, view):
         self.view = view
         self.tf = vtkTransform()
@@ -692,7 +740,6 @@ class StlMover:
 
 
 class StlTranslator(StlMover):
-
     def __init__(self, view):
         super().__init__(view)
 
@@ -715,7 +762,6 @@ class StlTranslator(StlMover):
 
 
 class StlRotator(StlMover):
-
     def __init__(self, view):
         super().__init__(view)
 
@@ -748,8 +794,8 @@ class StlRotator(StlMover):
 
         self.setMethod(val, axis)
 
-class StlScale(StlMover):
 
+class StlScale(StlMover):
     def __init__(self, view):
         super().__init__(view)
 
@@ -768,7 +814,6 @@ class StlScale(StlMover):
         tf.Concatenate(self.tf)
 
         self.tf = tf
-
 
     def actMethod(self, val, axis):
         x, y, z = axis

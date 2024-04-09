@@ -81,6 +81,7 @@ slicing:
   bottom_of_cut_layers: 1
   cmd: ./lib/goosli --cmd=slice --settings=
   cmd_version: ./lib/goosli --version
+  consumption_material: 0
   extruder_temperature: 200
   fan_off_layer1: false
   fan_speed: 95
@@ -105,9 +106,11 @@ slicing:
   originz: 0.0
   overlapping_infill_percentage: 100.0
   overlapping_infill_lid_percentage: 60.0
+  planes_contact_with_nozzle: ''
   print_speed: 50
   print_speed_layer1: 50
   print_speed_wall: 50
+  print_time: 0
   retract_compensation_amount: 0.0
   retraction_distance: 0.3
   retraction_on: true
@@ -123,6 +126,7 @@ slicing:
   smooth_cmd: ./smooth_FASP.exe
   splanes_file: lib/planes_file.txt
   stl_file: example.stl
+  stl_filename:
   t_geodesic: 0.0
   transformation_matrix:
     m00: 1.0
@@ -151,3 +155,6 @@ supports:
   fill_density: 5
   bottoms_depth: 0
   lids_depth: 0
+uninterrupted_print:
+  enabled: false
+  cut_distance: 0.0

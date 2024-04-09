@@ -1,6 +1,7 @@
 """
 Module contains logic behind the cone slicing
 """
+
 from typing import Tuple
 
 import numpy as np
@@ -52,12 +53,16 @@ def cross_stl(mesh_input: mesh.Mesh, cone: Tuple[float, Tuple[float, float, floa
 
             points = []
             for x, y in ((t[0], t[1]), (t[0], t[2]), (t[1], t[2])):
-                cross_p = cone_cross(x, y, cone[0], np.array(vertex))  # find cross point(s) of line and cone
+                cross_p = cone_cross(
+                    x, y, cone[0], np.array(vertex)
+                )  # find cross point(s) of line and cone
                 if cross_p:
                     if len(cross_p) == 3:  # one intersection point of line and cone
                         if cross_p not in points:
                             points.append(cross_p)
-                        elif len(cross_p) == 2:  # two intersection points of line and cone
+                        elif (
+                            len(cross_p) == 2
+                        ):  # two intersection points of line and cone
                             points = cross_p
                         if len(points) in [2, 4, 6]:
                             cross_p_list.append(points)  # add intersection lines
@@ -76,16 +81,29 @@ def cone_cross(p_1, p_2, alpha_cone=10.0, p_cone=np.array([0.0, 0.0, 0.0])):
     alpha_cone - cone angle in degrees
     p_cone - vertex of the cone: [x, y, z]
     """
-    a = [p_2[0] - p_1[0], p_2[1] - p_1[1], p_2[2] - p_1[2]]  # direction vector of the line
+    a = [
+        p_2[0] - p_1[0],
+        p_2[1] - p_1[1],
+        p_2[2] - p_1[2],
+    ]  # direction vector of the line
     ctg_alpha_cone = 1 / np.tan(alpha_cone * np.pi / 180)
-    a_1 = a[2] ** 2 - (a[0] ** 2 + a[1] ** 2) * ctg_alpha_cone ** 2
-    b_1 = 2 * (a[2] * p_1[2] - a[2] * p_cone[2] - (a[0] * p_1[0] + a[1] * p_1[1]) * ctg_alpha_cone ** 2)
-    c_1 = p_1[2] ** 2 + p_cone[2] ** 2 - 2 * p_cone[2] * p_1[2] - (p_1[0] ** 2 + p_1[1] ** 2) * ctg_alpha_cone ** 2
-    D = b_1 ** 2 - 4 * a_1 * c_1  # discriminant
+    a_1 = a[2] ** 2 - (a[0] ** 2 + a[1] ** 2) * ctg_alpha_cone**2
+    b_1 = 2 * (
+        a[2] * p_1[2]
+        - a[2] * p_cone[2]
+        - (a[0] * p_1[0] + a[1] * p_1[1]) * ctg_alpha_cone**2
+    )
+    c_1 = (
+        p_1[2] ** 2
+        + p_cone[2] ** 2
+        - 2 * p_cone[2] * p_1[2]
+        - (p_1[0] ** 2 + p_1[1] ** 2) * ctg_alpha_cone**2
+    )
+    D = b_1**2 - 4 * a_1 * c_1  # discriminant
 
     if D > 0:
-        lam_1 = (-b_1 - D ** 0.5) / (2 * a_1)
-        lam_2 = (-b_1 + D ** 0.5) / (2 * a_1)
+        lam_1 = (-b_1 - D**0.5) / (2 * a_1)
+        lam_2 = (-b_1 + D**0.5) / (2 * a_1)
 
         x_1 = lam_1 * a[0] + p_1[0]
         y_1 = lam_1 * a[1] + p_1[1]
@@ -96,12 +114,14 @@ def cone_cross(p_1, p_2, alpha_cone=10.0, p_cone=np.array([0.0, 0.0, 0.0])):
         z_2 = lam_2 * a[2] + p_1[2]
 
         # check that points are on the line
-        check_points = [min(p_1[0], p_2[0]) <= x_1 <= max(p_1[0], p_2[0]),
-                        min(p_1[1], p_2[1]) <= y_1 <= max(p_1[1], p_2[1]),
-                        min(p_1[2], p_2[2]) <= z_1 <= max(p_1[2], p_2[2]),
-                        min(p_1[0], p_2[0]) <= x_2 <= max(p_1[0], p_2[0]),
-                        min(p_1[1], p_2[1]) <= y_2 <= max(p_1[1], p_2[1]),
-                        min(p_1[2], p_2[2]) <= z_2 <= max(p_1[2], p_2[2])]
+        check_points = [
+            min(p_1[0], p_2[0]) <= x_1 <= max(p_1[0], p_2[0]),
+            min(p_1[1], p_2[1]) <= y_1 <= max(p_1[1], p_2[1]),
+            min(p_1[2], p_2[2]) <= z_1 <= max(p_1[2], p_2[2]),
+            min(p_1[0], p_2[0]) <= x_2 <= max(p_1[0], p_2[0]),
+            min(p_1[1], p_2[1]) <= y_2 <= max(p_1[1], p_2[1]),
+            min(p_1[2], p_2[2]) <= z_2 <= max(p_1[2], p_2[2]),
+        ]
         if all(check_points) and z_1 <= p_cone[2] and z_2 <= p_cone[2]:
             return [[x_1, y_1, z_1], [x_2, y_2, z_2]]  # two intersection points
         elif all(check_points[:3]) and z_1 <= p_cone[2]:

@@ -1,13 +1,31 @@
 """
 Provides a class creating a new window to edit parameters of custom figures
 """
+
 import sys
 from typing import List, Callable, Dict, Tuple, Optional, Union
 from functools import partial
 
 from PyQt5 import QtCore, sip
-from PyQt5.QtWidgets import (QSlider, QLineEdit, QApplication, QGridLayout, QWidget, QLabel, QSizePolicy,
-                             QPushButton, QHBoxLayout, QCheckBox)
+from PyQt5.QtWidgets import (
+    QSlider,
+    QLineEdit,
+    QApplication,
+    QGridLayout,
+    QWidget,
+    QLabel,
+    QSizePolicy,
+    QPushButton,
+    QHBoxLayout,
+    QCheckBox,
+    QScrollArea,
+    QVBoxLayout,
+    QComboBox,
+    QStyle,
+)
+from src.settings_widget import SettingsWidget
+from src.settings import sett
+from src.locales import getLocale
 
 
 class FigureEditor(QWidget):
@@ -18,30 +36,42 @@ class FigureEditor(QWidget):
 
     _checkboxes = []
 
-    def __init__(self, tabs, params: List[str], constrains: List[Tuple[int, int]],
-                 on_change: Callable[[Dict[str, float]], None] = None,
-                 initial_params: Optional[Dict[str, float]] = None):
+    def __init__(
+        self,
+        tabs,
+        params: List[str],
+        constrains: List[Tuple[int, int]],
+        on_change: Callable[[Dict[str, float]], None] = None,
+        initial_params: Optional[Dict[str, float]] = None,
+        settings_provider: callable = None,
+        figure_index=0,
+    ):
         super().__init__()
         self.on_change = on_change
         self.setWindowTitle("Parameters tooling")
 
-        self.layout = QGridLayout()
-        self.layout.setSpacing(5)
+        self.__layout = QHBoxLayout()
+
+        self.__figure_params_layout = QGridLayout()
+        self.__figure_params_layout.setSpacing(5)
         # self.layout.setColumnStretch(7, 1)
 
         self.params_widgets = []
         # TODO add implementation of True/False parameters
         self.params_dict: Dict[str, float] = dict(
             (el, initial_params[el] if initial_params and initial_params[el] else 0)
-            for el in params + self._checkboxes)
+            for el in params + self._checkboxes
+        )
 
         for param_idx, param in enumerate(params):
             # add label for parameter name
             label = QLabel(str(param))
             self.params_widgets.append(label)
-            self.layout.addWidget(label, param_idx, 0)
+            self.__figure_params_layout.addWidget(label, param_idx, 0)
 
-            def pass_updated_value_edit(param_name: str, qslider: QSlider, qlineedit: QLineEdit):
+            def pass_updated_value_edit(
+                param_name: str, qslider: QSlider, qlineedit: QLineEdit
+            ):
                 # return a function to be called from QLineEdit callback
                 def emmit_value(state: str):
                     try:
@@ -58,11 +88,11 @@ class FigureEditor(QWidget):
 
                     if value < minimumValue:
                         value = minimumValue
-                        qlineedit.setText(str(int(value))) # TODO: use validator
+                        qlineedit.setText(str(int(value)))  # TODO: use validator
 
                     elif value > maximumValue:
                         value = maximumValue
-                        qlineedit.setText(str(int(value))) # TODO: use validator
+                        qlineedit.setText(str(int(value)))  # TODO: use validator
 
                     self.params_dict[param_name] = float(value)
 
@@ -92,7 +122,9 @@ class FigureEditor(QWidget):
             edit.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
             edit.setMinimumWidth(40)
             self.params_widgets.append(edit)
-            self.layout.addWidget(edit, param_idx, 1)
+            self.__figure_params_layout.addWidget(edit, param_idx, 1)
+            # we should disable slider for the first figure
+            edit.setReadOnly(figure_index == 0)
 
             # add a slider for parameter
             slider = QSlider()
@@ -103,13 +135,14 @@ class FigureEditor(QWidget):
             slider.setValue(int(initial_params.get(param, 0)))
             slider.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             slider.setMinimumWidth(200)
+            # we should disable slider for the first figure
+            slider.setEnabled(figure_index != 0)
 
             self.params_widgets.append(slider)
-            self.layout.addWidget(slider, param_idx, 2)
+            self.__figure_params_layout.addWidget(slider, param_idx, 2)
 
             slider.valueChanged.connect(pass_updated_value_slider(param, edit))
             edit.textChanged.connect(pass_updated_value_edit(param, slider, edit))
-            self.setLayout(self.layout)
 
         for param in self._checkboxes:
             param_idx += 1
@@ -118,13 +151,69 @@ class FigureEditor(QWidget):
             checkbox.setChecked(initial_params.get(param, False))
 
             self.params_widgets.append(checkbox)
-            self.layout.addWidget(checkbox, param_idx, 0)
+            self.__figure_params_layout.addWidget(checkbox, param_idx, 0)
 
             checkbox.stateChanged.connect(self.pass_updated_value_checkbox(param))
 
-        if not tabs.widget(1).layout() is None:
+        self.__figure_params_widget = QWidget()
+        self.__figure_params_widget.setLayout(self.__figure_params_layout)
+        self.__layout.addWidget(self.__figure_params_widget)
+
+        # part regarding additional settings per figure
+        self.__additional_settings_widget = (
+            SettingsWidget(settings_provider=settings_provider)
+            .from_settings(settings_provider())
+            .with_delete()
+        )
+
+        self.__scroll = QScrollArea()
+        self.__scroll.setWidget(self.__additional_settings_widget)
+        self.__scroll.setWidgetResizable(True)
+
+        # widget with vertical layout:
+        # element to add settings to layout
+        # settings widget
+        self.__right_widget = QWidget()
+        self.__right_layout = QVBoxLayout()
+
+        self.__add_settings_widget = QWidget()
+        self.__add_settings_layout = QHBoxLayout()
+
+        # add combobox to choose settings
+        self.__add_settings_combobox = QComboBox()
+        self.__combobox_values = []
+        for param in self.__additional_settings_widget.extra_sett_parameters:
+            self.__combobox_values.append(param)
+            self.__add_settings_combobox.addItem(
+                self.__additional_settings_widget.translation[param]
+            )
+        self.__add_settings_layout.addWidget(self.__add_settings_combobox)
+
+        # add button which adds selected setting to layout
+        self.__add_settings_button = QPushButton()
+        self.__add_settings_button.setIcon(
+            self.style().standardIcon(QStyle.SP_DialogApplyButton)
+        )
+        self.__add_settings_layout.addWidget(self.__add_settings_button)
+
+        def add_sett():
+            self.__additional_settings_widget.with_sett(
+                self.__combobox_values[self.__add_settings_combobox.currentIndex()]
+            ).with_delete()
+
+        self.__add_settings_button.clicked.connect(add_sett)
+
+        self.__add_settings_widget.setLayout(self.__add_settings_layout)
+
+        self.__right_layout.addWidget(self.__add_settings_widget)
+        self.__right_layout.addWidget(self.__scroll)
+        self.__right_widget.setLayout(self.__right_layout)
+
+        self.__layout.addWidget(self.__right_widget)
+
+        if tabs.widget(1).layout() is not None:
             self.deleteLayout(tabs.widget(1).layout())
-        tabs.widget(1).setLayout(self.layout)
+        tabs.widget(1).setLayout(self.__layout)
 
     def pass_updated_value_checkbox(self, param_name: str):
         # return a function to be called from QCheckBox callback
@@ -149,14 +238,22 @@ class FigureEditor(QWidget):
 
             sip.delete(cur_lay)
 
+
 class PlaneEditor(FigureEditor):
     __params = ["X", "Y", "Z", "Rotation", "Tilt"]
     __constrains = [(-100, 100), (-100, 100), (0, 200), (-180, 180), (-90, 0)]
     _checkboxes = ["Smooth"]
 
-    def __init__(self, tabs, on_change: Callable[[Dict[str, float]], None],
-                 initial_params: Optional[Dict[str, Union[float, bool]]] = None):
-        super().__init__(tabs, self.__params, self.__constrains, on_change, initial_params)
+    def __init__(
+        self,
+        tabs,
+        on_change: Callable[[Dict[str, float]], None],
+        initial_params: Optional[Dict[str, Union[float, bool]]] = None,
+        **kwargs,
+    ):
+        super().__init__(
+            tabs, self.__params, self.__constrains, on_change, initial_params, **kwargs
+        )
 
     def params(self):
         return self.__params
@@ -166,16 +263,22 @@ class ConeEditor(FigureEditor):
     __params = ["Z", "A", "H1", "H2"]
     __constrains = [(-100, 200), (-80, 80), (0, 150), (1, 150)]
 
-    def __init__(self, tabs, on_change: Callable[[Dict[str, float]], None],
-                 initial_params: Optional[Dict[str, float]] = None):
-        super().__init__(tabs, self.__params, self.__constrains, on_change, initial_params)
+    def __init__(
+        self,
+        tabs,
+        on_change: Callable[[Dict[str, float]], None],
+        initial_params: Optional[Dict[str, float]] = None,
+        **kwargs,
+    ):
+        super().__init__(
+            tabs, self.__params, self.__constrains, on_change, initial_params, **kwargs
+        )
 
     def params(self):
         return self.__params
 
 
 class StlMovePanel(QWidget):
-
     def __init__(self, methods, captions):
         super().__init__()
 
@@ -192,10 +295,10 @@ class StlMovePanel(QWidget):
             label.setAlignment(QtCore.Qt.AlignCenter)
             gridLayout.addWidget(label, 0, 0, 1, 3)
             for row, param in enumerate(["X", "Y", "Z"], start=1):
-                btn_pos = QPushButton(str(param) + '+')
+                btn_pos = QPushButton(str(param) + "+")
                 gridLayout.addWidget(btn_pos, row, 0)
 
-                btn_neg = QPushButton(str(param) + '-')
+                btn_neg = QPushButton(str(param) + "-")
                 gridLayout.addWidget(btn_neg, row, 1)
 
                 edit = QLineEdit()
@@ -238,13 +341,12 @@ class StlMovePanel(QWidget):
 
 
 if __name__ == "__main__":
+
     def handle1(d):
         print(1, d)
 
-
     def handle2(d):
         print(2, d)
-
 
     app = QApplication(sys.argv)
     f1 = PlaneEditor(handle1, None)

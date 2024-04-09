@@ -1,5 +1,6 @@
 import qdarkstyle
 
+
 def getStyleSheet():
     # Loading the style so that can get pictures from the link
     darkstyle = qdarkstyle.load_stylesheet()

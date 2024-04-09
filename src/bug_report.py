@@ -6,9 +6,19 @@ from os import path
 from datetime import datetime
 from functools import partial
 from PyQt5 import QtCore, QtGui
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QTextEdit, QPushButton, QLabel, QHBoxLayout, QFileDialog, QMessageBox
+from PyQt5.QtWidgets import (
+    QWidget,
+    QVBoxLayout,
+    QTextEdit,
+    QPushButton,
+    QLabel,
+    QHBoxLayout,
+    QFileDialog,
+    QMessageBox,
+)
 from src.settings import sett, save_splanes_to_file, PathBuilder
 from src.client import send_bug_report
+
 
 class bugReportDialog(QWidget):
     def __init__(self, controller):
@@ -62,7 +72,9 @@ class bugReportDialog(QWidget):
         if not os.path.exists(self.temp_images_folder):
             os.mkdir(self.temp_images_folder)
 
-        image_path, _ = QFileDialog.getOpenFileName(self, controller.view.locale.AddingImage, "", "Images (*.png *.jpg)")
+        image_path, _ = QFileDialog.getOpenFileName(
+            self, controller.view.locale.AddingImage, "", "Images (*.png *.jpg)"
+        )
 
         if image_path:
             image_name = os.path.basename(image_path)
@@ -74,7 +86,9 @@ class bugReportDialog(QWidget):
                 self.update_image_names_label()
 
     def update_image_names_label(self):
-        image_names = ', '.join([os.path.basename(image_name) for image_name in self.images])
+        image_names = ", ".join(
+            [os.path.basename(image_name) for image_name in self.images]
+        )
         self.image_list.setText(image_names)
 
     def send(self, controller):
@@ -89,18 +103,26 @@ class bugReportDialog(QWidget):
                 message_box.exec_()
                 return
 
-            splanes_full_path = PathBuilder.splanes_file()
-            save_splanes_to_file(controller.model.splanes, splanes_full_path)
-            sett().slicing.splanes_file = path.basename(splanes_full_path)
             controller.save_settings("vip")
+
+            if not os.path.exists("temp"):
+                os.makedirs("temp")
 
             current_datetime = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
             self.archive_path = os.path.join("temp", f"{current_datetime}.zip")
 
-            self.addFolderToArchive(self.archive_path, PathBuilder.project_path(), "project")
-            self.addFolderToArchive(self.archive_path, self.temp_images_folder, "images")
+            self.addFolderToArchive(
+                self.archive_path, PathBuilder.project_path(), "project"
+            )
+            self.addFolderToArchive(
+                self.archive_path, self.temp_images_folder, "images"
+            )
 
-            with zipfile.ZipFile(self.archive_path, 'a') as archive:
+            if os.path.exists("interface.log"):
+                with zipfile.ZipFile(self.archive_path, "a") as archive:
+                    archive.write("interface.log")
+
+            with zipfile.ZipFile(self.archive_path, "a") as archive:
                 archive.writestr("error_description.txt", error_description)
 
             successfully_sent = send_bug_report(self.archive_path, error_description)
@@ -117,16 +139,18 @@ class bugReportDialog(QWidget):
             self.cleaningTempFiles()
             self.close()
 
-            self.failedSendWindow(controller)
+            self.failedSendWindow(controller, str(e))
 
-    def addFolderToArchive(self, archive_path, folder_path, subfolder = ""):
-        with zipfile.ZipFile(archive_path, 'a') as archive:
+    def addFolderToArchive(self, archive_path, folder_path, subfolder=""):
+        with zipfile.ZipFile(archive_path, "a") as archive:
             for path, _, files in os.walk(folder_path):
                 for file in files:
                     file_path = os.path.join(path, file)
                     archive_relative_path = os.path.relpath(file_path, folder_path)
                     if subfolder:
-                        archive.write(file_path, os.path.join(subfolder, archive_relative_path))
+                        archive.write(
+                            file_path, os.path.join(subfolder, archive_relative_path)
+                        )
                     else:
                         archive.write(file_path, archive_relative_path)
 
@@ -137,10 +161,12 @@ class bugReportDialog(QWidget):
         message_box.setIcon(QMessageBox.Information)
         message_box.exec_()
 
-    def failedSendWindow(self, controller):
+    def failedSendWindow(self, controller, error_msg: str = ""):
         message_box = QMessageBox(parent=self)
         message_box.setWindowTitle(controller.view.locale.SubmittingBugReport)
-        message_box.setText(controller.view.locale.ErrorReport)
+        message_box.setText(
+            controller.view.locale.ErrorReport + f"\nError message: {error_msg}"
+        )
         message_box.setIcon(QMessageBox.Critical)
         message_box.exec_()
 
