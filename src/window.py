@@ -1134,7 +1134,6 @@ class MainWindow(QMainWindow):
 
             # self.interactor.SetInteractorStyle(self.actor_interactor_style)
 
-            self.axesWidget.SetEnabled(False)
             if self.boxWidget is None:
                 self.boxWidget = vtk.vtkBoxWidget()
                 self.boxWidget.SetInteractor(self.interactor)
@@ -1173,7 +1172,6 @@ class MainWindow(QMainWindow):
             self.state_stl()  # TODO: might be not stl but both or gcode
             # self.interactor.SetInteractorStyle(self.camera_interactor_style)
             self.boxWidget.SetEnabled(False)
-            self.axesWidget.SetEnabled(True)
             xc, yc, zmin = gui_utils.findStlOrigin(self.stlActor)
             tf = self.stlActor.GetUserTransform()
             tf.PostMultiply()
