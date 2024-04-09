@@ -387,6 +387,10 @@ class MainController:
             showErrorDialog("Error during file opening:" + str(e))
 
     def load_figure_settings(self):
+        # check if we have figures specific settings
+        if not hasattr(sett(), "figures"):
+            setattr(sett(), "figures", [])
+
         if len(self.model.splanes) == 0:
             return
 
@@ -415,6 +419,10 @@ class MainController:
 
     def load_planes(self, splanes):
         if len(splanes) == 0:
+            splanes = [Plane(0, 0, [0, 0, 0])] + splanes
+
+        # check if the first figure is plane and if it is not, add it
+        if not isinstance(splanes[0], Plane) or splanes[0] != Plane(0, 0, [0, 0, 0]):
             splanes = [Plane(0, 0, [0, 0, 0])] + splanes
 
         self.model.splanes = splanes
