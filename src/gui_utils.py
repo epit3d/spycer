@@ -560,6 +560,18 @@ class Plane:
             "Smooth": self.smooth,
         }
 
+    def __eq__(self, value: object) -> bool:
+        if not isinstance(value, Plane):
+            return False
+        return (
+            self.x == value.x
+            and self.y == value.y
+            and self.z == value.z
+            and self.incline == value.incline
+            and self.rot == value.rot
+            and self.smooth == value.smooth
+        )
+
 
 class Cone:
     def __init__(

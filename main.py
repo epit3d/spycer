@@ -86,6 +86,8 @@ if __name__ == "__main__":
             figpath = pathlib.Path(project_path, sett().slicing.splanes_file)
             if os.path.isfile(figpath):
                 cntrl.load_planes_from_file(figpath)
+            else:
+                cntrl.load_planes([])
 
             del sett().slicing.splanes_file
 
