@@ -402,17 +402,7 @@ class MainWindow(QMainWindow):
 
         self.save_gcode_button = QPushButton(self.locale.SaveGCode)
         buttons_layout.addWidget(self.save_gcode_button, get_cur_row(), 3)
-
-        self.critical_wall_overhang_angle_label = QLabel(
-            self.locale.CriticalWallOverhangAngle
-        )
-        buttons_layout.addWidget(
-            self.critical_wall_overhang_angle_label, get_next_row(), 1, 1, 2
-        )
         buttons_layout.setColumnMinimumWidth(1, 230)
-        self.colorize_angle_value = LineEdit(str(sett().slicing.angle))
-        self.colorize_angle_value.setValidator(doubleValidator)
-        buttons_layout.addWidget(self.colorize_angle_value, get_cur_row(), 2, 1, 1)
 
         self.color_model_button = QPushButton(self.locale.ColorModel)
         buttons_layout.addWidget(self.color_model_button, get_cur_row(), 3)
