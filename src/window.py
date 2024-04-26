@@ -780,7 +780,7 @@ class MainWindow(QMainWindow):
         self.stlActor.movements_array = movements
         self.stlActor.current_movement_index = len(movements) - 1
 
-    def cancel_movement(self, cancel = True):
+    def cancel_movement(self, cancel=True):
         current_index = self.stlActor.current_movement_index
         movements = self.stlActor.movements_array
 
