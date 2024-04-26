@@ -694,7 +694,7 @@ class MainWindow(QMainWindow):
 
     def keyPressProcessing(self, event):
         if event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_S:
-            self.save_project_signal.emit()
+            self.save_project_action.trigger()
             return True
 
         if self.move_button.isChecked():
