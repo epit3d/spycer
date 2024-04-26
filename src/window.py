@@ -684,15 +684,19 @@ class MainWindow(QMainWindow):
 
     def eventFilter(self, obj, event):
         if event.type() == QEvent.KeyPress:
-            self.cancel_movement_event(event)
+            self.keyPressProcessing(event)
             return True
         return super().eventFilter(obj, event)
 
     def keyPressEvent(self, event):
-        if not self.cancel_movement_event(event):
+        if not self.keyPressProcessing(event):
             super().keyPressEvent(event)
 
-    def cancel_movement_event(self, event):
+    def keyPressProcessing(self, event):
+        if event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_S:
+            self.save_project_signal.emit()
+            return True
+
         if self.move_button.isChecked():
             if event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_Z:
                 self.cancel_movement()
