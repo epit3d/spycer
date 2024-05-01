@@ -89,6 +89,9 @@ def compare_figures(settings):
         if current_figures[i]["description"] != figures_from_settings[i].description:
             return False
 
+        if current_figures[i]["settings"] != figures_from_settings[i].settings:
+            return False
+
     return True
 
 
@@ -319,16 +322,21 @@ class Settings(object):
             else:
                 setattr(self, a, Settings(b) if isinstance(b, dict) else b)
 
+    def __repr__(self):
+        return str(self.__dict__)
+
     def __eq__(self, other):
         if not isinstance(other, Settings):
             return False
         ignore_attributes = [
             "splanes_file",
+            "figures",
             "print_time",
             "consumption_material",
             "planes_contact_with_nozzle",
         ]
 
+        # try to compare attributes from left to right
         for attr in self.__dict__:
             if attr in ignore_attributes:
                 continue
@@ -336,6 +344,16 @@ class Settings(object):
                 return False
             if getattr(self, attr) != getattr(other, attr):
                 return False
+
+        # try to compare attributes from right to left
+        for attr in other.__dict__:
+            if attr in ignore_attributes:
+                continue
+            if not hasattr(self, attr):
+                return False
+            if getattr(self, attr) != getattr(other, attr):
+                return False
+
         return True
 
 
