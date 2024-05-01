@@ -144,6 +144,7 @@ class Locale:
     WarningPathNotClosed = "When cutting the model, not closed areas were found! Check that the shapes are positioned correctly"
 
     RemoveFirstPlaneError = "First figure cannot be removed"
+    CannotDropHere = "Figure cannot be dropped here"
 
     def __init__(self, **entries):
         self.__dict__.update(entries)
@@ -295,6 +296,7 @@ dicts = {
         M10CutDistance="Дистанция отреза филамента, мм:",
         RemoveFirstPlaneError="Первая фигура не может быть убрана",
         WarningPathNotClosed="При разрезании модели были обнаружены незамкнутые участки! Проверьте корректность расположения фигур",
+        CannotDropHere="Фигура не может быть перенесена сюда",
     ),
 }
 

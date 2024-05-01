@@ -29,7 +29,7 @@ from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
 from src import locales, gui_utils, interactor_style
 from src.InteractorAroundActivePlane import InteractionAroundActivePlane
-from src.gui_utils import plane_tf, Plane, Cone
+from src.gui_utils import plane_tf, Plane, Cone, showErrorDialog
 from src.settings import (
     sett,
     get_color,
@@ -70,9 +70,27 @@ class TreeWidget(QTreeWidget):
         self.setDropIndicatorShown(True)
         self.setAcceptDrops(True)
 
-    def dragMoveEvent(self, event):
+    def dragEnterEvent(self, e: QtGui.QDragEnterEvent) -> None:
+        # we cannot start dragging the first row
+        item = self.selectedItems()[0]
+        idx = self.indexFromItem(item)
+        if idx.row() == 0:
+            e.ignore()
+            return
+
+        return super().dragEnterEvent(e)
+
+    def dragMoveEvent(self, event: QtGui.QDragMoveEvent) -> None:
         self.itemIsMoving = True
         super().dragMoveEvent(event)
+
+    def dropEvent(self, event):
+        # we cannot drop on the first row
+        if self.indexAt(event.pos()).row() == 0:
+            showErrorDialog(locales.getLocale().CannotDropHere)
+            return
+
+        super().dropEvent(event)
 
 
 class MainWindow(QMainWindow):
