@@ -709,7 +709,6 @@ class MainController:
             s.slicing.rotationz,
         ) = tf.GetOrientation()
         s.slicing.scalex, s.slicing.scaley, s.slicing.scalez = tf.GetScale()
-        s.slicing.angle = float(self.view.colorize_angle_value.text())
         s.slicing.slicing_type = slicing_type
 
         m = vtkMatrix4x4()
