@@ -784,7 +784,7 @@ class MainWindow(QMainWindow):
         self.stlActor.movements_array = movements
         self.stlActor.current_movement_index = len(movements) - 1
 
-    # We move on to the nearest state of movement of the model. 
+    # We move on to the nearest state of movement of the model.
     # If cancel=True, go back. If cancel=False, move forward.
     def shift_state(self, cancel=True):
         current_index = self.stlActor.current_movement_index
