@@ -3,6 +3,7 @@ from typing import Optional
 import vtk, src
 from PyQt5 import QtCore
 from PyQt5 import QtGui
+from PyQt5.QtCore import Qt, QEvent
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
     QMainWindow,
@@ -167,6 +168,22 @@ class MainWindow(QMainWindow):
         self.place_button.setFixedWidth(240)
         page_layout.addWidget(self.place_button, 1, 2)
 
+        self.cancel_action = QPushButton(self)
+        self.cancel_action.setIcon(QtGui.QIcon("icons/undo.png"))
+        self.cancel_action.setIconSize(QtCore.QSize(20, 20))
+        self.cancel_action.setToolTip("Undo")
+        self.cancel_action.setCheckable(False)
+        self.cancel_action.setFixedWidth(30)
+        page_layout.addWidget(self.cancel_action, 1, 4)
+
+        self.return_action = QPushButton(self)
+        self.return_action.setIcon(QtGui.QIcon("icons/redo.png"))
+        self.return_action.setIconSize(QtCore.QSize(20, 20))
+        self.return_action.setToolTip("Redo")
+        self.return_action.setCheckable(False)
+        self.return_action.setFixedWidth(30)
+        page_layout.addWidget(self.return_action, 1, 5)
+
         page_layout.addWidget(self.init_stl_move_panel(), 2, 0, 1, 5)
         page_layout.setColumnStretch(0, 0)
         page_layout.setRowStretch(0, 0)
@@ -240,6 +257,7 @@ class MainWindow(QMainWindow):
 
     def init3d_widget(self):
         widget3d = QVTKRenderWindowInteractor(self)
+        widget3d.installEventFilter(self)
 
         self.render = vtk.vtkRenderer()
         self.render.SetBackground(get_color("white"))
@@ -672,6 +690,31 @@ class MainWindow(QMainWindow):
             #     self.rotateAnyPlane(self.planesActors[i], self.planes[i], currRotation)
         return new_slider_value
 
+    def eventFilter(self, obj, event):
+        if event.type() == QEvent.KeyPress:
+            self.keyPressProcessing(event)
+            return True
+        return super().eventFilter(obj, event)
+
+    def keyPressEvent(self, event):
+        if not self.keyPressProcessing(event):
+            super().keyPressEvent(event)
+
+    def keyPressProcessing(self, event):
+        if event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_S:
+            self.save_project_action.trigger()
+            return True
+
+        if self.move_button.isChecked():
+            if event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_Z:
+                self.shift_state()
+                return True
+            elif event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_Y:
+                self.shift_state(False)
+                return True
+
+        return False
+
     def move_stl2(self):
         if self.move_button.isChecked():
             self.state_moving()
@@ -708,7 +751,11 @@ class MainWindow(QMainWindow):
                         self.stlActor.lastMove = origin
                         self.model_centering_box.setChecked(False)
 
+                def EndTransform(obj, event):
+                    self.save_current_movement()
+
                 self.boxWidget.AddObserver("InteractionEvent", TransformActor)
+                self.boxWidget.AddObserver("EndInteractionEvent", EndTransform)
             else:
                 self.boxWidget.SetEnabled(True)
             # self.interactor.GetInteractorStyle().SetCurrentStyleToTrackballActor()
@@ -728,6 +775,47 @@ class MainWindow(QMainWindow):
             self.updateTransform()
             # self.interactor.GetInteractorStyle().SetCurrentStyleToTrackballCamera()
         self.reload_scene()
+
+    def save_current_movement(self):
+        movements = self.stlActor.movements_array
+        current_index = self.stlActor.current_movement_index
+
+        movements = [movement for movement in movements if movement[0] <= current_index]
+
+        movement = self.stlActor.GetUserTransform()
+        movements.append((current_index + 1, movement))
+
+        max_movements = 100
+        if len(movements) > max_movements:
+            movements.pop(0)
+
+        self.stlActor.movements_array = movements
+        self.stlActor.current_movement_index = len(movements) - 1
+
+    # We move on to the nearest state of movement of the model.
+    # If cancel=True, go back. If cancel=False, move forward.
+    def shift_state(self, cancel=True):
+        current_index = self.stlActor.current_movement_index
+        movements = self.stlActor.movements_array
+
+        if cancel:
+            current_index -= 1
+        else:
+            current_index += 1
+
+        if (current_index > len(movements) - 1) or (current_index < 0):
+            return False
+
+        transform = movements[current_index][1]
+
+        self.stlActor.SetUserTransform(transform)
+        if not self.boxWidget is None:
+            self.boxWidget.SetTransform(transform)
+
+        self.updateTransform()
+        self.reload_scene()
+
+        self.stlActor.current_movement_index = current_index
 
     def updateTransform(self):
         tf = self.stlActor.GetUserTransform()
@@ -761,6 +849,8 @@ class MainWindow(QMainWindow):
         self.clear_scene()
         self.boxWidget = None
         self.stlActor = stl_actor
+        self.stlActor.movements_array = [(0, self.stlActor.GetUserTransform())]
+        self.stlActor.current_movement_index = 0
         self.stlActor.addUserTransformUpdateCallback(self.stl_move_panel.update)
         # self.actor_interactor_style.setStlActor(self.stlActor)
         self.updateTransform()
@@ -970,6 +1060,9 @@ class MainWindow(QMainWindow):
         self.hide_checkbox.setChecked(False)
         self.bottom_panel.setEnabled(False)
         self.stl_move_panel.setEnabled(False)
+        self.place_button.setEnabled(False)
+        self.cancel_action.setEnabled(False)
+        self.return_action.setEnabled(False)
         self.state = NothingState
 
     def state_gcode(self, layers_count):
@@ -993,6 +1086,9 @@ class MainWindow(QMainWindow):
         self.hide_checkbox.setChecked(True)
         self.bottom_panel.setEnabled(False)
         self.stl_move_panel.setEnabled(False)
+        self.place_button.setEnabled(False)
+        self.cancel_action.setEnabled(False)
+        self.return_action.setEnabled(False)
         self.state = GCodeState
 
     def state_stl(self):
@@ -1015,6 +1111,9 @@ class MainWindow(QMainWindow):
         self.hide_checkbox.setChecked(False)
         self.bottom_panel.setEnabled(True)
         self.stl_move_panel.setEnabled(False)
+        self.place_button.setEnabled(False)
+        self.cancel_action.setEnabled(False)
+        self.return_action.setEnabled(False)
         self.state = StlState
 
     def state_moving(self):
@@ -1037,6 +1136,9 @@ class MainWindow(QMainWindow):
         # self.hide_checkbox.setChecked(False)
         self.bottom_panel.setEnabled(False)
         self.stl_move_panel.setEnabled(True)
+        self.place_button.setEnabled(True)
+        self.cancel_action.setEnabled(True)
+        self.return_action.setEnabled(True)
         self.state = MovingState
 
     def state_both(self, layers_count):
@@ -1060,6 +1162,9 @@ class MainWindow(QMainWindow):
         self.hide_checkbox.setChecked(True)
         self.bottom_panel.setEnabled(True)
         self.stl_move_panel.setEnabled(False)
+        self.place_button.setEnabled(False)
+        self.cancel_action.setEnabled(False)
+        self.return_action.setEnabled(False)
         self.state = BothState
 
     def reset_colorize(self):
