@@ -699,10 +699,10 @@ class MainWindow(QMainWindow):
 
         if self.move_button.isChecked():
             if event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_Z:
-                self.cancel_movement()
+                self.shift_state()
                 return True
             elif event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_Y:
-                self.cancel_movement(False)
+                self.shift_state(False)
                 return True
 
         return False
@@ -784,7 +784,9 @@ class MainWindow(QMainWindow):
         self.stlActor.movements_array = movements
         self.stlActor.current_movement_index = len(movements) - 1
 
-    def cancel_movement(self, cancel=True):
+    # We move on to the nearest state of movement of the model. 
+    # If cancel=True, go back. If cancel=False, move forward.
+    def shift_state(self, cancel=True):
         current_index = self.stlActor.current_movement_index
         movements = self.stlActor.movements_array
 
@@ -793,20 +795,19 @@ class MainWindow(QMainWindow):
         else:
             current_index += 1
 
-        if 0 <= current_index < len(movements):
-            transform = movements[current_index][1]
-
-            self.stlActor.SetUserTransform(transform)
-            if not self.boxWidget is None:
-                self.boxWidget.SetTransform(transform)
-
-            self.updateTransform()
-            self.reload_scene()
-
-            self.stlActor.current_movement_index = current_index
-
-        else:
+        if (current_index > len(movements) - 1) or (current_index < 0):
             return False
+
+        transform = movements[current_index][1]
+
+        self.stlActor.SetUserTransform(transform)
+        if not self.boxWidget is None:
+            self.boxWidget.SetTransform(transform)
+
+        self.updateTransform()
+        self.reload_scene()
+
+        self.stlActor.current_movement_index = current_index
 
     def updateTransform(self):
         tf = self.stlActor.GetUserTransform()

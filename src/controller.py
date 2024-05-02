@@ -126,10 +126,10 @@ class MainController:
         self.view.move_button.clicked.connect(self.move_model)
         self.view.place_button.clicked.connect(self.place_model)
         self.view.cancel_action.clicked.connect(
-            partial(self.view.cancel_movement, True)
+            partial(self.view.shift_state, True)
         )
         self.view.return_action.clicked.connect(
-            partial(self.view.cancel_movement, False)
+            partial(self.view.shift_state, False)
         )
         self.view.load_model_button.clicked.connect(self.open_file)
         self.view.slice3a_button.clicked.connect(partial(self.slice_stl, "3axes"))
