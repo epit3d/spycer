@@ -524,12 +524,20 @@ class StlActorMixin:
 
         self.SetUserTransform(rotation_matrix)
 
+
 def getScaleFromVtkTransform(transform):
     transformation_matrix = getMatrix4x4FromVtkTransform(transform)
     submatrix = transformation_matrix[:3, :3]
 
     rotation_quaternion = getQuaternionFromMatrix(submatrix)
-    inverse_rotation_quaternion = np.array([rotation_quaternion[0], -rotation_quaternion[1], -rotation_quaternion[2], -rotation_quaternion[3]])
+    inverse_rotation_quaternion = np.array(
+        [
+            rotation_quaternion[0],
+            -rotation_quaternion[1],
+            -rotation_quaternion[2],
+            -rotation_quaternion[3],
+        ]
+    )
 
     rotation_matrix_quat = getRotationMatrixFromQuaternion(inverse_rotation_quaternion)
     transformation_matrix = np.dot(rotation_matrix_quat, transformation_matrix)
@@ -539,6 +547,7 @@ def getScaleFromVtkTransform(transform):
     scaleZ = transformation_matrix[2][2]
 
     return [scaleX, scaleY, scaleZ]
+
 
 def getQuaternionFromMatrix(matrix):
     w = np.sqrt(1 + matrix[0, 0] + matrix[1, 1] + matrix[2, 2]) / 2
@@ -550,26 +559,45 @@ def getQuaternionFromMatrix(matrix):
 
     return quaternion
 
+
 def getMatrix4x4FromVtkTransform(transform):
     matrix4x4 = vtk.vtkMatrix4x4()
     transform.GetMatrix(matrix4x4)
 
-    matrix = np.array([
-        [matrix4x4.GetElement(i, j) for j in range(4)]
-        for i in range(4)
-    ])
+    matrix = np.array(
+        [[matrix4x4.GetElement(i, j) for j in range(4)] for i in range(4)]
+    )
 
     return matrix
 
+
 def getRotationMatrixFromQuaternion(quaternion):
-    rotation_matrix = np.array([
-        [1 - 2*(quaternion[2]**2 + quaternion[3]**2), 2*(quaternion[1]*quaternion[2] - quaternion[0]*quaternion[3]), 2*(quaternion[0]*quaternion[2] + quaternion[1]*quaternion[3]), 0],
-        [2*(quaternion[1]*quaternion[2] + quaternion[0]*quaternion[3]), 1 - 2*(quaternion[1]**2 + quaternion[3]**2), 2*(quaternion[2]*quaternion[3] - quaternion[0]*quaternion[1]), 0],
-        [2*(quaternion[1]*quaternion[3] - quaternion[0]*quaternion[2]), 2*(quaternion[0]*quaternion[1] + quaternion[2]*quaternion[3]), 1 - 2*(quaternion[1]**2 + quaternion[2]**2), 0],
-        [0, 0, 0, 1]
-    ])
+    rotation_matrix = np.array(
+        [
+            [
+                1 - 2 * (quaternion[2] ** 2 + quaternion[3] ** 2),
+                2 * (quaternion[1] * quaternion[2] - quaternion[0] * quaternion[3]),
+                2 * (quaternion[0] * quaternion[2] + quaternion[1] * quaternion[3]),
+                0,
+            ],
+            [
+                2 * (quaternion[1] * quaternion[2] + quaternion[0] * quaternion[3]),
+                1 - 2 * (quaternion[1] ** 2 + quaternion[3] ** 2),
+                2 * (quaternion[2] * quaternion[3] - quaternion[0] * quaternion[1]),
+                0,
+            ],
+            [
+                2 * (quaternion[1] * quaternion[3] - quaternion[0] * quaternion[2]),
+                2 * (quaternion[0] * quaternion[1] + quaternion[2] * quaternion[3]),
+                1 - 2 * (quaternion[1] ** 2 + quaternion[2] ** 2),
+                0,
+            ],
+            [0, 0, 0, 1],
+        ]
+    )
 
     return rotation_matrix
+
 
 class StlActor(StlActorMixin, ActorFromPolyData):
     def __init__(self, output):
