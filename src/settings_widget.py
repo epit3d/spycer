@@ -568,7 +568,7 @@ class SettingsWidget(QWidget):
 
             def on_change():
                 self.sett().slicing.bottoms_depth = self.__smart_float(
-                    bottom_thickness_value.text()
+                    number_of_bottom_layers_value.text()
                 )
 
             number_of_bottom_layers_value.textChanged.connect(on_change)
@@ -610,7 +610,7 @@ class SettingsWidget(QWidget):
 
             def on_change():
                 self.sett().slicing.lids_depth = self.__smart_float(
-                    lid_thickness_value.text()
+                    number_of_lids_layers_value.text()
                 )
 
             number_of_lids_layers_value.textChanged.connect(on_change)
@@ -1186,7 +1186,7 @@ class SettingsWidget(QWidget):
 
             def on_change():
                 self.sett().supports.bottoms_depth = self.__smart_float(
-                    bottom_thickness_value.text()
+                    support_number_of_bottom_layers_value.text()
                 )
 
             support_number_of_bottom_layers_value.textChanged.connect(on_change)
@@ -1231,7 +1231,7 @@ class SettingsWidget(QWidget):
 
             def on_change():
                 self.sett().supports.lids_depth = self.__smart_float(
-                    lid_thickness_value.text()
+                    support_number_of_lid_layers_value.text()
                 )
 
             support_number_of_lid_layers_value.textChanged.connect(on_change)
