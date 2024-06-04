@@ -206,7 +206,7 @@ class MainController:
         save_settings()
 
         # update label with printer path
-        self.view.printer_path_edit.setText(os.path.basename(printer_path))
+        self.view.setts._SettingsWidget__elements['printer_path']['edit'].setText(os.path.basename(printer_path))
 
         # update path in calibration model
         try:
@@ -245,7 +245,7 @@ class MainController:
             save_settings()
 
             # update label with printer path
-            self.view.printer_path_edit.setText(os.path.basename(printer_path))
+            self.view.setts._SettingsWidget__elements['printer_path']['edit'].setText(os.path.basename(printer_path))
 
             # update path in calibration model
             try:
