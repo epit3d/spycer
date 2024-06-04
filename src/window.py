@@ -340,9 +340,7 @@ class MainWindow(QMainWindow):
         self.legend.GetPosition2Coordinate().SetCoordinateSystemToDisplay()
         self.legend.GetPosition2Coordinate().SetValue(290, 3 * 30)
         self.legend.SetEntry(0, hackData, "rotate - left mouse button", [0, 0, 0])
-        self.legend.SetEntry(
-            1, hackData, "move - right mouse button", [0, 0, 0]
-        )
+        self.legend.SetEntry(1, hackData, "move - right mouse button", [0, 0, 0])
         self.legend.SetEntry(2, hackData, "scale - mouse wheel", [0, 0, 0])
         self.render.AddActor(self.legend)
 
