@@ -705,13 +705,12 @@ class MainWindow(QMainWindow):
             self.save_project_action.trigger()
             return True
 
-        if self.move_button.isChecked():
-            if event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_Z:
-                self.shift_state()
-                return True
-            elif event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_Y:
-                self.shift_state(False)
-                return True
+        if event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_Z:
+            self.shift_state()
+            return True
+        elif event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_Y:
+            self.shift_state(False)
+            return True
 
         return False
 
@@ -782,7 +781,7 @@ class MainWindow(QMainWindow):
 
         movements = [movement for movement in movements if movement[0] <= current_index]
 
-        movement = self.stlActor.GetUserTransform()
+        movement = self.copyTransform(self.stlActor.GetUserTransform())
         movements.append((current_index + 1, movement))
 
         max_movements = 100
@@ -817,6 +816,11 @@ class MainWindow(QMainWindow):
 
         self.stlActor.current_movement_index = current_index
 
+    def copyTransform(self, transform):
+        new_transform = vtk.vtkTransform()
+        new_transform.SetMatrix(transform.GetMatrix())
+        return new_transform
+
     def updateTransform(self):
         tf = self.stlActor.GetUserTransform()
         x, y, z = tf.GetPosition()
@@ -849,7 +853,9 @@ class MainWindow(QMainWindow):
         self.clear_scene()
         self.boxWidget = None
         self.stlActor = stl_actor
-        self.stlActor.movements_array = [(0, self.stlActor.GetUserTransform())]
+        self.stlActor.movements_array = [
+            (0, self.copyTransform(self.stlActor.GetUserTransform()))
+        ]
         self.stlActor.current_movement_index = 0
         self.stlActor.addUserTransformUpdateCallback(self.stl_move_panel.update)
         # self.actor_interactor_style.setStlActor(self.stlActor)
@@ -1060,7 +1066,6 @@ class MainWindow(QMainWindow):
         self.hide_checkbox.setChecked(False)
         self.bottom_panel.setEnabled(False)
         self.stl_move_panel.setEnabled(False)
-        self.place_button.setEnabled(False)
         self.cancel_action.setEnabled(False)
         self.return_action.setEnabled(False)
         self.state = NothingState
@@ -1086,7 +1091,6 @@ class MainWindow(QMainWindow):
         self.hide_checkbox.setChecked(True)
         self.bottom_panel.setEnabled(False)
         self.stl_move_panel.setEnabled(False)
-        self.place_button.setEnabled(False)
         self.cancel_action.setEnabled(False)
         self.return_action.setEnabled(False)
         self.state = GCodeState
@@ -1111,9 +1115,8 @@ class MainWindow(QMainWindow):
         self.hide_checkbox.setChecked(False)
         self.bottom_panel.setEnabled(True)
         self.stl_move_panel.setEnabled(False)
-        self.place_button.setEnabled(False)
-        self.cancel_action.setEnabled(False)
-        self.return_action.setEnabled(False)
+        self.cancel_action.setEnabled(True)
+        self.return_action.setEnabled(True)
         self.state = StlState
 
     def state_moving(self):
@@ -1127,7 +1130,7 @@ class MainWindow(QMainWindow):
         self.picture_slider.setEnabled(False)
         self.picture_slider.setSliderPosition(0)
         self.move_button.setEnabled(True)
-        self.place_button.setEnabled(True)
+        self.place_button.setEnabled(False)
         self.load_model_button.setEnabled(False)
         self.slice3a_button.setEnabled(False)
         self.color_model_button.setEnabled(False)
@@ -1136,7 +1139,6 @@ class MainWindow(QMainWindow):
         # self.hide_checkbox.setChecked(False)
         self.bottom_panel.setEnabled(False)
         self.stl_move_panel.setEnabled(True)
-        self.place_button.setEnabled(True)
         self.cancel_action.setEnabled(True)
         self.return_action.setEnabled(True)
         self.state = MovingState
@@ -1153,7 +1155,7 @@ class MainWindow(QMainWindow):
         self.picture_slider.setMaximum(layers_count)
         self.picture_slider.setSliderPosition(layers_count)
         self.move_button.setEnabled(True)
-        self.place_button.setEnabled(True)
+        self.place_button.setEnabled(False)
         self.load_model_button.setEnabled(True)
         self.slice3a_button.setEnabled(True)
         self.color_model_button.setEnabled(True)
@@ -1162,9 +1164,8 @@ class MainWindow(QMainWindow):
         self.hide_checkbox.setChecked(True)
         self.bottom_panel.setEnabled(True)
         self.stl_move_panel.setEnabled(False)
-        self.place_button.setEnabled(False)
-        self.cancel_action.setEnabled(False)
-        self.return_action.setEnabled(False)
+        self.cancel_action.setEnabled(True)
+        self.return_action.setEnabled(True)
         self.state = BothState
 
     def reset_colorize(self):
