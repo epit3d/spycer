@@ -1083,7 +1083,7 @@ class SettingsWidget(QWidget):
 
             support_xy_offset_label = QLabel(self.locale.SupportXYOffset)
             support_xy_offset_value = LineEdit(str(self.sett().supports.xy_offset))
-            support_xy_offset_value.setValidator(self.intValidator)
+            support_xy_offset_value.setValidator(self.doubleValidator)
             self.panel.addWidget(support_xy_offset_label, self.next_row, 1)
             self.panel.addWidget(
                 support_xy_offset_value, self.cur_row, 2, 1, self.col2_cells
