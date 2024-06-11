@@ -339,11 +339,12 @@ class MainWindow(QMainWindow):
         self.legend.GetPositionCoordinate().SetValue(0, 0)
         self.legend.GetPosition2Coordinate().SetCoordinateSystemToDisplay()
         self.legend.GetPosition2Coordinate().SetValue(290, 3 * 30)
-        self.legend.SetEntry(0, hackData, "rotate - left mouse button", [1, 1, 1])
-        self.legend.SetEntry(
-            1, hackData, "move - middle mouse button (or shift+left)", [1, 1, 1]
-        )
-        self.legend.SetEntry(2, hackData, "scale - right mouse button", [1, 1, 1])
+
+        legend_color = [192, 192, 192]
+        self.legend.SetEntry(0, hackData, "rotate - left mouse button", legend_color)
+        self.legend.SetEntry(1, hackData, "move - right mouse button", legend_color)
+        self.legend.SetEntry(2, hackData, "scale  - mouse wheel", legend_color)
+
         self.render.AddActor(self.legend)
 
     def init_right_panel(self):
