@@ -389,8 +389,21 @@ class PathBuilder:
         return path.join(PathBuilder.project_path(), "settings_old.yaml")
 
     @staticmethod
+    def get_cmd_with_path(cmd):
+        temp_settings = prepare_temp_settings(sett())
+        encoded_temp_settings = base64.b64encode(temp_settings.encode("utf-8")).decode(
+            "utf-8"
+        )
+        return (
+            cmd
+            + f'"{PathBuilder.settings_file_temp()}"'
+            + " --data="
+            + f"{encoded_temp_settings}"
+        )
+
+    @staticmethod
     def colorizer_cmd():
-        return sett().colorizer.cmd + f'"{PathBuilder.settings_file()}"'
+        return PathBuilder.get_cmd_with_path(sett().colorizer.cmd)
 
     @staticmethod
     def colorizer_stl():
@@ -402,16 +415,7 @@ class PathBuilder:
 
     @staticmethod
     def slicing_cmd():
-        temp_settings = prepare_temp_settings(sett())
-        encoded_temp_settings = base64.b64encode(temp_settings.encode("utf-8")).decode(
-            "utf-8"
-        )
-        return (
-            sett().slicing.cmd
-            + f'"{PathBuilder.settings_file_temp()}"'
-            + " --data="
-            + f"{encoded_temp_settings}"
-        )
+        return PathBuilder.get_cmd_with_path(sett().slicing.cmd)
 
     @staticmethod
     def gcodevis_file():
