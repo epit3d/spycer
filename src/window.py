@@ -558,6 +558,7 @@ class MainWindow(QMainWindow):
             return scalePos, scaleNeg, scaleSet
 
         self.stl_move_panel = StlMovePanel(
+            self,
             {
                 (0, "X"): translate(1, 0, 0),
                 (0, "Y"): translate(0, 1, 0),
@@ -693,7 +694,8 @@ class MainWindow(QMainWindow):
 
     def eventFilter(self, obj, event):
         if event.type() == QEvent.KeyPress:
-            self.keyPressProcessing(event)
+            if not self.keyPressProcessing(event):
+                return super().eventFilter(obj, event)
             return True
         return super().eventFilter(obj, event)
 
