@@ -888,14 +888,8 @@ class MainController:
         self.view.supports_number_of_bottom_layers_value.setText(
             str(s.supports.bottoms_depth)
         )
-        self.view.supports_bottom_thickness_value.setText(
-            str(round(s.slicing.layer_height * s.supports.bottoms_depth, 2))
-        )
         self.view.supports_number_of_lid_layers_value.setText(
             str(int(s.supports.lids_depth))
-        )
-        self.view.supports_lid_thickness_value.setText(
-            str(round(s.slicing.layer_height * s.supports.lids_depth, 2))
         )
         self.view.colorize_angle_value.setText(str(s.slicing.angle))
 
