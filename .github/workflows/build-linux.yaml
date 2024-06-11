@@ -34,7 +34,7 @@ jobs:
           # cache: "pip"
       - name: Install dependencies
         run: |
-          python3 -m pip install --upgrade pip setuptools wheel flake8 pyinstaller
+          python3 -m pip install --upgrade pip setuptools wheel flake8 pyinstaller==5.13.0
           python3 -m pip install -r linux-req.txt
       - name: Lint with flake8
         run: |
