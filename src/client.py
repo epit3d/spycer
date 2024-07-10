@@ -18,7 +18,7 @@ def get_file_chunks(filename):
 
 def prepare_bug(filename, error_description):
     with open("auth.yaml", "r") as file:
-        auth_data = yaml.safe_load(file)
+        auth_data = yaml.full_load(file)
 
     req = srv_bug_pb2.AddBugRequest(
         info=srv_bug_pb2.BugInfo(
