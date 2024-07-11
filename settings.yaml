@@ -106,7 +106,7 @@ slicing:
   originz: 0.0
   overlapping_infill_percentage: 100.0
   overlapping_infill_lid_percentage: 60.0
-  planes_contact_with_nozzle: ''
+  planes_contact_with_nozzle: ""
   print_speed: 50
   print_speed_layer1: 50
   print_speed_wall: 50
@@ -158,3 +158,7 @@ supports:
 uninterrupted_print:
   enabled: false
   cut_distance: 0.0
+figures:
+  - description: plane X0.00 Y0.00 Z0.00 T0.00 R0.00
+    index: 0
+    settings: {}

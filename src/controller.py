@@ -763,12 +763,14 @@ class MainController:
     def save_project_files(self, save_path=""):
         if save_path == "":
             self.save_settings("vip", PathBuilder.settings_file())
-            shutil.copy2(PathBuilder.stl_model_temp(), PathBuilder.stl_model())
+            if os.path.isfile(PathBuilder.stl_model_temp()):
+                shutil.copy2(PathBuilder.stl_model_temp(), PathBuilder.stl_model())
         else:
             self.save_settings("vip", path.join(save_path, "settings.yaml"))
-            shutil.copy2(
-                PathBuilder.stl_model_temp(), path.join(save_path, "model.stl")
-            )
+            if os.path.isfile(PathBuilder.stl_model_temp()):
+                shutil.copy2(
+                    PathBuilder.stl_model_temp(), path.join(save_path, "model.stl")
+                )
 
     def save_project(self):
         try:

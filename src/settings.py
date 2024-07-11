@@ -102,6 +102,10 @@ def compare_project_file(filename):
 
 
 def compare_files(file1_path, file2_path):
+    # if either of the files does not exist, return False
+    if not os.path.exists(file1_path) or not os.path.exists(file2_path):
+        return True
+
     try:
         with open(file1_path, "rb") as file1:
             data1 = file1.read()
@@ -268,7 +272,7 @@ def save_splanes_to_file(splanes, filename):
 def get_version(settings_filename):
     try:
         with open(settings_filename, "r") as settings_file:
-            settings = yaml.safe_load(settings_file)
+            settings = yaml.full_load(settings_file)
 
         version = settings["common"]["version"]
         return version
@@ -280,7 +284,7 @@ def get_version(settings_filename):
 def set_version(settings_filename, version):
     try:
         with open(settings_filename, "r") as settings_file:
-            settings = yaml.safe_load(settings_file)
+            settings = yaml.full_load(settings_file)
 
         settings["common"]["version"] = version
 
@@ -293,10 +297,10 @@ def set_version(settings_filename, version):
 
 def paths_transfer_in_settings(initial_settings_filename, final_settings_filename):
     with open(initial_settings_filename, "r") as settings_file:
-        initial_settings = yaml.safe_load(settings_file)
+        initial_settings = yaml.load(settings_file)
 
     with open(final_settings_filename, "r") as settings_file:
-        final_settings = yaml.safe_load(settings_file)
+        final_settings = yaml.load(settings_file)
 
         compare_settings(initial_settings, final_settings)
 
