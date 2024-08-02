@@ -43,6 +43,7 @@ jobs:
         run: |
           mv settings.yaml dist/settings.yaml
           mv icon.png dist/icon.png
+          mv icons/ dist/icons/
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
