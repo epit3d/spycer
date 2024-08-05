@@ -441,9 +441,6 @@ class MainWindow(QMainWindow):
         buttons_layout.addWidget(self.save_gcode_button, get_cur_row(), 3)
         buttons_layout.setColumnMinimumWidth(1, 230)
 
-        self.color_model_button = QPushButton(self.locale.ColorModel)
-        buttons_layout.addWidget(self.color_model_button, get_cur_row(), 3)
-
         self.slice_vip_button = QPushButton(self.locale.SliceVip)
         buttons_layout.addWidget(self.slice_vip_button, get_next_row(), 1, 1, 2)
 
@@ -498,6 +495,9 @@ class MainWindow(QMainWindow):
 
         self.remove_plane_button = QPushButton(self.locale.DeletePlane)
         bottom_layout.addWidget(self.remove_plane_button, 3, 2)
+
+        self.color_model_button = QPushButton(self.locale.ColorModel)
+        bottom_layout.addWidget(self.color_model_button, 3, 3)
 
         self.edit_figure_button = QPushButton(self.locale.EditFigure)
         bottom_layout.addWidget(self.edit_figure_button, 4, 2)
