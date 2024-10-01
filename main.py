@@ -59,24 +59,8 @@ if __name__ == "__main__":
     style_sheet = getStyleSheet()
     app.setStyleSheet(style_sheet)
 
-    def open_project(project_path: str):
-        load_settings(str(pathlib.Path(project_path, "settings.yaml")))
-
-        # update project_path in settings, because it originally might be in another place
-        sett().project_path = project_path
-        create_temporary_project_files()
-
-        window = MainWindow()
-        window.close_signal.connect(entry_window.show)
-
-        model = MainModel()
-        cntrl = MainController(window, model)
-
-        # try to open stl file
-        stlpath = pathlib.Path(project_path, sett().slicing.stl_file)
-        if os.path.isfile(stlpath):
-            cntrl.load_stl(stlpath)
-
+    def splanes_update(project_path, cntrl):
+        # update splanes in settings because we might have different versions
         if hasattr(sett().slicing, "splanes_file"):
             # we have kinda old settings which point to separate file with planes
             # load planes as it is, but remove this parameter and save settings
@@ -98,6 +82,26 @@ if __name__ == "__main__":
                 [read_plane(figure.description) for figure in sett().figures]
             )
 
+    def open_project(project_path: str):
+        load_settings(str(pathlib.Path(project_path, "settings.yaml")))
+
+        # update project_path in settings, because it originally might be in another place
+        sett().project_path = project_path
+        create_temporary_project_files()
+
+        window = MainWindow()
+        window.close_signal.connect(entry_window.show)
+
+        model = MainModel()
+        cntrl = MainController(window, model)
+
+        # try to open stl file
+        stlpath = pathlib.Path(project_path, sett().slicing.stl_file)
+        if os.path.isfile(stlpath):
+            cntrl.load_stl(stlpath)
+
+        splanes_update(project_path, cntrl)
+
         window.showMaximized()
         window.show()
         cntrl.reset_settings()
@@ -114,6 +118,9 @@ if __name__ == "__main__":
 
         model = MainModel()
         cntrl = MainController(window, model)
+
+        splanes_update(project_path, cntrl)
+
         window.showMaximized()
         window.show()
         entry_window.close()

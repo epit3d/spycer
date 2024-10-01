@@ -115,6 +115,7 @@ class InteractionAroundActivePlane:
                 normal = actor.GetTriangleNormal(triangle_id)
                 actor.RotateByVector(-normal)
                 view.model_centering()
+                view.save_current_movement()
 
     def middleBtnPress(self, obj, event):
         if event == "MouseWheelForwardEvent":

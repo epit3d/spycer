@@ -125,6 +125,8 @@ class MainController:
         self.view.picture_slider.valueChanged.connect(self.change_layer_view)
         self.view.move_button.clicked.connect(self.move_model)
         self.view.place_button.clicked.connect(self.place_model)
+        self.view.cancel_action.clicked.connect(partial(self.view.shift_state, True))
+        self.view.return_action.clicked.connect(partial(self.view.shift_state, False))
         self.view.load_model_button.clicked.connect(self.open_file)
         self.view.slice3a_button.clicked.connect(partial(self.slice_stl, "3axes"))
         self.view.slice_vip_button.clicked.connect(partial(self.slice_stl, "vip"))
@@ -204,7 +206,7 @@ class MainController:
         save_settings()
 
         # update label with printer path
-        self.view.printer_path_edit.setText(os.path.basename(printer_path))
+        self.view.setts.edit("printer_path").setText(os.path.basename(printer_path))
 
         # update path in calibration model
         try:
@@ -243,7 +245,7 @@ class MainController:
             save_settings()
 
             # update label with printer path
-            self.view.printer_path_edit.setText(os.path.basename(printer_path))
+            self.view.setts.edit("printer_path").setText(os.path.basename(printer_path))
 
             # update path in calibration model
             try:
@@ -709,7 +711,6 @@ class MainController:
             s.slicing.rotationz,
         ) = tf.GetOrientation()
         s.slicing.scalex, s.slicing.scaley, s.slicing.scalez = tf.GetScale()
-        s.slicing.angle = float(self.view.colorize_angle_value.text())
         s.slicing.slicing_type = slicing_type
 
         m = vtkMatrix4x4()
@@ -762,12 +763,14 @@ class MainController:
     def save_project_files(self, save_path=""):
         if save_path == "":
             self.save_settings("vip", PathBuilder.settings_file())
-            shutil.copy2(PathBuilder.stl_model_temp(), PathBuilder.stl_model())
+            if os.path.isfile(PathBuilder.stl_model_temp()):
+                shutil.copy2(PathBuilder.stl_model_temp(), PathBuilder.stl_model())
         else:
             self.save_settings("vip", path.join(save_path, "settings.yaml"))
-            shutil.copy2(
-                PathBuilder.stl_model_temp(), path.join(save_path, "model.stl")
-            )
+            if os.path.isfile(PathBuilder.stl_model_temp()):
+                shutil.copy2(
+                    PathBuilder.stl_model_temp(), path.join(save_path, "model.stl")
+                )
 
     def save_project(self):
         try:
@@ -887,14 +890,8 @@ class MainController:
         self.view.supports_number_of_bottom_layers_value.setText(
             str(s.supports.bottoms_depth)
         )
-        self.view.supports_bottom_thickness_value.setText(
-            str(round(s.slicing.layer_height * s.supports.bottoms_depth, 2))
-        )
         self.view.supports_number_of_lid_layers_value.setText(
             str(int(s.supports.lids_depth))
-        )
-        self.view.supports_lid_thickness_value.setText(
-            str(round(s.slicing.layer_height * s.supports.lids_depth, 2))
         )
         self.view.colorize_angle_value.setText(str(s.slicing.angle))
 

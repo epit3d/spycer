@@ -717,6 +717,7 @@ class StlMover:
         self.view.stlActor.SetUserTransform(self.tf)
         self.view.updateTransform()
         self.view.reload_scene()
+        self.view.save_current_movement()
 
     def set(self, text, axis):
         try:

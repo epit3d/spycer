@@ -3,6 +3,7 @@ from typing import Optional
 import vtk, src
 from PyQt5 import QtCore
 from PyQt5 import QtGui
+from PyQt5.QtCore import Qt, QEvent
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
     QMainWindow,
@@ -29,7 +30,7 @@ from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
 from src import locales, gui_utils, interactor_style
 from src.InteractorAroundActivePlane import InteractionAroundActivePlane
-from src.gui_utils import plane_tf, Plane, Cone
+from src.gui_utils import plane_tf, Plane, Cone, showErrorDialog
 from src.settings import (
     sett,
     get_color,
@@ -70,9 +71,27 @@ class TreeWidget(QTreeWidget):
         self.setDropIndicatorShown(True)
         self.setAcceptDrops(True)
 
-    def dragMoveEvent(self, event):
+    def dragEnterEvent(self, e: QtGui.QDragEnterEvent) -> None:
+        # we cannot start dragging the first row
+        item = self.selectedItems()[0]
+        idx = self.indexFromItem(item)
+        if idx.row() == 0:
+            e.ignore()
+            return
+
+        return super().dragEnterEvent(e)
+
+    def dragMoveEvent(self, event: QtGui.QDragMoveEvent) -> None:
         self.itemIsMoving = True
         super().dragMoveEvent(event)
+
+    def dropEvent(self, event):
+        # we cannot drop on the first row
+        if self.indexAt(event.pos()).row() == 0:
+            showErrorDialog(locales.getLocale().CannotDropHere)
+            return
+
+        super().dropEvent(event)
 
 
 class MainWindow(QMainWindow):
@@ -149,6 +168,22 @@ class MainWindow(QMainWindow):
         self.place_button.setFixedWidth(240)
         page_layout.addWidget(self.place_button, 1, 2)
 
+        self.cancel_action = QPushButton(self)
+        self.cancel_action.setIcon(QtGui.QIcon("icons/undo.png"))
+        self.cancel_action.setIconSize(QtCore.QSize(20, 20))
+        self.cancel_action.setToolTip("Undo")
+        self.cancel_action.setCheckable(False)
+        self.cancel_action.setFixedWidth(30)
+        page_layout.addWidget(self.cancel_action, 1, 4)
+
+        self.return_action = QPushButton(self)
+        self.return_action.setIcon(QtGui.QIcon("icons/redo.png"))
+        self.return_action.setIconSize(QtCore.QSize(20, 20))
+        self.return_action.setToolTip("Redo")
+        self.return_action.setCheckable(False)
+        self.return_action.setFixedWidth(30)
+        page_layout.addWidget(self.return_action, 1, 5)
+
         page_layout.addWidget(self.init_stl_move_panel(), 2, 0, 1, 5)
         page_layout.setColumnStretch(0, 0)
         page_layout.setRowStretch(0, 0)
@@ -222,6 +257,7 @@ class MainWindow(QMainWindow):
 
     def init3d_widget(self):
         widget3d = QVTKRenderWindowInteractor(self)
+        widget3d.installEventFilter(self)
 
         self.render = vtk.vtkRenderer()
         self.render.SetBackground(get_color("white"))
@@ -303,11 +339,12 @@ class MainWindow(QMainWindow):
         self.legend.GetPositionCoordinate().SetValue(0, 0)
         self.legend.GetPosition2Coordinate().SetCoordinateSystemToDisplay()
         self.legend.GetPosition2Coordinate().SetValue(290, 3 * 30)
-        self.legend.SetEntry(0, hackData, "rotate - left mouse button", [1, 1, 1])
-        self.legend.SetEntry(
-            1, hackData, "move - middle mouse button (or shift+left)", [1, 1, 1]
-        )
-        self.legend.SetEntry(2, hackData, "scale - right mouse button", [1, 1, 1])
+
+        legend_color = [192, 192, 192]
+        self.legend.SetEntry(0, hackData, "rotate - left mouse button", legend_color)
+        self.legend.SetEntry(1, hackData, "move - right mouse button", legend_color)
+        self.legend.SetEntry(2, hackData, "scale  - mouse wheel", legend_color)
+
         self.render.AddActor(self.legend)
 
     def init_right_panel(self):
@@ -402,20 +439,7 @@ class MainWindow(QMainWindow):
 
         self.save_gcode_button = QPushButton(self.locale.SaveGCode)
         buttons_layout.addWidget(self.save_gcode_button, get_cur_row(), 3)
-
-        self.critical_wall_overhang_angle_label = QLabel(
-            self.locale.CriticalWallOverhangAngle
-        )
-        buttons_layout.addWidget(
-            self.critical_wall_overhang_angle_label, get_next_row(), 1, 1, 2
-        )
         buttons_layout.setColumnMinimumWidth(1, 230)
-        self.colorize_angle_value = LineEdit(str(sett().slicing.angle))
-        self.colorize_angle_value.setValidator(doubleValidator)
-        buttons_layout.addWidget(self.colorize_angle_value, get_cur_row(), 2, 1, 1)
-
-        self.color_model_button = QPushButton(self.locale.ColorModel)
-        buttons_layout.addWidget(self.color_model_button, get_cur_row(), 3)
 
         self.slice_vip_button = QPushButton(self.locale.SliceVip)
         buttons_layout.addWidget(self.slice_vip_button, get_next_row(), 1, 1, 2)
@@ -471,6 +495,9 @@ class MainWindow(QMainWindow):
 
         self.remove_plane_button = QPushButton(self.locale.DeletePlane)
         bottom_layout.addWidget(self.remove_plane_button, 3, 2)
+
+        self.color_model_button = QPushButton(self.locale.ColorModel)
+        bottom_layout.addWidget(self.color_model_button, 3, 3)
 
         self.edit_figure_button = QPushButton(self.locale.EditFigure)
         bottom_layout.addWidget(self.edit_figure_button, 4, 2)
@@ -531,6 +558,7 @@ class MainWindow(QMainWindow):
             return scalePos, scaleNeg, scaleSet
 
         self.stl_move_panel = StlMovePanel(
+            self,
             {
                 (0, "X"): translate(1, 0, 0),
                 (0, "Y"): translate(0, 1, 0),
@@ -664,6 +692,31 @@ class MainWindow(QMainWindow):
             #     self.rotateAnyPlane(self.planesActors[i], self.planes[i], currRotation)
         return new_slider_value
 
+    def eventFilter(self, obj, event):
+        if event.type() == QEvent.KeyPress:
+            if not self.keyPressProcessing(event):
+                return super().eventFilter(obj, event)
+            return True
+        return super().eventFilter(obj, event)
+
+    def keyPressEvent(self, event):
+        if not self.keyPressProcessing(event):
+            super().keyPressEvent(event)
+
+    def keyPressProcessing(self, event):
+        if event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_S:
+            self.save_project_action.trigger()
+            return True
+
+        if event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_Z:
+            self.shift_state()
+            return True
+        elif event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_Y:
+            self.shift_state(False)
+            return True
+
+        return False
+
     def move_stl2(self):
         if self.move_button.isChecked():
             self.state_moving()
@@ -700,7 +753,11 @@ class MainWindow(QMainWindow):
                         self.stlActor.lastMove = origin
                         self.model_centering_box.setChecked(False)
 
+                def EndTransform(obj, event):
+                    self.save_current_movement()
+
                 self.boxWidget.AddObserver("InteractionEvent", TransformActor)
+                self.boxWidget.AddObserver("EndInteractionEvent", EndTransform)
             else:
                 self.boxWidget.SetEnabled(True)
             # self.interactor.GetInteractorStyle().SetCurrentStyleToTrackballActor()
@@ -720,6 +777,52 @@ class MainWindow(QMainWindow):
             self.updateTransform()
             # self.interactor.GetInteractorStyle().SetCurrentStyleToTrackballCamera()
         self.reload_scene()
+
+    def save_current_movement(self):
+        movements = self.stlActor.movements_array
+        current_index = self.stlActor.current_movement_index
+
+        movements = [movement for movement in movements if movement[0] <= current_index]
+
+        movement = self.copyTransform(self.stlActor.GetUserTransform())
+        movements.append((current_index + 1, movement))
+
+        max_movements = 100
+        if len(movements) > max_movements:
+            movements.pop(0)
+
+        self.stlActor.movements_array = movements
+        self.stlActor.current_movement_index = len(movements) - 1
+
+    # We move on to the nearest state of movement of the model.
+    # If cancel=True, go back. If cancel=False, move forward.
+    def shift_state(self, cancel=True):
+        current_index = self.stlActor.current_movement_index
+        movements = self.stlActor.movements_array
+
+        if cancel:
+            current_index -= 1
+        else:
+            current_index += 1
+
+        if (current_index > len(movements) - 1) or (current_index < 0):
+            return False
+
+        transform = movements[current_index][1]
+
+        self.stlActor.SetUserTransform(transform)
+        if not self.boxWidget is None:
+            self.boxWidget.SetTransform(transform)
+
+        self.updateTransform()
+        self.reload_scene()
+
+        self.stlActor.current_movement_index = current_index
+
+    def copyTransform(self, transform):
+        new_transform = vtk.vtkTransform()
+        new_transform.SetMatrix(transform.GetMatrix())
+        return new_transform
 
     def updateTransform(self):
         tf = self.stlActor.GetUserTransform()
@@ -753,6 +856,10 @@ class MainWindow(QMainWindow):
         self.clear_scene()
         self.boxWidget = None
         self.stlActor = stl_actor
+        self.stlActor.movements_array = [
+            (0, self.copyTransform(self.stlActor.GetUserTransform()))
+        ]
+        self.stlActor.current_movement_index = 0
         self.stlActor.addUserTransformUpdateCallback(self.stl_move_panel.update)
         # self.actor_interactor_style.setStlActor(self.stlActor)
         self.updateTransform()
@@ -962,6 +1069,8 @@ class MainWindow(QMainWindow):
         self.hide_checkbox.setChecked(False)
         self.bottom_panel.setEnabled(False)
         self.stl_move_panel.setEnabled(False)
+        self.cancel_action.setEnabled(False)
+        self.return_action.setEnabled(False)
         self.state = NothingState
 
     def state_gcode(self, layers_count):
@@ -985,6 +1094,8 @@ class MainWindow(QMainWindow):
         self.hide_checkbox.setChecked(True)
         self.bottom_panel.setEnabled(False)
         self.stl_move_panel.setEnabled(False)
+        self.cancel_action.setEnabled(False)
+        self.return_action.setEnabled(False)
         self.state = GCodeState
 
     def state_stl(self):
@@ -1007,6 +1118,8 @@ class MainWindow(QMainWindow):
         self.hide_checkbox.setChecked(False)
         self.bottom_panel.setEnabled(True)
         self.stl_move_panel.setEnabled(False)
+        self.cancel_action.setEnabled(True)
+        self.return_action.setEnabled(True)
         self.state = StlState
 
     def state_moving(self):
@@ -1020,7 +1133,7 @@ class MainWindow(QMainWindow):
         self.picture_slider.setEnabled(False)
         self.picture_slider.setSliderPosition(0)
         self.move_button.setEnabled(True)
-        self.place_button.setEnabled(True)
+        self.place_button.setEnabled(False)
         self.load_model_button.setEnabled(False)
         self.slice3a_button.setEnabled(False)
         self.color_model_button.setEnabled(False)
@@ -1029,6 +1142,8 @@ class MainWindow(QMainWindow):
         # self.hide_checkbox.setChecked(False)
         self.bottom_panel.setEnabled(False)
         self.stl_move_panel.setEnabled(True)
+        self.cancel_action.setEnabled(True)
+        self.return_action.setEnabled(True)
         self.state = MovingState
 
     def state_both(self, layers_count):
@@ -1043,7 +1158,7 @@ class MainWindow(QMainWindow):
         self.picture_slider.setMaximum(layers_count)
         self.picture_slider.setSliderPosition(layers_count)
         self.move_button.setEnabled(True)
-        self.place_button.setEnabled(True)
+        self.place_button.setEnabled(False)
         self.load_model_button.setEnabled(True)
         self.slice3a_button.setEnabled(True)
         self.color_model_button.setEnabled(True)
@@ -1052,6 +1167,8 @@ class MainWindow(QMainWindow):
         self.hide_checkbox.setChecked(True)
         self.bottom_panel.setEnabled(True)
         self.stl_move_panel.setEnabled(False)
+        self.cancel_action.setEnabled(True)
+        self.return_action.setEnabled(True)
         self.state = BothState
 
     def reset_colorize(self):

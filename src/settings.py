@@ -89,6 +89,9 @@ def compare_figures(settings):
         if current_figures[i]["description"] != figures_from_settings[i].description:
             return False
 
+        if current_figures[i]["settings"] != figures_from_settings[i].settings:
+            return False
+
     return True
 
 
@@ -99,6 +102,10 @@ def compare_project_file(filename):
 
 
 def compare_files(file1_path, file2_path):
+    # if either of the files does not exist, return False
+    if not os.path.exists(file1_path) or not os.path.exists(file2_path):
+        return True
+
     try:
         with open(file1_path, "rb") as file1:
             data1 = file1.read()
@@ -265,7 +272,7 @@ def save_splanes_to_file(splanes, filename):
 def get_version(settings_filename):
     try:
         with open(settings_filename, "r") as settings_file:
-            settings = yaml.safe_load(settings_file)
+            settings = yaml.full_load(settings_file)
 
         version = settings["common"]["version"]
         return version
@@ -277,7 +284,7 @@ def get_version(settings_filename):
 def set_version(settings_filename, version):
     try:
         with open(settings_filename, "r") as settings_file:
-            settings = yaml.safe_load(settings_file)
+            settings = yaml.full_load(settings_file)
 
         settings["common"]["version"] = version
 
@@ -290,10 +297,10 @@ def set_version(settings_filename, version):
 
 def paths_transfer_in_settings(initial_settings_filename, final_settings_filename):
     with open(initial_settings_filename, "r") as settings_file:
-        initial_settings = yaml.safe_load(settings_file)
+        initial_settings = yaml.load(settings_file)
 
     with open(final_settings_filename, "r") as settings_file:
-        final_settings = yaml.safe_load(settings_file)
+        final_settings = yaml.load(settings_file)
 
         compare_settings(initial_settings, final_settings)
 
@@ -319,16 +326,21 @@ class Settings(object):
             else:
                 setattr(self, a, Settings(b) if isinstance(b, dict) else b)
 
+    def __repr__(self):
+        return str(self.__dict__)
+
     def __eq__(self, other):
         if not isinstance(other, Settings):
             return False
         ignore_attributes = [
             "splanes_file",
+            "figures",
             "print_time",
             "consumption_material",
             "planes_contact_with_nozzle",
         ]
 
+        # try to compare attributes from left to right
         for attr in self.__dict__:
             if attr in ignore_attributes:
                 continue
@@ -336,6 +348,16 @@ class Settings(object):
                 return False
             if getattr(self, attr) != getattr(other, attr):
                 return False
+
+        # try to compare attributes from right to left
+        for attr in other.__dict__:
+            if attr in ignore_attributes:
+                continue
+            if not hasattr(self, attr):
+                return False
+            if getattr(self, attr) != getattr(other, attr):
+                return False
+
         return True
 
 
@@ -371,8 +393,21 @@ class PathBuilder:
         return path.join(PathBuilder.project_path(), "settings_old.yaml")
 
     @staticmethod
+    def get_cmd_with_path(cmd):
+        temp_settings = prepare_temp_settings(sett())
+        encoded_temp_settings = base64.b64encode(temp_settings.encode("utf-8")).decode(
+            "utf-8"
+        )
+        return (
+            cmd
+            + f'"{PathBuilder.settings_file_temp()}"'
+            + " --data="
+            + f"{encoded_temp_settings}"
+        )
+
+    @staticmethod
     def colorizer_cmd():
-        return sett().colorizer.cmd + f'"{PathBuilder.settings_file()}"'
+        return PathBuilder.get_cmd_with_path(sett().colorizer.cmd)
 
     @staticmethod
     def colorizer_stl():
@@ -384,16 +419,7 @@ class PathBuilder:
 
     @staticmethod
     def slicing_cmd():
-        temp_settings = prepare_temp_settings(sett())
-        encoded_temp_settings = base64.b64encode(temp_settings.encode("utf-8")).decode(
-            "utf-8"
-        )
-        return (
-            sett().slicing.cmd
-            + f'"{PathBuilder.settings_file_temp()}"'
-            + " --data="
-            + f"{encoded_temp_settings}"
-        )
+        return PathBuilder.get_cmd_with_path(sett().slicing.cmd)
 
     @staticmethod
     def gcodevis_file():

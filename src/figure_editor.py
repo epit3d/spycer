@@ -279,7 +279,7 @@ class ConeEditor(FigureEditor):
 
 
 class StlMovePanel(QWidget):
-    def __init__(self, methods, captions):
+    def __init__(self, viev, methods, captions):
         super().__init__()
 
         self.setEnabled(False)
@@ -302,6 +302,7 @@ class StlMovePanel(QWidget):
                 gridLayout.addWidget(btn_neg, row, 1)
 
                 edit = QLineEdit()
+                edit.installEventFilter(viev)
                 edit.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
                 edit.setMinimumWidth(20)
                 gridLayout.addWidget(edit, row, 2)
