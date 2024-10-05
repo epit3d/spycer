@@ -146,6 +146,8 @@ class Locale:
     RemoveFirstPlaneError = "First figure cannot be removed"
     CannotDropHere = "Figure cannot be dropped here"
 
+    ShouldCreateWalls = "Create wall in support"
+
     def __init__(self, **entries):
         self.__dict__.update(entries)
 
@@ -297,6 +299,7 @@ dicts = {
         RemoveFirstPlaneError="Первая фигура не может быть убрана",
         WarningPathNotClosed="При разрезании модели были обнаружены незамкнутые участки! Проверьте корректность расположения фигур",
         CannotDropHere="Фигура не может быть перенесена сюда",
+        ShouldCreateWalls="Создавать стенки в поддержках",
     ),
 }
 
