@@ -68,6 +68,7 @@ class SettingsWidget(QWidget):
         "support_priority_zoffset",
         "support_number_of_bottom_layers",
         "support_number_of_lid_layers",
+        "support_create_walls",
         "critical_angle",
     ]
 
@@ -1259,6 +1260,25 @@ class SettingsWidget(QWidget):
             self.__elements[name] = {
                 "label": angle_label,
                 "edit": angle_value,
+            }
+        elif name == "support_create_walls":
+            self.ensure_sett("supports.create_walls")
+
+            create_walls_label = QLabel(self.locale.ShouldCreateWalls)
+            create_walls_box = QCheckBox()
+            if self.sett().supports.create_walls:
+                create_walls_box.setCheckState(QtCore.Qt.Checked)
+            self.panel.addWidget(create_walls_label, self.next_row, 1)
+            self.panel.addWidget(create_walls_box, self.cur_row, 2, 1, self.col2_cells)
+
+            def on_change():
+                self.sett().supports.create_walls = create_walls_box.isChecked()
+
+            create_walls_box.stateChanged.connect(on_change)
+
+            self.__elements[name] = {
+                "label": create_walls_label,
+                "checkbox": create_walls_box,
             }
 
         # add row index for element
