@@ -297,10 +297,10 @@ def set_version(settings_filename, version):
 
 def paths_transfer_in_settings(initial_settings_filename, final_settings_filename):
     with open(initial_settings_filename, "r") as settings_file:
-        initial_settings = yaml.load(settings_file)
+        initial_settings = yaml.full_load(settings_file)
 
     with open(final_settings_filename, "r") as settings_file:
-        final_settings = yaml.load(settings_file)
+        final_settings = yaml.full_load(settings_file)
 
         compare_settings(initial_settings, final_settings)
 
