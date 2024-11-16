@@ -283,7 +283,7 @@ def parseGCode(lines):
             args, comment = line.split(";")[:2]
             args = args.split(" ")
             if line.endswith("rotation"):  # we have either rotation or incline
-                args, comment = line.split(";")[1:3] # we remove first colon
+                args, comment = line.split(";")[1:3]  # we remove first colon
                 args = args.split(" ")
                 printer.finishLayer()
                 # if any(a.lower().startswith('u') for a in args):  # rotation
