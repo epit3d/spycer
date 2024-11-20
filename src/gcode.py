@@ -282,14 +282,18 @@ def parseGCode(lines):
             line = line + ";" if len(line) == 0 or ";" not in line else line
             args, comment = line.split(";")[:2]
             args = args.split(" ")
-            if comment.lower() == "rotation":  # we have either rotation or incline
+            if line.endswith("rotation"):  # we have either rotation or incline
+                args, comment = line.split(";")[1:3]  # we remove first colon
+                args = args.split(" ")
                 printer.finishLayer()
                 # if any(a.lower().startswith('u') for a in args):  # rotation
                 printer.rotations.append(
                     Rotation(printer.rotations[-1].x_rot, parseRotation(args[1:]))
                 )
                 printer.currPos.U = printer.rotations[-1].z_rot
-            elif comment.lower() == "incline":
+            elif line.endswith("incline"):
+                args, comment = line.split(";")[1:3]  # we remove first colon
+                args = args.split(" ")
                 printer.finishLayer()
                 # if any(a.lower().startswith('v') for a in args):  # incline
                 printer.rotations.append(
