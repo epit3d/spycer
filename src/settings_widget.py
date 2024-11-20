@@ -59,6 +59,9 @@ class SettingsWidget(QWidget):
         "retraction_speed",
         "retraction_compensation",
         "material_shrinkage",
+        "flow_rate",  # Коэффициент потока расплава
+        "pressure_advance_on",
+        "pressure_advance_rate",
         # TODO: add separate dummy setting to mark the beginning of supports settings
         "supports_on",
         "support_density",
@@ -1000,6 +1003,93 @@ class SettingsWidget(QWidget):
             self.__elements[name] = {
                 "label": material_shrinkage_label,
                 "edit": material_shrinkage_value,
+            }
+
+        elif name == "flow_rate":
+            self.ensure_sett("slicing.flow_rate")
+
+            flow_rate_label = QLabel(self.locale.FlowRate)
+            flow_rate_value = LineEdit(str(self.sett().slicing.flow_rate))
+            self.panel.addWidget(flow_rate_label, self.next_row, 1)
+            self.panel.addWidget(flow_rate_value, self.cur_row, 2, 1, self.col2_cells)
+
+            def on_change():
+                value = self.__smart_float(flow_rate_value.text())
+                # value should be between 45 and 150 percent
+                if 45 <= value <= 150:
+                    flow_rate_value.setStyleSheet("")  # Reset to default style
+                    flow_rate_value.setToolTip("")
+                else:
+                    flow_rate_value.setStyleSheet(
+                        "background-color: lightcoral; color: black;"
+                    )
+                    flow_rate_value.setToolTip(
+                        self.locale.ValueInBetween.format(45, 150)
+                    )
+                self.sett().slicing.flow_rate = value
+
+            flow_rate_value.textChanged.connect(on_change)
+
+            self.__elements[name] = {
+                "label": flow_rate_label,
+                "edit": flow_rate_value,
+            }
+
+        elif name == "pressure_advance_on":
+            self.ensure_sett("slicing.pressure_advance_on")
+
+            pressure_advance_on_label = QLabel(self.locale.PressureAdvance)
+            pressure_advance_on_box = QCheckBox()
+            if self.sett().slicing.pressure_advance_on:
+                pressure_advance_on_box.setCheckState(QtCore.Qt.Checked)
+            self.panel.addWidget(pressure_advance_on_label, self.next_row, 1)
+            self.panel.addWidget(
+                pressure_advance_on_box, self.cur_row, 2, 1, self.col2_cells
+            )
+
+            def on_change():
+                self.sett().slicing.pressure_advance_on = (
+                    pressure_advance_on_box.isChecked()
+                )
+
+            pressure_advance_on_box.stateChanged.connect(on_change)
+
+            self.__elements[name] = {
+                "label": pressure_advance_on_label,
+                "checkbox": pressure_advance_on_box,
+            }
+
+        elif name == "pressure_advance_rate":
+            self.ensure_sett("slicing.pressure_advance_rate")
+
+            pressure_advance_label = QLabel(self.locale.PressureAdvanceValue)
+            pressure_advance_value = LineEdit(str(self.sett().slicing.pressure_advance))
+            # between 0.01 and 0.9, default is 0.45
+            self.panel.addWidget(pressure_advance_label, self.next_row, 1)
+            self.panel.addWidget(
+                pressure_advance_value, self.cur_row, 2, 1, self.col2_cells
+            )
+
+            def on_change():
+                value = self.__smart_float(pressure_advance_value.text())
+                # value should be between 0.01 and 0.9
+                if 0.01 <= value <= 0.9:
+                    pressure_advance_value.setStyleSheet("")
+                    pressure_advance_value.setToolTip("")
+                else:
+                    pressure_advance_value.setStyleSheet(
+                        "background-color: lightcoral; color: black;"
+                    )
+                    pressure_advance_value.setToolTip(
+                        self.locale.ValueInBetween.format(0.01, 0.9)
+                    )
+                self.sett().slicing.pressure_advance = value
+
+            pressure_advance_value.textChanged.connect(on_change)
+
+            self.__elements[name] = {
+                "label": pressure_advance_label,
+                "edit": pressure_advance_value,
             }
 
         elif name == "supports_on":

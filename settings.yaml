@@ -98,6 +98,9 @@ slicing:
   line_width: 0.4
   magic_epsilon: 40
   material_shrinkage: 1.5
+  flow_rate: 100
+  pressure_advance_on: false
+  pressure_advance: 0.45
   mesh_file: lib/goosli_middle.msh
   minimum_path_area: 0.001
   model_centering: false
