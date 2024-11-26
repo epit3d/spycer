@@ -91,6 +91,7 @@ class Locale:
     GCodeLoadingProgress = "GCode loading is in progress..."
     SupportsSettings = "Supports settings"
     MaterialShrinkage = "Material shrinkage, %:"
+    RandomLayerStart = "Random layer start"
     FlowRate = "Flow rate, %:"
     PressureAdvance = "Pressure advance"
     PressureAdvanceValue = "Pressure advance value"
@@ -255,6 +256,7 @@ dicts = {
         GCodeLoadingProgress="Загрузка GCode в прогрессе...",
         SupportsSettings="Настройки поддержек",
         MaterialShrinkage="Величина усадки материала, %:",
+        RandomLayerStart="Спрятать шов", 
         FlowRate="Коэффициент потока расплава, %:",
         PressureAdvance="Управление давлением расплава",
         PressureAdvanceValue="Коэффициент управления давлением",
