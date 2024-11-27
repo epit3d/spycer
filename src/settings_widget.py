@@ -62,6 +62,7 @@ class SettingsWidget(QWidget):
         "flow_rate",  # Коэффициент потока расплава
         "pressure_advance_on",
         "pressure_advance_rate",
+        "random_layer_start",
         # TODO: add separate dummy setting to mark the beginning of supports settings
         "supports_on",
         "support_density",
@@ -127,6 +128,7 @@ class SettingsWidget(QWidget):
             "retraction_speed": self.locale.RetractionSpeed,
             "retraction_compensation": self.locale.RetractCompensationAmount,
             "material_shrinkage": self.locale.MaterialShrinkage,
+            "random_layer_start": self.locale.RandomLayerStart,
             # TODO: add separate dummy setting to mark the beginning of supports settings
             "supports_on": self.locale.SupportsOn,
             "support_density": self.locale.SupportDensity,
@@ -888,21 +890,21 @@ class SettingsWidget(QWidget):
         elif name == "retraction_on":
             self.ensure_sett("slicing.retraction_on")
 
-            retraction_on_label = QLabel(self.locale.Retraction)
-            retraction_on_box = QCheckBox()
+            rls_on_label = QLabel(self.locale.Retraction)
+            rls_on_box = QCheckBox()
             if self.sett().slicing.retraction_on:
-                retraction_on_box.setCheckState(QtCore.Qt.Checked)
-            self.panel.addWidget(retraction_on_label, self.next_row, 1)
-            self.panel.addWidget(retraction_on_box, self.cur_row, 2, 1, self.col2_cells)
+                rls_on_box.setCheckState(QtCore.Qt.Checked)
+            self.panel.addWidget(rls_on_label, self.next_row, 1)
+            self.panel.addWidget(rls_on_box, self.cur_row, 2, 1, self.col2_cells)
 
             def on_change():
-                self.sett().slicing.retraction_on = retraction_on_box.isChecked()
+                self.sett().slicing.retraction_on = rls_on_box.isChecked()
 
-            retraction_on_box.stateChanged.connect(on_change)
+            rls_on_box.stateChanged.connect(on_change)
 
             self.__elements[name] = {
-                "label": retraction_on_label,
-                "checkbox": retraction_on_box,
+                "label": rls_on_label,
+                "checkbox": rls_on_box,
             }
 
         elif name == "retraction_distance":
@@ -1005,6 +1007,25 @@ class SettingsWidget(QWidget):
                 "edit": material_shrinkage_value,
             }
 
+        elif name == "random_layer_start":
+            self.ensure_sett("slicing.random_layer_start")
+
+            rls_on_label = QLabel(self.locale.RandomLayerStart)
+            rls_on_box = QCheckBox()
+            if self.sett().slicing.random_layer_start:
+                rls_on_box.setCheckState(QtCore.Qt.Checked)
+            self.panel.addWidget(rls_on_label, self.next_row, 1)
+            self.panel.addWidget(rls_on_box, self.cur_row, 2, 1, self.col2_cells)
+
+            def on_change():
+                self.sett().slicing.random_layer_start = rls_on_box.isChecked()
+
+            rls_on_box.stateChanged.connect(on_change)
+
+            self.__elements[name] = {
+                "label": rls_on_label,
+                "checkbox": rls_on_box,
+            }
         elif name == "flow_rate":
             self.ensure_sett("slicing.flow_rate")
 

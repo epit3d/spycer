@@ -109,6 +109,7 @@ slicing:
   originz: 0.0
   overlapping_infill_percentage: 100.0
   overlapping_infill_lid_percentage: 60.0
+  random_layer_start: false
   planes_contact_with_nozzle: ""
   print_speed: 50
   print_speed_layer1: 50
