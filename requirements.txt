@@ -1,5 +1,5 @@
 PyYAML>=6.0
-vtk>=9.0.0
+vtk==9.3.1
 numpy
 qdarkstyle>=3.1
 numpy-stl
