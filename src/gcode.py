@@ -282,20 +282,34 @@ def parseGCode(lines):
             line = line + ";" if len(line) == 0 or ";" not in line else line
             args, comment = line.split(";")[:2]
             args = args.split(" ")
-            if line.endswith("rotation"):  # we have either rotation or incline
+            if line.endswith("rotation-hack"):  # we pass U in the comment section
                 args, comment = line.split(";")[1:3]  # we remove first colon
                 args = args.split(" ")
                 printer.finishLayer()
-                # if any(a.lower().startswith('u') for a in args):  # rotation
                 printer.rotations.append(
                     Rotation(printer.rotations[-1].x_rot, parseRotation(args[1:]))
                 )
                 printer.currPos.U = printer.rotations[-1].z_rot
-            elif line.endswith("incline"):
+            elif line.endswith("rotation"):  # we have either rotation or incline
+                printer.finishLayer()
+                printer.rotations.append(
+                    Rotation(printer.rotations[-1].x_rot, parseRotation(args[1:]))
+                )
+                printer.currPos.U = printer.rotations[-1].z_rot
+            elif line.endswith("incline-hack"):
                 args, comment = line.split(";")[1:3]  # we remove first colon
                 args = args.split(" ")
                 printer.finishLayer()
-                # if any(a.lower().startswith('v') for a in args):  # incline
+                printer.rotations.append(
+                    Rotation(parseRotation(args[1:]), printer.rotations[-1].z_rot)
+                )
+
+                printer.cone_axis = rotation_matrix(
+                    [1, 0, 0], np.radians(printer.rotations[-1].x_rot)
+                ).dot([0, 0, 1])
+                printer.currPos.V = printer.rotations[-1].x_rot
+            elif line.endswith("incline"):
+                printer.finishLayer()
                 printer.rotations.append(
                     Rotation(parseRotation(args[1:]), printer.rotations[-1].z_rot)
                 )
