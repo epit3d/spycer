@@ -97,9 +97,9 @@ slicing:
   bottoms_depth: 3
   line_width: 0.4
   magic_epsilon: 40
-  material_shrinkage: 1.5
+  material_shrinkage: 0.0
   flow_rate: 100
-  pressure_advance_on: false
+  pressure_advance_on: true
   pressure_advance: 0.45
   mesh_file: lib/goosli_middle.msh
   minimum_path_area: 0.001
@@ -107,8 +107,8 @@ slicing:
   originx: 0.0
   originy: 0.0
   originz: 0.0
-  overlapping_infill_percentage: 100.0
-  overlapping_infill_lid_percentage: 60.0
+  overlapping_infill_percentage: 30.0
+  overlapping_infill_lid_percentage: 30.0
   random_layer_start: false
   is_wall_outside_in: true
   planes_contact_with_nozzle: ""
@@ -116,8 +116,8 @@ slicing:
   print_speed_layer1: 50
   print_speed_wall: 50
   print_time: 0
-  retract_compensation_amount: 0.0
-  retraction_distance: 0.3
+  retract_compensation_amount: 3.0
+  retraction_distance: 3.0
   retraction_on: true
   retraction_speed: 50
   rotationx: 0.0
@@ -153,7 +153,7 @@ slicing:
   wall_thickness: 0.8
 supports:
   enabled: true
-  xy_offset: 1.0
+  xy_offset: 0.3
   z_offset_layers: 1
   priority_z_offset: true
   fill_type: Lines
