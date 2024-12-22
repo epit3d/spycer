@@ -77,9 +77,11 @@ class SettingsWidget(QWidget):
     ]
 
     # extra parameters are only used for a small widget with parameters for each figure specifically
+    # also in corresponding branch "setting" key should point to the correct setting
     extra_sett_parameters = [
         "filling_type",
         "fill_density",
+        "fan_speed",
     ]
 
     def __init__(self, parent=None, settings_provider: callable = None):
@@ -334,6 +336,8 @@ class SettingsWidget(QWidget):
             self.with_sett("filling_type")
         if has_setting("slicing.fill_density"):
             self.with_sett("fill_density")
+        if has_setting("slicing.fan_speed"):
+            self.with_sett("fan_speed")
         # TODO: this list should be increased with the growth of extra parameters
 
         return self
@@ -716,6 +720,7 @@ class SettingsWidget(QWidget):
             self.__elements[name] = {
                 "label": fan_speed_label,
                 "edit": fan_speed_value,
+                "setting": "slicing.fan_speed",
             }
 
         elif name == "fan_off_layer1":
