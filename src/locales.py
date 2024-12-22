@@ -92,6 +92,7 @@ class Locale:
     SupportsSettings = "Supports settings"
     MaterialShrinkage = "Material shrinkage, %:"
     RandomLayerStart = "Random layer start"
+    IsWallsOutsideIn = "Printing walls from outside in"
     FlowRate = "Flow rate, %:"
     PressureAdvance = "Pressure advance"
     PressureAdvanceValue = "Pressure advance value"
@@ -257,6 +258,7 @@ dicts = {
         SupportsSettings="Настройки поддержек",
         MaterialShrinkage="Величина усадки материала, %:",
         RandomLayerStart="Спрятать шов",
+        IsWallsOutsideIn = "Печать стенок снаружи внутрь",
         FlowRate="Коэффициент потока расплава, %:",
         PressureAdvance="Управление давлением расплава",
         PressureAdvanceValue="Коэффициент управления давлением",

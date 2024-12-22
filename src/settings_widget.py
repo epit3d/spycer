@@ -63,6 +63,7 @@ class SettingsWidget(QWidget):
         "pressure_advance_on",
         "pressure_advance_rate",
         "random_layer_start",
+        "is_wall_outside_in",
         # TODO: add separate dummy setting to mark the beginning of supports settings
         "supports_on",
         "support_density",
@@ -129,6 +130,7 @@ class SettingsWidget(QWidget):
             "retraction_compensation": self.locale.RetractCompensationAmount,
             "material_shrinkage": self.locale.MaterialShrinkage,
             "random_layer_start": self.locale.RandomLayerStart,
+            "is_wall_outside_in": self.locale.IsWallsOutsideIn,
             # TODO: add separate dummy setting to mark the beginning of supports settings
             "supports_on": self.locale.SupportsOn,
             "support_density": self.locale.SupportDensity,
@@ -1025,6 +1027,27 @@ class SettingsWidget(QWidget):
             self.__elements[name] = {
                 "label": rls_on_label,
                 "checkbox": rls_on_box,
+            }
+        elif name == "is_wall_outside_in":
+            self.ensure_sett("slicing.is_wall_outside_in")
+
+            wall_outside_in_label = QLabel(self.locale.IsWallsOutsideIn)
+            wall_outside_in_box = QCheckBox()
+            if self.sett().slicing.is_wall_outside_in:
+                wall_outside_in_box.setCheckState(QtCore.Qt.Checked)
+            self.panel.addWidget(wall_outside_in_label, self.next_row, 1)
+            self.panel.addWidget(
+                wall_outside_in_box, self.cur_row, 2, 1, self.col2_cells
+            )
+
+            def on_change():
+                self.sett().slicing.is_wall_outside_in = wall_outside_in_box.isChecked()
+
+            wall_outside_in_box.stateChanged.connect(on_change)
+
+            self.__elements[name] = {
+                "label": wall_outside_in_label,
+                "checkbox": wall_outside_in_box,
             }
         elif name == "flow_rate":
             self.ensure_sett("slicing.flow_rate")
