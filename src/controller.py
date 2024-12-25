@@ -896,8 +896,8 @@ class MainController:
         self.view.colorize_angle_value.setText(str(s.slicing.angle))
 
     def colorize_model(self):
-        shutil.copyfile(PathBuilder.stl_model(), PathBuilder.colorizer_stl())
-        self.save_settings("vip")
+        shutil.copyfile(PathBuilder.stl_model_temp(), PathBuilder.colorizer_stl())
+        self.save_settings("vip", PathBuilder.settings_file_temp())
 
         p = Process(PathBuilder.colorizer_cmd()).wait()
         if p.returncode:
