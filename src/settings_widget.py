@@ -59,6 +59,11 @@ class SettingsWidget(QWidget):
         "retraction_speed",
         "retraction_compensation",
         "material_shrinkage",
+        "flow_rate",  # Коэффициент потока расплава
+        "pressure_advance_on",
+        "pressure_advance_rate",
+        "random_layer_start",
+        "is_wall_outside_in",
         # TODO: add separate dummy setting to mark the beginning of supports settings
         "supports_on",
         "support_density",
@@ -73,9 +78,11 @@ class SettingsWidget(QWidget):
     ]
 
     # extra parameters are only used for a small widget with parameters for each figure specifically
+    # also in corresponding branch "setting" key should point to the correct setting
     extra_sett_parameters = [
         "filling_type",
         "fill_density",
+        "fan_speed",
     ]
 
     def __init__(self, parent=None, settings_provider: callable = None):
@@ -124,6 +131,8 @@ class SettingsWidget(QWidget):
             "retraction_speed": self.locale.RetractionSpeed,
             "retraction_compensation": self.locale.RetractCompensationAmount,
             "material_shrinkage": self.locale.MaterialShrinkage,
+            "random_layer_start": self.locale.RandomLayerStart,
+            "is_wall_outside_in": self.locale.IsWallsOutsideIn,
             # TODO: add separate dummy setting to mark the beginning of supports settings
             "supports_on": self.locale.SupportsOn,
             "support_density": self.locale.SupportDensity,
@@ -329,6 +338,8 @@ class SettingsWidget(QWidget):
             self.with_sett("filling_type")
         if has_setting("slicing.fill_density"):
             self.with_sett("fill_density")
+        if has_setting("slicing.fan_speed"):
+            self.with_sett("fan_speed")
         # TODO: this list should be increased with the growth of extra parameters
 
         return self
@@ -711,6 +722,7 @@ class SettingsWidget(QWidget):
             self.__elements[name] = {
                 "label": fan_speed_label,
                 "edit": fan_speed_value,
+                "setting": "slicing.fan_speed",
             }
 
         elif name == "fan_off_layer1":
@@ -885,21 +897,21 @@ class SettingsWidget(QWidget):
         elif name == "retraction_on":
             self.ensure_sett("slicing.retraction_on")
 
-            retraction_on_label = QLabel(self.locale.Retraction)
-            retraction_on_box = QCheckBox()
+            rls_on_label = QLabel(self.locale.Retraction)
+            rls_on_box = QCheckBox()
             if self.sett().slicing.retraction_on:
-                retraction_on_box.setCheckState(QtCore.Qt.Checked)
-            self.panel.addWidget(retraction_on_label, self.next_row, 1)
-            self.panel.addWidget(retraction_on_box, self.cur_row, 2, 1, self.col2_cells)
+                rls_on_box.setCheckState(QtCore.Qt.Checked)
+            self.panel.addWidget(rls_on_label, self.next_row, 1)
+            self.panel.addWidget(rls_on_box, self.cur_row, 2, 1, self.col2_cells)
 
             def on_change():
-                self.sett().slicing.retraction_on = retraction_on_box.isChecked()
+                self.sett().slicing.retraction_on = rls_on_box.isChecked()
 
-            retraction_on_box.stateChanged.connect(on_change)
+            rls_on_box.stateChanged.connect(on_change)
 
             self.__elements[name] = {
-                "label": retraction_on_label,
-                "checkbox": retraction_on_box,
+                "label": rls_on_label,
+                "checkbox": rls_on_box,
             }
 
         elif name == "retraction_distance":
@@ -1000,6 +1012,133 @@ class SettingsWidget(QWidget):
             self.__elements[name] = {
                 "label": material_shrinkage_label,
                 "edit": material_shrinkage_value,
+            }
+
+        elif name == "random_layer_start":
+            self.ensure_sett("slicing.random_layer_start")
+
+            rls_on_label = QLabel(self.locale.RandomLayerStart)
+            rls_on_box = QCheckBox()
+            if self.sett().slicing.random_layer_start:
+                rls_on_box.setCheckState(QtCore.Qt.Checked)
+            self.panel.addWidget(rls_on_label, self.next_row, 1)
+            self.panel.addWidget(rls_on_box, self.cur_row, 2, 1, self.col2_cells)
+
+            def on_change():
+                self.sett().slicing.random_layer_start = rls_on_box.isChecked()
+
+            rls_on_box.stateChanged.connect(on_change)
+
+            self.__elements[name] = {
+                "label": rls_on_label,
+                "checkbox": rls_on_box,
+            }
+        elif name == "is_wall_outside_in":
+            self.ensure_sett("slicing.is_wall_outside_in")
+
+            wall_outside_in_label = QLabel(self.locale.IsWallsOutsideIn)
+            wall_outside_in_box = QCheckBox()
+            if self.sett().slicing.is_wall_outside_in:
+                wall_outside_in_box.setCheckState(QtCore.Qt.Checked)
+            self.panel.addWidget(wall_outside_in_label, self.next_row, 1)
+            self.panel.addWidget(
+                wall_outside_in_box, self.cur_row, 2, 1, self.col2_cells
+            )
+
+            def on_change():
+                self.sett().slicing.is_wall_outside_in = wall_outside_in_box.isChecked()
+
+            wall_outside_in_box.stateChanged.connect(on_change)
+
+            self.__elements[name] = {
+                "label": wall_outside_in_label,
+                "checkbox": wall_outside_in_box,
+            }
+        elif name == "flow_rate":
+            self.ensure_sett("slicing.flow_rate")
+
+            flow_rate_label = QLabel(self.locale.FlowRate)
+            flow_rate_value = LineEdit(str(self.sett().slicing.flow_rate))
+            self.panel.addWidget(flow_rate_label, self.next_row, 1)
+            self.panel.addWidget(flow_rate_value, self.cur_row, 2, 1, self.col2_cells)
+
+            def on_change():
+                value = self.__smart_float(flow_rate_value.text())
+                # value should be between 45 and 150 percent
+                if 45 <= value <= 150:
+                    flow_rate_value.setStyleSheet("")  # Reset to default style
+                    flow_rate_value.setToolTip("")
+                else:
+                    flow_rate_value.setStyleSheet(
+                        "background-color: lightcoral; color: black;"
+                    )
+                    flow_rate_value.setToolTip(
+                        self.locale.ValueInBetween.format(45, 150)
+                    )
+                self.sett().slicing.flow_rate = value
+
+            flow_rate_value.textChanged.connect(on_change)
+
+            self.__elements[name] = {
+                "label": flow_rate_label,
+                "edit": flow_rate_value,
+            }
+
+        elif name == "pressure_advance_on":
+            self.ensure_sett("slicing.pressure_advance_on")
+
+            pressure_advance_on_label = QLabel(self.locale.PressureAdvance)
+            pressure_advance_on_box = QCheckBox()
+            if self.sett().slicing.pressure_advance_on:
+                pressure_advance_on_box.setCheckState(QtCore.Qt.Checked)
+            self.panel.addWidget(pressure_advance_on_label, self.next_row, 1)
+            self.panel.addWidget(
+                pressure_advance_on_box, self.cur_row, 2, 1, self.col2_cells
+            )
+
+            def on_change():
+                self.sett().slicing.pressure_advance_on = (
+                    pressure_advance_on_box.isChecked()
+                )
+
+            pressure_advance_on_box.stateChanged.connect(on_change)
+
+            self.__elements[name] = {
+                "label": pressure_advance_on_label,
+                "checkbox": pressure_advance_on_box,
+            }
+
+        elif name == "pressure_advance_rate":
+            self.ensure_sett("slicing.pressure_advance_rate")
+
+            pressure_advance_label = QLabel(self.locale.PressureAdvanceValue)
+            pressure_advance_value = LineEdit(str(self.sett().slicing.pressure_advance))
+            # between 0.01 and 0.9, default is 0.45
+            self.panel.addWidget(pressure_advance_label, self.next_row, 1)
+            self.panel.addWidget(
+                pressure_advance_value, self.cur_row, 2, 1, self.col2_cells
+            )
+
+            def on_change():
+                value = self.__smart_float(pressure_advance_value.text())
+                # value should be between 0.01 and 0.9
+                if 0.01 <= value <= 0.9:
+                    pressure_advance_value.setStyleSheet("")
+                    pressure_advance_value.setToolTip("")
+                else:
+                    pressure_advance_value.setStyleSheet(
+                        "background-color: lightcoral; color: black;"
+                    )
+                    pressure_advance_value.setToolTip(
+                        self.locale.ValueInBetween.format(0.01, 0.9)
+                    )
+                self.sett().slicing.pressure_advance = value
+
+            pressure_advance_value.textChanged.connect(on_change)
+
+            self.__elements[name] = {
+                "label": pressure_advance_label,
+                "edit": pressure_advance_value,
             }
 
         elif name == "supports_on":
