@@ -241,6 +241,11 @@ class EntryWindow(QWidget):
 
         import pathlib
 
+        # new project name should not have any spaces, join with underscore
+        self.project_name_text_edit.setText(
+            self.project_name_text_edit.text().replace(" ", "_")
+        )
+
         full_path = pathlib.Path(
             self.project_directory_edit.text(), self.project_name_text_edit.text()
         )
