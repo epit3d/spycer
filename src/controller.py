@@ -837,7 +837,6 @@ class MainController:
                         self.display_settings()
                     except Exception as e:
                         showErrorDialog("Error during reading settings file: " + str(e))
-                        raise e
                 else:
                     showErrorDialog("This file format isn't supported:" + file_ext)
         except IOError as e:
