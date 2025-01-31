@@ -204,12 +204,17 @@ def add_recent_project(recent_projects, project_path):
 
 
 def load_settings(filename=""):
+    global _sett
+    old_setts = _sett
+
     data = read_settings(filename)
     if data != None:
-        global _sett
         _sett = Settings(data)
 
-    print(f"after loading stl_file is {_sett.slicing.stl_file}")
+    # check if the format is similar
+    if old_setts is not None and not old_setts.has_same_attributes(_sett):
+        _sett = old_setts
+        raise Exception("Check the settings file")
 
 
 def read_settings(filename=""):
@@ -335,6 +340,7 @@ class Settings(object):
         ignore_attributes = [
             "splanes_file",
             "figures",
+            "project_path",
             "print_time",
             "consumption_material",
             "planes_contact_with_nozzle",
@@ -356,6 +362,38 @@ class Settings(object):
             if not hasattr(self, attr):
                 return False
             if getattr(self, attr) != getattr(other, attr):
+                return False
+
+        return True
+
+    def has_same_attributes(self, other):
+        if not isinstance(other, Settings):
+            return False
+
+        ignore_attributes = [
+            "printer_dir",
+            "project_path",
+            "splanes_file",
+            "figures",
+            "print_time",
+            "consumption_material",
+            "planes_contact_with_nozzle",
+        ]
+
+        # try to compare attributes from left to right
+        for attr in self.__dict__:
+            if attr in ignore_attributes:
+                continue
+            if not hasattr(other, attr):
+                print(f"Attribute {attr} not found in other")
+                return False
+
+        # try to compare attributes from right to left
+        for attr in other.__dict__:
+            if attr in ignore_attributes:
+                continue
+            if not hasattr(self, attr):
+                print(f"Attribute {attr} not found in self")
                 return False
 
         return True

@@ -828,72 +828,22 @@ class MainController:
                 filename = str(Path(filename))
                 if file_ext == ".YAML":
                     try:
+                        # TODO: right now to maintain good transfer
+                        # we need to copy the project_path setting manually
+                        # everything else will work alright
+                        old_project_path = sett().project_path
                         load_settings(filename)
+                        sett().project_path = old_project_path
                         self.display_settings()
-                    except:
-                        showErrorDialog("Error during reading settings file")
+                    except Exception as e:
+                        showErrorDialog("Error during reading settings file: " + str(e))
                 else:
                     showErrorDialog("This file format isn't supported:" + file_ext)
         except IOError as e:
             showErrorDialog("Error during file opening:" + str(e))
 
     def display_settings(self):
-        s = sett()
-        self.view.line_width_value.setText(str(s.slicing.line_width))
-        self.view.layer_height_value.setText(str(s.slicing.layer_height))
-        self.view.wall_thickness_value.setText(str(s.slicing.wall_thickness))
-        self.view.number_of_bottom_layers_value.setText(str(s.slicing.bottoms_depth))
-        self.view.number_of_lid_layers_value.setText(str(s.slicing.lids_depth))
-        self.view.extruder_temp_value.setText(str(s.slicing.extruder_temperature))
-        self.view.bed_temp_value.setText(str(s.slicing.bed_temperature))
-        self.view.skirt_line_count_value.setText(str(s.slicing.skirt_line_count))
-        self.view.fan_speed_value.setText(str(s.slicing.fan_speed))
-        if s.slicing.fan_off_layer1:
-            self.view.fan_off_layer1_box.setCheckState(QtCore.Qt.Checked)
-        else:
-            self.view.fan_off_layer1_box.setCheckState(QtCore.Qt.Unchecked)
-        self.view.print_speed_value.setText(str(s.slicing.print_speed))
-        self.view.print_speed_layer1_value.setText(str(s.slicing.print_speed_layer1))
-        self.view.print_speed_wall_value.setText(str(s.slicing.print_speed_wall))
-        ind = locales.getLocaleByLang("en").FillingTypeValues.index(
-            s.slicing.filling_type
-        )
-        self.view.filling_type_values.setCurrentIndex(ind)
-        self.view.fill_density_value.setText(str(s.slicing.fill_density))
-        self.view.overlapping_infill_value.setText(
-            str(s.slicing.overlapping_infill_percentage)
-        )
-        if s.slicing.retraction_on:
-            self.view.retraction_on_box.setCheckState(QtCore.Qt.Checked)
-        else:
-            self.view.retraction_on_box.setCheckState(QtCore.Qt.Unchecked)
-        self.view.retraction_distance_value.setText(str(s.slicing.retraction_distance))
-        self.view.retraction_speed_value.setText(str(s.slicing.retraction_speed))
-        self.view.retract_compensation_amount_value.setText(
-            str(s.slicing.retract_compensation_amount)
-        )
-        if s.supports.enabled:
-            self.view.supports_on_box.setCheckState(QtCore.Qt.Checked)
-        else:
-            self.view.supports_on_box.setCheckState(QtCore.Qt.Unchecked)
-        self.view.support_density_value.setText(str(s.supports.fill_density))
-        ind = locales.getLocaleByLang("en").FillingTypeValues.index(
-            s.supports.fill_type
-        )
-        self.view.support_fill_type_values.setCurrentIndex(ind)
-        self.view.support_xy_offset_value.setText(str(s.supports.xy_offset))
-        self.view.support_z_offset_layers_value.setText(str(s.supports.z_offset_layers))
-        if s.supports.priority_z_offset:
-            self.view.support_priority_z_offset_box.setCheckState(QtCore.Qt.Checked)
-        else:
-            self.view.support_priority_z_offset_box.setCheckState(QtCore.Qt.Unchecked)
-        self.view.supports_number_of_bottom_layers_value.setText(
-            str(s.supports.bottoms_depth)
-        )
-        self.view.supports_number_of_lid_layers_value.setText(
-            str(int(s.supports.lids_depth))
-        )
-        self.view.colorize_angle_value.setText(str(s.slicing.angle))
+        self.view.setts.reload()
 
     def colorize_model(self):
         shutil.copyfile(PathBuilder.stl_model_temp(), PathBuilder.colorizer_stl())

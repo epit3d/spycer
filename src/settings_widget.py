@@ -101,6 +101,7 @@ class SettingsWidget(QWidget):
         self.setLayout(self.panel)
 
         self.__elements = {}
+        self.__order = []  # order of keys in the panel from top to bottom
 
         self.locale: locales.Locale = locales.getLocale()
 
@@ -143,6 +144,54 @@ class SettingsWidget(QWidget):
             "support_number_of_bottom_layers": self.locale.NumberOfBottomLayers,
             "support_number_of_lid_layers": self.locale.NumberOfLidLayers,
         }
+
+    def reload(self):
+        # reloads all settings from the sett
+        # right now we do it by deleting previous elements
+        # and creating new ones with the same order
+
+        # TODO: a little bit of copying, but it's ok for now
+        def get_row_widgets(row_idx):
+            widgets = []
+            for i in range(7):  # TODO: move to constant
+                item = self.panel.itemAtPosition(row_idx, i)
+                if item is None:
+                    continue
+                if len(widgets) != 0 and item.widget() == widgets[-1]:
+                    continue
+
+                widgets.append((item.widget(), i))
+            return widgets
+
+        def remove_row(row_idx):
+            dlt_row = get_row_widgets(row_idx)
+            for _, col_idx in dlt_row:
+                self.panel.itemAtPosition(row_idx, col_idx).widget().deleteLater()
+
+            # find key by row index
+            key = None
+            for k in self.__elements:
+                if self.__elements[k]["row_idx"] == row_idx:
+                    key = k
+                    break
+
+            # remove key from elements
+            del self.__elements[key]
+
+        for key in self.__order:
+            try:
+                row_idx = self.__elements[key]["row_idx"]
+                remove_row(row_idx)
+            except KeyError:
+                print(f"Key {key} not found in elements")
+                pass
+
+        self.__current_row = 1
+        copied_order = self.__order.copy()
+        self.__elements = {}
+        self.__order = []
+        for key in copied_order:
+            self = self.with_sett(key)
 
     @property
     def cur_row(self):
@@ -349,6 +398,8 @@ class SettingsWidget(QWidget):
         if name in self.__elements:
             return self
 
+        self.__order.append(name)
+
         # we match the given name with each setting and add it to the layout
         if name == "printer_path":
             # self.ensure_sett("hardware.printer_path")
@@ -390,6 +441,7 @@ class SettingsWidget(QWidget):
                 "label": label,
                 "edit": printer_path_edit,
                 "add_btn": printer_add_btn,
+                "sett_path": "hardware.printer_dir",
             }
         elif name == "uninterrupted_print":
             self.ensure_sett("uninterrupted_print.enabled")
