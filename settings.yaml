@@ -160,6 +160,7 @@ supports:
   fill_density: 5
   bottoms_depth: 0
   lids_depth: 0
+  create_walls: true
 uninterrupted_print:
   enabled: false
   cut_distance: 0.0

@@ -12,7 +12,7 @@ from PyQt5.QtWidgets import (
 )
 
 from src import locales
-from src.settings import sett, APP_PATH, Settings
+from src.settings import sett, APP_PATH, Settings, read_settings
 from src.qt_utils import ClickableLineEdit, LineEdit
 
 import os.path as path
@@ -61,7 +61,7 @@ class SettingsWidget(QWidget):
         "material_shrinkage",
         "flow_rate",  # Коэффициент потока расплава
         "pressure_advance_on",
-        "pressure_advance_rate",
+        "pressure_advance",
         "random_layer_start",
         "is_wall_outside_in",
         # TODO: add separate dummy setting to mark the beginning of supports settings
@@ -91,6 +91,9 @@ class SettingsWidget(QWidget):
         assert settings_provider is not None, "Settings provider is required"
 
         self.sett = settings_provider
+
+        # TODO: Load the bundled settings
+        self.bundled_settings = Settings(read_settings(filename=None))
 
         self.panel = QGridLayout()
         self.panel.setSpacing(5)
@@ -340,7 +343,11 @@ class SettingsWidget(QWidget):
         """
         attrs = name.split(".")
 
-        global_top = sett()
+        # TODO: right here global top should be something different, 
+        # I suppose inside this widget we should load kinda 
+        # global settings object with the original bundled data
+        # global_top = sett() 
+        global_top = self.bundled_settings
         top_level = self.sett()
         for idx, attr in enumerate(attrs):
             if not hasattr(top_level, attr):
@@ -1160,8 +1167,8 @@ class SettingsWidget(QWidget):
                 "checkbox": pressure_advance_on_box,
             }
 
-        elif name == "pressure_advance_rate":
-            self.ensure_sett("slicing.pressure_advance_rate")
+        elif name == "pressure_advance":
+            self.ensure_sett("slicing.pressure_advance")
 
             pressure_advance_label = QLabel(self.locale.PressureAdvanceValue)
             pressure_advance_value = LineEdit(str(self.sett().slicing.pressure_advance))

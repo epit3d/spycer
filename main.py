@@ -37,7 +37,7 @@ from src.gui_utils import read_plane
 
 logging.basicConfig(
     filename="interface.log",
-    filemode="a+",
+    filemode="w+",
     level=logging.INFO,
     format="%(asctime)s %(message)s",
 )
@@ -88,6 +88,8 @@ if __name__ == "__main__":
         # update project_path in settings, because it originally might be in another place
         sett().project_path = project_path
         create_temporary_project_files()
+
+        logging.info(f"after we opened project, settings are: {sett()}")
 
         window = MainWindow()
         window.close_signal.connect(entry_window.show)
