@@ -25,6 +25,8 @@ import pathlib
 from src.settings import (
     copy_project_files,
     load_settings,
+    read_settings,
+    Settings,
     sett,
     create_temporary_project_files,
 )
@@ -87,6 +89,10 @@ if __name__ == "__main__":
 
         # update project_path in settings, because it originally might be in another place
         sett().project_path = project_path
+        # we update language in the project from the bundled settings
+        # this way if user changed the language in some project it will not matter and
+        # we will use his personal settings
+        sett().common.lang = Settings(read_settings(filename=None)).common.lang
         create_temporary_project_files()
 
         logging.debug(f"after we opened project, settings are: {sett()}")
