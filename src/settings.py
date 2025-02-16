@@ -62,23 +62,23 @@ def copy_project_files(project_path: str):
 
 
 def project_change_check():
-    logging.info("Checking project change")
+    logging.debug("Checking project change")
     save_settings("vip")
     saved_settings = Settings(
         read_settings(str(pathlib.Path(sett().project_path, "settings.yaml")))
     )
-    logging.info("Saved settings:")
-    logging.info(saved_settings)
-    logging.info("Current settings:")
-    logging.info(sett())
+    logging.debug("Saved settings:")
+    logging.debug(saved_settings)
+    logging.debug("Current settings:")
+    logging.debug(sett())
     if sett() != saved_settings:
-        logging.warning("Saved settings do not match current settings.")
+        logging.debug("Saved settings do not match current settings.")
         return False
     if not compare_project_file("model.stl"):
-        logging.warning("Saved model.stl does not match current model.stl.")
+        logging.debug("Saved model.stl does not match current model.stl.")
         return False
     if not compare_figures(saved_settings):
-        logging.warning("Saved figures do not match current figures.")
+        logging.debug("Saved figures do not match current figures.")
         return False
 
     return True
@@ -92,16 +92,16 @@ def compare_figures(settings):
         figures_from_settings = []
 
     if len(current_figures) != len(figures_from_settings):
-        logging.warning("Number of figures does not match")
+        logging.debug("Number of figures does not match")
         return False
 
     for i in range(len(current_figures)):
         if current_figures[i]["description"] != figures_from_settings[i].description:
-            logging.warning(f"Description of figure {i} does not match")
+            logging.debug(f"Description of figure {i} does not match")
             return False
 
         if current_figures[i]["settings"] != figures_from_settings[i].settings:
-            logging.warning(f"Settings of figure {i} does not match")
+            logging.debug(f"Settings of figure {i} does not match")
             return False
 
     return True
@@ -221,7 +221,7 @@ def load_settings(filename=""):
 
     data = read_settings(filename)
     if data != None:
-        logging.info("Settings loaded")
+        logging.debug("Settings loaded")
         _sett = Settings(data)
 
     # check if the format is similar
@@ -256,7 +256,7 @@ def read_settings(filename=""):
                 if isinstance(value, dict):
                     check_children(value)
                 elif value is None:
-                    logging.warning(f"Value of {key} is None")
+                    logging.debug(f"Value of {key} is None")
 
         check_children(data)
 
@@ -379,10 +379,10 @@ class Settings(object):
             if attr in ignore_attributes:
                 continue
             if not hasattr(other, attr):
-                logging.warning(f"Attribute {attr} not found in other")
+                logging.debug(f"Attribute {attr} not found in other")
                 return False
             if getattr(self, attr) != getattr(other, attr):
-                logging.warning(f"Attribute {attr} does not match")
+                logging.debug(f"Attribute {attr} does not match")
                 return False
 
         # try to compare attributes from right to left
@@ -390,10 +390,10 @@ class Settings(object):
             if attr in ignore_attributes:
                 continue
             if not hasattr(self, attr):
-                logging.warning(f"Attribute {attr} not found in self")
+                logging.debug(f"Attribute {attr} not found in self")
                 return False
             if getattr(self, attr) != getattr(other, attr):
-                logging.warning(f"Attribute {attr} does not match")
+                logging.debug(f"Attribute {attr} does not match")
                 return False
 
         return True

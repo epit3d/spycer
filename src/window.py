@@ -450,9 +450,9 @@ class MainWindow(QMainWindow):
         self.setts = SettingsWidget(settings_provider=sett).with_all()
 
         # check if there is some stuff going on with loaded and missed settings
-        logging.info("Loaded settings after settings widget: %s", sett())
+        logging.debug("Loaded settings after settings widget: %s", sett())
 
-        # and when some of these parameters are null, we are actually better 
+        # and when some of these parameters are null, we are actually better
         # just take their defalts from the bundled settings yaml config
         # this way these mismatched settings will be fixed
 

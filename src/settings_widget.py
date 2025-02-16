@@ -343,10 +343,10 @@ class SettingsWidget(QWidget):
         """
         attrs = name.split(".")
 
-        # TODO: right here global top should be something different, 
-        # I suppose inside this widget we should load kinda 
+        # TODO: right here global top should be something different,
+        # I suppose inside this widget we should load kinda
         # global settings object with the original bundled data
-        # global_top = sett() 
+        # global_top = sett()
         global_top = self.bundled_settings
         top_level = self.sett()
         for idx, attr in enumerate(attrs):

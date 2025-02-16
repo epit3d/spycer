@@ -89,7 +89,7 @@ if __name__ == "__main__":
         sett().project_path = project_path
         create_temporary_project_files()
 
-        logging.info(f"after we opened project, settings are: {sett()}")
+        logging.debug(f"after we opened project, settings are: {sett()}")
 
         window = MainWindow()
         window.close_signal.connect(entry_window.show)
