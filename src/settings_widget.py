@@ -64,6 +64,9 @@ class SettingsWidget(QWidget):
         "pressure_advance",
         "random_layer_start",
         "is_wall_outside_in",
+        "auto_fan_enabled",
+        "auto_fan_area",
+        "auto_fan_speed",
         # TODO: add separate dummy setting to mark the beginning of supports settings
         "supports_on",
         "support_density",
@@ -1477,6 +1480,72 @@ class SettingsWidget(QWidget):
             self.__elements[name] = {
                 "label": create_walls_label,
                 "checkbox": create_walls_box,
+            }
+        elif name == "auto_fan_enabled":
+            self.ensure_sett("slicing.auto_fan.enabled")
+
+            auto_fan_enabled_label = QLabel(self.locale.AutoFanEnabled)
+            auto_fan_enabled_box = QCheckBox()
+            if self.sett().slicing.auto_fan.enabled:
+                auto_fan_enabled_box.setCheckState(QtCore.Qt.Checked)
+
+            self.panel.addWidget(auto_fan_enabled_label, self.next_row, 1)
+            self.panel.addWidget(
+                auto_fan_enabled_box, self.cur_row, 2, 1, self.col2_cells
+            )
+
+            def on_change():
+                self.sett().slicing.auto_fan.enabled = auto_fan_enabled_box.isChecked()
+
+            auto_fan_enabled_box.stateChanged.connect(on_change)
+
+            self.__elements[name] = {
+                "label": auto_fan_enabled_label,
+                "checkbox": auto_fan_enabled_box,
+            }
+        elif name == "auto_fan_area":
+            self.ensure_sett("slicing.auto_fan.area")
+
+            auto_fan_area_label = QLabel(self.locale.AutoFanArea)
+            auto_fan_area_value = LineEdit(str(self.sett().slicing.auto_fan.area))
+            auto_fan_area_value.setValidator(self.intValidator)
+            self.panel.addWidget(auto_fan_area_label, self.next_row, 1)
+            self.panel.addWidget(
+                auto_fan_area_value, self.cur_row, 2, 1, self.col2_cells
+            )
+
+            def on_change():
+                self.sett().slicing.auto_fan.area = self.__smart_float(
+                    auto_fan_area_value.text()
+                )
+
+            auto_fan_area_value.textChanged.connect(on_change)
+
+            self.__elements[name] = {
+                "label": auto_fan_area_label,
+                "edit": auto_fan_area_value,
+            }
+        elif name == "auto_fan_speed":
+            self.ensure_sett("slicing.auto_fan.fan_speed")
+
+            auto_fan_speed_label = QLabel(self.locale.AutoFanSpeed)
+            auto_fan_speed_value = LineEdit(str(self.sett().slicing.auto_fan.fan_speed))
+            auto_fan_speed_value.setValidator(self.intValidator)
+            self.panel.addWidget(auto_fan_speed_label, self.next_row, 1)
+            self.panel.addWidget(
+                auto_fan_speed_value, self.cur_row, 2, 1, self.col2_cells
+            )
+
+            def on_change():
+                self.sett().slicing.auto_fan.fan_speed = self.__smart_float(
+                    auto_fan_speed_value.text()
+                )
+
+            auto_fan_speed_value.textChanged.connect(on_change)
+
+            self.__elements[name] = {
+                "label": auto_fan_speed_label,
+                "edit": auto_fan_speed_value,
             }
 
         # add row index for element
