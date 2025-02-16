@@ -6,6 +6,7 @@ from PyQt5.QtCore import QSettings
 import shutil
 import pathlib
 import base64
+import logging
 
 import yaml
 import vtk
@@ -61,15 +62,23 @@ def copy_project_files(project_path: str):
 
 
 def project_change_check():
+    logging.debug("Checking project change")
     save_settings("vip")
     saved_settings = Settings(
         read_settings(str(pathlib.Path(sett().project_path, "settings.yaml")))
     )
+    logging.debug("Saved settings:")
+    logging.debug(saved_settings)
+    logging.debug("Current settings:")
+    logging.debug(sett())
     if sett() != saved_settings:
+        logging.debug("Saved settings do not match current settings.")
         return False
     if not compare_project_file("model.stl"):
+        logging.debug("Saved model.stl does not match current model.stl.")
         return False
     if not compare_figures(saved_settings):
+        logging.debug("Saved figures do not match current figures.")
         return False
 
     return True
@@ -83,13 +92,16 @@ def compare_figures(settings):
         figures_from_settings = []
 
     if len(current_figures) != len(figures_from_settings):
+        logging.debug("Number of figures does not match")
         return False
 
     for i in range(len(current_figures)):
         if current_figures[i]["description"] != figures_from_settings[i].description:
+            logging.debug(f"Description of figure {i} does not match")
             return False
 
         if current_figures[i]["settings"] != figures_from_settings[i].settings:
+            logging.debug(f"Settings of figure {i} does not match")
             return False
 
     return True
@@ -209,6 +221,7 @@ def load_settings(filename=""):
 
     data = read_settings(filename)
     if data != None:
+        logging.debug("Settings loaded")
         _sett = Settings(data)
 
     # check if the format is similar
@@ -235,6 +248,18 @@ def read_settings(filename=""):
 
     with open(filename) as f:
         data = yaml.safe_load(f)
+
+        # right now let's check that some fields are just None,
+        # just because they were not found in the new template
+        def check_children(obj):
+            for key, value in obj.items():
+                if isinstance(value, dict):
+                    check_children(value)
+                elif value is None:
+                    logging.debug(f"Value of {key} is None")
+
+        check_children(data)
+
         return data
 
     return None
@@ -344,6 +369,9 @@ class Settings(object):
             "print_time",
             "consumption_material",
             "planes_contact_with_nozzle",
+            # for some reason this is temporary field that is not being updated well
+            "stl_file",
+            "printer_dir",
         ]
 
         # try to compare attributes from left to right
@@ -351,8 +379,10 @@ class Settings(object):
             if attr in ignore_attributes:
                 continue
             if not hasattr(other, attr):
+                logging.debug(f"Attribute {attr} not found in other")
                 return False
             if getattr(self, attr) != getattr(other, attr):
+                logging.debug(f"Attribute {attr} does not match")
                 return False
 
         # try to compare attributes from right to left
@@ -360,8 +390,10 @@ class Settings(object):
             if attr in ignore_attributes:
                 continue
             if not hasattr(self, attr):
+                logging.debug(f"Attribute {attr} not found in self")
                 return False
             if getattr(self, attr) != getattr(other, attr):
+                logging.debug(f"Attribute {attr} does not match")
                 return False
 
         return True
