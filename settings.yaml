@@ -151,6 +151,10 @@ slicing:
     m32: 0.0
     m33: 1.0
   wall_thickness: 0.8
+  auto_fan:
+    enabled: false
+    area: 0.1
+    fan_speed: 20
 supports:
   enabled: true
   xy_offset: 0.3
