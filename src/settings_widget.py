@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QComboBox,
     QStyle,
+    QDoubleSpinBox,
 )
 
 from src import locales
@@ -17,6 +18,30 @@ from src.qt_utils import ClickableLineEdit, LineEdit
 
 import os.path as path
 import logging
+import re
+
+# Regular expression to find floats. Match groups are the whole string, the
+# whole coefficient, the decimal part of the coefficient, and the exponent
+# part.
+_float_re = re.compile(r"(([+-]?\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)")
+
+
+def valid_float_string(string):
+    match = _float_re.search(string)
+    return match.groups()[0] == string if match else False
+
+
+class FloatValidator(QtGui.QValidator):
+    def validate(self, string, position):
+        if valid_float_string(string):
+            return self.State.Acceptable
+        if string == "" or string[position - 1] in "e.-+":
+            return self.State.Intermediate
+        return self.State.Invalid
+
+    def fixup(self, text):
+        match = _float_re.search(text)
+        return match.groups()[0] if match else ""
 
 
 class SettingsWidget(QWidget):
@@ -1507,19 +1532,27 @@ class SettingsWidget(QWidget):
             self.ensure_sett("slicing.auto_fan.area")
 
             auto_fan_area_label = QLabel(self.locale.AutoFanArea)
-            auto_fan_area_value = LineEdit(str(self.sett().slicing.auto_fan.area))
-            auto_fan_area_value.setValidator(self.intValidator)
+
+            auto_fan_area_value = QDoubleSpinBox()
+            auto_fan_area_value.setMinimum(0.0)
+            auto_fan_area_value.setMaximum(9999.0)
+            auto_fan_area_value.validator = FloatValidator()
+            try:
+                auto_fan_area_value.setValue(self.sett().slicing.auto_fan.area)
+            except:
+                auto_fan_area_value.setValue(0.0)
+
+            # auto_fan_area_value = LineEdit(str(self.sett().slicing.auto_fan.area))
+            # auto_fan_area_value.setValidator(self.intValidator)
             self.panel.addWidget(auto_fan_area_label, self.next_row, 1)
             self.panel.addWidget(
                 auto_fan_area_value, self.cur_row, 2, 1, self.col2_cells
             )
 
             def on_change():
-                self.sett().slicing.auto_fan.area = self.__smart_float(
-                    auto_fan_area_value.text()
-                )
+                self.sett().slicing.auto_fan.area = auto_fan_area_value.value()
 
-            auto_fan_area_value.textChanged.connect(on_change)
+            auto_fan_area_value.valueChanged.connect(on_change)
 
             self.__elements[name] = {
                 "label": auto_fan_area_label,
