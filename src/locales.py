@@ -154,6 +154,10 @@ class Locale:
 
     ShouldCreateWalls = "Create wall in support"
 
+    AutoFanEnabled = "Enable auto fan speed adjustment"
+    AutoFanArea = "Auto fan max area, mm²:"
+    AutoFanSpeed = "Auto fan speed:"
+
     def __init__(self, **entries):
         self.__dict__.update(entries)
 
@@ -312,6 +316,9 @@ dicts = {
         WarningPathNotClosed="При разрезании модели были обнаружены незамкнутые участки! Проверьте корректность расположения фигур",
         CannotDropHere="Фигура не может быть перенесена сюда",
         ShouldCreateWalls="Создавать стенки в поддержках",
+        AutoFanEnabled="Включить автоматическое управление обдувом",
+        AutoFanArea="Максимальная площадь для автоматического обдува, мм²:",
+        AutoFanSpeed="Скорость автоматического обдува:",
     ),
 }
 

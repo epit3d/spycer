@@ -9,14 +9,39 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QComboBox,
     QStyle,
+    QDoubleSpinBox,
 )
 
 from src import locales
-from src.settings import sett, APP_PATH, Settings
+from src.settings import sett, APP_PATH, Settings, read_settings
 from src.qt_utils import ClickableLineEdit, LineEdit
 
 import os.path as path
 import logging
+import re
+
+# Regular expression to find floats. Match groups are the whole string, the
+# whole coefficient, the decimal part of the coefficient, and the exponent
+# part.
+_float_re = re.compile(r"(([+-]?\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?)")
+
+
+def valid_float_string(string):
+    match = _float_re.search(string)
+    return match.groups()[0] == string if match else False
+
+
+class FloatValidator(QtGui.QValidator):
+    def validate(self, string, position):
+        if valid_float_string(string):
+            return self.State.Acceptable
+        if string == "" or string[position - 1] in "e.-+":
+            return self.State.Intermediate
+        return self.State.Invalid
+
+    def fixup(self, text):
+        match = _float_re.search(text)
+        return match.groups()[0] if match else ""
 
 
 class SettingsWidget(QWidget):
@@ -61,9 +86,12 @@ class SettingsWidget(QWidget):
         "material_shrinkage",
         "flow_rate",  # Коэффициент потока расплава
         "pressure_advance_on",
-        "pressure_advance_rate",
+        "pressure_advance",
         "random_layer_start",
         "is_wall_outside_in",
+        "auto_fan_enabled",
+        "auto_fan_area",
+        "auto_fan_speed",
         # TODO: add separate dummy setting to mark the beginning of supports settings
         "supports_on",
         "support_density",
@@ -91,6 +119,9 @@ class SettingsWidget(QWidget):
         assert settings_provider is not None, "Settings provider is required"
 
         self.sett = settings_provider
+
+        # TODO: Load the bundled settings
+        self.bundled_settings = Settings(read_settings(filename=None))
 
         self.panel = QGridLayout()
         self.panel.setSpacing(5)
@@ -340,7 +371,11 @@ class SettingsWidget(QWidget):
         """
         attrs = name.split(".")
 
-        global_top = sett()
+        # TODO: right here global top should be something different,
+        # I suppose inside this widget we should load kinda
+        # global settings object with the original bundled data
+        # global_top = sett()
+        global_top = self.bundled_settings
         top_level = self.sett()
         for idx, attr in enumerate(attrs):
             if not hasattr(top_level, attr):
@@ -1160,8 +1195,8 @@ class SettingsWidget(QWidget):
                 "checkbox": pressure_advance_on_box,
             }
 
-        elif name == "pressure_advance_rate":
-            self.ensure_sett("slicing.pressure_advance_rate")
+        elif name == "pressure_advance":
+            self.ensure_sett("slicing.pressure_advance")
 
             pressure_advance_label = QLabel(self.locale.PressureAdvanceValue)
             pressure_advance_value = LineEdit(str(self.sett().slicing.pressure_advance))
@@ -1470,6 +1505,80 @@ class SettingsWidget(QWidget):
             self.__elements[name] = {
                 "label": create_walls_label,
                 "checkbox": create_walls_box,
+            }
+        elif name == "auto_fan_enabled":
+            self.ensure_sett("slicing.auto_fan.enabled")
+
+            auto_fan_enabled_label = QLabel(self.locale.AutoFanEnabled)
+            auto_fan_enabled_box = QCheckBox()
+            if self.sett().slicing.auto_fan.enabled:
+                auto_fan_enabled_box.setCheckState(QtCore.Qt.Checked)
+
+            self.panel.addWidget(auto_fan_enabled_label, self.next_row, 1)
+            self.panel.addWidget(
+                auto_fan_enabled_box, self.cur_row, 2, 1, self.col2_cells
+            )
+
+            def on_change():
+                self.sett().slicing.auto_fan.enabled = auto_fan_enabled_box.isChecked()
+
+            auto_fan_enabled_box.stateChanged.connect(on_change)
+
+            self.__elements[name] = {
+                "label": auto_fan_enabled_label,
+                "checkbox": auto_fan_enabled_box,
+            }
+        elif name == "auto_fan_area":
+            self.ensure_sett("slicing.auto_fan.area")
+
+            auto_fan_area_label = QLabel(self.locale.AutoFanArea)
+
+            auto_fan_area_value = QDoubleSpinBox()
+            auto_fan_area_value.setMinimum(0.0)
+            auto_fan_area_value.setMaximum(9999.0)
+            auto_fan_area_value.validator = FloatValidator()
+            try:
+                auto_fan_area_value.setValue(self.sett().slicing.auto_fan.area)
+            except:
+                auto_fan_area_value.setValue(0.0)
+
+            # auto_fan_area_value = LineEdit(str(self.sett().slicing.auto_fan.area))
+            # auto_fan_area_value.setValidator(self.intValidator)
+            self.panel.addWidget(auto_fan_area_label, self.next_row, 1)
+            self.panel.addWidget(
+                auto_fan_area_value, self.cur_row, 2, 1, self.col2_cells
+            )
+
+            def on_change():
+                self.sett().slicing.auto_fan.area = auto_fan_area_value.value()
+
+            auto_fan_area_value.valueChanged.connect(on_change)
+
+            self.__elements[name] = {
+                "label": auto_fan_area_label,
+                "edit": auto_fan_area_value,
+            }
+        elif name == "auto_fan_speed":
+            self.ensure_sett("slicing.auto_fan.fan_speed")
+
+            auto_fan_speed_label = QLabel(self.locale.AutoFanSpeed)
+            auto_fan_speed_value = LineEdit(str(self.sett().slicing.auto_fan.fan_speed))
+            auto_fan_speed_value.setValidator(self.intValidator)
+            self.panel.addWidget(auto_fan_speed_label, self.next_row, 1)
+            self.panel.addWidget(
+                auto_fan_speed_value, self.cur_row, 2, 1, self.col2_cells
+            )
+
+            def on_change():
+                self.sett().slicing.auto_fan.fan_speed = self.__smart_float(
+                    auto_fan_speed_value.text()
+                )
+
+            auto_fan_speed_value.textChanged.connect(on_change)
+
+            self.__elements[name] = {
+                "label": auto_fan_speed_label,
+                "edit": auto_fan_speed_value,
             }
 
         # add row index for element
