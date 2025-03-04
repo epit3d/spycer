@@ -410,6 +410,7 @@ class Settings(object):
             "print_time",
             "consumption_material",
             "planes_contact_with_nozzle",
+            "version",
         ]
 
         # try to compare attributes from left to right
