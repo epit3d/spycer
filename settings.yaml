@@ -87,6 +87,7 @@ slicing:
   fan_speed: 95
   fill_density: 20
   filling_type: Triangles
+  minimum_fill_area: 0.2
   filter_tolerance: 0.01
   flat_5d: 0
   ftetwild_cmd: ./lib/FloatTetwild_bin.exe -i sett.slicing.stl_file -o lib/goosli_middle.msh

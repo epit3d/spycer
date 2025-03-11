@@ -9,6 +9,7 @@ class Locale:
     ExtruderTemp = "Extruder temperature, °C:"
     BedTemp = "Bed temperature, °C:"
     FillDensity = "Fill density, %:"
+    MinimumFillArea = "Minimum fill area, mm²:"
     WallThickness = "Wall thickness:"
     NumberWallLines = "Number of wall lines:"
     BottomThickness = "Bottom thickness:"
@@ -172,6 +173,7 @@ dicts = {
         ExtruderTemp="Температура сопла, °C:",
         BedTemp="Температура стола, °C:",
         FillDensity="Плотность заполнения, %:",
+        MinimumFillArea="Минимальная площадь заполнения, мм²:",
         WallThickness="Толщина стенки:",
         NumberWallLines="Количество проходов стенки:",
         BottomThickness="Толщина дна:",
