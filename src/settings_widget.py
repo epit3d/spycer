@@ -78,6 +78,7 @@ class SettingsWidget(QWidget):
         "print_speed_wall",
         "filling_type",
         "fill_density",
+        "minimum_fill_area",
         "overlap_infill",
         "retraction_on",
         "retraction_distance",
@@ -157,6 +158,7 @@ class SettingsWidget(QWidget):
             "print_speed_wall": self.locale.PrintSpeedWall,
             "filling_type": self.locale.FillingType,
             "fill_density": self.locale.FillDensity,
+            "minimum_fill_area": self.locale.MinimumFillArea,
             "overlap_infill": self.locale.OverlappingInfillPercentage,
             "retraction_on": self.locale.Retraction,
             "retraction_distance": self.locale.RetractionDistance,
@@ -954,6 +956,31 @@ class SettingsWidget(QWidget):
                 "label": fill_density_label,
                 "edit": fill_density_value,
                 "setting": "slicing.fill_density",
+            }
+
+        elif name == "minimum_fill_area":
+            self.ensure_sett("slicing.minimum_fill_area")
+
+            minimum_fill_area_label = QLabel(self.locale.MinimumFillArea)
+
+            minimum_fill_area_value = QDoubleSpinBox()
+            minimum_fill_area_value.setMinimum(0.0)
+            minimum_fill_area_value.setMaximum(9999.0)
+            minimum_fill_area_value.validator = FloatValidator()
+
+            self.panel.addWidget(minimum_fill_area_label, self.next_row, 1)
+            self.panel.addWidget(
+                minimum_fill_area_value, self.cur_row, 2, 1, self.col2_cells
+            )
+
+            def on_change():
+                self.sett().slicing.minimum_fill_area = minimum_fill_area_value.value()
+
+            minimum_fill_area_value.valueChanged.connect(on_change)
+
+            self.__elements[name] = {
+                "label": minimum_fill_area_label,
+                "edit": minimum_fill_area_value,
             }
 
         elif name == "overlap_infill":
