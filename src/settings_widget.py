@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QComboBox,
     QStyle,
+    QSpinBox,
     QDoubleSpinBox,
 )
 
@@ -242,6 +243,14 @@ class SettingsWidget(QWidget):
         assert name in self.__elements, f"There is no LineEdit for {name}"
 
         return self.__elements[name]["edit"]
+
+    def spinbox(self, name: str):
+        """
+        Return spinbox element associated with the given name
+        """
+        assert name in self.__elements, f"There is no SpinBox/DoubleSpinBox for {name}"
+
+        return self.__elements[name]["spinbox"]
 
     def checkbox(self, name: str):
         """
@@ -526,72 +535,83 @@ class SettingsWidget(QWidget):
             self.ensure_sett("uninterrupted_print.cut_distance")
 
             m10_cut_distance = QLabel(self.locale.M10CutDistance)
-            m10_cut_distance_value = QLineEdit()
-            m10_cut_distance_value.setText(str(sett().uninterrupted_print.cut_distance))
-            m10_cut_distance_value.setValidator(self.doubleValidator)
+            m10_cut_distance_value = QDoubleSpinBox()
+            m10_cut_distance_value.setMinimum(0.0)
+            m10_cut_distance_value.setMaximum(9999.0)
+            m10_cut_distance_value.validator = FloatValidator()
+            try:
+                m10_cut_distance_value.setValue(sett().uninterrupted_print.cut_distance)
+            except:
+                m10_cut_distance_value.setValue(0.0)
             self.panel.addWidget(m10_cut_distance, self.next_row, 1)
             self.panel.addWidget(
                 m10_cut_distance_value, self.cur_row, 2, 1, self.col2_cells
             )
 
             def on_change():
-                sett().uninterrupted_print.cut_distance = self.__smart_float(
-                    m10_cut_distance_value.text()
-                )
+                sett().uninterrupted_print.cut_distance = m10_cut_distance_value.value()
 
-            m10_cut_distance_value.textChanged.connect(on_change)
+            m10_cut_distance_value.valueChanged.connect(on_change)
 
             self.__elements[name] = {
                 "label": m10_cut_distance,
-                "edit": m10_cut_distance_value,
+                "spinbox": m10_cut_distance_value,
             }
 
         elif name == "line_width":
             self.ensure_sett("slicing.line_width")
 
             line_width = QLabel(self.locale.LineWidth)
-            line_width_value = QLineEdit()
-            line_width_value.setText(str(self.sett().slicing.line_width))
-            line_width_value.setValidator(self.doubleValidator)
-            line_width_value.textChanged.connect(self.__update_wall_thickness)
+            line_width_value = QDoubleSpinBox()
+            line_width_value.setMinimum(0.0)
+            line_width_value.setMaximum(9999.0)
+            line_width_value.validator = FloatValidator()
             self.panel.addWidget(line_width, self.next_row, 1)
             self.panel.addWidget(line_width_value, self.cur_row, 2, 1, self.col2_cells)
+            try:
+                line_width_value.setValue(self.sett().slicing.line_width)
+            except:
+                line_width_value.setValue(0.0)
+            line_width_value.valueChanged.connect(self.__update_wall_thickness)
 
             def on_change():
-                self.sett().slicing.line_width = self.__smart_float(
-                    line_width_value.text()
-                )
+                self.sett().slicing.line_width = line_width_value.value()
 
-            line_width_value.textChanged.connect(on_change)
+            line_width_value.valueChanged.connect(on_change)
 
             self.__elements[name] = {
                 "label": line_width,
-                "edit": line_width_value,
+                "spinbox": line_width_value,
             }
 
         elif name == "layer_height":
             self.ensure_sett("slicing.layer_height")
 
             layer_height = QLabel(self.locale.LayerHeight)
-            layer_height_value = QLineEdit()
-            layer_height_value.setText(str(self.sett().slicing.layer_height))
-            layer_height_value.setValidator(self.doubleValidator)
-            layer_height_value.textChanged.connect(self.__change_layer_height)
+            layer_height_value = QDoubleSpinBox()
+            layer_height_value.setValue(self.sett().slicing.layer_height)
+            layer_height_value.setMinimum(0.0)
+            layer_height_value.setMaximum(9999.0)
+            layer_height_value.validator = FloatValidator()
+            layer_height_value.valueChanged.connect(self.__change_layer_height)
             self.panel.addWidget(layer_height, self.next_row, 1)
             self.panel.addWidget(
                 layer_height_value, self.cur_row, 2, 1, self.col2_cells
             )
 
-            def on_change():
-                self.sett().slicing.layer_height = self.__smart_float(
-                    layer_height_value.text()
-                )
+            try:
+                layer_height_value.setValue(self.sett().slicing.layer_height)
+            except:
+                layer_height_value.setValue(0.0)
 
-            layer_height_value.textChanged.connect(on_change)
+            def on_change():
+                self.sett().slicing.layer_height = layer_height_value.value()
+
+            layer_height_value.valueChanged.connect(on_change)
 
             self.__elements[name] = {
                 "label": layer_height,
-                "edit": layer_height_value,
+                "spinbox": layer_height_value,
             }
 
         elif name == "number_wall_lines":
@@ -599,22 +619,25 @@ class SettingsWidget(QWidget):
 
             number_wall_lines_label = QLabel(self.locale.NumberWallLines)
             if self.sett().slicing.line_width > 0:
-                number_wall_lines_value = int(
+                number_wall_lines = int(
                     self.sett().slicing.wall_thickness / self.sett().slicing.line_width
                 )
             else:
-                number_wall_lines_value = 0
+                number_wall_lines = 0
 
-            number_wall_lines_value = LineEdit(str(number_wall_lines_value))
-            number_wall_lines_value.setValidator(self.intValidator)
-
-            number_wall_lines_value.textChanged.connect(self.__update_wall_thickness)
+            number_wall_lines_value = QSpinBox()
+            number_wall_lines_value.setMinimum(0)
+            number_wall_lines_value.setMaximum(9999)
+            number_wall_lines_value.setValue(number_wall_lines)
+            number_wall_lines_value.valueChanged.connect(self.__update_wall_thickness)
 
             self.panel.addWidget(number_wall_lines_label, self.next_row, 1)
             self.panel.addWidget(number_wall_lines_value, self.cur_row, 2)
 
             wall_thickness_label = QLabel(self.locale.WallThickness)
-            wall_thickness_value = LineEdit(str(self.sett().slicing.wall_thickness))
+            wall_thickness_value = QDoubleSpinBox()
+            wall_thickness_value.setValue(float(self.sett().slicing.wall_thickness))
+            wall_thickness_value.setButtonSymbols(QSpinBox.NoButtons)
             wall_thickness_value.setReadOnly(True)
             millimeter_label = QLabel(self.locale.Millimeter)
             self.panel.addWidget(wall_thickness_label, self.cur_row, 3)
@@ -622,15 +645,13 @@ class SettingsWidget(QWidget):
             self.panel.addWidget(millimeter_label, self.cur_row, 5)
 
             def on_change():
-                self.sett().slicing.wall_thickness = self.__smart_float(
-                    wall_thickness_value.text()
-                )
+                self.sett().slicing.wall_thickness = wall_thickness_value.value()
 
-            number_wall_lines_value.textChanged.connect(on_change)
+            number_wall_lines_value.valueChanged.connect(on_change)
 
             self.__elements[name] = {
                 "label": number_wall_lines_label,
-                "edit": number_wall_lines_value,
+                "spinbox": number_wall_lines_value,
                 "wall_thickness_label": wall_thickness_label,
                 "wall_thickness_value": wall_thickness_value,
             }
@@ -639,11 +660,13 @@ class SettingsWidget(QWidget):
             self.ensure_sett("slicing.bottoms_depth")
 
             number_of_bottom_layers_label = QLabel(self.locale.NumberOfBottomLayers)
-            number_of_bottom_layers_value = LineEdit(
-                str(self.sett().slicing.bottoms_depth)
+            number_of_bottom_layers_value = QSpinBox()
+            number_of_bottom_layers_value.setMinimum(0)
+            number_of_bottom_layers_value.setMaximum(9999)
+            number_of_bottom_layers_value.setValue(
+                int(self.sett().slicing.bottoms_depth)
             )
-            number_of_bottom_layers_value.setValidator(self.intValidator)
-            number_of_bottom_layers_value.textChanged.connect(
+            number_of_bottom_layers_value.valueChanged.connect(
                 self.__update_bottom_thickness
             )
 
@@ -651,15 +674,15 @@ class SettingsWidget(QWidget):
             self.panel.addWidget(number_of_bottom_layers_value, self.cur_row, 2)
 
             bottom_thickness_label = QLabel(self.locale.BottomThickness)
-            bottom_thickness_value = LineEdit(
-                str(
-                    round(
-                        self.sett().slicing.bottoms_depth
-                        * self.sett().slicing.layer_height,
-                        2,
-                    ),
+            bottom_thickness_value = QDoubleSpinBox()
+            bottom_thickness_value.setValue(
+                round(
+                    self.sett().slicing.bottoms_depth
+                    * self.sett().slicing.layer_height,
+                    2,
                 )
             )
+            bottom_thickness_value.setButtonSymbols(QSpinBox.NoButtons)
             bottom_thickness_value.setReadOnly(True)
             millimeter_label = QLabel(self.locale.Millimeter)
 
@@ -668,15 +691,15 @@ class SettingsWidget(QWidget):
             self.panel.addWidget(millimeter_label, self.cur_row, 5)
 
             def on_change():
-                self.sett().slicing.bottoms_depth = self.__smart_float(
-                    number_of_bottom_layers_value.text()
+                self.sett().slicing.bottoms_depth = (
+                    number_of_bottom_layers_value.value()
                 )
 
-            number_of_bottom_layers_value.textChanged.connect(on_change)
+            number_of_bottom_layers_value.valueChanged.connect(on_change)
 
             self.__elements[name] = {
                 "label": number_of_bottom_layers_label,
-                "edit": number_of_bottom_layers_value,
+                "spinbox": number_of_bottom_layers_value,
                 "bottom_thickness_label": bottom_thickness_label,
                 "bottom_thickness_value": bottom_thickness_value,
             }
@@ -685,23 +708,29 @@ class SettingsWidget(QWidget):
             self.ensure_sett("slicing.lids_depth")
 
             number_of_lids_layers_label = QLabel(self.locale.NumberOfLidLayers)
-            number_of_lids_layers_value = LineEdit(str(self.sett().slicing.lids_depth))
-            number_of_lids_layers_value.setValidator(self.intValidator)
-            number_of_lids_layers_value.textChanged.connect(self.__update_lid_thickness)
+            number_of_lids_layers_value = QSpinBox()
+            number_of_lids_layers_value.setMinimum(0)
+            number_of_lids_layers_value.setMaximum(9999)
+            number_of_lids_layers_value.setValue(int(self.sett().slicing.lids_depth))
+            number_of_lids_layers_value.valueChanged.connect(
+                self.__update_lid_thickness
+            )
 
             self.panel.addWidget(number_of_lids_layers_label, self.next_row, 1)
             self.panel.addWidget(number_of_lids_layers_value, self.cur_row, 2)
 
             lid_thickness_label = QLabel(self.locale.LidsThickness)
-            lid_thickness_value = LineEdit(
-                str(
+            lid_thickness_value = QDoubleSpinBox()
+            lid_thickness_value.setValue(
+                float(
                     round(
                         self.sett().slicing.lids_depth
                         * self.sett().slicing.layer_height,
                         2,
-                    ),
+                    )
                 )
             )
+            lid_thickness_value.setButtonSymbols(QDoubleSpinBox.NoButtons)
             lid_thickness_value.setReadOnly(True)
             millimeter_label = QLabel(self.locale.Millimeter)
 
@@ -710,15 +739,13 @@ class SettingsWidget(QWidget):
             self.panel.addWidget(millimeter_label, self.cur_row, 5)
 
             def on_change():
-                self.sett().slicing.lids_depth = self.__smart_float(
-                    number_of_lids_layers_value.text()
-                )
+                self.sett().slicing.lids_depth = number_of_lids_layers_value.value()
 
-            number_of_lids_layers_value.textChanged.connect(on_change)
+            number_of_lids_layers_value.valueChanged.connect(on_change)
 
             self.__elements[name] = {
                 "label": number_of_lids_layers_label,
-                "edit": number_of_lids_layers_value,
+                "spinbox": number_of_lids_layers_value,
                 "lid_thickness_label": lid_thickness_label,
                 "lid_thickness_value": lid_thickness_value,
             }
@@ -727,90 +754,88 @@ class SettingsWidget(QWidget):
             self.ensure_sett("slicing.extruder_temperature")
 
             extruder_temp_label = QLabel(self.locale.ExtruderTemp)
-            extruder_temp_value = LineEdit(
-                str(self.sett().slicing.extruder_temperature)
-            )
-            extruder_temp_value.setValidator(self.intValidator)
+            extruder_temp_value = QSpinBox()
+            extruder_temp_value.setMinimum(0)
+            extruder_temp_value.setMaximum(9999)
+            extruder_temp_value.setValue(int(self.sett().slicing.extruder_temperature))
             self.panel.addWidget(extruder_temp_label, self.next_row, 1)
             self.panel.addWidget(
                 extruder_temp_value, self.cur_row, 2, 1, self.col2_cells
             )
 
             def on_change():
-                self.sett().slicing.extruder_temperature = self.__smart_float(
-                    extruder_temp_value.text()
-                )
+                self.sett().slicing.extruder_temperature = extruder_temp_value.value()
 
-            extruder_temp_value.textChanged.connect(on_change)
+            extruder_temp_value.valueChanged.connect(on_change)
 
             self.__elements[name] = {
                 "label": extruder_temp_label,
-                "edit": extruder_temp_value,
+                "spinbox": extruder_temp_value,
             }
 
         elif name == "bed_temp":
             self.ensure_sett("slicing.bed_temperature")
 
             bed_temp_label = QLabel(self.locale.BedTemp)
-            bed_temp_value = LineEdit(str(self.sett().slicing.bed_temperature))
-            bed_temp_value.setValidator(self.intValidator)
+            bed_temp_value = QSpinBox()
+            bed_temp_value.setMinimum(0)
+            bed_temp_value.setMaximum(9999)
+            bed_temp_value.setValue(int(self.sett().slicing.bed_temperature))
             self.panel.addWidget(bed_temp_label, self.next_row, 1)
             self.panel.addWidget(bed_temp_value, self.cur_row, 2, 1, self.col2_cells)
 
             def on_change():
-                self.sett().slicing.bed_temperature = self.__smart_float(
-                    bed_temp_value.text()
-                )
+                self.sett().slicing.bed_temperature = bed_temp_value.text()
 
-            bed_temp_value.textChanged.connect(on_change)
+            bed_temp_value.valueChanged.connect(on_change)
 
             self.__elements[name] = {
                 "label": bed_temp_label,
-                "edit": bed_temp_value,
+                "spinbox": bed_temp_value,
             }
 
         elif name == "skirt_line_count":
             self.ensure_sett("slicing.skirt_line_count")
 
             skirt_line_count_label = QLabel(self.locale.SkirtLineCount)
-            skirt_line_count_value = LineEdit(str(self.sett().slicing.skirt_line_count))
-            skirt_line_count_value.setValidator(self.intValidator)
+            skirt_line_count_value = QSpinBox()
+            skirt_line_count_value.setMinimum(0)
+            skirt_line_count_value.setMaximum(9999)
+            skirt_line_count_value.setValue(int(self.sett().slicing.skirt_line_count))
             self.panel.addWidget(skirt_line_count_label, self.next_row, 1)
             self.panel.addWidget(
                 skirt_line_count_value, self.cur_row, 2, 1, self.col2_cells
             )
 
             def on_change():
-                self.sett().slicing.skirt_line_count = self.__smart_float(
-                    skirt_line_count_value.text()
-                )
+                self.sett().slicing.skirt_line_count = skirt_line_count_value.value()
 
-            skirt_line_count_value.textChanged.connect(on_change)
+            skirt_line_count_value.valueChanged.connect(on_change)
 
             self.__elements[name] = {
                 "label": skirt_line_count_label,
-                "edit": skirt_line_count_value,
+                "spinbox": skirt_line_count_value,
             }
 
         elif name == "fan_speed":
             self.ensure_sett("slicing.fan_speed")
 
             fan_speed_label = QLabel(self.locale.FanSpeed)
-            fan_speed_value = LineEdit(str(self.sett().slicing.fan_speed))
-            fan_speed_value.setValidator(self.intValidator)
+            fan_speed_value = QSpinBox()
+            fan_speed_value.setMinimum(0)
+            fan_speed_value.setMaximum(9999)
+            fan_speed_value.setValue(int(self.sett().slicing.fan_speed))
             self.panel.addWidget(fan_speed_label, self.next_row, 1)
             self.panel.addWidget(fan_speed_value, self.cur_row, 2, 1, self.col2_cells)
 
             def on_change():
-                self.sett().slicing.fan_speed = self.__smart_float(
-                    fan_speed_value.text()
-                )
+                self.sett().slicing.fan_speed = fan_speed_value.value()
 
-            fan_speed_value.textChanged.connect(on_change)
+            fan_speed_value.valueChanged.connect(on_change)
 
             self.__elements[name] = {
                 "label": fan_speed_label,
-                "edit": fan_speed_value,
+                "spinbox": fan_speed_value,
                 "setting": "slicing.fan_speed",
             }
 
@@ -840,69 +865,71 @@ class SettingsWidget(QWidget):
             self.ensure_sett("slicing.print_speed")
 
             print_speed_label = QLabel(self.locale.PrintSpeed)
-            print_speed_value = LineEdit(str(self.sett().slicing.print_speed))
-            print_speed_value.setValidator(self.intValidator)
+            print_speed_value = QSpinBox()
+            print_speed_value.setMinimum(0)
+            print_speed_value.setMaximum(9999)
+            print_speed_value.setValue(int(self.sett().slicing.print_speed))
             self.panel.addWidget(print_speed_label, self.next_row, 1)
             self.panel.addWidget(print_speed_value, self.cur_row, 2, 1, self.col2_cells)
 
             def on_change():
-                self.sett().slicing.print_speed = self.__smart_float(
-                    print_speed_value.text()
-                )
+                self.sett().slicing.print_speed = print_speed_value.value()
 
-            print_speed_value.textChanged.connect(on_change)
+            print_speed_value.valueChanged.connect(on_change)
 
             self.__elements[name] = {
                 "label": print_speed_label,
-                "edit": print_speed_value,
+                "spinbox": print_speed_value,
             }
 
         elif name == "print_speed_layer1":
             self.ensure_sett("slicing.print_speed_layer1")
 
             print_speed_layer1_label = QLabel(self.locale.PrintSpeedLayer1)
-            print_speed_layer1_value = LineEdit(
-                str(self.sett().slicing.print_speed_layer1)
+            print_speed_layer1_value = QSpinBox()
+            print_speed_layer1_value.setMinimum(0)
+            print_speed_layer1_value.setMaximum(9999)
+            print_speed_layer1_value.setValue(
+                int(self.sett().slicing.print_speed_layer1)
             )
-            print_speed_layer1_value.setValidator(self.intValidator)
             self.panel.addWidget(print_speed_layer1_label, self.next_row, 1)
             self.panel.addWidget(
                 print_speed_layer1_value, self.cur_row, 2, 1, self.col2_cells
             )
 
             def on_change():
-                self.sett().slicing.print_speed_layer1 = self.__smart_float(
-                    print_speed_layer1_value.text()
+                self.sett().slicing.print_speed_layer1 = (
+                    print_speed_layer1_value.value()
                 )
 
-            print_speed_layer1_value.textChanged.connect(on_change)
+            print_speed_layer1_value.valueChanged.connect(on_change)
 
             self.__elements[name] = {
                 "label": print_speed_layer1_label,
-                "edit": print_speed_layer1_value,
+                "spinbox": print_speed_layer1_value,
             }
 
         elif name == "print_speed_wall":
             self.ensure_sett("slicing.print_speed_wall")
 
             print_speed_wall_label = QLabel(self.locale.PrintSpeedWall)
-            print_speed_wall_value = LineEdit(str(self.sett().slicing.print_speed_wall))
-            print_speed_wall_value.setValidator(self.intValidator)
+            print_speed_wall_value = QSpinBox()
+            print_speed_wall_value.setMinimum(0)
+            print_speed_wall_value.setMaximum(9999)
+            print_speed_wall_value.setValue(int(self.sett().slicing.print_speed_wall))
             self.panel.addWidget(print_speed_wall_label, self.next_row, 1)
             self.panel.addWidget(
                 print_speed_wall_value, self.cur_row, 2, 1, self.col2_cells
             )
 
             def on_change():
-                self.sett().slicing.print_speed_wall = self.__smart_float(
-                    print_speed_wall_value.text()
-                )
+                self.sett().slicing.print_speed_wall = print_speed_wall_value.value()
 
-            print_speed_wall_value.textChanged.connect(on_change)
+            print_speed_wall_value.valueChanged.connect(on_change)
 
             self.__elements[name] = {
                 "label": print_speed_wall_label,
-                "edit": print_speed_wall_value,
+                "spinbox": print_speed_wall_value,
             }
 
         elif name == "filling_type":
@@ -938,23 +965,23 @@ class SettingsWidget(QWidget):
             self.ensure_sett("slicing.fill_density")
 
             fill_density_label = QLabel(self.locale.FillDensity)
-            fill_density_value = LineEdit(str(self.sett().slicing.fill_density))
-            fill_density_value.setValidator(self.intValidator)
+            fill_density_value = QSpinBox()
+            fill_density_value.setMinimum(0)
+            fill_density_value.setMaximum(100)
+            fill_density_value.setValue(int(self.sett().slicing.fill_density))
             self.panel.addWidget(fill_density_label, self.next_row, 1)
             self.panel.addWidget(
                 fill_density_value, self.cur_row, 2, 1, self.col2_cells
             )
 
             def on_change():
-                self.sett().slicing.fill_density = self.__smart_float(
-                    fill_density_value.text()
-                )
+                self.sett().slicing.fill_density = fill_density_value.value()
 
-            fill_density_value.textChanged.connect(on_change)
+            fill_density_value.valueChanged.connect(on_change)
 
             self.__elements[name] = {
                 "label": fill_density_label,
-                "edit": fill_density_value,
+                "spinbox": fill_density_value,
                 "setting": "slicing.fill_density",
             }
 
@@ -980,32 +1007,34 @@ class SettingsWidget(QWidget):
 
             self.__elements[name] = {
                 "label": minimum_fill_area_label,
-                "edit": minimum_fill_area_value,
+                "spinbox": minimum_fill_area_value,
             }
 
         elif name == "overlap_infill":
             self.ensure_sett("slicing.overlapping_infill_percentage")
 
             overlap_infill_label = QLabel(self.locale.OverlappingInfillPercentage)
-            overlap_infill_value = LineEdit(
-                str(self.sett().slicing.overlapping_infill_percentage)
+            overlap_infill_value = QSpinBox()
+            overlap_infill_value.setMinimum(0)
+            overlap_infill_value.setMaximum(100)
+            overlap_infill_value.setValue(
+                int(self.sett().slicing.overlapping_infill_percentage)
             )
-            overlap_infill_value.setValidator(self.intValidator)
             self.panel.addWidget(overlap_infill_label, self.next_row, 1)
             self.panel.addWidget(
                 overlap_infill_value, self.cur_row, 2, 1, self.col2_cells
             )
 
             def on_change():
-                self.sett().slicing.overlapping_infill_percentage = self.__smart_float(
-                    overlap_infill_value.text()
+                self.sett().slicing.overlapping_infill_percentage = (
+                    overlap_infill_value.value()
                 )
 
-            overlap_infill_value.textChanged.connect(on_change)
+            overlap_infill_value.valueChanged.connect(on_change)
 
             self.__elements[name] = {
                 "label": overlap_infill_label,
-                "edit": overlap_infill_value,
+                "spinbox": overlap_infill_value,
             }
 
         elif name == "retraction_on":
@@ -1032,48 +1061,54 @@ class SettingsWidget(QWidget):
             self.ensure_sett("slicing.retraction_distance")
 
             retraction_distance_label = QLabel(self.locale.RetractionDistance)
-            retraction_distance_value = LineEdit(
-                str(self.sett().slicing.retraction_distance)
-            )
-            retraction_distance_value.setValidator(self.doubleValidator)
+            retraction_distance_value = QDoubleSpinBox()
+            retraction_distance_value.setMinimum(0.0)
+            retraction_distance_value.setMaximum(9999.0)
+            retraction_distance_value.validator = FloatValidator()
+            try:
+                retraction_distance_value.setValue(
+                    self.sett().slicing.retraction_distance
+                )
+            except:
+                retraction_distance_value.setValue(0.0)
             self.panel.addWidget(retraction_distance_label, self.next_row, 1)
             self.panel.addWidget(
                 retraction_distance_value, self.cur_row, 2, 1, self.col2_cells
             )
 
             def on_change():
-                self.sett().slicing.retraction_distance = self.__smart_float(
-                    retraction_distance_value.text()
+                self.sett().slicing.retraction_distance = (
+                    retraction_distance_value.value()
                 )
 
-            retraction_distance_value.textChanged.connect(on_change)
+            retraction_distance_value.valueChanged.connect(on_change)
 
             self.__elements[name] = {
                 "label": retraction_distance_label,
-                "edit": retraction_distance_value,
+                "spinbox": retraction_distance_value,
             }
 
         elif name == "retraction_speed":
             self.ensure_sett("slicing.retraction_speed")
 
             retraction_speed_label = QLabel(self.locale.RetractionSpeed)
-            retraction_speed_value = LineEdit(str(self.sett().slicing.retraction_speed))
-            retraction_speed_value.setValidator(self.intValidator)
+            retraction_speed_value = QSpinBox()
+            retraction_speed_value.setMinimum(0)
+            retraction_speed_value.setMaximum(9999)
+            retraction_speed_value.setValue(int(self.sett().slicing.retraction_speed))
             self.panel.addWidget(retraction_speed_label, self.next_row, 1)
             self.panel.addWidget(
                 retraction_speed_value, self.cur_row, 2, 1, self.col2_cells
             )
 
             def on_change():
-                self.sett().slicing.retraction_speed = self.__smart_float(
-                    retraction_speed_value.text()
-                )
+                self.sett().slicing.retraction_speed = retraction_speed_value.value()
 
-            retraction_speed_value.textChanged.connect(on_change)
+            retraction_speed_value.valueChanged.connect(on_change)
 
             self.__elements[name] = {
                 "label": retraction_speed_label,
-                "edit": retraction_speed_value,
+                "spinbox": retraction_speed_value,
             }
 
         elif name == "retraction_compensation":
@@ -1082,50 +1117,50 @@ class SettingsWidget(QWidget):
             retraction_compensation_label = QLabel(
                 self.locale.RetractCompensationAmount
             )
-            retraction_compensation_value = LineEdit(
-                str(self.sett().slicing.retract_compensation_amount)
-            )
-            retraction_compensation_value.setValidator(self.doubleValidator)
+            retraction_compensation_value = QDoubleSpinBox()
+            retraction_compensation_value.setMinimum(0.0)
+            retraction_compensation_value.setMaximum(9999.0)
+            retraction_compensation_value.validator = FloatValidator()
             self.panel.addWidget(retraction_compensation_label, self.next_row, 1)
             self.panel.addWidget(
                 retraction_compensation_value, self.cur_row, 2, 1, self.col2_cells
             )
 
             def on_change():
-                self.sett().slicing.retract_compensation_amount = self.__smart_float(
-                    retraction_compensation_value.text()
+                self.sett().slicing.retract_compensation_amount = (
+                    retraction_compensation_value.value()
                 )
 
-            retraction_compensation_value.textChanged.connect(on_change)
+            retraction_compensation_value.valueChanged.connect(on_change)
 
             self.__elements[name] = {
                 "label": retraction_compensation_label,
-                "edit": retraction_compensation_value,
+                "spinbox": retraction_compensation_value,
             }
 
         elif name == "material_shrinkage":
             self.ensure_sett("slicing.material_shrinkage")
 
             material_shrinkage_label = QLabel(self.locale.MaterialShrinkage)
-            material_shrinkage_value = LineEdit(
-                str(self.sett().slicing.material_shrinkage)
-            )
-            material_shrinkage_value.setValidator(self.doublePercentValidator)
+            material_shrinkage_value = QDoubleSpinBox()
+            material_shrinkage_value.setMinimum(0.0)
+            material_shrinkage_value.setMaximum(9999.0)
+            material_shrinkage_value.setValue(self.sett().slicing.material_shrinkage)
             self.panel.addWidget(material_shrinkage_label, self.next_row, 1)
             self.panel.addWidget(
                 material_shrinkage_value, self.cur_row, 2, 1, self.col2_cells
             )
 
             def on_change():
-                self.sett().slicing.material_shrinkage = self.__smart_float(
-                    material_shrinkage_value.text()
+                self.sett().slicing.material_shrinkage = (
+                    material_shrinkage_value.value()
                 )
 
-            material_shrinkage_value.textChanged.connect(on_change)
+            material_shrinkage_value.valueChanged.connect(on_change)
 
             self.__elements[name] = {
                 "label": material_shrinkage_label,
-                "edit": material_shrinkage_value,
+                "spinbox": material_shrinkage_value,
             }
 
         elif name == "random_layer_start":
@@ -1172,12 +1207,15 @@ class SettingsWidget(QWidget):
             self.ensure_sett("slicing.flow_rate")
 
             flow_rate_label = QLabel(self.locale.FlowRate)
-            flow_rate_value = LineEdit(str(self.sett().slicing.flow_rate))
+            flow_rate_value = QDoubleSpinBox()
+            flow_rate_value.setMinimum(0.0)
+            flow_rate_value.setMaximum(9999.0)
+            flow_rate_value.setValue(self.sett().slicing.flow_rate)
             self.panel.addWidget(flow_rate_label, self.next_row, 1)
             self.panel.addWidget(flow_rate_value, self.cur_row, 2, 1, self.col2_cells)
 
             def on_change():
-                value = self.__smart_float(flow_rate_value.text())
+                value = flow_rate_value.value()
                 # value should be between 45 and 150 percent
                 if 45 <= value <= 150:
                     flow_rate_value.setStyleSheet("")  # Reset to default style
@@ -1191,11 +1229,11 @@ class SettingsWidget(QWidget):
                     )
                 self.sett().slicing.flow_rate = value
 
-            flow_rate_value.textChanged.connect(on_change)
+            flow_rate_value.valueChanged.connect(on_change)
 
             self.__elements[name] = {
                 "label": flow_rate_label,
-                "edit": flow_rate_value,
+                "spinbox": flow_rate_value,
             }
 
         elif name == "pressure_advance_on":
@@ -1226,7 +1264,10 @@ class SettingsWidget(QWidget):
             self.ensure_sett("slicing.pressure_advance")
 
             pressure_advance_label = QLabel(self.locale.PressureAdvanceValue)
-            pressure_advance_value = LineEdit(str(self.sett().slicing.pressure_advance))
+            pressure_advance_value = QDoubleSpinBox()
+            pressure_advance_value.setMinimum(0.01)
+            pressure_advance_value.setMaximum(1.0)
+            pressure_advance_value.setValue(self.sett().slicing.pressure_advance)
             # between 0.01 and 0.9, default is 0.45
             self.panel.addWidget(pressure_advance_label, self.next_row, 1)
             self.panel.addWidget(
@@ -1234,7 +1275,7 @@ class SettingsWidget(QWidget):
             )
 
             def on_change():
-                value = self.__smart_float(pressure_advance_value.text())
+                value = pressure_advance_value.value()
                 # value should be between 0.01 and 0.9
                 if 0.01 <= value <= 0.9:
                     pressure_advance_value.setStyleSheet("")
@@ -1248,11 +1289,11 @@ class SettingsWidget(QWidget):
                     )
                 self.sett().slicing.pressure_advance = value
 
-            pressure_advance_value.textChanged.connect(on_change)
+            pressure_advance_value.valueChanged.connect(on_change)
 
             self.__elements[name] = {
                 "label": pressure_advance_label,
-                "edit": pressure_advance_value,
+                "spinbox": pressure_advance_value,
             }
 
         elif name == "supports_on":
@@ -1285,23 +1326,23 @@ class SettingsWidget(QWidget):
             self.ensure_sett("supports.fill_density")
 
             support_density_label = QLabel(self.locale.SupportDensity)
-            support_density_value = LineEdit(str(self.sett().supports.fill_density))
-            support_density_value.setValidator(self.intValidator)
+            support_density_value = QSpinBox()
+            support_density_value.setMinimum(0)
+            support_density_value.setMaximum(100)
+            support_density_value.setValue(int(self.sett().supports.fill_density))
             self.panel.addWidget(support_density_label, self.next_row, 1)
             self.panel.addWidget(
                 support_density_value, self.cur_row, 2, 1, self.col2_cells
             )
 
             def on_change():
-                self.sett().supports.fill_density = self.__smart_float(
-                    support_density_value.text()
-                )
+                self.sett().supports.fill_density = support_density_value.value()
 
-            support_density_value.textChanged.connect(on_change)
+            support_density_value.valueChanged.connect(on_change)
 
             self.__elements[name] = {
                 "label": support_density_label,
-                "edit": support_density_value,
+                "spinbox": support_density_value,
             }
 
         elif name == "support_fill_type":
@@ -1336,46 +1377,50 @@ class SettingsWidget(QWidget):
             self.ensure_sett("supports.xy_offset")
 
             support_xy_offset_label = QLabel(self.locale.SupportXYOffset)
-            support_xy_offset_value = LineEdit(str(self.sett().supports.xy_offset))
-            support_xy_offset_value.setValidator(self.doubleValidator)
+            support_xy_offset_value = QDoubleSpinBox()
+            support_xy_offset_value.setMinimum(0.0)
+            support_xy_offset_value.setMaximum(9999.0)
+            support_xy_offset_value.validator = FloatValidator()
+            try:
+                support_xy_offset_value.setValue(self.sett().supports.xy_offset)
+            except:
+                support_xy_offset_value.setValue(0.0)
             self.panel.addWidget(support_xy_offset_label, self.next_row, 1)
             self.panel.addWidget(
                 support_xy_offset_value, self.cur_row, 2, 1, self.col2_cells
             )
 
             def on_change():
-                self.sett().supports.xy_offset = self.__smart_float(
-                    support_xy_offset_value.text()
-                )
+                self.sett().supports.xy_offset = support_xy_offset_value.value()
 
-            support_xy_offset_value.textChanged.connect(on_change)
+            support_xy_offset_value.valueChanged.connect(on_change)
 
             self.__elements[name] = {
                 "label": support_xy_offset_label,
-                "edit": support_xy_offset_value,
+                "spinbox": support_xy_offset_value,
             }
 
         elif name == "support_z_offset":
             self.ensure_sett("supports.z_offset_layers")
 
             support_z_offset_label = QLabel(self.locale.SupportZOffsetLayers)
-            support_z_offset_value = LineEdit(str(self.sett().supports.z_offset_layers))
-            support_z_offset_value.setValidator(self.intValidator)
+            support_z_offset_value = QSpinBox()
+            support_z_offset_value.setMinimum(0)
+            support_z_offset_value.setMaximum(9999)
+            support_z_offset_value.setValue(int(self.sett().supports.z_offset_layers))
             self.panel.addWidget(support_z_offset_label, self.next_row, 1)
             self.panel.addWidget(
                 support_z_offset_value, self.cur_row, 2, 1, self.col2_cells
             )
 
             def on_change():
-                self.sett().supports.z_offset_layers = self.__smart_float(
-                    support_z_offset_value.text()
-                )
+                self.sett().supports.z_offset_layers = support_z_offset_value.value()
 
-            support_z_offset_value.textChanged.connect(on_change)
+            support_z_offset_value.valueChanged.connect(on_change)
 
             self.__elements[name] = {
                 "label": support_z_offset_label,
-                "edit": support_z_offset_value,
+                "spinbox": support_z_offset_value,
             }
 
         elif name == "support_priority_zoffset":
@@ -1409,11 +1454,13 @@ class SettingsWidget(QWidget):
             support_number_of_bottom_layers_label = QLabel(
                 self.locale.NumberOfBottomLayers
             )
-            support_number_of_bottom_layers_value = LineEdit(
-                str(self.sett().supports.bottoms_depth)
+            support_number_of_bottom_layers_value = QSpinBox()
+            support_number_of_bottom_layers_value.setMinimum(0)
+            support_number_of_bottom_layers_value.setMaximum(9999)
+            support_number_of_bottom_layers_value.setValue(
+                int(self.sett().supports.bottoms_depth)
             )
-            support_number_of_bottom_layers_value.setValidator(self.intValidator)
-            support_number_of_bottom_layers_value.textChanged.connect(
+            support_number_of_bottom_layers_value.valueChanged.connect(
                 self.__update_supports_bottom_thickness
             )
             self.panel.addWidget(
@@ -1422,15 +1469,15 @@ class SettingsWidget(QWidget):
             self.panel.addWidget(support_number_of_bottom_layers_value, self.cur_row, 2)
 
             bottom_thickness_label = QLabel(self.locale.BottomThickness)
-            bottom_thickness_value = LineEdit(
-                str(
-                    round(
-                        self.sett().supports.bottoms_depth
-                        * self.sett().slicing.layer_height,
-                        2,
-                    ),
+            bottom_thickness_value = QDoubleSpinBox()
+            bottom_thickness_value.setValue(
+                round(
+                    self.sett().supports.bottoms_depth
+                    * self.sett().slicing.layer_height,
+                    2,
                 )
             )
+            bottom_thickness_value.setButtonSymbols(QSpinBox.NoButtons)
             bottom_thickness_value.setReadOnly(True)
             millimeter_label = QLabel(self.locale.Millimeter)
 
@@ -1439,15 +1486,15 @@ class SettingsWidget(QWidget):
             self.panel.addWidget(millimeter_label, self.cur_row, 5)
 
             def on_change():
-                self.sett().supports.bottoms_depth = self.__smart_float(
-                    support_number_of_bottom_layers_value.text()
+                self.sett().supports.bottoms_depth = (
+                    support_number_of_bottom_layers_value.value()
                 )
 
-            support_number_of_bottom_layers_value.textChanged.connect(on_change)
+            support_number_of_bottom_layers_value.valueChanged.connect(on_change)
 
             self.__elements[name] = {
                 "label": support_number_of_bottom_layers_label,
-                "edit": support_number_of_bottom_layers_value,
+                "spinbox": support_number_of_bottom_layers_value,
                 "bottom_thickness_label": bottom_thickness_label,
                 "bottom_thickness_value": bottom_thickness_value,
             }
@@ -1456,26 +1503,27 @@ class SettingsWidget(QWidget):
             self.ensure_sett("supports.lids_depth")
 
             support_number_of_lid_layers_label = QLabel(self.locale.NumberOfLidLayers)
-            support_number_of_lid_layers_value = LineEdit(
-                str(self.sett().supports.lids_depth)
+            support_number_of_lid_layers_value = QSpinBox()
+            support_number_of_lid_layers_value.setMinimum(0)
+            support_number_of_lid_layers_value.setMaximum(9999)
+            support_number_of_lid_layers_value.setValue(
+                int(self.sett().supports.lids_depth)
             )
-            support_number_of_lid_layers_value.setValidator(self.intValidator)
-            support_number_of_lid_layers_value.textChanged.connect(
+            support_number_of_lid_layers_value.valueChanged.connect(
                 self.__update_supports_lid_thickness
             )
             self.panel.addWidget(support_number_of_lid_layers_label, self.next_row, 1)
             self.panel.addWidget(support_number_of_lid_layers_value, self.cur_row, 2)
 
             lid_thickness_label = QLabel(self.locale.LidsThickness)
-            lid_thickness_value = LineEdit(
-                str(
-                    round(
-                        self.sett().supports.lids_depth
-                        * self.sett().slicing.layer_height,
-                        2,
-                    ),
+            lid_thickness_value = QDoubleSpinBox()
+            lid_thickness_value.setValue(
+                round(
+                    self.sett().supports.lids_depth * self.sett().slicing.layer_height,
+                    2,
                 )
             )
+            lid_thickness_value.setButtonSymbols(QSpinBox.NoButtons)
             lid_thickness_value.setReadOnly(True)
             millimeter_label = QLabel(self.locale.Millimeter)
 
@@ -1484,15 +1532,15 @@ class SettingsWidget(QWidget):
             self.panel.addWidget(millimeter_label, self.cur_row, 5)
 
             def on_change():
-                self.sett().supports.lids_depth = self.__smart_float(
-                    support_number_of_lid_layers_value.text()
+                self.sett().supports.lids_depth = (
+                    support_number_of_lid_layers_value.value()
                 )
 
-            support_number_of_lid_layers_value.textChanged.connect(on_change)
+            support_number_of_lid_layers_value.valueChanged.connect(on_change)
 
             self.__elements[name] = {
                 "label": support_number_of_lid_layers_label,
-                "edit": support_number_of_lid_layers_value,
+                "spinbox": support_number_of_lid_layers_value,
                 "lid_thickness_label": lid_thickness_label,
                 "lid_thickness_value": lid_thickness_value,
             }
@@ -1500,19 +1548,26 @@ class SettingsWidget(QWidget):
             self.ensure_sett("slicing.angle")
 
             angle_label = QLabel(self.locale.CriticalWallOverhangAngle)
-            angle_value = LineEdit(str(self.sett().slicing.angle))
-            angle_value.setValidator(self.doubleValidator)
+            angle_value = QDoubleSpinBox()
+            angle_value.setMinimum(0.0)
+            angle_value.setMaximum(90.0)
+            angle_value.validator = FloatValidator()
+            try:
+                angle_value.setValue(self.sett().slicing.angle)
+            except:
+                angle_value.setValue(0.0)
+
             self.panel.addWidget(angle_label, self.next_row, 1)
             self.panel.addWidget(angle_value, self.cur_row, 2, 1, self.col2_cells)
 
             def on_change():
-                self.sett().slicing.angle = self.__smart_float(angle_value.text())
+                self.sett().slicing.angle = angle_value.value()
 
-            angle_value.textChanged.connect(on_change)
+            angle_value.valueChanged.connect(on_change)
 
             self.__elements[name] = {
                 "label": angle_label,
-                "edit": angle_value,
+                "spinbox": angle_value,
             }
         elif name == "support_create_walls":
             self.ensure_sett("supports.create_walls")
@@ -1583,29 +1638,29 @@ class SettingsWidget(QWidget):
 
             self.__elements[name] = {
                 "label": auto_fan_area_label,
-                "edit": auto_fan_area_value,
+                "spinbox": auto_fan_area_value,
             }
         elif name == "auto_fan_speed":
             self.ensure_sett("slicing.auto_fan.fan_speed")
 
             auto_fan_speed_label = QLabel(self.locale.AutoFanSpeed)
-            auto_fan_speed_value = LineEdit(str(self.sett().slicing.auto_fan.fan_speed))
-            auto_fan_speed_value.setValidator(self.intValidator)
+            auto_fan_speed_value = QSpinBox()
+            auto_fan_speed_value.setMinimum(0)
+            auto_fan_speed_value.setMaximum(9999)
+            auto_fan_speed_value.setValue(int(self.sett().slicing.auto_fan.fan_speed))
             self.panel.addWidget(auto_fan_speed_label, self.next_row, 1)
             self.panel.addWidget(
                 auto_fan_speed_value, self.cur_row, 2, 1, self.col2_cells
             )
 
             def on_change():
-                self.sett().slicing.auto_fan.fan_speed = self.__smart_float(
-                    auto_fan_speed_value.text()
-                )
+                self.sett().slicing.auto_fan.fan_speed = auto_fan_speed_value.value()
 
-            auto_fan_speed_value.textChanged.connect(on_change)
+            auto_fan_speed_value.valueChanged.connect(on_change)
 
             self.__elements[name] = {
                 "label": auto_fan_speed_label,
-                "edit": auto_fan_speed_value,
+                "spinbox": auto_fan_speed_value,
             }
 
         # add row index for element
@@ -1613,12 +1668,33 @@ class SettingsWidget(QWidget):
 
         return self
 
+    def __update_dependent_fields(self, spinbox1, spinbox2, spinbox_output):
+        # take value from spinbox1 and spinbox2, multiply them and set the result to spinbox_output
+        value1 = spinbox1.value()
+        value2 = spinbox2.value()
+
+        spinbox_output.setValue(float(value1 * value2))
+
+        return
+
+        entry_field_1_text = entry_field_1.text().replace(",", ".")
+        entry_field_2_text = entry_field_2.text().replace(",", ".")
+
+        if ((not entry_field_1_text) or entry_field_1_text == ".") or (
+            (not entry_field_2_text) or entry_field_2_text == "."
+        ):
+            output_field.setText("0.0")
+        else:
+            output_field.setText(
+                str(round(float(entry_field_1_text) * float(entry_field_2_text), 2))
+            )
+
     def __update_wall_thickness(self):
         """Callback to update wall thickness when number of wall lines or line width changes."""
         try:
-            self.update_dependent_fields(
-                self.edit("number_wall_lines"),
-                self.edit("line_width"),
+            self.__update_dependent_fields(
+                self.spinbox("number_wall_lines"),
+                self.spinbox("line_width"),
                 self.get_element("number_wall_lines", "wall_thickness_value"),
             )
         except KeyError:
@@ -1627,9 +1703,9 @@ class SettingsWidget(QWidget):
     def __update_bottom_thickness(self):
         """Callback to update bottom thickness when number of bottom layers or layer height changes."""
         try:
-            self.update_dependent_fields(
-                self.edit("number_of_bottom_layers"),
-                self.edit("layer_height"),
+            self.__update_dependent_fields(
+                self.spinbox("number_of_bottom_layers"),
+                self.spinbox("layer_height"),
                 self.get_element("number_of_bottom_layers", "bottom_thickness_value"),
             )
         except KeyError:
@@ -1638,9 +1714,9 @@ class SettingsWidget(QWidget):
     def __update_lid_thickness(self):
         """Callback to update lid thickness when number of lid layers or layer height changes."""
         try:
-            self.update_dependent_fields(
-                self.edit("number_of_lids_layers"),
-                self.edit("layer_height"),
+            self.__update_dependent_fields(
+                self.spinbox("number_of_lids_layers"),
+                self.spinbox("layer_height"),
                 self.get_element("number_of_lids_layers", "lid_thickness_value"),
             )
         except KeyError:
@@ -1649,9 +1725,9 @@ class SettingsWidget(QWidget):
     def __update_supports_bottom_thickness(self):
         """Callback to update bottom thickness when number of bottom layers or layer height changes."""
         try:
-            self.update_dependent_fields(
-                self.edit("support_number_of_bottom_layers"),
-                self.edit("layer_height"),
+            self.__update_dependent_fields(
+                self.spinbox("support_number_of_bottom_layers"),
+                self.spinbox("layer_height"),
                 self.get_element(
                     "support_number_of_bottom_layers", "bottom_thickness_value"
                 ),
@@ -1662,9 +1738,9 @@ class SettingsWidget(QWidget):
     def __update_supports_lid_thickness(self):
         """Callback to update lid thickness when number of lid layers or layer height changes."""
         try:
-            self.update_dependent_fields(
-                self.edit("support_number_of_lid_layers"),
-                self.edit("layer_height"),
+            self.__update_dependent_fields(
+                self.spinbox("support_number_of_lid_layers"),
+                self.spinbox("layer_height"),
                 self.get_element("support_number_of_lid_layers", "lid_thickness_value"),
             )
         except KeyError:
