@@ -1801,20 +1801,6 @@ class SettingsWidget(QToolBox):
 
         spinbox_output.setValue(float(value1 * value2))
 
-        return
-
-        entry_field_1_text = entry_field_1.text().replace(",", ".")
-        entry_field_2_text = entry_field_2.text().replace(",", ".")
-
-        if ((not entry_field_1_text) or entry_field_1_text == ".") or (
-            (not entry_field_2_text) or entry_field_2_text == "."
-        ):
-            output_field.setText("0.0")
-        else:
-            output_field.setText(
-                str(round(float(entry_field_1_text) * float(entry_field_2_text), 2))
-            )
-
     def __update_wall_thickness(self):
         """Callback to update wall thickness when number of wall lines or line width changes."""
         try:
