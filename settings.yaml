@@ -97,7 +97,7 @@ slicing:
   lids_depth: 3
   bottoms_depth: 3
   line_width: 0.4
-  magic_epsilon: 40
+  magic_epsilon: 15
   material_shrinkage: 0.0
   flow_rate: 100
   pressure_advance_on: true
