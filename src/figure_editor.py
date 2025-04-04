@@ -161,7 +161,7 @@ class FigureEditor(QWidget):
 
         # part regarding additional settings per figure
         self.__additional_settings_widget = (
-            SettingsWidget(settings_provider=settings_provider)
+            SettingsWidget(settings_provider=settings_provider, use_grouping=False)
             .from_settings(settings_provider())
             .with_delete()
         )

@@ -11,6 +11,8 @@ from PyQt5.QtWidgets import (
     QStyle,
     QSpinBox,
     QDoubleSpinBox,
+    QToolBox,
+    QSizePolicy,
 )
 
 from src import locales
@@ -45,7 +47,7 @@ class FloatValidator(QtGui.QValidator):
         return match.groups()[0] if match else ""
 
 
-class SettingsWidget(QWidget):
+class SettingsWidget(QToolBox):
     """
     Settings widget defines a way to create a widget with chosen number of settings inside
     """
@@ -107,6 +109,56 @@ class SettingsWidget(QWidget):
         "critical_angle",
     ]
 
+    GROUPING = {
+        "model": [
+            "printer_path",
+            "layer_height",
+            "line_width",
+            "number_wall_lines",
+            "number_of_bottom_layers",
+            "number_of_lids_layers",
+            "is_wall_outside_in",
+            "supports_on",
+            "support_density",
+            "support_z_offset",
+            "support_priority_zoffset",
+            "support_xy_offset",
+            "support_number_of_bottom_layers",
+            "support_number_of_lid_layers",
+            "support_create_walls",
+            "critical_angle",
+            "skirt_line_count",
+        ],
+        "material": [
+            "extruder_temp",
+            "bed_temp",
+            "fan_speed",
+            "fan_off_layer1",
+            "auto_fan_enabled",
+            "auto_fan_area",
+            "auto_fan_speed",
+            "retraction_on",
+            "retraction_distance",
+            "retraction_speed",
+            "retraction_compensation",
+            "pressure_advance_on",
+            "pressure_advance",
+            "material_shrinkage",
+            "uninterrupted_print",
+            "m10_cut_distance",
+            "print_speed",
+            "print_speed_layer1",
+            "print_speed_wall",
+            "filling_type",
+            "support_fill_type",
+            "fill_density",
+            "minimum_fill_area",
+            "overlap_infill",
+            "random_layer_start",
+            "flow_rate",
+        ],
+    }
+
     # extra parameters are only used for a small widget with parameters for each figure specifically
     # also in corresponding branch "setting" key should point to the correct setting
     extra_sett_parameters = [
@@ -115,7 +167,12 @@ class SettingsWidget(QWidget):
         "fan_speed",
     ]
 
-    def __init__(self, parent=None, settings_provider: callable = None):
+    def __init__(
+        self,
+        parent=None,
+        settings_provider: callable = None,
+        use_grouping=True,
+    ):
         super(SettingsWidget, self).__init__(parent)
 
         assert settings_provider is not None, "Settings provider is required"
@@ -125,18 +182,63 @@ class SettingsWidget(QWidget):
         # TODO: Load the bundled settings
         self.bundled_settings = Settings(read_settings(filename=None))
 
-        self.panel = QGridLayout()
-        self.panel.setSpacing(5)
-        self.panel.setColumnStretch(1, 1)
-        self.panel.setColumnStretch(3, 1)
-        self.panel.setColumnStretch(4, 1)
+        self.locale: locales.Locale = locales.getLocale()
+        # create panels depending on the alignment of the widget
+        self.use_grouping = use_grouping
+        if self.use_grouping:
+            from PyQt5.QtWidgets import QScrollArea
 
-        self.setLayout(self.panel)
+            self.layouts = {}
+            for group in self.GROUPING.keys():
+                page = QWidget()
+                page.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+                page.setObjectName(group)
+                layout = QGridLayout(page)
+                layout.setVerticalSpacing(10)
+                layout.setHorizontalSpacing(10)
+                layout.setContentsMargins(10, 10, 10, 10)
+                layout.setColumnStretch(1, 1)
+                layout.setColumnStretch(3, 1)
+                layout.setColumnStretch(4, 1)
+                self.layouts[group] = layout
+
+                scroll = QScrollArea()
+                scroll.setWidget(page)
+                scroll.setWidgetResizable(True)
+                self.addItem(
+                    scroll,
+                    self.locale.GroupNames.get(group, f"{group.capitalize()} settings"),
+                )
+        else:
+            page1 = QWidget()
+            page1.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            page1.setObjectName("page1")
+
+            self.layouts = {
+                "default": QGridLayout(page1),
+            }
+
+            for k, v in self.layouts.items():
+                from PyQt5.QtWidgets import QLayout
+
+                v.setSizeConstraint(QLayout.SetFixedSize)
+                v.setVerticalSpacing(10)
+                v.setHorizontalSpacing(10)
+                v.setContentsMargins(10, 10, 10, 10)
+                v.setColumnStretch(1, 1)
+                v.setColumnStretch(3, 1)
+                v.setColumnStretch(4, 1)
+            from PyQt5.QtWidgets import QScrollArea
+
+            scroll = QScrollArea()
+            scroll.setWidget(page1)
+            scroll.setWidgetResizable(True)
+            self.addItem(scroll, self.locale.Settings)
+
+        self.__rows = {}
 
         self.__elements = {}
         self.__order = []  # order of keys in the panel from top to bottom
-
-        self.locale: locales.Locale = locales.getLocale()
 
         self.__current_row = 1
 
@@ -179,16 +281,49 @@ class SettingsWidget(QWidget):
             "support_number_of_lid_layers": self.locale.NumberOfLidLayers,
         }
 
+    def get_panel_name(self, sett_name: str):
+        # given a name of the setting, return the panel where we should append it
+        if not self.use_grouping:
+            return "default"
+
+        for group, params in self.GROUPING.items():
+            if sett_name in params:
+                return group
+
+        # we should have found the group
+        raise ValueError(f"Group for {sett_name} not found")
+
+    def get_panel(self, sett_name: str):
+        return self.layouts[self.get_panel_name(sett_name)]
+
+    def panel_next_row(self, sett_name: str):
+        # given a name of the setting, get what is the next row in the panel, increment and return so we add it to the grid
+        panel_name = self.get_panel_name(sett_name)
+
+        if panel_name not in self.__rows:
+            self.__rows[panel_name] = 1
+        else:
+            self.__rows[panel_name] += 1
+        return self.__rows[panel_name]
+
+    def panel_current_row(self, sett_name: str):
+        # given a name of the setting, get what is the current row in the panel, return it
+        panel_name = self.get_panel_name(sett_name)
+        if panel_name not in self.__rows:
+            self.__rows[panel_name] = 1
+        return self.__rows[panel_name]
+
     def reload(self):
         # reloads all settings from the sett
         # right now we do it by deleting previous elements
         # and creating new ones with the same order
 
         # TODO: a little bit of copying, but it's ok for now
-        def get_row_widgets(row_idx):
+        def get_row_widgets(key, row_idx):
             widgets = []
+            panel = self.get_panel(key)
             for i in range(7):  # TODO: move to constant
-                item = self.panel.itemAtPosition(row_idx, i)
+                item = panel.itemAtPosition(row_idx, i)
                 if item is None:
                     continue
                 if len(widgets) != 0 and item.widget() == widgets[-1]:
@@ -197,10 +332,11 @@ class SettingsWidget(QWidget):
                 widgets.append((item.widget(), i))
             return widgets
 
-        def remove_row(row_idx):
-            dlt_row = get_row_widgets(row_idx)
+        def remove_row(key, row_idx):
+            panel = self.get_panel(key)
+            dlt_row = get_row_widgets(key, row_idx)
             for _, col_idx in dlt_row:
-                self.panel.itemAtPosition(row_idx, col_idx).widget().deleteLater()
+                panel.itemAtPosition(row_idx, col_idx).widget().deleteLater()
 
             # find key by row index
             key = None
@@ -307,20 +443,23 @@ class SettingsWidget(QWidget):
 
         for key in self.__elements:
             row_idx = self.__elements[key]["row_idx"]
+            panel = self.get_panel(key)
 
             # check whether this row already has delete button
-            if self.panel.itemAtPosition(row_idx, 6) is not None:
+            if panel.itemAtPosition(row_idx, 6) is not None:
                 continue
 
             delete_btn = QPushButton()
             self.btns += [delete_btn]
             # set icon
             delete_btn.setIcon(self.style().standardIcon(QStyle.SP_DialogCloseButton))
+            # set background color
+            delete_btn.setStyleSheet("background-color: red;")
 
             def get_row_widgets(row_idx):
                 widgets = []
                 for i in range(7):  # TODO: move to constant
-                    item = self.panel.itemAtPosition(row_idx, i)
+                    item = panel.itemAtPosition(row_idx, i)
                     if item is None:
                         continue
                     if len(widgets) != 0 and item.widget() == widgets[-1]:
@@ -332,7 +471,7 @@ class SettingsWidget(QWidget):
             def remove_row(row_idx):
                 dlt_row = get_row_widgets(row_idx)
                 for _, col_idx in dlt_row:
-                    self.panel.itemAtPosition(row_idx, col_idx).widget().deleteLater()
+                    panel.itemAtPosition(row_idx, col_idx).widget().deleteLater()
 
                 # find key by row index
                 key = None
@@ -348,7 +487,7 @@ class SettingsWidget(QWidget):
             delete_btn.clicked.connect(lambda _, row_idx=row_idx: remove_row(row_idx))
 
             # TODO: set btn index constant
-            self.panel.addWidget(delete_btn, row_idx, 6)
+            panel.addWidget(delete_btn, row_idx, 6)
 
         return self
 
@@ -446,6 +585,11 @@ class SettingsWidget(QWidget):
 
         self.__order.append(name)
 
+        # given setting name get the panel where we should add it
+        panel = self.get_panel(name)
+        panel_cur_row = lambda: self.panel_current_row(name)
+        panel_next_row = lambda: self.panel_next_row(name)
+
         # we match the given name with each setting and add it to the layout
         if name == "printer_path":
             # self.ensure_sett("hardware.printer_path")
@@ -479,9 +623,9 @@ class SettingsWidget(QWidget):
             printer_add_btn.setToolTip(self.locale.AddNewPrinter)
 
             label = QLabel(self.locale.PrinterName)
-            self.panel.addWidget(label, self.next_row, 1)
-            self.panel.addWidget(printer_add_btn, self.cur_row, 2)
-            self.panel.addWidget(printer_path_edit, self.cur_row, 3, 1, 3)
+            panel.addWidget(label, panel_next_row(), 1)
+            panel.addWidget(printer_add_btn, panel_cur_row(), 2)
+            panel.addWidget(printer_path_edit, panel_cur_row(), 3, 1, 3)
 
             self.__elements[name] = {
                 "label": label,
@@ -496,11 +640,9 @@ class SettingsWidget(QWidget):
             uninterrupted_print_box = QCheckBox()
             if sett().uninterrupted_print.enabled:
                 uninterrupted_print_box.setCheckState(QtCore.Qt.Checked)
-            self.panel.addWidget(
-                QLabel(self.locale.UninterruptedPrint), self.next_row, 1
-            )
-            self.panel.addWidget(
-                uninterrupted_print_box, self.cur_row, 2, 1, self.col2_cells
+            panel.addWidget(QLabel(self.locale.UninterruptedPrint), panel_next_row(), 1)
+            panel.addWidget(
+                uninterrupted_print_box, panel_cur_row(), 2, 1, self.col2_cells
             )
 
             # on check on this box, we should restrict fill type to zigzag only
@@ -543,9 +685,9 @@ class SettingsWidget(QWidget):
                 m10_cut_distance_value.setValue(sett().uninterrupted_print.cut_distance)
             except:
                 m10_cut_distance_value.setValue(0.0)
-            self.panel.addWidget(m10_cut_distance, self.next_row, 1)
-            self.panel.addWidget(
-                m10_cut_distance_value, self.cur_row, 2, 1, self.col2_cells
+            panel.addWidget(m10_cut_distance, panel_next_row(), 1)
+            panel.addWidget(
+                m10_cut_distance_value, panel_cur_row(), 2, 1, self.col2_cells
             )
 
             def on_change():
@@ -566,8 +708,8 @@ class SettingsWidget(QWidget):
             line_width_value.setMinimum(0.0)
             line_width_value.setMaximum(9999.0)
             line_width_value.validator = FloatValidator()
-            self.panel.addWidget(line_width, self.next_row, 1)
-            self.panel.addWidget(line_width_value, self.cur_row, 2, 1, self.col2_cells)
+            panel.addWidget(line_width, panel_next_row(), 1)
+            panel.addWidget(line_width_value, panel_cur_row(), 2, 1, self.col2_cells)
             try:
                 line_width_value.setValue(self.sett().slicing.line_width)
             except:
@@ -594,10 +736,8 @@ class SettingsWidget(QWidget):
             layer_height_value.setMaximum(9999.0)
             layer_height_value.validator = FloatValidator()
             layer_height_value.valueChanged.connect(self.__change_layer_height)
-            self.panel.addWidget(layer_height, self.next_row, 1)
-            self.panel.addWidget(
-                layer_height_value, self.cur_row, 2, 1, self.col2_cells
-            )
+            panel.addWidget(layer_height, panel_next_row(), 1)
+            panel.addWidget(layer_height_value, panel_cur_row(), 2, 1, self.col2_cells)
 
             try:
                 layer_height_value.setValue(self.sett().slicing.layer_height)
@@ -631,8 +771,8 @@ class SettingsWidget(QWidget):
             number_wall_lines_value.setValue(number_wall_lines)
             number_wall_lines_value.valueChanged.connect(self.__update_wall_thickness)
 
-            self.panel.addWidget(number_wall_lines_label, self.next_row, 1)
-            self.panel.addWidget(number_wall_lines_value, self.cur_row, 2)
+            panel.addWidget(number_wall_lines_label, panel_next_row(), 1)
+            panel.addWidget(number_wall_lines_value, panel_cur_row(), 2)
 
             wall_thickness_label = QLabel(self.locale.WallThickness)
             wall_thickness_value = QDoubleSpinBox()
@@ -640,9 +780,9 @@ class SettingsWidget(QWidget):
             wall_thickness_value.setButtonSymbols(QSpinBox.NoButtons)
             wall_thickness_value.setReadOnly(True)
             millimeter_label = QLabel(self.locale.Millimeter)
-            self.panel.addWidget(wall_thickness_label, self.cur_row, 3)
-            self.panel.addWidget(wall_thickness_value, self.cur_row, 4)
-            self.panel.addWidget(millimeter_label, self.cur_row, 5)
+            panel.addWidget(wall_thickness_label, panel_cur_row(), 3)
+            panel.addWidget(wall_thickness_value, panel_cur_row(), 4)
+            panel.addWidget(millimeter_label, panel_cur_row(), 5)
 
             def on_change():
                 self.sett().slicing.wall_thickness = wall_thickness_value.value()
@@ -670,8 +810,8 @@ class SettingsWidget(QWidget):
                 self.__update_bottom_thickness
             )
 
-            self.panel.addWidget(number_of_bottom_layers_label, self.next_row, 1)
-            self.panel.addWidget(number_of_bottom_layers_value, self.cur_row, 2)
+            panel.addWidget(number_of_bottom_layers_label, panel_next_row(), 1)
+            panel.addWidget(number_of_bottom_layers_value, panel_cur_row(), 2)
 
             bottom_thickness_label = QLabel(self.locale.BottomThickness)
             bottom_thickness_value = QDoubleSpinBox()
@@ -686,9 +826,9 @@ class SettingsWidget(QWidget):
             bottom_thickness_value.setReadOnly(True)
             millimeter_label = QLabel(self.locale.Millimeter)
 
-            self.panel.addWidget(bottom_thickness_label, self.cur_row, 3)
-            self.panel.addWidget(bottom_thickness_value, self.cur_row, 4)
-            self.panel.addWidget(millimeter_label, self.cur_row, 5)
+            panel.addWidget(bottom_thickness_label, panel_cur_row(), 3)
+            panel.addWidget(bottom_thickness_value, panel_cur_row(), 4)
+            panel.addWidget(millimeter_label, panel_cur_row(), 5)
 
             def on_change():
                 self.sett().slicing.bottoms_depth = (
@@ -716,8 +856,8 @@ class SettingsWidget(QWidget):
                 self.__update_lid_thickness
             )
 
-            self.panel.addWidget(number_of_lids_layers_label, self.next_row, 1)
-            self.panel.addWidget(number_of_lids_layers_value, self.cur_row, 2)
+            panel.addWidget(number_of_lids_layers_label, panel_next_row(), 1)
+            panel.addWidget(number_of_lids_layers_value, panel_cur_row(), 2)
 
             lid_thickness_label = QLabel(self.locale.LidsThickness)
             lid_thickness_value = QDoubleSpinBox()
@@ -734,9 +874,9 @@ class SettingsWidget(QWidget):
             lid_thickness_value.setReadOnly(True)
             millimeter_label = QLabel(self.locale.Millimeter)
 
-            self.panel.addWidget(lid_thickness_label, self.cur_row, 3)
-            self.panel.addWidget(lid_thickness_value, self.cur_row, 4)
-            self.panel.addWidget(millimeter_label, self.cur_row, 5)
+            panel.addWidget(lid_thickness_label, panel_cur_row(), 3)
+            panel.addWidget(lid_thickness_value, panel_cur_row(), 4)
+            panel.addWidget(millimeter_label, panel_cur_row(), 5)
 
             def on_change():
                 self.sett().slicing.lids_depth = number_of_lids_layers_value.value()
@@ -758,10 +898,8 @@ class SettingsWidget(QWidget):
             extruder_temp_value.setMinimum(0)
             extruder_temp_value.setMaximum(9999)
             extruder_temp_value.setValue(int(self.sett().slicing.extruder_temperature))
-            self.panel.addWidget(extruder_temp_label, self.next_row, 1)
-            self.panel.addWidget(
-                extruder_temp_value, self.cur_row, 2, 1, self.col2_cells
-            )
+            panel.addWidget(extruder_temp_label, panel_next_row(), 1)
+            panel.addWidget(extruder_temp_value, panel_cur_row(), 2, 1, self.col2_cells)
 
             def on_change():
                 self.sett().slicing.extruder_temperature = extruder_temp_value.value()
@@ -781,8 +919,8 @@ class SettingsWidget(QWidget):
             bed_temp_value.setMinimum(0)
             bed_temp_value.setMaximum(9999)
             bed_temp_value.setValue(int(self.sett().slicing.bed_temperature))
-            self.panel.addWidget(bed_temp_label, self.next_row, 1)
-            self.panel.addWidget(bed_temp_value, self.cur_row, 2, 1, self.col2_cells)
+            panel.addWidget(bed_temp_label, panel_next_row(), 1)
+            panel.addWidget(bed_temp_value, panel_cur_row(), 2, 1, self.col2_cells)
 
             def on_change():
                 self.sett().slicing.bed_temperature = bed_temp_value.text()
@@ -802,9 +940,9 @@ class SettingsWidget(QWidget):
             skirt_line_count_value.setMinimum(0)
             skirt_line_count_value.setMaximum(9999)
             skirt_line_count_value.setValue(int(self.sett().slicing.skirt_line_count))
-            self.panel.addWidget(skirt_line_count_label, self.next_row, 1)
-            self.panel.addWidget(
-                skirt_line_count_value, self.cur_row, 2, 1, self.col2_cells
+            panel.addWidget(skirt_line_count_label, panel_next_row(), 1)
+            panel.addWidget(
+                skirt_line_count_value, panel_cur_row(), 2, 1, self.col2_cells
             )
 
             def on_change():
@@ -825,8 +963,8 @@ class SettingsWidget(QWidget):
             fan_speed_value.setMinimum(0)
             fan_speed_value.setMaximum(9999)
             fan_speed_value.setValue(int(self.sett().slicing.fan_speed))
-            self.panel.addWidget(fan_speed_label, self.next_row, 1)
-            self.panel.addWidget(fan_speed_value, self.cur_row, 2, 1, self.col2_cells)
+            panel.addWidget(fan_speed_label, panel_next_row(), 1)
+            panel.addWidget(fan_speed_value, panel_cur_row(), 2, 1, self.col2_cells)
 
             def on_change():
                 self.sett().slicing.fan_speed = fan_speed_value.value()
@@ -846,10 +984,8 @@ class SettingsWidget(QWidget):
             fan_off_layer1_box = QCheckBox()
             if self.sett().slicing.fan_off_layer1:
                 fan_off_layer1_box.setCheckState(QtCore.Qt.Checked)
-            self.panel.addWidget(fan_off_layer1_label, self.next_row, 1)
-            self.panel.addWidget(
-                fan_off_layer1_box, self.cur_row, 2, 1, self.col2_cells
-            )
+            panel.addWidget(fan_off_layer1_label, panel_next_row(), 1)
+            panel.addWidget(fan_off_layer1_box, panel_cur_row(), 2, 1, self.col2_cells)
 
             def on_change():
                 self.sett().slicing.fan_off_layer1 = fan_off_layer1_box.isChecked()
@@ -869,8 +1005,8 @@ class SettingsWidget(QWidget):
             print_speed_value.setMinimum(0)
             print_speed_value.setMaximum(9999)
             print_speed_value.setValue(int(self.sett().slicing.print_speed))
-            self.panel.addWidget(print_speed_label, self.next_row, 1)
-            self.panel.addWidget(print_speed_value, self.cur_row, 2, 1, self.col2_cells)
+            panel.addWidget(print_speed_label, panel_next_row(), 1)
+            panel.addWidget(print_speed_value, panel_cur_row(), 2, 1, self.col2_cells)
 
             def on_change():
                 self.sett().slicing.print_speed = print_speed_value.value()
@@ -892,9 +1028,9 @@ class SettingsWidget(QWidget):
             print_speed_layer1_value.setValue(
                 int(self.sett().slicing.print_speed_layer1)
             )
-            self.panel.addWidget(print_speed_layer1_label, self.next_row, 1)
-            self.panel.addWidget(
-                print_speed_layer1_value, self.cur_row, 2, 1, self.col2_cells
+            panel.addWidget(print_speed_layer1_label, panel_next_row(), 1)
+            panel.addWidget(
+                print_speed_layer1_value, panel_cur_row(), 2, 1, self.col2_cells
             )
 
             def on_change():
@@ -917,9 +1053,9 @@ class SettingsWidget(QWidget):
             print_speed_wall_value.setMinimum(0)
             print_speed_wall_value.setMaximum(9999)
             print_speed_wall_value.setValue(int(self.sett().slicing.print_speed_wall))
-            self.panel.addWidget(print_speed_wall_label, self.next_row, 1)
-            self.panel.addWidget(
-                print_speed_wall_value, self.cur_row, 2, 1, self.col2_cells
+            panel.addWidget(print_speed_wall_label, panel_next_row(), 1)
+            panel.addWidget(
+                print_speed_wall_value, panel_cur_row(), 2, 1, self.col2_cells
             )
 
             def on_change():
@@ -943,10 +1079,8 @@ class SettingsWidget(QWidget):
                     self.sett().slicing.filling_type
                 )
             )
-            self.panel.addWidget(filling_type_label, self.next_row, 1)
-            self.panel.addWidget(
-                filling_type_values, self.cur_row, 2, 1, self.col2_cells
-            )
+            panel.addWidget(filling_type_label, panel_next_row(), 1)
+            panel.addWidget(filling_type_values, panel_cur_row(), 2, 1, self.col2_cells)
 
             def on_change():
                 self.sett().slicing.filling_type = locales.getLocaleByLang(
@@ -969,10 +1103,8 @@ class SettingsWidget(QWidget):
             fill_density_value.setMinimum(0)
             fill_density_value.setMaximum(100)
             fill_density_value.setValue(int(self.sett().slicing.fill_density))
-            self.panel.addWidget(fill_density_label, self.next_row, 1)
-            self.panel.addWidget(
-                fill_density_value, self.cur_row, 2, 1, self.col2_cells
-            )
+            panel.addWidget(fill_density_label, panel_next_row(), 1)
+            panel.addWidget(fill_density_value, panel_cur_row(), 2, 1, self.col2_cells)
 
             def on_change():
                 self.sett().slicing.fill_density = fill_density_value.value()
@@ -995,9 +1127,9 @@ class SettingsWidget(QWidget):
             minimum_fill_area_value.setMaximum(9999.0)
             minimum_fill_area_value.validator = FloatValidator()
 
-            self.panel.addWidget(minimum_fill_area_label, self.next_row, 1)
-            self.panel.addWidget(
-                minimum_fill_area_value, self.cur_row, 2, 1, self.col2_cells
+            panel.addWidget(minimum_fill_area_label, panel_next_row(), 1)
+            panel.addWidget(
+                minimum_fill_area_value, panel_cur_row(), 2, 1, self.col2_cells
             )
 
             def on_change():
@@ -1020,9 +1152,9 @@ class SettingsWidget(QWidget):
             overlap_infill_value.setValue(
                 int(self.sett().slicing.overlapping_infill_percentage)
             )
-            self.panel.addWidget(overlap_infill_label, self.next_row, 1)
-            self.panel.addWidget(
-                overlap_infill_value, self.cur_row, 2, 1, self.col2_cells
+            panel.addWidget(overlap_infill_label, panel_next_row(), 1)
+            panel.addWidget(
+                overlap_infill_value, panel_cur_row(), 2, 1, self.col2_cells
             )
 
             def on_change():
@@ -1044,8 +1176,8 @@ class SettingsWidget(QWidget):
             rls_on_box = QCheckBox()
             if self.sett().slicing.retraction_on:
                 rls_on_box.setCheckState(QtCore.Qt.Checked)
-            self.panel.addWidget(rls_on_label, self.next_row, 1)
-            self.panel.addWidget(rls_on_box, self.cur_row, 2, 1, self.col2_cells)
+            panel.addWidget(rls_on_label, panel_next_row(), 1)
+            panel.addWidget(rls_on_box, panel_cur_row(), 2, 1, self.col2_cells)
 
             def on_change():
                 self.sett().slicing.retraction_on = rls_on_box.isChecked()
@@ -1071,9 +1203,9 @@ class SettingsWidget(QWidget):
                 )
             except:
                 retraction_distance_value.setValue(0.0)
-            self.panel.addWidget(retraction_distance_label, self.next_row, 1)
-            self.panel.addWidget(
-                retraction_distance_value, self.cur_row, 2, 1, self.col2_cells
+            panel.addWidget(retraction_distance_label, panel_next_row(), 1)
+            panel.addWidget(
+                retraction_distance_value, panel_cur_row(), 2, 1, self.col2_cells
             )
 
             def on_change():
@@ -1096,9 +1228,9 @@ class SettingsWidget(QWidget):
             retraction_speed_value.setMinimum(0)
             retraction_speed_value.setMaximum(9999)
             retraction_speed_value.setValue(int(self.sett().slicing.retraction_speed))
-            self.panel.addWidget(retraction_speed_label, self.next_row, 1)
-            self.panel.addWidget(
-                retraction_speed_value, self.cur_row, 2, 1, self.col2_cells
+            panel.addWidget(retraction_speed_label, panel_next_row(), 1)
+            panel.addWidget(
+                retraction_speed_value, panel_cur_row(), 2, 1, self.col2_cells
             )
 
             def on_change():
@@ -1121,9 +1253,9 @@ class SettingsWidget(QWidget):
             retraction_compensation_value.setMinimum(0.0)
             retraction_compensation_value.setMaximum(9999.0)
             retraction_compensation_value.validator = FloatValidator()
-            self.panel.addWidget(retraction_compensation_label, self.next_row, 1)
-            self.panel.addWidget(
-                retraction_compensation_value, self.cur_row, 2, 1, self.col2_cells
+            panel.addWidget(retraction_compensation_label, panel_next_row(), 1)
+            panel.addWidget(
+                retraction_compensation_value, panel_cur_row(), 2, 1, self.col2_cells
             )
 
             def on_change():
@@ -1146,9 +1278,9 @@ class SettingsWidget(QWidget):
             material_shrinkage_value.setMinimum(0.0)
             material_shrinkage_value.setMaximum(9999.0)
             material_shrinkage_value.setValue(self.sett().slicing.material_shrinkage)
-            self.panel.addWidget(material_shrinkage_label, self.next_row, 1)
-            self.panel.addWidget(
-                material_shrinkage_value, self.cur_row, 2, 1, self.col2_cells
+            panel.addWidget(material_shrinkage_label, panel_next_row(), 1)
+            panel.addWidget(
+                material_shrinkage_value, panel_cur_row(), 2, 1, self.col2_cells
             )
 
             def on_change():
@@ -1170,8 +1302,8 @@ class SettingsWidget(QWidget):
             rls_on_box = QCheckBox()
             if self.sett().slicing.random_layer_start:
                 rls_on_box.setCheckState(QtCore.Qt.Checked)
-            self.panel.addWidget(rls_on_label, self.next_row, 1)
-            self.panel.addWidget(rls_on_box, self.cur_row, 2, 1, self.col2_cells)
+            panel.addWidget(rls_on_label, panel_next_row(), 1)
+            panel.addWidget(rls_on_box, panel_cur_row(), 2, 1, self.col2_cells)
 
             def on_change():
                 self.sett().slicing.random_layer_start = rls_on_box.isChecked()
@@ -1189,10 +1321,8 @@ class SettingsWidget(QWidget):
             wall_outside_in_box = QCheckBox()
             if self.sett().slicing.is_wall_outside_in:
                 wall_outside_in_box.setCheckState(QtCore.Qt.Checked)
-            self.panel.addWidget(wall_outside_in_label, self.next_row, 1)
-            self.panel.addWidget(
-                wall_outside_in_box, self.cur_row, 2, 1, self.col2_cells
-            )
+            panel.addWidget(wall_outside_in_label, panel_next_row(), 1)
+            panel.addWidget(wall_outside_in_box, panel_cur_row(), 2, 1, self.col2_cells)
 
             def on_change():
                 self.sett().slicing.is_wall_outside_in = wall_outside_in_box.isChecked()
@@ -1211,8 +1341,8 @@ class SettingsWidget(QWidget):
             flow_rate_value.setMinimum(0.0)
             flow_rate_value.setMaximum(9999.0)
             flow_rate_value.setValue(self.sett().slicing.flow_rate)
-            self.panel.addWidget(flow_rate_label, self.next_row, 1)
-            self.panel.addWidget(flow_rate_value, self.cur_row, 2, 1, self.col2_cells)
+            panel.addWidget(flow_rate_label, panel_next_row(), 1)
+            panel.addWidget(flow_rate_value, panel_cur_row(), 2, 1, self.col2_cells)
 
             def on_change():
                 value = flow_rate_value.value()
@@ -1243,9 +1373,9 @@ class SettingsWidget(QWidget):
             pressure_advance_on_box = QCheckBox()
             if self.sett().slicing.pressure_advance_on:
                 pressure_advance_on_box.setCheckState(QtCore.Qt.Checked)
-            self.panel.addWidget(pressure_advance_on_label, self.next_row, 1)
-            self.panel.addWidget(
-                pressure_advance_on_box, self.cur_row, 2, 1, self.col2_cells
+            panel.addWidget(pressure_advance_on_label, panel_next_row(), 1)
+            panel.addWidget(
+                pressure_advance_on_box, panel_cur_row(), 2, 1, self.col2_cells
             )
 
             def on_change():
@@ -1269,9 +1399,9 @@ class SettingsWidget(QWidget):
             pressure_advance_value.setMaximum(1.0)
             pressure_advance_value.setValue(self.sett().slicing.pressure_advance)
             # between 0.01 and 0.9, default is 0.45
-            self.panel.addWidget(pressure_advance_label, self.next_row, 1)
-            self.panel.addWidget(
-                pressure_advance_value, self.cur_row, 2, 1, self.col2_cells
+            panel.addWidget(pressure_advance_label, panel_next_row(), 1)
+            panel.addWidget(
+                pressure_advance_value, panel_cur_row(), 2, 1, self.col2_cells
             )
 
             def on_change():
@@ -1308,8 +1438,8 @@ class SettingsWidget(QWidget):
 
             # self.panel.addWidget(supports_label, self.next_row, 1)
 
-            self.panel.addWidget(supports_on_label, self.next_row, 1)
-            self.panel.addWidget(supports_on_box, self.cur_row, 2, 1, self.col2_cells)
+            panel.addWidget(supports_on_label, panel_next_row(), 1)
+            panel.addWidget(supports_on_box, panel_cur_row(), 2, 1, self.col2_cells)
 
             def on_change():
                 self.sett().supports.enabled = supports_on_box.isChecked()
@@ -1330,9 +1460,9 @@ class SettingsWidget(QWidget):
             support_density_value.setMinimum(0)
             support_density_value.setMaximum(100)
             support_density_value.setValue(int(self.sett().supports.fill_density))
-            self.panel.addWidget(support_density_label, self.next_row, 1)
-            self.panel.addWidget(
-                support_density_value, self.cur_row, 2, 1, self.col2_cells
+            panel.addWidget(support_density_label, panel_next_row(), 1)
+            panel.addWidget(
+                support_density_value, panel_cur_row(), 2, 1, self.col2_cells
             )
 
             def on_change():
@@ -1356,9 +1486,9 @@ class SettingsWidget(QWidget):
                     self.sett().supports.fill_type
                 )
             )
-            self.panel.addWidget(support_fill_type_label, self.next_row, 1)
-            self.panel.addWidget(
-                support_fill_type_values, self.cur_row, 2, 1, self.col2_cells
+            panel.addWidget(support_fill_type_label, panel_next_row(), 1)
+            panel.addWidget(
+                support_fill_type_values, panel_cur_row(), 2, 1, self.col2_cells
             )
 
             def on_change():
@@ -1385,9 +1515,9 @@ class SettingsWidget(QWidget):
                 support_xy_offset_value.setValue(self.sett().supports.xy_offset)
             except:
                 support_xy_offset_value.setValue(0.0)
-            self.panel.addWidget(support_xy_offset_label, self.next_row, 1)
-            self.panel.addWidget(
-                support_xy_offset_value, self.cur_row, 2, 1, self.col2_cells
+            panel.addWidget(support_xy_offset_label, panel_next_row(), 1)
+            panel.addWidget(
+                support_xy_offset_value, panel_cur_row(), 2, 1, self.col2_cells
             )
 
             def on_change():
@@ -1408,9 +1538,9 @@ class SettingsWidget(QWidget):
             support_z_offset_value.setMinimum(0)
             support_z_offset_value.setMaximum(9999)
             support_z_offset_value.setValue(int(self.sett().supports.z_offset_layers))
-            self.panel.addWidget(support_z_offset_label, self.next_row, 1)
-            self.panel.addWidget(
-                support_z_offset_value, self.cur_row, 2, 1, self.col2_cells
+            panel.addWidget(support_z_offset_label, panel_next_row(), 1)
+            panel.addWidget(
+                support_z_offset_value, panel_cur_row(), 2, 1, self.col2_cells
             )
 
             def on_change():
@@ -1431,9 +1561,9 @@ class SettingsWidget(QWidget):
             if self.sett().supports.priority_z_offset:
                 support_priorityz_offset_box.setCheckState(QtCore.Qt.Checked)
 
-            self.panel.addWidget(support_priority_zoffset_label, self.next_row, 1)
-            self.panel.addWidget(
-                support_priorityz_offset_box, self.cur_row, 2, 1, self.col2_cells
+            panel.addWidget(support_priority_zoffset_label, panel_next_row(), 1)
+            panel.addWidget(
+                support_priorityz_offset_box, panel_cur_row(), 2, 1, self.col2_cells
             )
 
             def on_change():
@@ -1463,10 +1593,8 @@ class SettingsWidget(QWidget):
             support_number_of_bottom_layers_value.valueChanged.connect(
                 self.__update_supports_bottom_thickness
             )
-            self.panel.addWidget(
-                support_number_of_bottom_layers_label, self.next_row, 1
-            )
-            self.panel.addWidget(support_number_of_bottom_layers_value, self.cur_row, 2)
+            panel.addWidget(support_number_of_bottom_layers_label, panel_next_row(), 1)
+            panel.addWidget(support_number_of_bottom_layers_value, panel_cur_row(), 2)
 
             bottom_thickness_label = QLabel(self.locale.BottomThickness)
             bottom_thickness_value = QDoubleSpinBox()
@@ -1481,9 +1609,9 @@ class SettingsWidget(QWidget):
             bottom_thickness_value.setReadOnly(True)
             millimeter_label = QLabel(self.locale.Millimeter)
 
-            self.panel.addWidget(bottom_thickness_label, self.cur_row, 3)
-            self.panel.addWidget(bottom_thickness_value, self.cur_row, 4)
-            self.panel.addWidget(millimeter_label, self.cur_row, 5)
+            panel.addWidget(bottom_thickness_label, panel_cur_row(), 3)
+            panel.addWidget(bottom_thickness_value, panel_cur_row(), 4)
+            panel.addWidget(millimeter_label, panel_cur_row(), 5)
 
             def on_change():
                 self.sett().supports.bottoms_depth = (
@@ -1512,8 +1640,8 @@ class SettingsWidget(QWidget):
             support_number_of_lid_layers_value.valueChanged.connect(
                 self.__update_supports_lid_thickness
             )
-            self.panel.addWidget(support_number_of_lid_layers_label, self.next_row, 1)
-            self.panel.addWidget(support_number_of_lid_layers_value, self.cur_row, 2)
+            panel.addWidget(support_number_of_lid_layers_label, panel_next_row(), 1)
+            panel.addWidget(support_number_of_lid_layers_value, panel_cur_row(), 2)
 
             lid_thickness_label = QLabel(self.locale.LidsThickness)
             lid_thickness_value = QDoubleSpinBox()
@@ -1527,9 +1655,9 @@ class SettingsWidget(QWidget):
             lid_thickness_value.setReadOnly(True)
             millimeter_label = QLabel(self.locale.Millimeter)
 
-            self.panel.addWidget(lid_thickness_label, self.cur_row, 3)
-            self.panel.addWidget(lid_thickness_value, self.cur_row, 4)
-            self.panel.addWidget(millimeter_label, self.cur_row, 5)
+            panel.addWidget(lid_thickness_label, panel_cur_row(), 3)
+            panel.addWidget(lid_thickness_value, panel_cur_row(), 4)
+            panel.addWidget(millimeter_label, panel_cur_row(), 5)
 
             def on_change():
                 self.sett().supports.lids_depth = (
@@ -1557,8 +1685,8 @@ class SettingsWidget(QWidget):
             except:
                 angle_value.setValue(0.0)
 
-            self.panel.addWidget(angle_label, self.next_row, 1)
-            self.panel.addWidget(angle_value, self.cur_row, 2, 1, self.col2_cells)
+            panel.addWidget(angle_label, panel_next_row(), 1)
+            panel.addWidget(angle_value, panel_cur_row(), 2, 1, self.col2_cells)
 
             def on_change():
                 self.sett().slicing.angle = angle_value.value()
@@ -1576,8 +1704,8 @@ class SettingsWidget(QWidget):
             create_walls_box = QCheckBox()
             if self.sett().supports.create_walls:
                 create_walls_box.setCheckState(QtCore.Qt.Checked)
-            self.panel.addWidget(create_walls_label, self.next_row, 1)
-            self.panel.addWidget(create_walls_box, self.cur_row, 2, 1, self.col2_cells)
+            panel.addWidget(create_walls_label, panel_next_row(), 1)
+            panel.addWidget(create_walls_box, panel_cur_row(), 2, 1, self.col2_cells)
 
             def on_change():
                 self.sett().supports.create_walls = create_walls_box.isChecked()
@@ -1596,9 +1724,9 @@ class SettingsWidget(QWidget):
             if self.sett().slicing.auto_fan.enabled:
                 auto_fan_enabled_box.setCheckState(QtCore.Qt.Checked)
 
-            self.panel.addWidget(auto_fan_enabled_label, self.next_row, 1)
-            self.panel.addWidget(
-                auto_fan_enabled_box, self.cur_row, 2, 1, self.col2_cells
+            panel.addWidget(auto_fan_enabled_label, panel_next_row(), 1)
+            panel.addWidget(
+                auto_fan_enabled_box, panel_cur_row(), 2, 1, self.col2_cells
             )
 
             def on_change():
@@ -1626,10 +1754,8 @@ class SettingsWidget(QWidget):
 
             # auto_fan_area_value = LineEdit(str(self.sett().slicing.auto_fan.area))
             # auto_fan_area_value.setValidator(self.intValidator)
-            self.panel.addWidget(auto_fan_area_label, self.next_row, 1)
-            self.panel.addWidget(
-                auto_fan_area_value, self.cur_row, 2, 1, self.col2_cells
-            )
+            panel.addWidget(auto_fan_area_label, panel_next_row(), 1)
+            panel.addWidget(auto_fan_area_value, panel_cur_row(), 2, 1, self.col2_cells)
 
             def on_change():
                 self.sett().slicing.auto_fan.area = auto_fan_area_value.value()
@@ -1648,9 +1774,9 @@ class SettingsWidget(QWidget):
             auto_fan_speed_value.setMinimum(0)
             auto_fan_speed_value.setMaximum(9999)
             auto_fan_speed_value.setValue(int(self.sett().slicing.auto_fan.fan_speed))
-            self.panel.addWidget(auto_fan_speed_label, self.next_row, 1)
-            self.panel.addWidget(
-                auto_fan_speed_value, self.cur_row, 2, 1, self.col2_cells
+            panel.addWidget(auto_fan_speed_label, panel_next_row(), 1)
+            panel.addWidget(
+                auto_fan_speed_value, panel_cur_row(), 2, 1, self.col2_cells
             )
 
             def on_change():
@@ -1664,7 +1790,7 @@ class SettingsWidget(QWidget):
             }
 
         # add row index for element
-        self.__elements[name]["row_idx"] = self.cur_row
+        self.__elements[name]["row_idx"] = panel_cur_row()
 
         return self
 
