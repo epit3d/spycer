@@ -162,6 +162,7 @@ class Locale:
     GroupNames = {
         "model": "Model Settings",
         "material": "Material Settings",
+        "supports": "Supports Settings",
     }
 
     def __init__(self, **entries):
@@ -329,6 +330,7 @@ dicts = {
         GroupNames={
             "model": "Настройки модели",
             "material": "Настройки материала",
+            "supports": "Настройки поддержек",
         },
     ),
 }
