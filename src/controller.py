@@ -381,8 +381,8 @@ class MainController:
                 if file_ext == ".TXT":
                     try:
                         self.load_planes_from_file(filename)
-                    except:
-                        showErrorDialog("Error during reading planes file")
+                    except Exception as e:
+                        showErrorDialog("Error during reading planes file: " + str(e))
                 else:
                     showErrorDialog("This file format isn't supported:" + file_ext)
         except IOError as e:
@@ -411,10 +411,16 @@ class MainController:
                     )
                 )
 
+            if isinstance(sett().figures[idx], dict):
+                sett().figures[idx] = settings.Settings(sett().figures[idx])
+
             if not hasattr(sett().figures[idx], "settings"):
                 setattr(sett().figures[idx], "settings", settings.Settings({}))
 
-            self.model.figures_setts.append(sett().figures[idx].settings)
+            try:
+                self.model.figures_setts.append(sett().figures[idx].settings)
+            except Exception as e:
+                showErrorDialog("Error accessing settings: " + str(e))
 
     def load_planes_from_file(self, filename):
         self.load_planes(read_planes(filename))
