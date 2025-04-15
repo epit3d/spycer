@@ -353,7 +353,7 @@ class SettingsWidget(QToolBox):
         for key in self.__order:
             try:
                 row_idx = self.__elements[key]["row_idx"]
-                remove_row(row_idx)
+                remove_row(key, row_idx)
             except KeyError:
                 print(f"Key {key} not found in elements")
                 pass
