@@ -112,50 +112,52 @@ class SettingsWidget(QToolBox):
     GROUPING = {
         "model": [
             "printer_path",
-            "layer_height",
             "line_width",
+            "layer_height",
             "number_wall_lines",
             "number_of_bottom_layers",
             "number_of_lids_layers",
-            "is_wall_outside_in",
-            "supports_on",
-            "support_density",
-            "support_z_offset",
-            "support_priority_zoffset",
-            "support_xy_offset",
-            "support_number_of_bottom_layers",
-            "support_number_of_lid_layers",
-            "support_create_walls",
-            "critical_angle",
             "skirt_line_count",
+            "is_wall_outside_in",
+            "filling_type",
+            "fill_density",
+            "overlap_infill",
+            "minimum_fill_area",
+            "critical_angle",
         ],
         "material": [
+            "uninterrupted_print",
+            "m10_cut_distance",
             "extruder_temp",
             "bed_temp",
             "fan_speed",
             "fan_off_layer1",
-            "auto_fan_enabled",
-            "auto_fan_area",
-            "auto_fan_speed",
+            "print_speed",
+            "print_speed_layer1",
+            "print_speed_wall",
             "retraction_on",
             "retraction_distance",
             "retraction_speed",
             "retraction_compensation",
+            "material_shrinkage",
             "pressure_advance_on",
             "pressure_advance",
-            "material_shrinkage",
-            "uninterrupted_print",
-            "m10_cut_distance",
-            "print_speed",
-            "print_speed_layer1",
-            "print_speed_wall",
-            "filling_type",
-            "support_fill_type",
-            "fill_density",
-            "minimum_fill_area",
-            "overlap_infill",
-            "random_layer_start",
             "flow_rate",
+            "auto_fan_enabled",
+            "auto_fan_area",
+            "auto_fan_speed",
+            "random_layer_start",
+        ],
+        "supports": [
+            "supports_on",
+            "support_density",
+            "support_fill_type",
+            "support_xy_offset",
+            "support_z_offset",
+            "support_priority_zoffset",
+            "support_number_of_bottom_layers",
+            "support_number_of_lid_layers",
+            "support_create_walls",
         ],
     }
 
@@ -419,8 +421,11 @@ class SettingsWidget(QToolBox):
         return self.__elements[name][key]
 
     def with_all(self):
-        for param in self.parameters:
-            self.with_sett(param)
+        for group in self.GROUPING.keys():
+            for param in self.GROUPING[group]:
+                self.with_sett(param)
+        # for param in self.parameters:
+        #     self.with_sett(param)
         return self
 
     def with_delete(self):
