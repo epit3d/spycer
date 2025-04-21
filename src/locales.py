@@ -9,6 +9,7 @@ class Locale:
     ExtruderTemp = "Extruder temperature, °C:"
     BedTemp = "Bed temperature, °C:"
     FillDensity = "Fill density, %:"
+    MinimumFillArea = "Minimum fill area, mm²:"
     WallThickness = "Wall thickness:"
     NumberWallLines = "Number of wall lines:"
     BottomThickness = "Bottom thickness:"
@@ -158,6 +159,12 @@ class Locale:
     AutoFanArea = "Auto fan max area, mm²:"
     AutoFanSpeed = "Auto fan speed:"
 
+    GroupNames = {
+        "model": "Model Settings",
+        "material": "Material Settings",
+        "supports": "Supports Settings",
+    }
+
     def __init__(self, **entries):
         self.__dict__.update(entries)
 
@@ -172,6 +179,7 @@ dicts = {
         ExtruderTemp="Температура сопла, °C:",
         BedTemp="Температура стола, °C:",
         FillDensity="Плотность заполнения, %:",
+        MinimumFillArea="Минимальная площадь заполнения, мм²:",
         WallThickness="Толщина стенки:",
         NumberWallLines="Количество проходов стенки:",
         BottomThickness="Толщина дна:",
@@ -319,6 +327,11 @@ dicts = {
         AutoFanEnabled="Включить автоматическое управление обдувом",
         AutoFanArea="Максимальная площадь для автоматического обдува, мм²:",
         AutoFanSpeed="Скорость автоматического обдува:",
+        GroupNames={
+            "model": "Настройки модели",
+            "material": "Настройки материала",
+            "supports": "Настройки поддержек",
+        },
     ),
 }
 
