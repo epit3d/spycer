@@ -39,6 +39,7 @@ hardware:
   plane_center_y: 0
   plane_center_z: 0
   plane_diameter: 250
+  printer_type: E240
   maximum_height: 240
   minimum_planner_speed: 0.05
   nozzle_contact_points:

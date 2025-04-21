@@ -133,7 +133,8 @@ class Locale:
     ErrorBugModule = "Bug reporting is unavailable in public"
 
     PrinterName = "Printer name:"
-    ChoosePrinterDirectory = "Choose printer name"
+    ChoosePrinterDirectory = "Choose printer name:"
+    ChoosePrinterType = "Choose printer type:"
     AddNewPrinter = "Add new printer"
     DefaultPrinterWarn = "Be aware that you are using default printer. New data might be removed after update. We recommend to create new printer and calibrate it."
     CheckUpdates = "Check for updates"
@@ -308,7 +309,8 @@ dicts = {
         ErrorHardwareModule="Модуль калибровки недоступен публично",
         ErrorBugModule="Модуль отправки багов недоступен публично",
         PrinterName="Конфигурация принтера:",
-        ChoosePrinterDirectory="Выберите название принтера",
+        ChoosePrinterDirectory="Выберите название принтера:",
+        ChoosePrinterType="Выберите тип принтера:",
         AddNewPrinter="Добавить новый принтер",
         DefaultPrinterWarn="Будьте внимательны, Вы используете принтер по умолчанию. Данные этого принтера будут перезаписываться при обновлениях. Мы рекомендуем создать и использовать свою конфигурацию принтера.",
         CheckUpdates="Проверить наличие обновлений",
