@@ -1257,6 +1257,9 @@ class SettingsWidget(QToolBox):
             retraction_compensation_value = QDoubleSpinBox()
             retraction_compensation_value.setMinimum(0.0)
             retraction_compensation_value.setMaximum(9999.0)
+            retraction_compensation_value.setValue(
+                self.sett().slicing.retract_compensation_amount
+            )
             retraction_compensation_value.validator = FloatValidator()
             panel.addWidget(retraction_compensation_label, panel_next_row(), 1)
             panel.addWidget(
