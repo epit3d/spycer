@@ -76,14 +76,14 @@ hardware:
     V: 200
     E: 120
 slicing:
-  angle: 30
+  angle: 40
   bed_temperature: 60
   bottom_of_cut_layers: 1
   cmd: ./lib/goosli --cmd=slice --settings=
   cmd_version: ./lib/goosli --version
   consumption_material: 0
   extruder_temperature: 200
-  fan_off_layer1: false
+  fan_off_layer1: true
   fan_speed: 95
   fill_density: 20
   filling_type: Triangles
@@ -157,12 +157,12 @@ slicing:
     area: 0.1
     fan_speed: 20
 supports:
-  enabled: true
+  enabled: false
   xy_offset: 0.3
   z_offset_layers: 1
   priority_z_offset: true
   fill_type: Lines
-  fill_density: 5
+  fill_density: 25
   bottoms_depth: 0
   lids_depth: 0
   create_walls: true
