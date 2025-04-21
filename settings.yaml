@@ -113,14 +113,14 @@ slicing:
   random_layer_start: false
   is_wall_outside_in: true
   planes_contact_with_nozzle: ""
-  print_speed: 50
-  print_speed_layer1: 50
-  print_speed_wall: 50
+  print_speed: 60
+  print_speed_layer1: 30
+  print_speed_wall: 60
   print_time: 0
-  retract_compensation_amount: 3.0
-  retraction_distance: 3.0
+  retract_compensation_amount: 1.9
+  retraction_distance: 2.0
   retraction_on: true
-  retraction_speed: 50
+  retraction_speed: 30
   rotationx: 0.0
   rotationy: -0.0
   rotationz: 0.0
