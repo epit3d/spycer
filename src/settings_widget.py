@@ -928,7 +928,7 @@ class SettingsWidget(QToolBox):
             panel.addWidget(bed_temp_value, panel_cur_row(), 2, 1, self.col2_cells)
 
             def on_change():
-                self.sett().slicing.bed_temperature = bed_temp_value.text()
+                self.sett().slicing.bed_temperature = bed_temp_value.value()
 
             bed_temp_value.valueChanged.connect(on_change)
 
