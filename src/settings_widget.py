@@ -660,9 +660,9 @@ class SettingsWidget(QToolBox):
 
                 self.values("filling_type").setEnabled(not isUninterrupted)
                 self.checkbox("retraction_on").setEnabled(not isUninterrupted)
-                self.edit("retraction_distance").setEnabled(not isUninterrupted)
-                self.edit("retraction_speed").setEnabled(not isUninterrupted)
-                self.edit("retraction_compensation").setEnabled(not isUninterrupted)
+                self.spinbox("retraction_distance").setEnabled(not isUninterrupted)
+                self.spinbox("retraction_speed").setEnabled(not isUninterrupted)
+                self.spinbox("retraction_compensation").setEnabled(not isUninterrupted)
 
                 if isUninterrupted:
                     zigzag_idx = locales.getLocaleByLang("en").FillingTypeValues.index(
