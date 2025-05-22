@@ -14,8 +14,9 @@ from vtkmodules.vtkCommonMath import vtkMatrix4x4
 
 import vtk
 from PyQt5 import QtCore
-from PyQt5.QtCore import QSettings
+from PyQt5.QtCore import QSettings, QUrl
 from PyQt5.QtWidgets import QFileDialog, QInputDialog, QMessageBox
+from PyQt5.QtGui import QDesktopServices
 
 from src import gui_utils, locales, qt_utils
 from src.figure_editor import PlaneEditor, ConeEditor
@@ -98,6 +99,7 @@ class MainController:
         self.view.save_project_as_action.triggered.connect(self.save_project_as)
         self.view.load_sett_action.triggered.connect(self.load_settings_file)
         self.view.slicing_info_action.triggered.connect(self.get_slicer_version)
+        self.view.documentation_action.triggered.connect(self.show_online_documentation)
         self.view.check_updates_action.triggered.connect(self.open_updater)
 
         try:
@@ -699,6 +701,10 @@ class MainController:
             showErrorDialog("Error during getting slicer version:" + str(proc.stdout))
         else:
             showInfoDialog(locales.getLocale().SlicerVersion + proc.stdout)
+
+    def show_online_documentation(self):
+        # open default browser to the online documentation
+        QDesktopServices.openUrl(QUrl("https://docs.epit3d.com"))
 
     def save_settings(self, slicing_type, filename=""):
         s = sett()
