@@ -143,6 +143,13 @@ class MainWindow(QMainWindow):
         self.check_updates_action = QAction(self.locale.CheckUpdates, self)
         tools_menu.addAction(self.check_updates_action)
 
+        help_menu = bar.addMenu(self.locale.Help)
+        self.slicing_info_action = QAction(self.locale.SlicerInfo, self)
+        help_menu.addAction(self.slicing_info_action)
+
+        self.documentation_action = QAction(self.locale.Documentation, self)
+        help_menu.addAction(self.documentation_action)
+
         # main parts
         central_widget = QWidget()
         main_grid = QGridLayout()
