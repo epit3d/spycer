@@ -155,7 +155,12 @@ class MainWindow(QMainWindow):
         main_grid = QGridLayout()
         self.widget3d = self.init3d_widget()
         main_grid.addWidget(self.widget3d, 0, 0, 20, 5)
-        main_grid.addWidget(self.init_right_panel(), 0, 5, 21, 2)
+        from pyvistaqt import QtInteractor
+        self.vista_interactor = QtInteractor(self)
+        main_grid.addWidget(self.vista_interactor, 0, 5, 20, 5)
+
+        main_grid.addWidget(self.init_right_panel(), 0, 10, 21, 2)
+
 
         # Tabs
         tabs = QTabWidget()
@@ -246,6 +251,7 @@ class MainWindow(QMainWindow):
         event.accept()
 
         self.widget3d.Finalize()
+        self.vista_interactor.Finalize()
 
     def projectChangeDialog(self):
         message_box = QMessageBox()

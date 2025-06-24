@@ -625,6 +625,15 @@ class MainController:
                 sett().common.opacity_last_layer
             )
 
+        # self.view.vista_interactor
+        from src.smotrelka.main import GCodeVisualizer
+        from src.smotrelka.gcode_parser import parse_gcode_file
+
+        layers = parse_gcode_file(filename)
+
+        self.smotrelka = GCodeVisualizer(layers, plotter=self.view.vista_interactor, default_opacity=1.0)
+        self.smotrelka.show(preload=True, preload_threads=4)
+
     def slice_stl(self, slicing_type):
         if slicing_type == "vip" and len(self.model.splanes) == 0:
             showErrorDialog(locales.getLocale().AddOnePlaneError)
