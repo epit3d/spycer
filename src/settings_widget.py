@@ -107,6 +107,7 @@ class SettingsWidget(QToolBox):
         "support_number_of_lid_layers",
         "support_create_walls",
         "critical_angle",
+        "filter_tolerance",
     ]
 
     GROUPING = {
@@ -124,6 +125,7 @@ class SettingsWidget(QToolBox):
             "overlap_infill",
             "minimum_fill_area",
             "critical_angle",
+            "filter_tolerance",
         ],
         "material": [
             "uninterrupted_print",
@@ -1795,6 +1797,33 @@ class SettingsWidget(QToolBox):
             self.__elements[name] = {
                 "label": auto_fan_speed_label,
                 "spinbox": auto_fan_speed_value,
+            }
+        elif name == "filter_tolerance":
+            self.ensure_sett("slicing.filter_tolerance")
+
+            filter_tolerance_label = QLabel(self.locale.FilterTolerance)
+            filter_tolerance_value = QDoubleSpinBox()
+            filter_tolerance_value.setMinimum(0.0)
+            filter_tolerance_value.setMaximum(10.0)
+            filter_tolerance_value.validator = FloatValidator()
+            try:
+                filter_tolerance_value.setValue(self.sett().slicing.filter_tolerance)
+            except:
+                filter_tolerance_value.setValue(0.0)
+
+            panel.addWidget(filter_tolerance_label, panel_next_row(), 1)
+            panel.addWidget(
+                filter_tolerance_value, panel_cur_row(), 2, 1, self.col2_cells
+            )
+
+            def on_change():
+                self.sett().slicing.filter_tolerance = filter_tolerance_value.value()
+
+            filter_tolerance_value.valueChanged.connect(on_change)
+
+            self.__elements[name] = {
+                "label": filter_tolerance_label,
+                "spinbox": filter_tolerance_value,
             }
 
         # add row index for element

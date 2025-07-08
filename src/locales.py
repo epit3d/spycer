@@ -161,6 +161,8 @@ class Locale:
     AutoFanArea = "Auto fan max area, mm²:"
     AutoFanSpeed = "Auto fan speed:"
 
+    FilterTolerance = "Filter tolerance, mm:"
+
     GroupNames = {
         "model": "Model Settings",
         "material": "Material Settings",
@@ -336,6 +338,7 @@ dicts = {
             "material": "Настройки материала",
             "supports": "Настройки поддержек",
         },
+        FilterTolerance="Допуск при конической печати, мм:",
     ),
 }
 
