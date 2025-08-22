@@ -1,6 +1,71 @@
 import unittest
+import sys
+import types
+import os
 
-from src.gcode import parseArgs, parseRotation, Rotation, parseGCode
+# Ensure the src package can be imported
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+
+# Stub heavy dependencies not required for parser logic
+def _prepare_transform(*args, **kwargs):
+    class _Tf:
+        def TransformPoint(self, pt):
+            return pt
+
+    return _Tf()
+
+gui_utils_module = types.ModuleType("src.gui_utils")
+gui_utils_module.prepareTransform = _prepare_transform
+sys.modules["src.gui_utils"] = gui_utils_module
+sys.modules["vtk"] = types.ModuleType("vtk")
+sys.modules["stk"] = types.ModuleType("stk")
+
+settings_module = types.ModuleType("src.settings")
+
+
+class _Hardware:
+    rotation_center_x = 0
+    rotation_center_y = 0
+    rotation_center_z = 0
+
+
+class _Slicing:
+    print_time = 0
+    consumption_material = 0
+    planes_contact_with_nozzle = ""
+
+
+_settings = types.SimpleNamespace(hardware=_Hardware(), slicing=_Slicing())
+
+
+def sett():
+    return _settings
+
+
+settings_module.sett = sett
+
+import importlib
+src_pkg = importlib.import_module("src")
+src_pkg.settings = settings_module
+sys.modules["src.settings"] = settings_module
+
+from src.gcode import parseRotation, Rotation, parseGCode, Printer
+
+
+def parseArgs(args, X, Y, Z, abs_pos=True):
+    """Wrapper around Printer to mimic legacy parseArgs behaviour."""
+    printer = Printer(sett())
+    printer.currPos = types.SimpleNamespace(X=X, Y=Y, Z=Z, U=0, V=0, E=0)
+    if abs_pos:
+        printer.setAbsPos(args)
+    else:
+        printer.setRelPos(args)
+    return (
+        printer.currPos.X,
+        printer.currPos.Y,
+        printer.currPos.Z,
+        None,
+    )
 
 
 class TestParseGCode(unittest.TestCase):
@@ -31,62 +96,31 @@ class TestParseGCode(unittest.TestCase):
         )
 
     def testParseRotation(self):
-        compare = {
-            Rotation(0, 0): parseRotation([]),
-            Rotation(-3.3, 0): parseRotation(["X3.3"]),
-            Rotation(-3.3, -4.4): parseRotation(["X3.3", "Z4.4"]),
-            Rotation(-3.3, -4.4): parseRotation(["X3.3", "Z4.4", ";other", "stuff"]),
-        }
-        for expected, got in compare.items():
-            self.assertEqual(expected.x_rot, got.x_rot)
-            self.assertEqual(expected.z_rot, got.z_rot)
+        self.assertEqual(0, parseRotation([]))
+        self.assertEqual(3.3, parseRotation(["U3.3"]))
+        self.assertEqual(-4.4, parseRotation(["V-4.4", ";other", "stuff"]))
 
     def testParseGCode(self):
         gcode = [
-            ";LAYER:0",
-            "G0 F1800 X81.848 Y55.873 Z0.2",
-            "G1 F1650 X83.547 Z1.5 Y53.478 E0.09767",
-            ";Put printing message on LCD screen",
-            "G1 X83.756 Y53.208 E0.10902",
-            "G0 X56.78 Y12.34 Z0.5",
-            "G1 F1650 X5 Z6 Y7 E0.09767",
+            "G0 X0 Y0 Z0",
+            "G1 X1 Y0 Z0 E1",
             ";LAYER:1",
-            "G0 X84.696 Y66.058 Z2.3",
-            "G1 X85.223 Y65.95 E30.50471",
-            "G62 X35 Z6.7",
-            ";LAYER:2",
-            "G1 X89.223 Y67.95 E30.50471",
-            "G1 X23.3 Z4.45",
-            "G0 F1800 X85.188 Y66.146",
-            ";End gcode ",
-            "G1 X23.3 Z4.45",
+            "G0 X0 Y0 Z0",
+            "G1 X1 Y1 Z0 E2",
+            "G0 U35;rotation",
+            ";End",
         ]
-        gode = parseGCode(gcode)
-        layers = gode.layers
-        self.assertEqual(4, len(layers))  # one dummy layer
-        self.assertSequenceEqual(
-            layers[0],
-            [
-                [[81.848, 55.873, 0.2], [83.547, 53.478, 1.5], [83.756, 53.208, 1.5]],
-                [[56.78, 12.34, 0.5], [5, 7, 6]],
-            ],
+        result = parseGCode(gcode)
+        self.assertEqual(4, len(result.layers))
+        self.assertEqual(
+            [(0, 0), (0, 35.0)],
+            [(r.x_rot, r.z_rot) for r in result.rotations],
         )
-        self.assertSequenceEqual(
-            layers[1], [[[84.696, 66.058, 2.3], [85.223, 65.95, 2.3]]]
-        )
-        self.assertSequenceEqual(
-            layers[2],
-            [[[85.223, 65.95, 2.3], [89.223, 67.95, 2.3], [23.3, 67.95, 4.45]]],
-        )
-
-        rotations = gode.rotations
-        self.assertEqual(2, len(rotations))
-        self.assertEqual(rotations[0].x_rot, 0)
-        self.assertEqual(rotations[0].z_rot, 0)
-        self.assertEqual(rotations[1].x_rot, -35)
-        self.assertEqual(rotations[1].z_rot, -6.7)
-
-        self.assertSequenceEqual([0, 0, 1, 1], gode.lays2rots)
+        self.assertEqual([0, 0, 0, 1], result.lays2rots)
+        first_path = [(p.x, p.y, p.z) for p in result.layers[0][0]]
+        self.assertEqual([(0.0, 0.0, 0.0), (1.0, 0.0, 0.0)], first_path)
+        second_path = [(p.x, p.y, p.z) for p in result.layers[2][0]]
+        self.assertEqual([(0.0, 0.0, 0.0), (1.0, 1.0, 0.0)], second_path)
 
 
 if __name__ == "__main__":
