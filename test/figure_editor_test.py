@@ -4,6 +4,7 @@ import unittest
 
 # --- Begin stubs for PyQt5 and related modules ---
 
+
 class Signal:
     def __init__(self):
         self._callbacks = []
