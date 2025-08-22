@@ -58,10 +58,10 @@ class FigureEditor(QWidget):
 
         self.params_widgets = []
         # TODO add implementation of True/False parameters
-        self.params_dict: Dict[str, float] = dict(
-            (el, initial_params[el] if initial_params and initial_params[el] else 0)
+        self.params_dict: Dict[str, float] = {
+            el: initial_params.get(el, 0) if initial_params else 0
             for el in params + self._checkboxes
-        )
+        }
 
         for param_idx, param in enumerate(params):
             # add label for parameter name
