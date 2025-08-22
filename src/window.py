@@ -42,6 +42,7 @@ import src.settings as settings
 from src.figure_editor import StlMovePanel
 from src.qt_utils import ClickableLineEdit, LineEdit
 from src.settings_widget import SettingsWidget
+import os
 import os.path as path
 import logging
 
@@ -854,16 +855,34 @@ class MainWindow(QMainWindow):
         self,
         caption,
         format="STL (*.stl *.STL);;Gcode (*.gcode)",
-        directory="/home/l1va/Downloads/5axes_3d_printer/test",
-    ):  # TODO: fix path
+        directory="",
+    ):
+        base_dir = getattr(sett(), "project_path", "") or os.getcwd()
+        if not base_dir or not path.isdir(base_dir):
+            base_dir = path.expanduser("~")
+
+        if directory:
+            directory = directory if path.isabs(directory) else path.join(base_dir, directory)
+        else:
+            directory = base_dir
+
         return QFileDialog.getSaveFileName(None, caption, directory, format)[0]
 
     def open_dialog(
         self,
         caption,
         format="STL (*.stl *.STL);;Gcode (*.gcode)",
-        directory="/home/l1va/Downloads/5axes_3d_printer/test",
-    ):  # TODO: fix path
+        directory="",
+    ):
+        base_dir = getattr(sett(), "project_path", "") or os.getcwd()
+        if not base_dir or not path.isdir(base_dir):
+            base_dir = path.expanduser("~")
+
+        if directory:
+            directory = directory if path.isabs(directory) else path.join(base_dir, directory)
+        else:
+            directory = base_dir
+
         return QFileDialog.getOpenFileName(None, caption, directory, format)[0]
 
     def load_stl(self, stl_actor):
