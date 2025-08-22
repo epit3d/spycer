@@ -6,6 +6,7 @@ import os
 # Ensure the src package can be imported
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
+
 # Stub heavy dependencies not required for parser logic
 def _prepare_transform(*args, **kwargs):
     class _Tf:
@@ -13,6 +14,7 @@ def _prepare_transform(*args, **kwargs):
             return pt
 
     return _Tf()
+
 
 gui_utils_module = types.ModuleType("src.gui_utils")
 gui_utils_module.prepareTransform = _prepare_transform
@@ -45,6 +47,7 @@ def sett():
 settings_module.sett = sett
 
 import importlib
+
 src_pkg = importlib.import_module("src")
 src_pkg.settings = settings_module
 sys.modules["src.settings"] = settings_module
