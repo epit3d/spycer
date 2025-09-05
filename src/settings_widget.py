@@ -53,7 +53,7 @@ class SettingsWidget(QToolBox):
     """
 
     col2_cells = 4
-    validatorLocale = QtCore.QLocale("Englishs")
+    validatorLocale = QtCore.QLocale("en_US")
     intValidator = QtGui.QIntValidator(0, 9000)
 
     doubleValidator = QtGui.QDoubleValidator(0.00, 9000.00, 2)
