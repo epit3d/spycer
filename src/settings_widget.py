@@ -365,7 +365,7 @@ class SettingsWidget(QToolBox):
         self.__elements = {}
         self.__order = []
         for key in copied_order:
-            self = self.with_sett(key)
+            self.with_sett(key)
 
     @property
     def cur_row(self):
