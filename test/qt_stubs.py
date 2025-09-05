@@ -318,4 +318,3 @@ sys.modules["PyQt5.QtWidgets"] = qtwidgets
 sys.modules["PyQt5.QtCore"] = qtcore
 sys.modules["PyQt5.QtGui"] = qtgui
 sys.modules["sip"] = sip
-
