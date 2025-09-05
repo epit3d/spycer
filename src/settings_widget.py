@@ -1,3 +1,4 @@
+import logging
 from PyQt5 import QtCore
 from PyQt5 import QtGui
 from PyQt5.QtWidgets import (
@@ -18,6 +19,8 @@ from PyQt5.QtWidgets import (
 from src import locales
 from src.settings import sett, APP_PATH, Settings, read_settings
 from src.qt_utils import ClickableLineEdit, LineEdit
+
+logger = logging.getLogger(__name__)
 
 import os.path as path
 import logging
@@ -357,7 +360,7 @@ class SettingsWidget(QToolBox):
                 row_idx = self.__elements[key]["row_idx"]
                 remove_row(key, row_idx)
             except KeyError:
-                print(f"Key {key} not found in elements")
+                logger.warning("Key %s not found in elements", key)
                 pass
 
         self.__current_row = 1

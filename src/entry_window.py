@@ -1,4 +1,5 @@
 import os, math
+import logging
 from PyQt5.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -32,6 +33,8 @@ from src.settings import (
 )
 import src.locales as locales
 import shutil
+
+logger = logging.getLogger(__name__)
 
 
 class EntryWindow(QWidget):
@@ -228,7 +231,7 @@ class EntryWindow(QWidget):
         return ""
 
     def create_new_project(self):
-        print("Creating new project...")
+        logger.info("Creating new project...")
         # check if project name is empty
         if self.project_name_text_edit.text() == "":
             showErrorDialog(locales.getLocale().ProjectNameCannotBeEmpty)
@@ -249,7 +252,7 @@ class EntryWindow(QWidget):
         full_path = pathlib.Path(
             self.project_directory_edit.text(), self.project_name_text_edit.text()
         )
-        print(full_path)
+        logger.info("%s", full_path)
 
         # check if project already exists
         if full_path.exists():
@@ -282,7 +285,7 @@ class EntryWindow(QWidget):
         self.open_existing_project(selected_project)
 
     def open_existing_project(self, selected_project):
-        print(f"Opening {selected_project}...")
+        logger.info("Opening %s...", selected_project)
 
         update_last_open_project(self.recent_projects, selected_project)
 

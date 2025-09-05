@@ -1,8 +1,11 @@
 import src.server_api.pyapi.srv_bug.srv_bug_pb2 as srv_bug_pb2
+import logging
 import src.server_api.pyapi.srv_bug.srv_bug_pb2_grpc as srv_bug_pb2_grpc
 import grpc
 import os
 import yaml
+
+logger = logging.getLogger(__name__)
 
 CHUNK_SIZE = 1024 * 1024  # 1MB
 
@@ -40,12 +43,12 @@ def send_bug_report(filename, error_description):
 
         # check if file exists
         if not os.path.exists(filename):
-            print("File not found: %s" % filename)
+            logger.error("File not found: %s", filename)
             return False
 
         msgs = prepare_bug(filename, error_description)
 
-        print("prepared to call rpc")
+        logger.info("prepared to call rpc")
         response = stub.AddBug(msgs)
-        print(response)
+        logger.info("%s", response)
         return True

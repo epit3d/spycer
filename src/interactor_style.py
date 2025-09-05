@@ -1,4 +1,8 @@
+import logging
 import vtk
+
+
+logger = logging.getLogger(__name__)
 
 
 class ActorInteractorStyle(vtk.vtkInteractorStyleTrackballActor):
@@ -15,10 +19,10 @@ class ActorInteractorStyle(vtk.vtkInteractorStyleTrackballActor):
         # self.AddObserver('MouseWheelBackwardEvent', self.bimodal_mouse_handler)
 
     def onPressEvent(self, obj, event):
-        print("INSIDE!")
+        logger.debug("INSIDE!")
         # pos2d = obj.GetEventPosition()
         clickPos = self.GetInteractor().GetEventPosition()
-        print(clickPos)
+        logger.debug("%s", clickPos)
 
         picker = vtk.vtkPropPicker()
         picker.Pick(clickPos[0], clickPos[1], 0, self.GetDefaultRenderer())
@@ -29,7 +33,7 @@ class ActorInteractorStyle(vtk.vtkInteractorStyleTrackballActor):
         if self.NewPickedActor != self.WorkingActor:
             return
 
-        print("BEFORE ON LEFT")
+        logger.debug("BEFORE ON LEFT")
 
         if event == "LeftButtonPressEvent":
             self.OnLeftButtonDown()

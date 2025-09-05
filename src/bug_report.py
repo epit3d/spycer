@@ -1,3 +1,4 @@
+import logging
 import os
 import shutil
 import zipfile
@@ -18,6 +19,8 @@ from PyQt5.QtWidgets import (
 )
 from src.settings import sett, save_splanes_to_file, PathBuilder
 from src.client import send_bug_report
+
+logger = logging.getLogger(__name__)
 
 
 class bugReportDialog(QWidget):
@@ -190,4 +193,4 @@ class bugReportDialog(QWidget):
             self.image_list.setText("")
             self.error_description.setText("")
         except Exception as e:
-            print(str(e))
+            logger.error(str(e))

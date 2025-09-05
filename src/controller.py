@@ -43,10 +43,12 @@ from src.settings import (
 )
 import src.settings as settings
 
+logger = logging.getLogger(__name__)
+
 try:
     from src.bug_report import bugReportDialog
-except:
-    print("bug reporting is unavailable")
+except Exception:
+    logger.warning("bug reporting is unavailable")
 
 # try import of private hardware module
 try:
@@ -54,7 +56,7 @@ try:
     import src.hardware.calibration as calibration
     import src.hardware.printer as printer
 except Exception as e:
-    print(f"hardware module is unavailable: {e}")
+    logger.warning("hardware module is unavailable: %s", e)
 
 
 class MainController:
@@ -81,14 +83,14 @@ class MainController:
                     self.printer, PathBuilder.calibration_file()
                 ),
             )
-        except:
-            print("printer is not initialized")
+        except Exception:
+            logger.warning("printer is not initialized")
 
         # bug reporting might be unavailable
         try:
             self.bugReportDialog = bugReportDialog(self)
-        except:
-            print("bug reporting is unavailable")
+        except Exception:
+            logger.warning("bug reporting is unavailable")
         self._connect_signals()
 
     def _connect_signals(self):
@@ -216,7 +218,7 @@ class MainController:
                 PathBuilder.calibration_file()
             )
         except AttributeError:
-            print("hardware module is unavailable, skip")
+            logger.warning("hardware module is unavailable, skip")
 
         # show info dialog
         showInfoDialog(
@@ -255,7 +257,7 @@ class MainController:
                     PathBuilder.calibration_file()
                 )
             except AttributeError:
-                print("hardware module is unavailable, skip")
+                logger.warning("hardware module is unavailable, skip")
 
     def moving_figure(self, sourceParent, previousRow):
         if sourceParent.row() != -1:
@@ -592,12 +594,12 @@ class MainController:
 
     def load_gcode(self, filename, is_from_stl):
         def work():
-            print("start parsing gcode")
+            logger.info("start parsing gcode")
             start_time = time.time()
             gc = self.model.load_gcode(filename)
-            print("finish parsing gcode")
+            logger.info("finish parsing gcode")
             end_time = time.time()
-            print("spent time for gcode loading: ", end_time - start_time, "s")
+            logger.info("spent time for gcode loading: %s s", end_time - start_time)
 
             return gc
 
@@ -637,12 +639,12 @@ class MainController:
 
         def work():
             start_time = time.time()
-            print("start slicing")
+            logger.info("start slicing")
             p = Process(PathBuilder.slicing_cmd())
             p.wait()
-            print("finished command")
+            logger.info("finished command")
             end_time = time.time()
-            print("spent time for slicing: ", end_time - start_time, "s")
+            logger.info("spent time for slicing: %s s", end_time - start_time)
 
             if p.returncode == 2:
                 # panic
@@ -672,7 +674,7 @@ class MainController:
         # load gcode without calibration
         self.view.picture_slider.setValue(0)
         self.load_gcode(PathBuilder.gcodevis_file(), True)
-        print("loaded gcode")
+        logger.info("loaded gcode")
         self.update_interface(sett().slicing.stl_filename)
 
     def check_calibration_data_catalog(self):
@@ -708,8 +710,10 @@ class MainController:
 
     def save_settings(self, slicing_type, filename=""):
         s = sett()
-        print(
-            f"saving settings of stl file {self.model.opened_stl} {s.slicing.stl_file}"
+        logger.info(
+            "saving settings of stl file %s %s",
+            self.model.opened_stl,
+            s.slicing.stl_file,
         )
         # s.slicing.stl_file = self.model.opened_stl
         tf = vtk.vtkTransform()
