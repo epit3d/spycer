@@ -3,7 +3,6 @@ from PyQt5 import QtGui
 from PyQt5.QtWidgets import (
     QWidget,
     QLabel,
-    QLineEdit,
     QGridLayout,
     QCheckBox,
     QPushButton,
@@ -17,7 +16,7 @@ from PyQt5.QtWidgets import (
 
 from src import locales
 from src.settings import sett, APP_PATH, Settings, read_settings
-from src.qt_utils import ClickableLineEdit, LineEdit
+from src.qt_utils import ClickableLineEdit
 
 import os.path as path
 import logging
@@ -365,7 +364,7 @@ class SettingsWidget(QToolBox):
         self.__elements = {}
         self.__order = []
         for key in copied_order:
-            self = self.with_sett(key)
+            self.with_sett(key)
 
     @property
     def cur_row(self):
