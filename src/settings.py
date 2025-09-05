@@ -130,7 +130,7 @@ def compare_files(file1_path, file2_path):
             return False
 
     except FileNotFoundError:
-        print("Error during file comparison!")
+        logging.error("Error during file comparison!")
         return True
 
 
@@ -232,7 +232,7 @@ def load_settings(filename=""):
 
 def read_settings(filename=""):
     if not filename:
-        print("retrieving settings")
+        logging.debug("retrieving settings")
         if getattr(sys, "frozen", False):
             app_path = path.dirname(sys.executable)
             # uncomment if you want some protection that nothing would be broken
@@ -280,7 +280,7 @@ def save_settings(filename=""):
 
     temp = prepare_temp_settings(_sett)
 
-    print(f"saving settings to {filename}")
+    logging.info("saving settings to %s", filename)
     with open(filename, "w") as f:
         f.write(temp)
 
@@ -307,7 +307,7 @@ def get_version(settings_filename):
         version = settings["common"]["version"]
         return version
     except Exception as e:
-        print("Error reading version")
+        logging.error("Error reading version")
         return ""
 
 
@@ -322,7 +322,7 @@ def set_version(settings_filename, version):
             yaml.dump(settings, settings_file, default_flow_style=False)
 
     except Exception as e:
-        print("Error writing version")
+        logging.error("Error writing version")
 
 
 def paths_transfer_in_settings(initial_settings_filename, final_settings_filename):
@@ -418,7 +418,7 @@ class Settings(object):
             if attr in ignore_attributes:
                 continue
             if not hasattr(other, attr):
-                print(f"Attribute {attr} not found in other")
+                logging.warning("Attribute %s not found in other", attr)
                 return False
 
         # try to compare attributes from right to left
@@ -426,7 +426,7 @@ class Settings(object):
             if attr in ignore_attributes:
                 continue
             if not hasattr(self, attr):
-                print(f"Attribute {attr} not found in self")
+                logging.warning("Attribute %s not found in self", attr)
                 return False
 
         return True

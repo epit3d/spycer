@@ -12,7 +12,7 @@ if getattr(sys, "frozen", False) and sys.platform.startswith("linux"):
 
     # add shared libraries to LD_LIBRARY_PATH
     os.environ["LD_LIBRARY_PATH"] = shared_libs + ":" + prev_ld_path
-    print("LD_LIBRARY_PATH:", os.environ["LD_LIBRARY_PATH"])
+    logging.debug("LD_LIBRARY_PATH: %s", os.environ["LD_LIBRARY_PATH"])
 
 
 import logging
@@ -36,18 +36,19 @@ from src.entry_window import EntryWindow
 from src.gui_utils import read_plane
 
 logging.basicConfig(
-    filename="interface.log",
-    filemode="w+",
     level=logging.INFO,
     format="%(asctime)s %(message)s",
+    handlers=[
+        logging.FileHandler("interface.log", mode="w+"),
+        logging.StreamHandler(sys.stdout),
+    ],
 )
 
 
 def excepthook(exc_type, exc_value, exc_tb):
     tb = "".join(traceback.format_exception(exc_type, exc_value, exc_tb))
-    print("error catched!:")
-    print("error message:\n", tb)
-    logging.error(tb)
+    logging.error("error caught!")
+    logging.error("error message:\n%s", tb)
     QtWidgets.QApplication.quit()
 
 
@@ -136,7 +137,7 @@ if __name__ == "__main__":
     # sys.exit(app.exec_())
     sys.excepthook = excepthook
     ret = app.exec_()
-    print("event loop exited")
+    logging.info("event loop exited")
 
     s = sett()
     if os.path.isfile(s.colorizer.copy_stl_file):
