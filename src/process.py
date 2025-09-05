@@ -53,7 +53,10 @@ class Process:
             self.kill()
         for f in self._files.values():
             f.close()
-            os.unlink(f.name)
+            try:
+                os.unlink(f.name)
+            except FileNotFoundError:
+                pass
 
     @property
     def pid(self):
