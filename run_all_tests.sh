@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 set -e
-python3 -m unittest discover -p '*_test.py'
+python -m unittest discover -s test -p '*_test.py'
