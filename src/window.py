@@ -1,10 +1,9 @@
 from typing import Optional
 
-import vtk, src
+import vtk
 from PyQt5 import QtCore
 from PyQt5 import QtGui
 from PyQt5.QtCore import Qt, QEvent
-from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
     QMainWindow,
     QWidget,
@@ -28,7 +27,7 @@ from PyQt5.QtWidgets import (
 )
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
-from src import locales, gui_utils, interactor_style
+from src import locales, gui_utils
 from src.InteractorAroundActivePlane import InteractionAroundActivePlane
 from src.gui_utils import plane_tf, Plane, Cone, showErrorDialog
 from src.settings import (
@@ -38,9 +37,7 @@ from src.settings import (
     delete_temporary_project_files,
     project_change_check,
 )
-import src.settings as settings
 from src.figure_editor import StlMovePanel
-from src.qt_utils import ClickableLineEdit, LineEdit
 from src.settings_widget import SettingsWidget
 import os
 import os.path as path
