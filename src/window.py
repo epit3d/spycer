@@ -862,7 +862,9 @@ class MainWindow(QMainWindow):
             base_dir = path.expanduser("~")
 
         if directory:
-            directory = directory if path.isabs(directory) else path.join(base_dir, directory)
+            directory = (
+                directory if path.isabs(directory) else path.join(base_dir, directory)
+            )
         else:
             directory = base_dir
 
@@ -879,7 +881,9 @@ class MainWindow(QMainWindow):
             base_dir = path.expanduser("~")
 
         if directory:
-            directory = directory if path.isabs(directory) else path.join(base_dir, directory)
+            directory = (
+                directory if path.isabs(directory) else path.join(base_dir, directory)
+            )
         else:
             directory = base_dir
 
