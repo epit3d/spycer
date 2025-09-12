@@ -1,5 +1,5 @@
-import os, math
 import logging
+from pathlib import Path
 from PyQt5.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -183,7 +183,7 @@ class EntryWindow(QWidget):
 
     def add_recent_projects_in_list(self):
         for _, p in enumerate(self.recent_projects):
-            text = "<b>" + os.path.basename(p) + "</b><br>" + p
+            text = "<b>" + p.name + "</b><br>" + str(p)
             label = QLabel(text)
             label.setStyleSheet("background-color: rgba(255, 255, 255, 0);")
 
@@ -193,9 +193,7 @@ class EntryWindow(QWidget):
             self.adjust_item_height(item)
 
     def choose_project_location(self):
-        file = str(
-            QFileDialog.getExistingDirectory(self, locales.getLocale().ChooseFolder)
-        )
+        file = QFileDialog.getExistingDirectory(self, locales.getLocale().ChooseFolder)
         if not file:
             return
 
@@ -205,16 +203,14 @@ class EntryWindow(QWidget):
 
         self.project_directory_edit.setText(file)
 
-    def load_recent_projects(self) -> List[str]:
+    def load_recent_projects(self) -> List[Path]:
         settings = QSettings("Epit3D", "Spycer")
 
         if settings.contains("recent_projects"):
             projects = settings.value("recent_projects", type=list)
 
             # filter projects which do not exist
-            import pathlib
-
-            projects = [p for p in projects if pathlib.Path(p).exists()]
+            projects = [Path(p) for p in projects if Path(p).exists()]
 
             number_of_recent_projects = 10
             return projects[:number_of_recent_projects]
@@ -242,14 +238,12 @@ class EntryWindow(QWidget):
             showErrorDialog(locales.getLocale().ProjectLocationCannotBeEmpty)
             return
 
-        import pathlib
-
         # new project name should not have any spaces, join with underscore
         self.project_name_text_edit.setText(
             self.project_name_text_edit.text().replace(" ", "_")
         )
 
-        full_path = pathlib.Path(
+        full_path = Path(
             self.project_directory_edit.text(), self.project_name_text_edit.text()
         )
         logger.info("%s", full_path)
@@ -275,16 +269,17 @@ class EntryWindow(QWidget):
         self.open_existing_project(selected_project)
 
     def open_existing_project_via_directory(self):
-        if directory := str(
-            QFileDialog.getExistingDirectory(self, locales.getLocale().ChooseFolder)
+        if directory := QFileDialog.getExistingDirectory(
+            self, locales.getLocale().ChooseFolder
         ):
-            selected_project = directory
+            selected_project = Path(directory)
         else:
             # didn't choose any project, release
             return
         self.open_existing_project(selected_project)
 
-    def open_existing_project(self, selected_project):
+    def open_existing_project(self, selected_project: Path | str):
+        selected_project = Path(selected_project)
         logger.info("Opening %s...", selected_project)
 
         update_last_open_project(self.recent_projects, selected_project)
@@ -295,7 +290,7 @@ class EntryWindow(QWidget):
         self.reload_recent_projects_list()
 
         # emit signal with path to project file
-        self.open_project_signal.emit(selected_project)
+        self.open_project_signal.emit(str(selected_project))
 
     def сheck_project_version(self, project_path):
         sett().project_path = project_path

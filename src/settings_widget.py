@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 from PyQt5 import QtCore
 from PyQt5 import QtGui
 from PyQt5.QtWidgets import (
@@ -21,8 +22,6 @@ from src.qt_utils import ClickableLineEdit
 
 logger = logging.getLogger(__name__)
 
-import os.path as path
-import logging
 import re
 
 # Regular expression to find floats. Match groups are the whole string, the
@@ -605,10 +604,9 @@ class SettingsWidget(QToolBox):
 
             printer_basename = ""
             try:
-                printer_basename = path.basename(self.sett().hardware.printer_dir)
-                if self.sett().hardware.printer_dir == "" or not path.isdir(
-                    self.sett().hardware.printer_dir
-                ):
+                printer_dir = Path(self.sett().hardware.printer_dir)
+                printer_basename = printer_dir.name
+                if self.sett().hardware.printer_dir == "" or not printer_dir.is_dir():
                     # empty directory
                     raise ValueError("Choose default printer")
 
@@ -617,13 +615,13 @@ class SettingsWidget(QToolBox):
                 )
             except ValueError:
                 # set default path to printer config
-                self.sett().hardware.printer_dir = path.join(
-                    APP_PATH, "data", "printers", "default"
+                self.sett().hardware.printer_dir = (
+                    APP_PATH / "data" / "printers" / "default"
                 )
                 logging.info(
                     f"hardware printer path is default: {self.sett().hardware.printer_dir}"
                 )
-                printer_basename = path.basename(self.sett().hardware.printer_dir)
+                printer_basename = Path(self.sett().hardware.printer_dir).name
 
             printer_path_edit = ClickableLineEdit(printer_basename)
             printer_path_edit.setReadOnly(True)
