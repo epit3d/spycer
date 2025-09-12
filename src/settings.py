@@ -11,7 +11,62 @@ import logging
 import yaml
 import vtk
 
-_sett = None  # do not forget to load_settings() at start
+
+class SettingsManager:
+    """Encapsulates loading, saving and accessing application settings."""
+
+    def __init__(self, settings=None):
+        self._sett = settings
+
+    @property
+    def settings(self):
+        return self._sett
+
+    def load(self, filename=""):
+        old_setts = self._sett
+        data = read_settings(filename)
+        if data is not None:
+            logging.debug("Settings loaded")
+            self._sett = Settings(data)
+
+        if old_setts is not None and not old_setts.has_same_attributes(self._sett):
+            self._sett = old_setts
+            raise Exception("Check the settings file")
+
+        return self._sett
+
+    def save(self, filename=""):
+        if not filename:
+            if self._sett and getattr(self._sett, "project_path", None):
+                app_path = self._sett.project_path
+            elif getattr(sys, "frozen", False):
+                app_path = path.dirname(sys.executable)
+            else:
+                app_path = path.join(path.dirname(__file__), "..")
+
+            filename = path.join(app_path, "settings.yaml")
+
+        temp = prepare_temp_settings(self._sett)
+
+        logging.info("saving settings to %s", filename)
+        with open(filename, "w") as f:
+            f.write(temp)
+
+
+# default singleton used across the application
+settings_manager = SettingsManager()
+
+
+def sett():
+    return settings_manager.settings
+
+
+def load_settings(filename=""):
+    return settings_manager.load(filename)
+
+
+def save_settings(filename=""):
+    return settings_manager.save(filename)
 
 # setup app path
 if getattr(sys, "frozen", False):
@@ -23,10 +78,6 @@ if getattr(sys, "frozen", False):
 else:
     # have to add .. because settings.py is under src folder
     APP_PATH = path.join(path.dirname(__file__), "..")
-
-
-def sett():
-    return _sett
 
 
 _colors = {}  # Available colors: https://en.wikipedia.org/wiki/File:SVG_Recognized_color_keyword_names.svg
@@ -55,9 +106,9 @@ def get_color_rgb(color_name):
 
 def copy_project_files(project_path: str):
     load_settings()
-    global _sett
-    _sett.project_path = project_path
-    _sett.slicing.stl_file = ""
+    s = sett()
+    s.project_path = project_path
+    s.slicing.stl_file = ""
     save_settings()
 
 
@@ -215,21 +266,6 @@ def add_recent_project(recent_projects, project_path):
     save_recent_projects(recent_projects)
 
 
-def load_settings(filename=""):
-    global _sett
-    old_setts = _sett
-
-    data = read_settings(filename)
-    if data != None:
-        logging.debug("Settings loaded")
-        _sett = Settings(data)
-
-    # check if the format is similar
-    if old_setts is not None and not old_setts.has_same_attributes(_sett):
-        _sett = old_setts
-        raise Exception("Check the settings file")
-
-
 def read_settings(filename=""):
     if not filename:
         logging.debug("retrieving settings")
@@ -260,33 +296,13 @@ def read_settings(filename=""):
 
         check_children(data)
 
-        return data
+    return data
 
     return None
 
 
-def save_settings(filename=""):
-    if not filename:
-        if _sett.project_path:
-            app_path = _sett.project_path
-        elif getattr(sys, "frozen", False):
-            app_path = path.dirname(sys.executable)
-        else:
-            # have to add .. because settings.py is under src folder
-            app_path = path.join(path.dirname(__file__), "..")
-
-        settings_filename = "settings.yaml"
-        filename = path.join(app_path, settings_filename)
-
-    temp = prepare_temp_settings(_sett)
-
-    logging.info("saving settings to %s", filename)
-    with open(filename, "w") as f:
-        f.write(temp)
-
-
-def prepare_temp_settings(_sett):
-    temp = yaml.dump(_sett)
+def prepare_temp_settings(settings):
+    temp = yaml.dump(settings)
     temp = temp.replace("!!python/object:src.settings.Settings", "").strip()
     temp = temp.replace("!!python/object/apply:pathlib.PosixPath", "").strip()
 
