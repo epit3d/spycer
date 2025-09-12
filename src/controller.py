@@ -196,11 +196,7 @@ class MainController:
 
         # copy calibration data from default directory to new printer directory
         default_calibration_file = (
-            settings.APP_PATH
-            / "data"
-            / "printers"
-            / "default"
-            / "calibration_data.csv"
+            settings.APP_PATH / "data" / "printers" / "default" / "calibration_data.csv"
         )
         target_calibration_file = printer_path / "calibration_data.csv"
 

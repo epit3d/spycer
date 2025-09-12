@@ -484,7 +484,9 @@ class PathBuilder:
 
     @staticmethod
     def gcodevis_file() -> Path:
-        return PathBuilder.project_path() / sett().slicing.gcode_file_without_calibration
+        return (
+            PathBuilder.project_path() / sett().slicing.gcode_file_without_calibration
+        )
 
     @staticmethod
     def gcode_file() -> Path:
