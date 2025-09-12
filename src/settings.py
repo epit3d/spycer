@@ -1,10 +1,7 @@
-import os
+from pathlib import Path
 import sys
-import tempfile as tmp
-from os import path
 from PyQt5.QtCore import QSettings
 import shutil
-import pathlib
 import base64
 import logging
 
@@ -15,14 +12,13 @@ _sett = None  # do not forget to load_settings() at start
 
 # setup app path
 if getattr(sys, "frozen", False):
-    APP_PATH = path.dirname(sys.executable)
+    APP_PATH = Path(sys.executable).parent
     # uncomment if you want some protection that nothing would be broken
-    # if not path.exists(path.join(app_path, settings_filename)):
-    #     bundle_path = sys._MEIPASS
-    #     shutil.copyfile(path.join(bundle_path, settings_filename), path.join(app_path, settings_filename))
+    # bundle_path = Path(sys._MEIPASS)
+    # shutil.copyfile(bundle_path / settings_filename, APP_PATH / settings_filename)
 else:
     # have to add .. because settings.py is under src folder
-    APP_PATH = path.join(path.dirname(__file__), "..")
+    APP_PATH = Path(__file__).resolve().parent.parent
 
 
 def sett():
@@ -53,10 +49,10 @@ def get_color_rgb(color_name):
     return rgb
 
 
-def copy_project_files(project_path: str):
+def copy_project_files(project_path: Path):
     load_settings()
     global _sett
-    _sett.project_path = project_path
+    _sett.project_path = Path(project_path)
     _sett.slicing.stl_file = ""
     save_settings()
 
@@ -64,9 +60,7 @@ def copy_project_files(project_path: str):
 def project_change_check():
     logging.debug("Checking project change")
     save_settings("vip")
-    saved_settings = Settings(
-        read_settings(str(pathlib.Path(sett().project_path, "settings.yaml")))
-    )
+    saved_settings = Settings(read_settings(sett().project_path / "settings.yaml"))
     logging.debug("Saved settings:")
     logging.debug(saved_settings)
     logging.debug("Current settings:")
@@ -107,22 +101,24 @@ def compare_figures(settings):
     return True
 
 
-def compare_project_file(filename):
-    filename = pathlib.Path(sett().project_path, filename)
+def compare_project_file(filename: Path | str):
+    filename = Path(sett().project_path) / filename
     filename_temp = get_temp_path(filename)
     return compare_files(filename, filename_temp)
 
 
-def compare_files(file1_path, file2_path):
+def compare_files(file1_path: Path | str, file2_path: Path | str):
+    file1 = Path(file1_path)
+    file2 = Path(file2_path)
     # if either of the files does not exist, return False
-    if not os.path.exists(file1_path) or not os.path.exists(file2_path):
+    if not file1.exists() or not file2.exists():
         return True
 
     try:
-        with open(file1_path, "rb") as file1:
-            data1 = file1.read()
-        with open(file2_path, "rb") as file2:
-            data2 = file2.read()
+        with file1.open("rb") as file1_obj:
+            data1 = file1_obj.read()
+        with file2.open("rb") as file2_obj:
+            data2 = file2_obj.read()
 
         if data1 == data2:
             return True
@@ -139,22 +135,22 @@ def create_temporary_project_files():
     sett().slicing.stl_file = create_temporary_project_file("model.stl")
 
 
-def create_temporary_project_file(filename):
+def create_temporary_project_file(filename: Path | str):
+    filename = Path(filename)
     filename_temp = get_temp_path(filename)
-    filename_path = str(pathlib.Path(sett().project_path, filename))
+    filename_path = Path(sett().project_path) / filename
 
-    if os.path.exists(filename_path):
-        filename_temp_path = str(pathlib.Path(sett().project_path, filename_temp))
+    if filename_path.exists():
+        filename_temp_path = Path(sett().project_path) / filename_temp
         shutil.copy(filename_path, filename_temp_path)
-        return filename_temp
+        return filename_temp.name
     else:
         return ""
 
 
-def get_temp_path(filename):
-    basename, extension = os.path.splitext(filename)
-    filename_temp = basename + "_temp" + extension
-    return filename_temp
+def get_temp_path(filename: Path | str) -> Path:
+    filename = Path(filename)
+    return filename.with_name(f"{filename.stem}_temp{filename.suffix}")
 
 
 def delete_temporary_project_files(project_path=""):
@@ -162,38 +158,34 @@ def delete_temporary_project_files(project_path=""):
     delete_project_file("model_temp.stl", project_path)
 
 
-def delete_project_file(filename, project_path=""):
-    if project_path == "":
+def delete_project_file(filename: Path | str, project_path: Path | str = ""):
+    if not project_path:
         project_path = sett().project_path
 
-    filename_path = str(pathlib.Path(project_path, filename))
-    if os.path.exists(filename_path):
-        os.remove(filename_path)
+    filename_path = Path(project_path) / filename
+    if filename_path.exists():
+        filename_path.unlink()
 
 
-def get_recent_projects():
+def get_recent_projects() -> list[Path]:
     settings = QSettings("Epit3D", "Spycer")
 
-    recent_projects = list()
+    recent_projects: list[Path] = []
 
     if settings.contains("recent_projects"):
-        recent_projects = settings.value("recent_projects", type=list)
-
-        # filter projects which do not exist
-        import pathlib
-
-        recent_projects = [p for p in recent_projects if pathlib.Path(p).exists()]
+        projects = settings.value("recent_projects", type=list)
+        recent_projects = [Path(p) for p in projects if Path(p).exists()]
 
     return recent_projects
 
 
-def save_recent_projects(recent_projects):
+def save_recent_projects(recent_projects: list[Path]):
     settings = QSettings("Epit3D", "Spycer")
-    settings.setValue("recent_projects", recent_projects)
+    settings.setValue("recent_projects", [str(p) for p in recent_projects])
 
 
-def update_last_open_project(recent_projects, project_path):
-    project_path = str(project_path)
+def update_last_open_project(recent_projects: list[Path], project_path: Path):
+    project_path = Path(project_path)
     # adds recent project to system settings
     if project_path in recent_projects:
         # move the project to the beginning of the list
@@ -203,24 +195,24 @@ def update_last_open_project(recent_projects, project_path):
         add_recent_project(recent_projects, project_path)
 
 
-def move_project_to_top(recent_projects, project_path):
+def move_project_to_top(recent_projects: list[Path], project_path: Path):
     last_opened_project_index = recent_projects.index(project_path)
     last_opened_project = recent_projects.pop(last_opened_project_index)
     recent_projects.insert(0, last_opened_project)
     save_recent_projects(recent_projects)
 
 
-def add_recent_project(recent_projects, project_path):
-    recent_projects.insert(0, str(project_path))
+def add_recent_project(recent_projects: list[Path], project_path: Path):
+    recent_projects.insert(0, project_path)
     save_recent_projects(recent_projects)
 
 
-def load_settings(filename=""):
+def load_settings(filename: Path | str | None = None):
     global _sett
     old_setts = _sett
 
     data = read_settings(filename)
-    if data != None:
+    if data is not None:
         logging.debug("Settings loaded")
         _sett = Settings(data)
 
@@ -230,23 +222,20 @@ def load_settings(filename=""):
         raise Exception("Check the settings file")
 
 
-def read_settings(filename=""):
+def read_settings(filename: Path | str | None = None):
     if not filename:
         logging.debug("retrieving settings")
         if getattr(sys, "frozen", False):
-            app_path = path.dirname(sys.executable)
-            # uncomment if you want some protection that nothing would be broken
-            # if not path.exists(path.join(app_path, settings_filename)):
-            #     bundle_path = sys._MEIPASS
-            #     shutil.copyfile(path.join(bundle_path, settings_filename), path.join(app_path, settings_filename))
+            app_path = Path(sys.executable).parent
         else:
             # have to add .. because settings.py is under src folder
-            app_path = path.join(path.dirname(__file__), "..")
+            app_path = Path(__file__).resolve().parent.parent
 
-        settings_filename = "settings.yaml"
-        filename = path.join(app_path, settings_filename)
+        filename = app_path / "settings.yaml"
+    else:
+        filename = Path(filename)
 
-    with open(filename) as f:
+    with filename.open() as f:
         data = yaml.safe_load(f)
 
         # right now let's check that some fields are just None,
@@ -265,23 +254,24 @@ def read_settings(filename=""):
     return None
 
 
-def save_settings(filename=""):
+def save_settings(filename: Path | str | None = None):
     if not filename:
-        if _sett.project_path:
-            app_path = _sett.project_path
+        if getattr(_sett, "project_path", None):
+            app_path = Path(_sett.project_path)
         elif getattr(sys, "frozen", False):
-            app_path = path.dirname(sys.executable)
+            app_path = Path(sys.executable).parent
         else:
             # have to add .. because settings.py is under src folder
-            app_path = path.join(path.dirname(__file__), "..")
+            app_path = Path(__file__).resolve().parent.parent
 
-        settings_filename = "settings.yaml"
-        filename = path.join(app_path, settings_filename)
+        filename = app_path / "settings.yaml"
+    else:
+        filename = Path(filename)
 
     temp = prepare_temp_settings(_sett)
 
     logging.info("saving settings to %s", filename)
-    with open(filename, "w") as f:
+    with filename.open("w") as f:
         f.write(temp)
 
 
@@ -436,32 +426,32 @@ class PathBuilder:
     # class to build paths to files and folders
 
     @staticmethod
-    def project_path():
-        return sett().project_path
+    def project_path() -> Path:
+        return Path(sett().project_path)
 
     @staticmethod
-    def stl_model():
-        return path.join(PathBuilder.project_path(), "model.stl")
+    def stl_model() -> Path:
+        return PathBuilder.project_path() / "model.stl"
 
     @staticmethod
-    def stl_model_temp():
-        return path.join(PathBuilder.project_path(), "model_temp.stl")
+    def stl_model_temp() -> Path:
+        return PathBuilder.project_path() / "model_temp.stl"
 
     @staticmethod
-    def settings_file():
-        return path.join(PathBuilder.project_path(), "settings.yaml")
+    def settings_file() -> Path:
+        return PathBuilder.project_path() / "settings.yaml"
 
     @staticmethod
-    def settings_file_temp():
-        return path.join(PathBuilder.project_path(), "settings_temp.yaml")
+    def settings_file_temp() -> Path:
+        return PathBuilder.project_path() / "settings_temp.yaml"
 
     @staticmethod
-    def settings_file_default():
-        return "settings.yaml"
+    def settings_file_default() -> Path:
+        return Path("settings.yaml")
 
     @staticmethod
-    def settings_file_old():
-        return path.join(PathBuilder.project_path(), "settings_old.yaml")
+    def settings_file_old() -> Path:
+        return PathBuilder.project_path() / "settings_old.yaml"
 
     @staticmethod
     def get_cmd_with_path(cmd):
@@ -481,31 +471,29 @@ class PathBuilder:
         return PathBuilder.get_cmd_with_path(sett().colorizer.cmd)
 
     @staticmethod
-    def colorizer_stl():
-        return path.join(PathBuilder.project_path(), sett().colorizer.copy_stl_file)
+    def colorizer_stl() -> Path:
+        return PathBuilder.project_path() / sett().colorizer.copy_stl_file
 
     @staticmethod
-    def colorizer_result():
-        return path.join(PathBuilder.project_path(), sett().colorizer.result)
+    def colorizer_result() -> Path:
+        return PathBuilder.project_path() / sett().colorizer.result
 
     @staticmethod
     def slicing_cmd():
         return PathBuilder.get_cmd_with_path(sett().slicing.cmd)
 
     @staticmethod
-    def gcodevis_file():
-        return path.join(
-            PathBuilder.project_path(), sett().slicing.gcode_file_without_calibration
-        )
+    def gcodevis_file() -> Path:
+        return PathBuilder.project_path() / sett().slicing.gcode_file_without_calibration
 
     @staticmethod
-    def gcode_file():
-        return path.join(PathBuilder.project_path(), sett().slicing.gcode_file)
+    def gcode_file() -> Path:
+        return PathBuilder.project_path() / sett().slicing.gcode_file
 
     @staticmethod
-    def printer_dir():
-        return sett().hardware.printer_dir
+    def printer_dir() -> Path:
+        return Path(sett().hardware.printer_dir)
 
     @staticmethod
-    def calibration_file():
-        return path.join(PathBuilder.printer_dir(), sett().hardware.calibration_file)
+    def calibration_file() -> Path:
+        return PathBuilder.printer_dir() / sett().hardware.calibration_file

@@ -1,7 +1,5 @@
 import logging
 import math
-import os
-from os import path
 import subprocess
 import time
 import sys
@@ -163,7 +161,7 @@ class MainController:
         self.calibrationPanel.show()
 
     def current_printer_is_default(self):
-        if os.path.basename(sett().hardware.printer_dir) == "default":
+        if Path(sett().hardware.printer_dir).name == "default":
             return True
 
         return False
@@ -186,21 +184,25 @@ class MainController:
             return
 
         # create directory in data/printers/<name> relative to FASP root
-        printer_path = path.join(settings.APP_PATH, "data", "printers", printer_name)
+        printer_path = settings.APP_PATH / "data" / "printers" / printer_name
 
         # check if directory already exists
-        if path.exists(printer_path):
+        if printer_path.exists():
             showErrorDialog("Printer with this name already exists")
             return
 
         # create directory
-        os.makedirs(printer_path)
+        printer_path.mkdir(parents=True)
 
         # copy calibration data from default directory to new printer directory
-        default_calibration_file = path.join(
-            settings.APP_PATH, "data", "printers", "default", "calibration_data.csv"
+        default_calibration_file = (
+            settings.APP_PATH
+            / "data"
+            / "printers"
+            / "default"
+            / "calibration_data.csv"
         )
-        target_calibration_file = path.join(printer_path, "calibration_data.csv")
+        target_calibration_file = printer_path / "calibration_data.csv"
 
         shutil.copyfile(default_calibration_file, target_calibration_file)
 
@@ -210,7 +212,7 @@ class MainController:
         save_settings()
 
         # update label with printer path
-        self.view.setts.edit("printer_path").setText(os.path.basename(printer_path))
+        self.view.setts.edit("printer_path").setText(printer_path.name)
 
         # update path in calibration model
         try:
@@ -233,9 +235,10 @@ class MainController:
         )
 
         if printer_path:
+            printer_path = Path(printer_path)
             # check if directory contains calibration file
-            calibration_file = path.join(printer_path, "calibration_data.csv")
-            if not path.exists(calibration_file):
+            calibration_file = printer_path / "calibration_data.csv"
+            if not calibration_file.exists():
                 showErrorDialog(
                     "Directory doesn't contain calibration file. Please choose another directory."
                 )
@@ -249,7 +252,7 @@ class MainController:
             save_settings()
 
             # update label with printer path
-            self.view.setts.edit("printer_path").setText(os.path.basename(printer_path))
+            self.view.setts.edit("printer_path").setText(printer_path.name)
 
             # update path in calibration model
             try:
@@ -357,9 +360,7 @@ class MainController:
 
     def save_planes(self):
         try:
-            directory = (
-                "Planes_" + os.path.basename(sett().slicing.stl_file).split(".")[0]
-            )
+            directory = "Planes_" + Path(sett().slicing.stl_file).stem
             filename = str(
                 self.view.save_dialog(
                     self.view.locale.SavePlanes, "TXT (*.txt *.TXT)", directory
@@ -374,17 +375,15 @@ class MainController:
 
     def download_planes(self):
         try:
-            filename = str(
-                self.view.open_dialog(
-                    self.view.locale.DownloadPlanes, "TXT (*.txt *.TXT)"
-                )
+            filename = self.view.open_dialog(
+                self.view.locale.DownloadPlanes, "TXT (*.txt *.TXT)"
             )
-            if filename != "":
-                file_ext = os.path.splitext(filename)[1].upper()
-                filename = str(Path(filename))
+            filename = Path(filename) if filename else None
+            if filename:
+                file_ext = filename.suffix.upper()
                 if file_ext == ".TXT":
                     try:
-                        self.load_planes_from_file(filename)
+                        self.load_planes_from_file(str(filename))
                     except Exception as e:
                         showErrorDialog("Error during reading planes file: " + str(e))
                 else:
@@ -528,10 +527,10 @@ class MainController:
 
     def open_file(self):
         try:
-            filename = str(self.view.open_dialog(self.view.locale.OpenModel))
-            if filename != "":
-                file_ext = os.path.splitext(filename)[1].upper()
-                filename = str(Path(filename))
+            filename = self.view.open_dialog(self.view.locale.OpenModel)
+            filename = Path(filename) if filename else None
+            if filename:
+                file_ext = filename.suffix.upper()
                 if file_ext == ".STL":
                     self.reset_settings()
                     s = sett()
@@ -540,23 +539,24 @@ class MainController:
                     stl_full_path = PathBuilder.stl_model_temp()
                     shutil.copyfile(filename, stl_full_path)
                     # relative path inside project
-                    s.slicing.stl_filename = path.basename(filename)
-                    s.slicing.stl_file = path.basename(stl_full_path)
+                    s.slicing.stl_filename = filename.name
+                    s.slicing.stl_file = stl_full_path.name
 
                     self.save_settings("vip")
-                    self.update_interface(filename)
+                    self.update_interface(str(filename))
 
                     self.view.model_centering_box.setChecked(False)
 
-                    if os.path.isfile(s.colorizer.copy_stl_file):
-                        os.remove(s.colorizer.copy_stl_file)
+                    copy_file = Path(s.colorizer.copy_stl_file)
+                    if copy_file.is_file():
+                        copy_file.unlink()
 
                     self.load_stl(stl_full_path)
                 elif file_ext == ".GCODE":
                     s = sett()
                     # s.slicing.stl_file = filename # TODO optimize
                     self.save_settings("vip")
-                    self.load_gcode(filename, False)
+                    self.load_gcode(str(filename), False)
                     self.update_interface(filename)
                 else:
                     showErrorDialog("This file format isn't supported:" + file_ext)
@@ -761,9 +761,7 @@ class MainController:
 
     def save_settings_file(self):
         try:
-            directory = (
-                "Settings_" + os.path.basename(sett().slicing.stl_file).split(".")[0]
-            )
+            directory = "Settings_" + Path(sett().slicing.stl_file).stem
             filename = str(
                 self.view.save_dialog(
                     self.view.locale.SaveSettings, "YAML (*.yaml *.YAML)", directory
@@ -779,14 +777,13 @@ class MainController:
     def save_project_files(self, save_path=""):
         if save_path == "":
             self.save_settings("vip", PathBuilder.settings_file())
-            if os.path.isfile(PathBuilder.stl_model_temp()):
+            if PathBuilder.stl_model_temp().is_file():
                 shutil.copy2(PathBuilder.stl_model_temp(), PathBuilder.stl_model())
         else:
-            self.save_settings("vip", path.join(save_path, "settings.yaml"))
-            if os.path.isfile(PathBuilder.stl_model_temp()):
-                shutil.copy2(
-                    PathBuilder.stl_model_temp(), path.join(save_path, "model.stl")
-                )
+            save_path = Path(save_path)
+            self.save_settings("vip", save_path / "settings.yaml")
+            if PathBuilder.stl_model_temp().is_file():
+                shutil.copy2(PathBuilder.stl_model_temp(), save_path / "model.stl")
 
     def save_project(self):
         try:
@@ -800,15 +797,14 @@ class MainController:
         project_path = PathBuilder.project_path()
 
         try:
-            save_directory = str(
-                QFileDialog.getExistingDirectory(
-                    self.view, locales.getLocale().SavingProject
-                )
+            save_directory = QFileDialog.getExistingDirectory(
+                self.view, locales.getLocale().SavingProject
             )
 
             if not save_directory:
                 return
 
+            save_directory = Path(save_directory)
             self.save_project_files(save_directory)
             sett().project_path = save_directory
             self.save_settings("vip", PathBuilder.settings_file())
@@ -834,14 +830,12 @@ class MainController:
 
     def load_settings_file(self):
         try:
-            filename = str(
-                self.view.open_dialog(
-                    self.view.locale.LoadSettings, "YAML (*.yaml *.YAML)"
-                )
+            filename = self.view.open_dialog(
+                self.view.locale.LoadSettings, "YAML (*.yaml *.YAML)"
             )
-            if filename != "":
-                file_ext = os.path.splitext(filename)[1].upper()
-                filename = str(Path(filename))
+            filename = Path(filename) if filename else None
+            if filename:
+                file_ext = filename.suffix.upper()
                 if file_ext == ".YAML":
                     try:
                         # TODO: right now to maintain good transfer
@@ -973,8 +967,9 @@ class MainController:
             self.view.name_stl_file.setText("")
             self.view.setWindowTitle("FASP")
         else:
-            name_stl_file = os.path.splitext(os.path.basename(filename))[0]
-            file_ext = os.path.splitext(filename)[1].upper()
+            filename = Path(filename)
+            name_stl_file = filename.stem
+            file_ext = filename.suffix.upper()
 
             self.view.setWindowTitle(name_stl_file + " - FASP")
             self.view.name_stl_file.setText(
