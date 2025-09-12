@@ -247,6 +247,7 @@ def parseGCode(lines, settings=None):
 
     if settings is None:
         from src import settings as settings_module
+
         settings = settings_module.sett()
 
     s = settings

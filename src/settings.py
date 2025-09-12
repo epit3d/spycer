@@ -68,6 +68,7 @@ def load_settings(filename=""):
 def save_settings(filename=""):
     return settings_manager.save(filename)
 
+
 # setup app path
 if getattr(sys, "frozen", False):
     APP_PATH = path.dirname(sys.executable)
