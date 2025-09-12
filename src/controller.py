@@ -110,7 +110,9 @@ class MainController:
         if service is not None:
             self.servicePanel, self.serviceController = service
         else:
-            self.servicePanel, self.serviceController = create_service(view, self.printer)
+            self.servicePanel, self.serviceController = create_service(
+                view, self.printer
+            )
 
         if calibration is not None:
             self.calibrationPanel, self.calibrationController = calibration
@@ -138,9 +140,7 @@ class MainController:
         self.view.check_updates_action.triggered.connect(self.open_updater)
 
         if self.calibrationPanel is not None:
-            self.view.calibration_action.triggered.connect(
-                self.calibration_action_show
-            )
+            self.view.calibration_action.triggered.connect(self.calibration_action_show)
         else:
             self.view.calibration_action.triggered.connect(
                 lambda: showInfoDialog(locales.getLocale().ErrorHardwareModule)
