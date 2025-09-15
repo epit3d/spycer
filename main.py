@@ -1,27 +1,26 @@
 # if we run pyinstaller build for linux, we have to extend LD_LIBRARY_PATH with goosli dependencies
-import os, sys
+import logging
+import os
+import sys
+from pathlib import Path
 
 # check whether we are in pyinstaller bundle and on linux
 if getattr(sys, "frozen", False) and sys.platform.startswith("linux"):
-    app_path = os.path.dirname(sys.executable)
+    app_path = Path(sys.executable).parent
 
     prev_ld_path = os.environ.get("LD_LIBRARY_PATH", "")
 
     # shared libraries are located at lib/
-    shared_libs = os.path.join(app_path, "lib")
+    shared_libs = app_path / "lib"
 
     # add shared libraries to LD_LIBRARY_PATH
-    os.environ["LD_LIBRARY_PATH"] = shared_libs + ":" + prev_ld_path
+    os.environ["LD_LIBRARY_PATH"] = str(shared_libs) + ":" + prev_ld_path
     logging.debug("LD_LIBRARY_PATH: %s", os.environ["LD_LIBRARY_PATH"])
 
 
-import logging
-import sys
 import traceback
-import os
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QApplication
-import pathlib
 from src.settings import (
     copy_project_files,
     load_settings,
@@ -68,8 +67,8 @@ if __name__ == "__main__":
             # TODO: we can remove this condition after one release
 
             # try to open figures file
-            figpath = pathlib.Path(project_path, sett().slicing.splanes_file)
-            if os.path.isfile(figpath):
+            figpath = Path(project_path) / sett().slicing.splanes_file
+            if figpath.is_file():
                 cntrl.load_planes_from_file(figpath)
             else:
                 cntrl.load_planes([])
@@ -84,7 +83,7 @@ if __name__ == "__main__":
             )
 
     def open_project(project_path: str):
-        load_settings(str(pathlib.Path(project_path, "settings.yaml")))
+        load_settings(Path(project_path) / "settings.yaml")
 
         # update project_path in settings, because it originally might be in another place
         sett().project_path = project_path
@@ -99,8 +98,8 @@ if __name__ == "__main__":
         cntrl = MainController(window, model)
 
         # try to open stl file
-        stlpath = pathlib.Path(project_path, sett().slicing.stl_file)
-        if os.path.isfile(stlpath):
+        stlpath = Path(project_path) / sett().slicing.stl_file
+        if stlpath.is_file():
             cntrl.load_stl(stlpath)
 
         splanes_update(project_path, cntrl)
@@ -113,7 +112,7 @@ if __name__ == "__main__":
 
     def create_project(project_path: str):
         copy_project_files(project_path)
-        load_settings(str(pathlib.Path(project_path, "settings.yaml")))
+        load_settings(Path(project_path) / "settings.yaml")
         create_temporary_project_files()
 
         window = MainWindow()
@@ -140,7 +139,8 @@ if __name__ == "__main__":
     logging.info("event loop exited")
 
     s = sett()
-    if os.path.isfile(s.colorizer.copy_stl_file):
-        os.remove(s.colorizer.copy_stl_file)
+    copy_path = Path(s.colorizer.copy_stl_file)
+    if copy_path.is_file():
+        copy_path.unlink()
 
     sys.exit(ret)
