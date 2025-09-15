@@ -1,6 +1,6 @@
 """Menu helpers for :mod:`src.window`."""
+
 from PyQt5.QtWidgets import QAction
-from src import locales
 
 
 def setup_menus(window):

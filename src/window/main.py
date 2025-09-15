@@ -7,7 +7,6 @@ from PyQt5.QtWidgets import (
     QMainWindow,
     QWidget,
     QLabel,
-    QComboBox,
     QGridLayout,
     QSlider,
     QCheckBox,
@@ -16,6 +15,7 @@ from PyQt5.QtWidgets import (
     QScrollArea,
     QGroupBox,
     QDialog,
+    QFileDialog,
     QTreeWidget,
     QTreeWidgetItem,
     QAbstractItemView,
@@ -35,8 +35,6 @@ from src.settings import (
 from src.figure_editor import StlMovePanel
 from src.settings_widget import SettingsWidget
 from . import menu, rendering, dialogs
-import os
-import os.path as path
 import logging
 
 NothingState = "nothing"
@@ -247,17 +245,6 @@ class MainWindow(QMainWindow):
         right_panel.setColumnStretch(1, 1)
         right_panel.setColumnStretch(3, 1)
         right_panel.setColumnStretch(4, 1)
-
-        сolumn2_number_of_cells = 4
-
-        validatorLocale = QtCore.QLocale("Englishs")
-        intValidator = QtGui.QIntValidator(0, 9000)
-
-        doubleValidator = QtGui.QDoubleValidator(0.00, 9000.00, 2)
-        doubleValidator.setLocale(validatorLocale)
-
-        doublePercentValidator = QtGui.QDoubleValidator(0.00, 9000.00, 2)
-        doublePercentValidator.setLocale(validatorLocale)
 
         # Front-end development at its best
         self.cur_row = 1
@@ -521,7 +508,7 @@ class MainWindow(QMainWindow):
 
         self.stlActor.SetUserTransform(transform)
 
-        if not self.boxWidget is None:
+        if self.boxWidget is not None:
             self.boxWidget.SetTransform(transform)
 
         self.updateTransform()
@@ -712,7 +699,7 @@ class MainWindow(QMainWindow):
         transform = movements[current_index][1]
 
         self.stlActor.SetUserTransform(transform)
-        if not self.boxWidget is None:
+        if self.boxWidget is not None:
             self.boxWidget.SetTransform(transform)
 
         self.updateTransform()
@@ -737,10 +724,14 @@ class MainWindow(QMainWindow):
         i, j, k = tf.GetOrientation()
         self.xyz_orient_value.setText(f"Orientation: {i:.2f} {j:.2f} {k:.2f}")
 
-    def save_dialog(self, caption, format="STL (*.stl *.STL);;Gcode (*.gcode)", directory=""):
+    def save_dialog(
+        self, caption, format="STL (*.stl *.STL);;Gcode (*.gcode)", directory=""
+    ):
         return dialogs.save_dialog(self, caption, format, directory)
 
-    def open_dialog(self, caption, format="STL (*.stl *.STL);;Gcode (*.gcode)", directory=""):
+    def open_dialog(
+        self, caption, format="STL (*.stl *.STL);;Gcode (*.gcode)", directory=""
+    ):
         return dialogs.open_dialog(self, caption, format, directory)
 
     def load_stl(self, stl_actor):
@@ -809,7 +800,7 @@ class MainWindow(QMainWindow):
                 )
 
             row = self.splanes_tree.topLevelItem(i)
-            if row != None:
+            if row is not None:
                 if (
                     row.checkState(0) == QtCore.Qt.CheckState.Checked
                 ) or self.hide_checkbox.isChecked():

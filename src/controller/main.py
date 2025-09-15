@@ -4,17 +4,14 @@ import os
 from os import path
 import subprocess
 import time
-import sys
-from functools import partial
 from pathlib import Path
 import shutil
-from shutil import copy2
 from typing import Dict, List, Union
 from vtkmodules.vtkCommonMath import vtkMatrix4x4
 
 import vtk
 from PyQt5 import QtCore
-from PyQt5.QtCore import QSettings, QUrl
+from PyQt5.QtCore import QUrl
 from PyQt5.QtWidgets import QFileDialog, QInputDialog, QMessageBox
 from PyQt5.QtGui import QDesktopServices
 
@@ -33,13 +30,8 @@ from src.settings import (
     sett,
     save_settings,
     save_splanes_to_file,
-    load_settings,
     get_color,
     PathBuilder,
-    create_temporary_project_files,
-    update_last_open_project,
-    get_recent_projects,
-    delete_temporary_project_files,
 )
 import src.settings as settings
 

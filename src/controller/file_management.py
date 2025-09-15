@@ -1,4 +1,5 @@
 """File-related controller mixins."""
+
 import os
 import shutil
 from os import path
@@ -8,12 +9,11 @@ import logging
 
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
 
-from src import gui_utils, locales, qt_utils
+from src import gui_utils, locales
 from src.gui_utils import showErrorDialog
 from src.process import Process
 from src.settings import (
     sett,
-    save_settings,
     load_settings,
     PathBuilder,
     create_temporary_project_files,
@@ -71,7 +71,9 @@ class FileManagementMixin:
 
     def save_settings_file(self):
         try:
-            directory = "Settings_" + os.path.basename(sett().slicing.stl_file).split(".")[0]
+            directory = (
+                "Settings_" + os.path.basename(sett().slicing.stl_file).split(".")[0]
+            )
             filename = str(
                 self.view.save_dialog(
                     self.view.locale.SaveSettings, "YAML (*.yaml *.YAML)", directory
@@ -151,9 +153,7 @@ class FileManagementMixin:
                         sett().project_path = old_project_path
                         self.display_settings()
                     except Exception as e:
-                        showErrorDialog(
-                            "Error during reading settings file: " + str(e)
-                        )
+                        showErrorDialog("Error during reading settings file: " + str(e))
                 else:
                     showErrorDialog("This file format isn't supported:" + file_ext)
         except IOError as e:
