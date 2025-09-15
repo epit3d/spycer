@@ -1,4 +1,5 @@
 """UI signal wiring for controllers."""
+
 from functools import partial
 
 from src import locales

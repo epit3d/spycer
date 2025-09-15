@@ -1,4 +1,5 @@
 """3D rendering utilities for :mod:`src.window`."""
+
 import vtk
 from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
