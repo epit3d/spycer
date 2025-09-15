@@ -1,8 +1,7 @@
 from typing import Optional
 
 import vtk
-from PyQt5 import QtCore
-from PyQt5 import QtGui
+from PyQt5 import QtCore, QtGui
 from PyQt5.QtCore import Qt, QEvent
 from PyQt5.QtWidgets import (
     QMainWindow,
@@ -14,10 +13,8 @@ from PyQt5.QtWidgets import (
     QCheckBox,
     QVBoxLayout,
     QPushButton,
-    QFileDialog,
     QScrollArea,
     QGroupBox,
-    QAction,
     QDialog,
     QTreeWidget,
     QTreeWidgetItem,
@@ -25,10 +22,8 @@ from PyQt5.QtWidgets import (
     QTabWidget,
     QMessageBox,
 )
-from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
 
 from src import locales, gui_utils
-from src.InteractorAroundActivePlane import InteractionAroundActivePlane
 from src.gui_utils import plane_tf, Plane, Cone, showErrorDialog
 from src.settings import (
     sett,
@@ -39,6 +34,7 @@ from src.settings import (
 )
 from src.figure_editor import StlMovePanel
 from src.settings_widget import SettingsWidget
+from . import menu, rendering, dialogs
 import os
 import os.path as path
 import logging
@@ -112,46 +108,12 @@ class MainWindow(QMainWindow):
         self.locale = locales.getLocale()
 
         # Menu
-        bar = self.menuBar()
-        file_menu = bar.addMenu(self.locale.File)
-        self.open_action = QAction(self.locale.Open, self)
-        file_menu.addAction(self.open_action)
-        # file_menu.addAction(close_action)
-
-        self.save_gcode_action = QAction(self.locale.SaveGCode, self)
-        self.save_project_action = QAction(self.locale.SaveProject, self)
-        file_menu.addAction(self.save_project_action)
-        self.save_project_as_action = QAction(self.locale.SaveProjectAs, self)
-        file_menu.addAction(self.save_project_as_action)
-        file_menu.addAction(self.save_gcode_action)
-        self.save_sett_action = QAction(self.locale.SaveSettings, self)
-        file_menu.addAction(self.save_sett_action)
-        self.load_sett_action = QAction(self.locale.LoadSettings, self)
-        file_menu.addAction(self.load_sett_action)
-
-        self.slicing_info_action = QAction(self.locale.SlicerInfo, self)
-        file_menu.addAction(self.slicing_info_action)
-
-        tools_menu = bar.addMenu(self.locale.Tools)
-        self.calibration_action = QAction(self.locale.Calibration, self)
-        tools_menu.addAction(self.calibration_action)
-        self.bug_report = QAction(self.locale.SubmitBugReport, self)
-        tools_menu.addAction(self.bug_report)
-
-        self.check_updates_action = QAction(self.locale.CheckUpdates, self)
-        tools_menu.addAction(self.check_updates_action)
-
-        help_menu = bar.addMenu(self.locale.Help)
-        self.slicing_info_action = QAction(self.locale.SlicerInfo, self)
-        help_menu.addAction(self.slicing_info_action)
-
-        self.documentation_action = QAction(self.locale.Documentation, self)
-        help_menu.addAction(self.documentation_action)
+        menu.setup_menus(self)
 
         # main parts
         central_widget = QWidget()
         main_grid = QGridLayout()
-        self.widget3d = self.init3d_widget()
+        self.widget3d = rendering.init_3d_widget(self)
         main_grid.addWidget(self.widget3d, 0, 0, 20, 5)
         main_grid.addWidget(self.init_right_panel(), 0, 5, 21, 2)
 
@@ -259,79 +221,6 @@ class MainWindow(QMainWindow):
         message_box.button(QMessageBox.Cancel).setText(self.locale.Cancel)
 
         return message_box.exec()
-
-    def init3d_widget(self):
-        widget3d = QVTKRenderWindowInteractor(self)
-        widget3d.installEventFilter(self)
-
-        self.render = vtk.vtkRenderer()
-        self.render.SetBackground(get_color("white"))
-
-        widget3d.GetRenderWindow().AddRenderer(self.render)
-        self.interactor = widget3d.GetRenderWindow().GetInteractor()
-        self.interactor.SetInteractorStyle(None)
-
-        self.interactor.Initialize()
-        self.interactor.Start()
-
-        # self.render.ResetCamera()
-        # self.render.GetActiveCamera().AddObserver('ModifiedEvent', CameraModifiedCallback)
-
-        # set position of camera to (5, 5, 5) and look at (0, 0, 0) and z-axis is looking up
-        self.render.GetActiveCamera().SetPosition(5, 5, 5)
-        self.render.GetActiveCamera().SetFocalPoint(0, 0, 0)
-        self.render.GetActiveCamera().SetViewUp(0, 0, 1)
-
-        self.customInteractor = InteractionAroundActivePlane(
-            self.interactor, self.render
-        )
-        self.interactor.AddObserver(
-            "MouseWheelBackwardEvent", self.customInteractor.middleBtnPress
-        )
-        self.interactor.AddObserver(
-            "MouseWheelForwardEvent", self.customInteractor.middleBtnPress
-        )
-        self.interactor.AddObserver(
-            "RightButtonPressEvent", self.customInteractor.rightBtnPress
-        )
-        self.interactor.AddObserver(
-            "RightButtonReleaseEvent", self.customInteractor.rightBtnPress
-        )
-        self.interactor.AddObserver(
-            "LeftButtonPressEvent",
-            lambda obj, event: self.customInteractor.leftBtnPress(obj, event, self),
-        )
-        self.interactor.AddObserver(
-            "LeftButtonReleaseEvent", self.customInteractor.leftBtnPress
-        )
-        self.interactor.AddObserver(
-            "MouseMoveEvent",
-            lambda obj, event: self.customInteractor.mouseMove(obj, event, self),
-        )
-
-        # self.actor_interactor_style = interactor_style.ActorInteractorStyle(self.updateTransform)
-        # self.actor_interactor_style.SetDefaultRenderer(self.render)
-        # self.interactor.SetInteractorStyle(style)
-        # self.camera_interactor_style = interactor_style.CameraInteractorStyle()
-        # self.camera_interactor_style.SetDefaultRenderer(self.render)
-
-        self.axesWidget = gui_utils.createAxes(self.interactor)
-
-        self.planeActor = gui_utils.createPlaneActorCircle()
-        self.planeTransform = vtk.vtkTransform()
-        self.render.AddActor(self.planeActor)
-
-        self.add_legend()
-
-        self.splanes_actors = []
-
-        # self.render.ResetCamera()
-        # self.render.SetUseDepthPeeling(True)
-
-        widget3d.Initialize()
-        widget3d.Start()
-
-        return widget3d
 
     def add_legend(self):
         hackData = vtk.vtkPolyData()  # it is hack to pass value to legend
@@ -848,43 +737,11 @@ class MainWindow(QMainWindow):
         i, j, k = tf.GetOrientation()
         self.xyz_orient_value.setText(f"Orientation: {i:.2f} {j:.2f} {k:.2f}")
 
-    def save_dialog(
-        self,
-        caption,
-        format="STL (*.stl *.STL);;Gcode (*.gcode)",
-        directory="",
-    ):
-        base_dir = getattr(sett(), "project_path", "") or os.getcwd()
-        if not base_dir or not path.isdir(base_dir):
-            base_dir = path.expanduser("~")
+    def save_dialog(self, caption, format="STL (*.stl *.STL);;Gcode (*.gcode)", directory=""):
+        return dialogs.save_dialog(self, caption, format, directory)
 
-        if directory:
-            directory = (
-                directory if path.isabs(directory) else path.join(base_dir, directory)
-            )
-        else:
-            directory = base_dir
-
-        return QFileDialog.getSaveFileName(None, caption, directory, format)[0]
-
-    def open_dialog(
-        self,
-        caption,
-        format="STL (*.stl *.STL);;Gcode (*.gcode)",
-        directory="",
-    ):
-        base_dir = getattr(sett(), "project_path", "") or os.getcwd()
-        if not base_dir or not path.isdir(base_dir):
-            base_dir = path.expanduser("~")
-
-        if directory:
-            directory = (
-                directory if path.isabs(directory) else path.join(base_dir, directory)
-            )
-        else:
-            directory = base_dir
-
-        return QFileDialog.getOpenFileName(None, caption, directory, format)[0]
+    def open_dialog(self, caption, format="STL (*.stl *.STL);;Gcode (*.gcode)", directory=""):
+        return dialogs.open_dialog(self, caption, format, directory)
 
     def load_stl(self, stl_actor):
         self.clear_scene()
