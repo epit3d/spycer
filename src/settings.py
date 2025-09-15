@@ -114,9 +114,11 @@ def compare_project_file(filename):
 
 
 def compare_files(file1_path, file2_path):
-    # if either of the files does not exist, return False
+    # return False if either path is missing or the file does not exist
+    if not file1_path or not file2_path:
+        return False
     if not os.path.exists(file1_path) or not os.path.exists(file2_path):
-        return True
+        return False
 
     try:
         with open(file1_path, "rb") as file1:
@@ -131,7 +133,7 @@ def compare_files(file1_path, file2_path):
 
     except FileNotFoundError:
         logging.error("Error during file comparison!")
-        return True
+        return False
 
 
 def create_temporary_project_files():
