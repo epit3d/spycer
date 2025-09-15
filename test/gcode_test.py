@@ -64,7 +64,7 @@ class TestParseGCode(unittest.TestCase):
             "G0 U35;rotation",
             ";End",
         ]
-        result = parseGCode(gcode)
+        result = parseGCode(gcode, gcode_stubs.sett())
         self.assertEqual(4, len(result.layers))
         self.assertEqual(
             [(0, 0), (0, 35.0)],

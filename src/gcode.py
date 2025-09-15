@@ -2,7 +2,6 @@ import math
 import numpy as np
 from typing import List, Optional
 
-import src.settings
 from src import gui_utils
 import vtk
 
@@ -242,16 +241,21 @@ def readGCode(filename):
     return parseGCode(lines)
 
 
-def parseGCode(lines):
+def parseGCode(lines, settings=None):
     layer = []
     planes = []
 
-    s = src.settings.sett()
+    if settings is None:
+        from src import settings as settings_module
+
+        settings = settings_module.sett()
+
+    s = settings
 
     current_layer = 0
 
     t = 0  # select extruder (t==0) or incline (t==2) or rotate (t==1)
-    printer = Printer(src.settings.sett())
+    printer = Printer(settings)
 
     for line in lines:
         line = line.strip()
