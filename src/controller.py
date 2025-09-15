@@ -50,41 +50,76 @@ try:
 except Exception:
     logger.warning("bug reporting is unavailable")
 
-# try import of private hardware module
-try:
-    import src.hardware.service as service
-    import src.hardware.calibration as calibration
-    import src.hardware.printer as printer
-except Exception as e:
-    logger.warning("hardware module is unavailable: %s", e)
+
+def create_printer():
+    """Load printer implementation lazily."""
+    try:
+        from src.hardware import printer
+
+        return printer.EpitPrinter()
+    except Exception as e:
+        logger.warning("printer is not initialized: %s", e)
+        return None
+
+
+def create_service(view, printer):
+    """Instantiate service tool for the given printer."""
+    if not printer:
+        return None, None
+
+    try:
+        from src.hardware import service
+
+        panel = service.ServicePanel(view)
+        panel.setModal(True)
+        controller = service.ServiceController(panel, service.ServiceModel(printer))
+        return panel, controller
+    except Exception as e:
+        logger.warning("service tool is unavailable: %s", e)
+        return None, None
+
+
+def create_calibration(view, printer):
+    """Instantiate calibration tool for the given printer."""
+    if not printer:
+        return None, None
+
+    try:
+        from src.hardware import calibration
+
+        panel = calibration.CalibrationPanel(view)
+        panel.setModal(True)
+        controller = calibration.CalibrationController(
+            panel,
+            calibration.CalibrationModel(printer, PathBuilder.calibration_file()),
+        )
+        return panel, controller
+    except Exception as e:
+        logger.warning("calibration tool is unavailable: %s", e)
+        return None, None
 
 
 class MainController:
-    def __init__(self, view, model):
+    def __init__(self, view, model, printer=None, service=None, calibration=None):
         self.view = view
         self.model = model
 
         # hardware part might be unavailable
-        try:
-            self.printer = printer.EpitPrinter()
-            # embed service tool
-            self.servicePanel = service.ServicePanel(view)
-            self.servicePanel.setModal(True)
-            self.serviceController = service.ServiceController(
-                self.servicePanel, service.ServiceModel(self.printer)
+        self.printer = printer if printer is not None else create_printer()
+
+        if service is not None:
+            self.servicePanel, self.serviceController = service
+        else:
+            self.servicePanel, self.serviceController = create_service(
+                view, self.printer
             )
 
-            # embed calibration tool
-            self.calibrationPanel = calibration.CalibrationPanel(view)
-            self.calibrationPanel.setModal(True)
-            self.calibrationController = calibration.CalibrationController(
-                self.calibrationPanel,
-                calibration.CalibrationModel(
-                    self.printer, PathBuilder.calibration_file()
-                ),
+        if calibration is not None:
+            self.calibrationPanel, self.calibrationController = calibration
+        else:
+            self.calibrationPanel, self.calibrationController = create_calibration(
+                view, self.printer
             )
-        except Exception:
-            logger.warning("printer is not initialized")
 
         # bug reporting might be unavailable
         try:
@@ -104,9 +139,9 @@ class MainController:
         self.view.documentation_action.triggered.connect(self.show_online_documentation)
         self.view.check_updates_action.triggered.connect(self.open_updater)
 
-        try:
+        if self.calibrationPanel is not None:
             self.view.calibration_action.triggered.connect(self.calibration_action_show)
-        except:
+        else:
             self.view.calibration_action.triggered.connect(
                 lambda: showInfoDialog(locales.getLocale().ErrorHardwareModule)
             )
@@ -156,6 +191,10 @@ class MainController:
         self.view.save_project_signal.connect(self.save_project)
 
     def calibration_action_show(self):
+        if not self.calibrationPanel:
+            showInfoDialog(locales.getLocale().ErrorHardwareModule)
+            return
+
         # check that printer is not default, otherwise show information with warning
         if self.current_printer_is_default():
             showInfoDialog(locales.getLocale().DefaultPrinterWarn)
