@@ -1,9 +1,9 @@
-PyYAML>=6.0
+PyYAML>=6.0,<7  # allow bugfixes until next major release
 vtk==9.3.1
-numpy
-qdarkstyle>=3.1
-numpy-stl
-requests
-grpcio-tools
-grpcio
-protobuf
+numpy>=1.24,<3  # support both NumPy 1.x and 2.x
+qdarkstyle>=3.2,<4  # theme updates are backward compatible
+numpy-stl>=3.0,<4  # library follows semver; latest 3.x works
+requests>=2.31,<3  # allow latest 2.x
+grpcio-tools>=1.59,<2  # closely tied to grpc releases
+grpcio>=1.59,<2  # keep within grpc 1.x series
+protobuf>=4.21,<5  # compatible with grpc 1.x
