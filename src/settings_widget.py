@@ -64,6 +64,17 @@ class SettingsWidget(QToolBox):
     doublePercentValidator = QtGui.QDoubleValidator(0.00, 9000.00, 2)
     doublePercentValidator.setLocale(validatorLocale)
 
+    # Configuration options for spinboxes that require custom behaviour.
+    # Additional settings can be added by using the setting name as the key and
+    # providing any of the supported options (currently decimals, single_step,
+    # minimum and maximum).
+    spinbox_overrides = {
+        "pressure_advance": {
+            "decimals": 3,
+            "single_step": 0.001,
+        }
+    }
+
     parameters = [
         "printer_path",
         "uninterrupted_print",
@@ -393,6 +404,37 @@ class SettingsWidget(QToolBox):
         assert name in self.__elements, f"There is no SpinBox/DoubleSpinBox for {name}"
 
         return self.__elements[name]["spinbox"]
+
+    def configure_spinbox(self, name: str, spinbox):
+        """
+        Apply custom configuration options to the provided spinbox.
+
+        This helper makes it simple to reuse the configuration logic for
+        additional settings in the future by extending ``spinbox_overrides``.
+        """
+
+        if not spinbox:
+            return
+
+        config = self.spinbox_overrides.get(name)
+        if not config:
+            return
+
+        decimals = config.get("decimals")
+        if decimals is not None and hasattr(spinbox, "setDecimals"):
+            spinbox.setDecimals(decimals)
+
+        single_step = config.get("single_step")
+        if single_step is not None and hasattr(spinbox, "setSingleStep"):
+            spinbox.setSingleStep(single_step)
+
+        minimum = config.get("minimum")
+        if minimum is not None and hasattr(spinbox, "setMinimum"):
+            spinbox.setMinimum(minimum)
+
+        maximum = config.get("maximum")
+        if maximum is not None and hasattr(spinbox, "setMaximum"):
+            spinbox.setMaximum(maximum)
 
     def checkbox(self, name: str):
         """
@@ -1409,8 +1451,9 @@ class SettingsWidget(QToolBox):
             pressure_advance_value = QDoubleSpinBox()
             pressure_advance_value.setMinimum(0.01)
             pressure_advance_value.setMaximum(1.0)
+            self.configure_spinbox(name, pressure_advance_value)
             pressure_advance_value.setValue(self.sett().slicing.pressure_advance)
-            # between 0.01 and 0.9, default is 0.45
+            # between 0.01 and 0.9, default is 0.045
             panel.addWidget(pressure_advance_label, panel_next_row(), 1)
             panel.addWidget(
                 pressure_advance_value, panel_cur_row(), 2, 1, self.col2_cells

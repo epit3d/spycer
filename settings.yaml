@@ -101,7 +101,7 @@ slicing:
   material_shrinkage: 0.0
   flow_rate: 100
   pressure_advance_on: true
-  pressure_advance: 0.45
+  pressure_advance: 0.045
   mesh_file: lib/goosli_middle.msh
   minimum_path_area: 0.001
   model_centering: false
