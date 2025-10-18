@@ -1,32 +1,83 @@
-import os
+from pathlib import Path
 import sys
-import tempfile as tmp
-from os import path
 from PyQt5.QtCore import QSettings
 import shutil
-import pathlib
 import base64
 import logging
 
 import yaml
 import vtk
 
-_sett = None  # do not forget to load_settings() at start
 
-# setup app path
-if getattr(sys, "frozen", False):
-    APP_PATH = path.dirname(sys.executable)
-    # uncomment if you want some protection that nothing would be broken
-    # if not path.exists(path.join(app_path, settings_filename)):
-    #     bundle_path = sys._MEIPASS
-    #     shutil.copyfile(path.join(bundle_path, settings_filename), path.join(app_path, settings_filename))
-else:
-    # have to add .. because settings.py is under src folder
-    APP_PATH = path.join(path.dirname(__file__), "..")
+class SettingsManager:
+    """Encapsulates loading, saving and accessing application settings."""
+
+    def __init__(self, settings=None):
+        self._sett = settings
+
+    @property
+    def settings(self):
+        return self._sett
+
+    def load(self, filename: Path | str | None = None):
+        old_setts = self._sett
+        data = read_settings(filename)
+        if data is not None:
+            logging.debug("Settings loaded")
+            self._sett = Settings(data)
+
+        if old_setts is not None and not old_setts.has_same_attributes(self._sett):
+            self._sett = old_setts
+            raise Exception("Check the settings file")
+
+        return self._sett
+
+    def save(self, filename: Path | str | None = None):
+        if not filename:
+            if self._sett and getattr(self._sett, "project_path", None):
+                app_path = Path(self._sett.project_path)
+            elif getattr(sys, "frozen", False):
+                app_path = Path(sys.executable).parent
+            else:
+                app_path = Path(__file__).resolve().parent.parent
+
+            filename = app_path / "settings.yaml"
+        else:
+            filename = Path(filename)
+
+        temp = prepare_temp_settings(self._sett)
+
+        logging.info("saving settings to %s", filename)
+        with filename.open("w") as f:
+            f.write(temp)
+
+
+# default singleton used across the application
+settings_manager = SettingsManager()
 
 
 def sett():
-    return _sett
+    return settings_manager.settings
+
+
+def load_settings(filename: Path | str | None = None):
+    return settings_manager.load(filename)
+
+
+def save_settings(filename: Path | str | None = None):
+    return settings_manager.save(filename)
+
+
+# setup app path
+if getattr(sys, "frozen", False):
+    APP_PATH = Path(sys.executable).parent
+    # uncomment if you want some protection that nothing would be broken
+    # if not (app_path / settings_filename).exists():
+    #     bundle_path = sys._MEIPASS
+    #     shutil.copyfile(Path(bundle_path, settings_filename), app_path / settings_filename)
+else:
+    # have to add .. because settings.py is under src folder
+    APP_PATH = Path(__file__).resolve().parent.parent
 
 
 _colors = {}  # Available colors: https://en.wikipedia.org/wiki/File:SVG_Recognized_color_keyword_names.svg
@@ -55,9 +106,9 @@ def get_color_rgb(color_name):
 
 def copy_project_files(project_path: str):
     load_settings()
-    global _sett
-    _sett.project_path = project_path
-    _sett.slicing.stl_file = ""
+    s = sett()
+    s.project_path = project_path
+    s.slicing.stl_file = ""
     save_settings()
 
 
@@ -65,7 +116,7 @@ def project_change_check():
     logging.debug("Checking project change")
     save_settings("vip")
     saved_settings = Settings(
-        read_settings(str(pathlib.Path(sett().project_path, "settings.yaml")))
+        read_settings(Path(sett().project_path) / "settings.yaml")
     )
     logging.debug("Saved settings:")
     logging.debug(saved_settings)
@@ -108,30 +159,32 @@ def compare_figures(settings):
 
 
 def compare_project_file(filename):
-    filename = pathlib.Path(sett().project_path, filename)
+    filename = Path(sett().project_path) / filename
     filename_temp = get_temp_path(filename)
     return compare_files(filename, filename_temp)
 
 
-def compare_files(file1_path, file2_path):
-    # if either of the files does not exist, return False
-    if not os.path.exists(file1_path) or not os.path.exists(file2_path):
-        return True
+def compare_files(file1_path: Path | str, file2_path: Path | str) -> bool:
+    path1 = Path(file1_path) if file1_path else None
+    path2 = Path(file2_path) if file2_path else None
+
+    # return False if either path is missing or the file does not exist
+    if not path1 or not path2:
+        return False
+    if not path1.exists() or not path2.exists():
+        return False
 
     try:
-        with open(file1_path, "rb") as file1:
+        with path1.open("rb") as file1:
             data1 = file1.read()
-        with open(file2_path, "rb") as file2:
+        with path2.open("rb") as file2:
             data2 = file2.read()
 
-        if data1 == data2:
-            return True
-        else:
-            return False
+        return data1 == data2
 
     except FileNotFoundError:
-        print("Error during file comparison!")
-        return True
+        logging.error("Error during file comparison!")
+        return False
 
 
 def create_temporary_project_files():
@@ -141,20 +194,18 @@ def create_temporary_project_files():
 
 def create_temporary_project_file(filename):
     filename_temp = get_temp_path(filename)
-    filename_path = str(pathlib.Path(sett().project_path, filename))
+    filename_path = Path(sett().project_path) / filename
 
-    if os.path.exists(filename_path):
-        filename_temp_path = str(pathlib.Path(sett().project_path, filename_temp))
+    if filename_path.exists():
+        filename_temp_path = Path(sett().project_path) / filename_temp
         shutil.copy(filename_path, filename_temp_path)
-        return filename_temp
-    else:
-        return ""
+        return str(filename_temp)
+    return ""
 
 
 def get_temp_path(filename):
-    basename, extension = os.path.splitext(filename)
-    filename_temp = basename + "_temp" + extension
-    return filename_temp
+    p = Path(filename)
+    return p.with_name(f"{p.stem}_temp{p.suffix}")
 
 
 def delete_temporary_project_files(project_path=""):
@@ -166,9 +217,9 @@ def delete_project_file(filename, project_path=""):
     if project_path == "":
         project_path = sett().project_path
 
-    filename_path = str(pathlib.Path(project_path, filename))
-    if os.path.exists(filename_path):
-        os.remove(filename_path)
+    filename_path = Path(project_path) / filename
+    if filename_path.exists():
+        filename_path.unlink()
 
 
 def get_recent_projects():
@@ -215,38 +266,25 @@ def add_recent_project(recent_projects, project_path):
     save_recent_projects(recent_projects)
 
 
-def load_settings(filename=""):
-    global _sett
-    old_setts = _sett
-
-    data = read_settings(filename)
-    if data != None:
-        logging.debug("Settings loaded")
-        _sett = Settings(data)
-
-    # check if the format is similar
-    if old_setts is not None and not old_setts.has_same_attributes(_sett):
-        _sett = old_setts
-        raise Exception("Check the settings file")
-
-
-def read_settings(filename=""):
+def read_settings(filename: Path | str | None = None):
     if not filename:
-        print("retrieving settings")
+        logging.debug("retrieving settings")
         if getattr(sys, "frozen", False):
-            app_path = path.dirname(sys.executable)
+            app_path = Path(sys.executable).parent
             # uncomment if you want some protection that nothing would be broken
-            # if not path.exists(path.join(app_path, settings_filename)):
+            # if not (app_path / settings_filename).exists():
             #     bundle_path = sys._MEIPASS
-            #     shutil.copyfile(path.join(bundle_path, settings_filename), path.join(app_path, settings_filename))
+            #     shutil.copyfile(Path(bundle_path, settings_filename), app_path / settings_filename)
         else:
             # have to add .. because settings.py is under src folder
-            app_path = path.join(path.dirname(__file__), "..")
+            app_path = Path(__file__).resolve().parent.parent
 
         settings_filename = "settings.yaml"
-        filename = path.join(app_path, settings_filename)
+        filename = app_path / settings_filename
+    else:
+        filename = Path(filename)
 
-    with open(filename) as f:
+    with filename.open() as f:
         data = yaml.safe_load(f)
 
         # right now let's check that some fields are just None,
@@ -260,33 +298,13 @@ def read_settings(filename=""):
 
         check_children(data)
 
-        return data
+    return data
 
     return None
 
 
-def save_settings(filename=""):
-    if not filename:
-        if _sett.project_path:
-            app_path = _sett.project_path
-        elif getattr(sys, "frozen", False):
-            app_path = path.dirname(sys.executable)
-        else:
-            # have to add .. because settings.py is under src folder
-            app_path = path.join(path.dirname(__file__), "..")
-
-        settings_filename = "settings.yaml"
-        filename = path.join(app_path, settings_filename)
-
-    temp = prepare_temp_settings(_sett)
-
-    print(f"saving settings to {filename}")
-    with open(filename, "w") as f:
-        f.write(temp)
-
-
-def prepare_temp_settings(_sett):
-    temp = yaml.dump(_sett)
+def prepare_temp_settings(settings):
+    temp = yaml.dump(settings)
     temp = temp.replace("!!python/object:src.settings.Settings", "").strip()
     temp = temp.replace("!!python/object/apply:pathlib.PosixPath", "").strip()
 
@@ -306,8 +324,8 @@ def get_version(settings_filename):
 
         version = settings["common"]["version"]
         return version
-    except Exception as e:
-        print("Error reading version")
+    except Exception:
+        logging.error("Error reading version")
         return ""
 
 
@@ -321,8 +339,8 @@ def set_version(settings_filename, version):
         with open(settings_filename, "w") as settings_file:
             yaml.dump(settings, settings_file, default_flow_style=False)
 
-    except Exception as e:
-        print("Error writing version")
+    except Exception:
+        logging.error("Error writing version")
 
 
 def paths_transfer_in_settings(initial_settings_filename, final_settings_filename):
@@ -344,7 +362,7 @@ def compare_settings(initial_settings, final_settings):
             if isinstance(final_settings[key], dict):
                 compare_settings(initial_settings[key], final_settings[key])
             else:
-                if not initial_settings[key] is None:
+                if initial_settings[key] is not None:
                     final_settings[key] = initial_settings[key]
 
 
@@ -418,7 +436,7 @@ class Settings(object):
             if attr in ignore_attributes:
                 continue
             if not hasattr(other, attr):
-                print(f"Attribute {attr} not found in other")
+                logging.warning("Attribute %s not found in other", attr)
                 return False
 
         # try to compare attributes from right to left
@@ -426,7 +444,7 @@ class Settings(object):
             if attr in ignore_attributes:
                 continue
             if not hasattr(self, attr):
-                print(f"Attribute {attr} not found in self")
+                logging.warning("Attribute %s not found in self", attr)
                 return False
 
         return True
@@ -437,31 +455,31 @@ class PathBuilder:
 
     @staticmethod
     def project_path():
-        return sett().project_path
+        return Path(sett().project_path)
 
     @staticmethod
     def stl_model():
-        return path.join(PathBuilder.project_path(), "model.stl")
+        return PathBuilder.project_path() / "model.stl"
 
     @staticmethod
     def stl_model_temp():
-        return path.join(PathBuilder.project_path(), "model_temp.stl")
+        return PathBuilder.project_path() / "model_temp.stl"
 
     @staticmethod
     def settings_file():
-        return path.join(PathBuilder.project_path(), "settings.yaml")
+        return PathBuilder.project_path() / "settings.yaml"
 
     @staticmethod
     def settings_file_temp():
-        return path.join(PathBuilder.project_path(), "settings_temp.yaml")
+        return PathBuilder.project_path() / "settings_temp.yaml"
 
     @staticmethod
     def settings_file_default():
-        return "settings.yaml"
+        return Path("settings.yaml")
 
     @staticmethod
     def settings_file_old():
-        return path.join(PathBuilder.project_path(), "settings_old.yaml")
+        return PathBuilder.project_path() / "settings_old.yaml"
 
     @staticmethod
     def get_cmd_with_path(cmd):
@@ -482,11 +500,11 @@ class PathBuilder:
 
     @staticmethod
     def colorizer_stl():
-        return path.join(PathBuilder.project_path(), sett().colorizer.copy_stl_file)
+        return PathBuilder.project_path() / sett().colorizer.copy_stl_file
 
     @staticmethod
     def colorizer_result():
-        return path.join(PathBuilder.project_path(), sett().colorizer.result)
+        return PathBuilder.project_path() / sett().colorizer.result
 
     @staticmethod
     def slicing_cmd():
@@ -494,18 +512,18 @@ class PathBuilder:
 
     @staticmethod
     def gcodevis_file():
-        return path.join(
-            PathBuilder.project_path(), sett().slicing.gcode_file_without_calibration
+        return (
+            PathBuilder.project_path() / sett().slicing.gcode_file_without_calibration
         )
 
     @staticmethod
     def gcode_file():
-        return path.join(PathBuilder.project_path(), sett().slicing.gcode_file)
+        return PathBuilder.project_path() / sett().slicing.gcode_file
 
     @staticmethod
     def printer_dir():
-        return sett().hardware.printer_dir
+        return Path(sett().hardware.printer_dir)
 
     @staticmethod
     def calibration_file():
-        return path.join(PathBuilder.printer_dir(), sett().hardware.calibration_file)
+        return PathBuilder.printer_dir() / sett().hardware.calibration_file

@@ -1,9 +1,9 @@
+import logging
 from PyQt5 import QtCore
 from PyQt5 import QtGui
 from PyQt5.QtWidgets import (
     QWidget,
     QLabel,
-    QLineEdit,
     QGridLayout,
     QCheckBox,
     QPushButton,
@@ -17,7 +17,9 @@ from PyQt5.QtWidgets import (
 
 from src import locales
 from src.settings import sett, APP_PATH, Settings, read_settings
-from src.qt_utils import ClickableLineEdit, LineEdit
+from src.qt_utils import ClickableLineEdit
+
+logger = logging.getLogger(__name__)
 
 import os.path as path
 import logging
@@ -53,7 +55,7 @@ class SettingsWidget(QToolBox):
     """
 
     col2_cells = 4
-    validatorLocale = QtCore.QLocale("Englishs")
+    validatorLocale = QtCore.QLocale("en_US")
     intValidator = QtGui.QIntValidator(0, 9000)
 
     doubleValidator = QtGui.QDoubleValidator(0.00, 9000.00, 2)
@@ -61,6 +63,17 @@ class SettingsWidget(QToolBox):
 
     doublePercentValidator = QtGui.QDoubleValidator(0.00, 9000.00, 2)
     doublePercentValidator.setLocale(validatorLocale)
+
+    # Configuration options for spinboxes that require custom behaviour.
+    # Additional settings can be added by using the setting name as the key and
+    # providing any of the supported options (currently decimals, single_step,
+    # minimum and maximum).
+    spinbox_overrides = {
+        "pressure_advance": {
+            "decimals": 3,
+            "single_step": 0.001,
+        }
+    }
 
     parameters = [
         "printer_path",
@@ -107,6 +120,7 @@ class SettingsWidget(QToolBox):
         "support_number_of_lid_layers",
         "support_create_walls",
         "critical_angle",
+        "filter_tolerance",
     ]
 
     GROUPING = {
@@ -124,6 +138,7 @@ class SettingsWidget(QToolBox):
             "overlap_infill",
             "minimum_fill_area",
             "critical_angle",
+            "filter_tolerance",
         ],
         "material": [
             "uninterrupted_print",
@@ -355,7 +370,7 @@ class SettingsWidget(QToolBox):
                 row_idx = self.__elements[key]["row_idx"]
                 remove_row(key, row_idx)
             except KeyError:
-                print(f"Key {key} not found in elements")
+                logger.warning("Key %s not found in elements", key)
                 pass
 
         self.__current_row = 1
@@ -363,7 +378,7 @@ class SettingsWidget(QToolBox):
         self.__elements = {}
         self.__order = []
         for key in copied_order:
-            self = self.with_sett(key)
+            self.with_sett(key)
 
     @property
     def cur_row(self):
@@ -389,6 +404,37 @@ class SettingsWidget(QToolBox):
         assert name in self.__elements, f"There is no SpinBox/DoubleSpinBox for {name}"
 
         return self.__elements[name]["spinbox"]
+
+    def configure_spinbox(self, name: str, spinbox):
+        """
+        Apply custom configuration options to the provided spinbox.
+
+        This helper makes it simple to reuse the configuration logic for
+        additional settings in the future by extending ``spinbox_overrides``.
+        """
+
+        if not spinbox:
+            return
+
+        config = self.spinbox_overrides.get(name)
+        if not config:
+            return
+
+        decimals = config.get("decimals")
+        if decimals is not None and hasattr(spinbox, "setDecimals"):
+            spinbox.setDecimals(decimals)
+
+        single_step = config.get("single_step")
+        if single_step is not None and hasattr(spinbox, "setSingleStep"):
+            spinbox.setSingleStep(single_step)
+
+        minimum = config.get("minimum")
+        if minimum is not None and hasattr(spinbox, "setMinimum"):
+            spinbox.setMinimum(minimum)
+
+        maximum = config.get("maximum")
+        if maximum is not None and hasattr(spinbox, "setMaximum"):
+            spinbox.setMaximum(maximum)
 
     def checkbox(self, name: str):
         """
@@ -1405,8 +1451,9 @@ class SettingsWidget(QToolBox):
             pressure_advance_value = QDoubleSpinBox()
             pressure_advance_value.setMinimum(0.01)
             pressure_advance_value.setMaximum(1.0)
+            self.configure_spinbox(name, pressure_advance_value)
             pressure_advance_value.setValue(self.sett().slicing.pressure_advance)
-            # between 0.01 and 0.9, default is 0.45
+            # between 0.01 and 0.9, default is 0.045
             panel.addWidget(pressure_advance_label, panel_next_row(), 1)
             panel.addWidget(
                 pressure_advance_value, panel_cur_row(), 2, 1, self.col2_cells
@@ -1795,6 +1842,33 @@ class SettingsWidget(QToolBox):
             self.__elements[name] = {
                 "label": auto_fan_speed_label,
                 "spinbox": auto_fan_speed_value,
+            }
+        elif name == "filter_tolerance":
+            self.ensure_sett("slicing.filter_tolerance")
+
+            filter_tolerance_label = QLabel(self.locale.FilterTolerance)
+            filter_tolerance_value = QDoubleSpinBox()
+            filter_tolerance_value.setMinimum(0.0)
+            filter_tolerance_value.setMaximum(10.0)
+            filter_tolerance_value.validator = FloatValidator()
+            try:
+                filter_tolerance_value.setValue(self.sett().slicing.filter_tolerance)
+            except:
+                filter_tolerance_value.setValue(0.0)
+
+            panel.addWidget(filter_tolerance_label, panel_next_row(), 1)
+            panel.addWidget(
+                filter_tolerance_value, panel_cur_row(), 2, 1, self.col2_cells
+            )
+
+            def on_change():
+                self.sett().slicing.filter_tolerance = filter_tolerance_value.value()
+
+            filter_tolerance_value.valueChanged.connect(on_change)
+
+            self.__elements[name] = {
+                "label": filter_tolerance_label,
+                "spinbox": filter_tolerance_value,
             }
 
         # add row index for element

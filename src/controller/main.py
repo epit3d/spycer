@@ -4,18 +4,16 @@ import os
 from os import path
 import subprocess
 import time
-import sys
-from functools import partial
 from pathlib import Path
 import shutil
-from shutil import copy2
 from typing import Dict, List, Union
 from vtkmodules.vtkCommonMath import vtkMatrix4x4
 
 import vtk
 from PyQt5 import QtCore
-from PyQt5.QtCore import QSettings
+from PyQt5.QtCore import QUrl
 from PyQt5.QtWidgets import QFileDialog, QInputDialog, QMessageBox
+from PyQt5.QtGui import QDesktopServices
 
 from src import gui_utils, locales, qt_utils
 from src.figure_editor import PlaneEditor, ConeEditor
@@ -32,126 +30,57 @@ from src.settings import (
     sett,
     save_settings,
     save_splanes_to_file,
-    load_settings,
     get_color,
     PathBuilder,
-    create_temporary_project_files,
-    update_last_open_project,
-    get_recent_projects,
-    delete_temporary_project_files,
 )
 import src.settings as settings
 
+from .hardware import create_printer, create_service, create_calibration
+from .ui_wiring import connect_signals
+from .file_management import FileManagementMixin
+
+logger = logging.getLogger(__name__)
+
 try:
     from src.bug_report import bugReportDialog
-except:
-    print("bug reporting is unavailable")
-
-# try import of private hardware module
-try:
-    import src.hardware.service as service
-    import src.hardware.calibration as calibration
-    import src.hardware.printer as printer
-except Exception as e:
-    print(f"hardware module is unavailable: {e}")
+except Exception:
+    logger.warning("bug reporting is unavailable")
 
 
-class MainController:
-    def __init__(self, view, model):
+class MainController(FileManagementMixin):
+    def __init__(self, view, model, printer=None, service=None, calibration=None):
         self.view = view
         self.model = model
 
         # hardware part might be unavailable
-        try:
-            self.printer = printer.EpitPrinter()
-            # embed service tool
-            self.servicePanel = service.ServicePanel(view)
-            self.servicePanel.setModal(True)
-            self.serviceController = service.ServiceController(
-                self.servicePanel, service.ServiceModel(self.printer)
+        self.printer = printer if printer is not None else create_printer()
+
+        if service is not None:
+            self.servicePanel, self.serviceController = service
+        else:
+            self.servicePanel, self.serviceController = create_service(
+                view, self.printer
             )
 
-            # embed calibration tool
-            self.calibrationPanel = calibration.CalibrationPanel(view)
-            self.calibrationPanel.setModal(True)
-            self.calibrationController = calibration.CalibrationController(
-                self.calibrationPanel,
-                calibration.CalibrationModel(
-                    self.printer, PathBuilder.calibration_file()
-                ),
+        if calibration is not None:
+            self.calibrationPanel, self.calibrationController = calibration
+        else:
+            self.calibrationPanel, self.calibrationController = create_calibration(
+                view, self.printer
             )
-        except:
-            print("printer is not initialized")
 
         # bug reporting might be unavailable
         try:
             self.bugReportDialog = bugReportDialog(self)
-        except:
-            print("bug reporting is unavailable")
-        self._connect_signals()
-
-    def _connect_signals(self):
-        self.view.open_action.triggered.connect(self.open_file)
-        self.view.save_gcode_action.triggered.connect(partial(self.save_gcode_file))
-        self.view.save_sett_action.triggered.connect(self.save_settings_file)
-        self.view.save_project_action.triggered.connect(self.save_project)
-        self.view.save_project_as_action.triggered.connect(self.save_project_as)
-        self.view.load_sett_action.triggered.connect(self.load_settings_file)
-        self.view.slicing_info_action.triggered.connect(self.get_slicer_version)
-        self.view.check_updates_action.triggered.connect(self.open_updater)
-
-        try:
-            self.view.calibration_action.triggered.connect(self.calibration_action_show)
-        except:
-            self.view.calibration_action.triggered.connect(
-                lambda: showInfoDialog(locales.getLocale().ErrorHardwareModule)
-            )
-
-        try:
-            self.view.bug_report.triggered.connect(self.bugReportDialog.show)
-        except:
-            self.view.bug_report.triggered.connect(
-                lambda: showInfoDialog(locales.getLocale().ErrorBugModule)
-            )
-
-        # right panel
-        self.view.setts.get_element("printer_path", "add_btn").clicked.connect(
-            self.create_printer
-        )
-        self.view.setts.edit("printer_path").clicked.connect(self.choose_printer_path)
-
-        self.view.model_switch_box.stateChanged.connect(self.view.switch_stl_gcode)
-        self.view.model_centering_box.stateChanged.connect(self.view.model_centering)
-        self.view.picture_slider.valueChanged.connect(self.change_layer_view)
-        self.view.move_button.clicked.connect(self.move_model)
-        self.view.place_button.clicked.connect(self.place_model)
-        self.view.cancel_action.clicked.connect(partial(self.view.shift_state, True))
-        self.view.return_action.clicked.connect(partial(self.view.shift_state, False))
-        self.view.load_model_button.clicked.connect(self.open_file)
-        self.view.slice3a_button.clicked.connect(partial(self.slice_stl, "3axes"))
-        self.view.slice_vip_button.clicked.connect(partial(self.slice_stl, "vip"))
-        self.view.save_gcode_button.clicked.connect(self.save_gcode_file)
-        self.view.color_model_button.clicked.connect(self.colorize_model)
-
-        # bottom panel
-        self.view.add_plane_button.clicked.connect(self.add_splane)
-        self.view.add_cone_button.clicked.connect(self.add_cone)
-        self.view.edit_figure_button.clicked.connect(self.change_figure_parameters)
-        self.view.save_planes_button.clicked.connect(self.save_planes)
-        self.view.download_planes_button.clicked.connect(self.download_planes)
-        self.view.remove_plane_button.clicked.connect(self.remove_splane)
-        self.view.splanes_tree.itemClicked.connect(self.change_splanes_tree)
-        self.view.splanes_tree.itemChanged.connect(self.change_figure_check_state)
-        self.view.splanes_tree.currentItemChanged.connect(self.change_combo_select)
-        self.view.splanes_tree.model().rowsInserted.connect(self.moving_figure)
-
-        self.view.hide_checkbox.stateChanged.connect(self.view.hide_splanes)
-
-        # on close of window we save current planes to project file
-        self.view.before_closing_signal.connect(self.save_planes_on_close)
-        self.view.save_project_signal.connect(self.save_project)
+        except Exception:
+            logger.warning("bug reporting is unavailable")
+        connect_signals(self)
 
     def calibration_action_show(self):
+        if not self.calibrationPanel:
+            showInfoDialog(locales.getLocale().ErrorHardwareModule)
+            return
+
         # check that printer is not default, otherwise show information with warning
         if self.current_printer_is_default():
             showInfoDialog(locales.getLocale().DefaultPrinterWarn)
@@ -214,7 +143,7 @@ class MainController:
                 PathBuilder.calibration_file()
             )
         except AttributeError:
-            print("hardware module is unavailable, skip")
+            logger.warning("hardware module is unavailable, skip")
 
         # show info dialog
         showInfoDialog(
@@ -253,7 +182,7 @@ class MainController:
                     PathBuilder.calibration_file()
                 )
             except AttributeError:
-                print("hardware module is unavailable, skip")
+                logger.warning("hardware module is unavailable, skip")
 
     def moving_figure(self, sourceParent, previousRow):
         if sourceParent.row() != -1:
@@ -522,43 +451,6 @@ class MainController:
     def place_model(self):
         self.view.stlActor.ResetColorize()
 
-    def open_file(self):
-        try:
-            filename = str(self.view.open_dialog(self.view.locale.OpenModel))
-            if filename != "":
-                file_ext = os.path.splitext(filename)[1].upper()
-                filename = str(Path(filename))
-                if file_ext == ".STL":
-                    self.reset_settings()
-                    s = sett()
-                    # copy stl file to project directory
-
-                    stl_full_path = PathBuilder.stl_model_temp()
-                    shutil.copyfile(filename, stl_full_path)
-                    # relative path inside project
-                    s.slicing.stl_filename = path.basename(filename)
-                    s.slicing.stl_file = path.basename(stl_full_path)
-
-                    self.save_settings("vip")
-                    self.update_interface(filename)
-
-                    self.view.model_centering_box.setChecked(False)
-
-                    if os.path.isfile(s.colorizer.copy_stl_file):
-                        os.remove(s.colorizer.copy_stl_file)
-
-                    self.load_stl(stl_full_path)
-                elif file_ext == ".GCODE":
-                    s = sett()
-                    # s.slicing.stl_file = filename # TODO optimize
-                    self.save_settings("vip")
-                    self.load_gcode(filename, False)
-                    self.update_interface(filename)
-                else:
-                    showErrorDialog("This file format isn't supported:" + file_ext)
-        except IOError as e:
-            showErrorDialog("Error during file opening:" + str(e))
-
     def reset_settings(self):
         s = sett()
         s.slicing.originx, s.slicing.originy, s.slicing.originz = 0, 0, 0
@@ -590,12 +482,12 @@ class MainController:
 
     def load_gcode(self, filename, is_from_stl):
         def work():
-            print("start parsing gcode")
+            logger.info("start parsing gcode")
             start_time = time.time()
             gc = self.model.load_gcode(filename)
-            print("finish parsing gcode")
+            logger.info("finish parsing gcode")
             end_time = time.time()
-            print("spent time for gcode loading: ", end_time - start_time, "s")
+            logger.info("spent time for gcode loading: %s s", end_time - start_time)
 
             return gc
 
@@ -635,12 +527,12 @@ class MainController:
 
         def work():
             start_time = time.time()
-            print("start slicing")
+            logger.info("start slicing")
             p = Process(PathBuilder.slicing_cmd())
             p.wait()
-            print("finished command")
+            logger.info("finished command")
             end_time = time.time()
-            print("spent time for slicing: ", end_time - start_time, "s")
+            logger.info("spent time for slicing: %s s", end_time - start_time)
 
             if p.returncode == 2:
                 # panic
@@ -670,7 +562,7 @@ class MainController:
         # load gcode without calibration
         self.view.picture_slider.setValue(0)
         self.load_gcode(PathBuilder.gcodevis_file(), True)
-        print("loaded gcode")
+        logger.info("loaded gcode")
         self.update_interface(sett().slicing.stl_filename)
 
     def check_calibration_data_catalog(self):
@@ -700,10 +592,16 @@ class MainController:
         else:
             showInfoDialog(locales.getLocale().SlicerVersion + proc.stdout)
 
+    def show_online_documentation(self):
+        # open default browser to the online documentation
+        QDesktopServices.openUrl(QUrl("https://docs.epit3d.com"))
+
     def save_settings(self, slicing_type, filename=""):
         s = sett()
-        print(
-            f"saving settings of stl file {self.model.opened_stl} {s.slicing.stl_file}"
+        logger.info(
+            "saving settings of stl file %s %s",
+            self.model.opened_stl,
+            s.slicing.stl_file,
         )
         # s.slicing.stl_file = self.model.opened_stl
         tf = vtk.vtkTransform()
@@ -738,133 +636,6 @@ class MainController:
 
         if filename != "":
             save_settings(filename)
-
-    def save_gcode_file(self):
-        try:
-            name = str(self.view.save_gcode_dialog())
-            if name != "":
-                if not name.endswith(".gcode"):
-                    name += ".gcode"
-                copy2(PathBuilder.gcode_file(), name)
-        except IOError as e:
-            showErrorDialog("Error during file saving:" + str(e))
-
-    def save_settings_file(self):
-        try:
-            directory = (
-                "Settings_" + os.path.basename(sett().slicing.stl_file).split(".")[0]
-            )
-            filename = str(
-                self.view.save_dialog(
-                    self.view.locale.SaveSettings, "YAML (*.yaml *.YAML)", directory
-                )
-            )
-            if filename != "":
-                if not (filename.endswith(".yaml") or filename.endswith(".YAML")):
-                    filename += ".yaml"
-                self.save_settings("vip", filename)
-        except IOError as e:
-            showErrorDialog("Error during file saving:" + str(e))
-
-    def save_project_files(self, save_path=""):
-        if save_path == "":
-            self.save_settings("vip", PathBuilder.settings_file())
-            if os.path.isfile(PathBuilder.stl_model_temp()):
-                shutil.copy2(PathBuilder.stl_model_temp(), PathBuilder.stl_model())
-        else:
-            self.save_settings("vip", path.join(save_path, "settings.yaml"))
-            if os.path.isfile(PathBuilder.stl_model_temp()):
-                shutil.copy2(
-                    PathBuilder.stl_model_temp(), path.join(save_path, "model.stl")
-                )
-
-    def save_project(self):
-        try:
-            self.save_project_files()
-            create_temporary_project_files()
-            self.successful_saving_project()
-        except IOError as e:
-            showErrorDialog("Error during project saving: " + str(e))
-
-    def save_project_as(self):
-        project_path = PathBuilder.project_path()
-
-        try:
-            save_directory = str(
-                QFileDialog.getExistingDirectory(
-                    self.view, locales.getLocale().SavingProject
-                )
-            )
-
-            if not save_directory:
-                return
-
-            self.save_project_files(save_directory)
-            sett().project_path = save_directory
-            self.save_settings("vip", PathBuilder.settings_file())
-            create_temporary_project_files()
-            delete_temporary_project_files(project_path)
-
-            recent_projects = get_recent_projects()
-            update_last_open_project(recent_projects, save_directory)
-
-            self.successful_saving_project()
-
-        except IOError as e:
-            sett().project_path = project_path
-            self.save_settings("vip")
-            showErrorDialog("Error during project saving: " + str(e))
-
-    def successful_saving_project(self):
-        message_box = QMessageBox(parent=self.view)
-        message_box.setWindowTitle(locales.getLocale().SavingProject)
-        message_box.setText(locales.getLocale().ProjectSaved)
-        message_box.setIcon(QMessageBox.Information)
-        message_box.exec_()
-
-    def load_settings_file(self):
-        try:
-            filename = str(
-                self.view.open_dialog(
-                    self.view.locale.LoadSettings, "YAML (*.yaml *.YAML)"
-                )
-            )
-            if filename != "":
-                file_ext = os.path.splitext(filename)[1].upper()
-                filename = str(Path(filename))
-                if file_ext == ".YAML":
-                    try:
-                        # TODO: right now to maintain good transfer
-                        # we need to copy the project_path setting manually
-                        # everything else will work alright
-                        old_project_path = sett().project_path
-                        load_settings(filename)
-                        sett().project_path = old_project_path
-                        self.display_settings()
-                    except Exception as e:
-                        showErrorDialog("Error during reading settings file: " + str(e))
-                else:
-                    showErrorDialog("This file format isn't supported:" + file_ext)
-        except IOError as e:
-            showErrorDialog("Error during file opening:" + str(e))
-
-    def display_settings(self):
-        self.view.setts.reload()
-
-    def colorize_model(self):
-        shutil.copyfile(PathBuilder.stl_model_temp(), PathBuilder.colorizer_stl())
-        self.save_settings("vip", PathBuilder.settings_file_temp())
-
-        p = Process(PathBuilder.colorizer_cmd()).wait()
-        if p.returncode:
-            logging.error(f"error: <{p.stdout}>")
-            gui_utils.showErrorDialog(p.stdout)
-            return
-
-        lastMove = self.view.stlActor.lastMove
-        self.load_stl(PathBuilder.colorizer_stl(), colorize=True)
-        self.view.stlActor.lastMove = lastMove
-        # self.model.opened_stl = s.slicing.stl_file
 
     # ######################bottom panel
 

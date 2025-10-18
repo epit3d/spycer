@@ -2,6 +2,7 @@
 Provides a class creating a new window to edit parameters of custom figures
 """
 
+import logging
 import sys
 from typing import List, Callable, Dict, Tuple, Optional, Union
 from functools import partial
@@ -26,6 +27,8 @@ from PyQt5.QtWidgets import (
 from src.settings_widget import SettingsWidget
 from src.settings import sett
 from src.locales import getLocale
+
+logger = logging.getLogger(__name__)
 
 
 class FigureEditor(QWidget):
@@ -58,10 +61,10 @@ class FigureEditor(QWidget):
 
         self.params_widgets = []
         # TODO add implementation of True/False parameters
-        self.params_dict: Dict[str, float] = dict(
-            (el, initial_params[el] if initial_params and initial_params[el] else 0)
+        self.params_dict: Dict[str, float] = {
+            el: initial_params.get(el, 0) if initial_params else 0
             for el in params + self._checkboxes
-        )
+        }
 
         for param_idx, param in enumerate(params):
             # add label for parameter name
@@ -344,10 +347,10 @@ class StlMovePanel(QWidget):
 if __name__ == "__main__":
 
     def handle1(d):
-        print(1, d)
+        logger.debug("handler1 %s", d)
 
     def handle2(d):
-        print(2, d)
+        logger.debug("handler2 %s", d)
 
     app = QApplication(sys.argv)
     f1 = PlaneEditor(handle1, None)

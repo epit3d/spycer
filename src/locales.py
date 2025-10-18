@@ -86,6 +86,7 @@ class Locale:
     SaveProjectAs = "Save project as..."
     SlicerInfo = "Slicer info"
     SlicerVersion = "Slicer version: "
+    Documentation = "Show online documentation"
     SlicingTitle = "Slicing"
     SlicingProgress = "Slicing is in progress..."
     GCodeLoadingTitle = "GCode loading"
@@ -111,6 +112,7 @@ class Locale:
     ProjectAlreadyExists = "Project already exists"
     NoProjectSelected = "No project selected"
     Tools = "Tools"
+    Help = "Help"
     Calibration = "Calibration"
     SubmitBugReport = "Submit a bug report"
     SubmittingBugReport = "Submitting a bug report"
@@ -158,6 +160,8 @@ class Locale:
     AutoFanEnabled = "Enable auto fan speed adjustment"
     AutoFanArea = "Auto fan max area, mm²:"
     AutoFanSpeed = "Auto fan speed:"
+
+    FilterTolerance = "Filter tolerance, mm:"
 
     GroupNames = {
         "model": "Model Settings",
@@ -263,6 +267,7 @@ dicts = {
         SaveProjectAs="Сохранить проект как...",
         SlicerInfo="Информация о слайсере",
         SlicerVersion="Версия слайсера: ",
+        Documentation="Открыть онлайн документацию",
         SlicingTitle="Слайсинг",
         SlicingProgress="Слайсинг в прогрессе...",
         GCodeLoadingTitle="Загрузка GCode",
@@ -288,6 +293,7 @@ dicts = {
         ProjectAlreadyExists="Проект с таким именем уже существует",
         NoProjectSelected="Проект не выбран",
         Tools="Инструменты",
+        Help="Помощь",
         Calibration="Калибровка",
         SubmitBugReport="Отправить сообщение об ошибке",
         SubmittingBugReport="Отправка сообщения об ошибке",
@@ -332,6 +338,7 @@ dicts = {
             "material": "Настройки материала",
             "supports": "Настройки поддержек",
         },
+        FilterTolerance="Допуск при конической печати, мм:",
     ),
 }
 
