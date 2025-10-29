@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Any
 import sys
 from PyQt5.QtCore import QSettings
 import shutil
@@ -303,12 +304,27 @@ def read_settings(filename: Path | str | None = None):
     return None
 
 
-def prepare_temp_settings(settings):
-    temp = yaml.dump(settings)
-    temp = temp.replace("!!python/object:src.settings.Settings", "").strip()
-    temp = temp.replace("!!python/object/apply:pathlib.PosixPath", "").strip()
+def to_plain_data(value: Any):
+    """Convert ``Settings`` instances and nested structures to plain Python data."""
 
-    return temp
+    if isinstance(value, Settings):
+        return {key: to_plain_data(val) for key, val in value.__dict__.items()}
+    if isinstance(value, dict):
+        return {key: to_plain_data(val) for key, val in value.items()}
+    if isinstance(value, list):
+        return [to_plain_data(item) for item in value]
+    if isinstance(value, tuple):
+        return [to_plain_data(item) for item in value]
+    if isinstance(value, Path):
+        return str(value)
+
+    return value
+
+
+def prepare_temp_settings(settings):
+    plain_settings = to_plain_data(settings) if settings is not None else {}
+
+    return yaml.safe_dump(plain_settings, sort_keys=False)
 
 
 def save_splanes_to_file(splanes, filename):
@@ -373,6 +389,9 @@ class Settings(object):
                 setattr(self, a, [Settings(x) if isinstance(x, dict) else x for x in b])
             else:
                 setattr(self, a, Settings(b) if isinstance(b, dict) else b)
+
+    def to_dict(self):
+        return to_plain_data(self)
 
     def __repr__(self):
         return str(self.__dict__)
