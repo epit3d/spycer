@@ -526,28 +526,51 @@ class MainController(FileManagementMixin):
 
         self.save_settings(slicing_type, PathBuilder.settings_file_temp())
 
+        # Check if using remote slicer
+        s = sett()
+        use_remote = getattr(s.slicing, 'use_remote_slicer', False)
+
         def work():
             start_time = time.time()
             logger.info("start slicing")
-            p = Process(PathBuilder.slicing_cmd())
-            p.wait()
-            logger.info("finished command")
-            end_time = time.time()
-            logger.info("spent time for slicing: %s s", end_time - start_time)
+            
+            if use_remote:
+                # Use GRPC remote slicer
+                logger.info("Using remote GRPC slicer")
+                from src.slicer_client import slice_via_grpc
+                
+                stl_path = PathBuilder.stl_model_temp()
+                output_dir = PathBuilder.project_path()
+                
+                result = slice_via_grpc(stl_path, output_dir)
+                
+                if not result["success"]:
+                    return result["error"]
+                
+                # no errors
+                return ""
+            else:
+                # Use local slicer (legacy)
+                logger.info("Using local slicer")
+                p = Process(PathBuilder.slicing_cmd())
+                p.wait()
+                logger.info("finished command")
+                end_time = time.time()
+                logger.info("spent time for slicing: %s s", end_time - start_time)
 
-            if p.returncode == 2:
-                # panic
-                return p.stderr
-            elif p.returncode == 1:
-                # fatal, the error is in the latest line
-                error_message = p.stdout.splitlines()[-1]
-                if "path is not closed before triangulation" in error_message:
-                    return locales.getLocale().WarningPathNotClosed
-                else:
-                    return error_message
+                if p.returncode == 2:
+                    # panic
+                    return p.stderr
+                elif p.returncode == 1:
+                    # fatal, the error is in the latest line
+                    error_message = p.stdout.splitlines()[-1]
+                    if "path is not closed before triangulation" in error_message:
+                        return locales.getLocale().WarningPathNotClosed
+                    else:
+                        return error_message
 
-            # no errors
-            return ""
+                # no errors
+                return ""
 
         error = qt_utils.progress_dialog(
             locales.getLocale().SlicingTitle,
@@ -560,10 +583,22 @@ class MainController(FileManagementMixin):
             gui_utils.showErrorDialog(error)
             return
 
-        # load gcode without calibration
+        # load gcode without calibration (if available)
         self.view.picture_slider.setValue(0)
-        self.load_gcode(PathBuilder.gcodevis_file(), True)
-        logger.info("loaded gcode")
+        gcodevis_path = PathBuilder.gcodevis_file()
+        if gcodevis_path.exists():
+            self.load_gcode(gcodevis_path, True)
+            logger.info("loaded gcode")
+        else:
+            logger.warning(f"GCode visualization file not found: {gcodevis_path}")
+            # Try loading the regular gcode instead
+            gcode_path = PathBuilder.gcode_file()
+            if gcode_path.exists():
+                self.load_gcode(gcode_path, True)
+                logger.info("loaded gcode (no visualization available)")
+            else:
+                logger.error("Neither gcode nor gcodevis files found")
+        
         self.update_interface(sett().slicing.stl_filename)
 
     def check_calibration_data_catalog(self):

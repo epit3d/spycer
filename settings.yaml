@@ -81,6 +81,9 @@ slicing:
   bottom_of_cut_layers: 1
   cmd: ./lib/goosli --cmd=slice --settings=
   cmd_version: ./lib/goosli --version
+  # Remote slicer configuration
+  use_remote_slicer: true
+  remote_slicer_address: localhost:50051
   consumption_material: 0
   extruder_temperature: 200
   fan_off_layer1: true
