@@ -36,6 +36,7 @@ class Locale:
     RetractionDistance = "Retraction distance"
     RetractionSpeed = "Retraction speed"
     SupportsOn = "Add supports"
+    SupportsBedOnly = "Supports from bed only"
     # EditPlanes = "Edit"
     # Analyze = "Analyze"
     AddPlane = "Add Plane"
@@ -217,6 +218,7 @@ dicts = {
         Tilted="Наклонена",
         Hide="Скрыть",
         SupportsOn="Добавить поддержки",
+        SupportsBedOnly="Поддержки только от стола",
         # EditPlanes='Редактировать',
         # Analyze='Анализировать',
         AddPlane="Добавить плоскость",
