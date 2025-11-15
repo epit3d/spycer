@@ -111,6 +111,7 @@ class SettingsWidget(QToolBox):
         "auto_fan_speed",
         # TODO: add separate dummy setting to mark the beginning of supports settings
         "supports_on",
+        "support_bed_only",
         "support_density",
         "support_fill_type",
         "support_xy_offset",
@@ -165,6 +166,7 @@ class SettingsWidget(QToolBox):
         ],
         "supports": [
             "supports_on",
+            "support_bed_only",
             "support_density",
             "support_fill_type",
             "support_xy_offset",
@@ -289,6 +291,7 @@ class SettingsWidget(QToolBox):
             "is_wall_outside_in": self.locale.IsWallsOutsideIn,
             # TODO: add separate dummy setting to mark the beginning of supports settings
             "supports_on": self.locale.SupportsOn,
+            "support_bed_only": self.locale.SupportsBedOnly,
             "support_density": self.locale.SupportDensity,
             "support_fill_type": self.locale.FillingType,
             "support_xy_offset": self.locale.SupportXYOffset,
@@ -1505,6 +1508,29 @@ class SettingsWidget(QToolBox):
                 # "group_label": supports_label,
                 "label": supports_on_label,
                 "checkbox": supports_on_box,
+            }
+
+        elif name == "support_bed_only":
+            self.ensure_sett("supports.bed_only")
+
+            support_bed_only_label = QLabel(self.locale.SupportsBedOnly)
+            support_bed_only_box = QCheckBox()
+            if getattr(self.sett().supports, "bed_only", False):
+                support_bed_only_box.setCheckState(QtCore.Qt.Checked)
+
+            panel.addWidget(support_bed_only_label, panel_next_row(), 1)
+            panel.addWidget(
+                support_bed_only_box, panel_cur_row(), 2, 1, self.col2_cells
+            )
+
+            def on_change():
+                self.sett().supports.bed_only = support_bed_only_box.isChecked()
+
+            support_bed_only_box.stateChanged.connect(on_change)
+
+            self.__elements[name] = {
+                "label": support_bed_only_label,
+                "checkbox": support_bed_only_box,
             }
 
         elif name == "support_density":

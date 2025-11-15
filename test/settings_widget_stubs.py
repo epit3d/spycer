@@ -41,6 +41,8 @@ class Settings:
 settings_module.Settings = Settings
 settings_module.read_settings = lambda filename=None: {"slicing": {"fill_density": 0}}
 settings_module.APP_PATH = ""
+_stub_settings = Settings({"slicing": {"fill_density": 0}, "common": {"lang": "en"}})
+settings_module.sett = lambda: _stub_settings
 sys.modules["src.settings"] = settings_module
 
 # Stub locales expected by SettingsWidget

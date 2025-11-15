@@ -158,6 +158,7 @@ slicing:
     fan_speed: 20
 supports:
   enabled: false
+  bed_only: false
   xy_offset: 0.3
   z_offset_layers: 1
   priority_z_offset: true
