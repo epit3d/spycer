@@ -265,6 +265,7 @@ class PlaneEditor(FigureEditor):
 class ConeEditor(FigureEditor):
     __params = ["Z", "A", "H1", "H2"]
     __constrains = [(-100, 200), (-80, 80), (0, 150), (1, 150)]
+    _checkboxes = ["Smooth"]
 
     def __init__(
         self,
