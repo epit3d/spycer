@@ -32,6 +32,7 @@ from src.settings import (
     save_splanes_to_file,
     get_color,
     PathBuilder,
+    to_plain_data,
 )
 import src.settings as settings
 
@@ -630,12 +631,11 @@ class MainController(FileManagementMixin):
                 dict(
                     index=idx,
                     description=plane.toFile(),
-                    settings=self.model.figures_setts[idx],
+                    settings=to_plain_data(self.model.figures_setts[idx]),
                 )
             )
 
-        if filename != "":
-            save_settings(filename)
+        save_settings(filename or None)
 
     # ######################bottom panel
 
