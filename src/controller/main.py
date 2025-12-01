@@ -711,13 +711,17 @@ class MainController(FileManagementMixin):
                 2, self.model.splanes[i].toFile()
             )
 
-    def update_cone_common(self, values: Dict[str, float]):
+    def update_cone_common(self, values: Dict[str, Union[float, bool]]):
         center: List[float] = [0, 0, values.get("Z", 0)]
         ind = self.view.splanes_tree.currentIndex().row()
         if ind == -1:
             return
         self.model.splanes[ind] = gui_utils.Cone(
-            values.get("A", 0), tuple(center), values.get("H1", 0), values.get("H2", 15)
+            values.get("A", 0),
+            tuple(center),
+            values.get("H1", 0),
+            values.get("H2", 15),
+            values.get("Smooth", False),
         )
         self.view.update_cone(self.model.splanes[ind], ind)
 
