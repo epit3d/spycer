@@ -580,14 +580,23 @@ class Cone:
         point: Tuple[float, float, float],
         h1: float = 0,
         h2: float = 100,
+        smooth=False,
+        smooth_cone_upward=False,
     ):
         self.cone_angle = cone_angle
         self.x, self.y, self.z = point
         self.h1 = h1
         self.h2 = h2
+        self.smooth = smooth
+        self.smooth_cone_upward = smooth_cone_upward
 
     def toFile(self) -> str:
-        return f"cone X{self.x:.2f} Y{self.y:.2f} Z{self.z:.2f} A{self.cone_angle:.2f} H{self.h1:.2f} H{self.h2:.2f}"
+        cone = f"cone X{self.x:.2f} Y{self.y:.2f} Z{self.z:.2f} A{self.cone_angle:.2f} H{self.h1:.2f} H{self.h2:.2f}"
+        if self.smooth:
+            cone += " S"
+        if self.smooth_cone_upward:
+            cone += " U"
+        return cone
 
     def params(self) -> Dict[str, float]:
         return {
@@ -597,6 +606,8 @@ class Cone:
             "A": self.cone_angle,
             "H1": self.h1,
             "H2": self.h2,
+            "Smooth": self.smooth,
+            "SmoothConeUpward": self.smooth_cone_upward,
         }
 
 
@@ -627,6 +638,8 @@ def read_plane(line: str):
             (float(v[1][1:]), float(v[2][1:]), float(v[3][1:])),
             float(v[5][1:]),
             float(v[6][1:]),
+            "S" in v,
+            "U" in v,
         )
 
 
