@@ -158,6 +158,15 @@ class FigureEditor(QWidget):
 
             checkbox.stateChanged.connect(self.pass_updated_value_checkbox(param))
 
+            help_image = getattr(self, "_checkbox_help", {}).get(param)
+            if help_image:
+                help_label = QLabel("?")
+                help_label.setToolTip(
+                    f"<img src='{help_image}'><br>{getLocale().SmoothConeUpwardTooltip}"
+                )
+                help_label.setStyleSheet("QLabel { color : blue; font-weight: bold; }")
+                self.__figure_params_layout.addWidget(help_label, param_idx, 1)
+
         self.__figure_params_widget = QWidget()
         self.__figure_params_widget.setLayout(self.__figure_params_layout)
         self.__layout.addWidget(self.__figure_params_widget)
@@ -265,7 +274,8 @@ class PlaneEditor(FigureEditor):
 class ConeEditor(FigureEditor):
     __params = ["Z", "A", "H1", "H2"]
     __constrains = [(-100, 200), (-80, 80), (0, 150), (1, 150)]
-    _checkboxes = ["Smooth"]
+    _checkboxes = ["Smooth", "SmoothConeUpward"]
+    _checkbox_help = {"SmoothConeUpward": "icons/smooth_cone.jpg"}
 
     def __init__(
         self,

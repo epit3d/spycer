@@ -722,6 +722,7 @@ class MainController(FileManagementMixin):
             values.get("H1", 0),
             values.get("H2", 15),
             values.get("Smooth", False),
+            values.get("SmoothConeUpward", False),
         )
         self.view.update_cone(self.model.splanes[ind], ind)
 
