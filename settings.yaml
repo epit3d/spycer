@@ -108,6 +108,7 @@ slicing:
   originx: 0.0
   originy: 0.0
   originz: 0.0
+  smooth_coefficient: 8
   overlapping_infill_percentage: 30.0
   overlapping_infill_lid_percentage: 30.0
   random_layer_start: false

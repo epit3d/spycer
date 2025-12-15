@@ -122,6 +122,7 @@ class SettingsWidget(QToolBox):
         "support_create_walls",
         "critical_angle",
         "filter_tolerance",
+        "smooth_coefficient",
     ]
 
     GROUPING = {
@@ -140,6 +141,7 @@ class SettingsWidget(QToolBox):
             "minimum_fill_area",
             "critical_angle",
             "filter_tolerance",
+            "smooth_coefficient",
         ],
         "material": [
             "uninterrupted_print",
@@ -184,6 +186,7 @@ class SettingsWidget(QToolBox):
         "filling_type",
         "fill_density",
         "fan_speed",
+        "smooth_coefficient",
     ]
 
     def __init__(
@@ -282,6 +285,7 @@ class SettingsWidget(QToolBox):
             "fill_density": self.locale.FillDensity,
             "minimum_fill_area": self.locale.MinimumFillArea,
             "overlap_infill": self.locale.OverlappingInfillPercentage,
+            "smooth_coefficient": self.locale.SmoothCoefficient,
             "retraction_on": self.locale.Retraction,
             "retraction_distance": self.locale.RetractionDistance,
             "retraction_speed": self.locale.RetractionSpeed,
@@ -628,6 +632,8 @@ class SettingsWidget(QToolBox):
             self.with_sett("fill_density")
         if has_setting("slicing.fan_speed"):
             self.with_sett("fan_speed")
+        if has_setting("slicing.smooth_coefficient"):
+            self.with_sett("smooth_coefficient")
         # TODO: this list should be increased with the growth of extra parameters
 
         return self
@@ -1895,6 +1901,33 @@ class SettingsWidget(QToolBox):
             self.__elements[name] = {
                 "label": filter_tolerance_label,
                 "spinbox": filter_tolerance_value,
+            }
+        elif name == "smooth_coefficient":
+            self.ensure_sett("slicing.smooth_coefficient")
+
+            smooth_coefficient_label = QLabel(self.locale.SmoothCoefficient)
+            smooth_coefficient_value = QSpinBox()
+            smooth_coefficient_value.setMinimum(2)
+            smooth_coefficient_value.setMaximum(8)
+            smooth_coefficient_value.setValue(
+                int(self.sett().slicing.smooth_coefficient)
+            )
+
+            panel.addWidget(smooth_coefficient_label, panel_next_row(), 1)
+            panel.addWidget(
+                smooth_coefficient_value, panel_cur_row(), 2, 1, self.col2_cells
+            )
+
+            def on_change():
+                self.sett().slicing.smooth_coefficient = (
+                    smooth_coefficient_value.value()
+                )
+
+            smooth_coefficient_value.valueChanged.connect(on_change)
+
+            self.__elements[name] = {
+                "label": smooth_coefficient_label,
+                "spinbox": smooth_coefficient_value,
             }
 
         # add row index for element
