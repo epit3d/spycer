@@ -449,7 +449,7 @@ class StlActorMixin:
         _, _, _, _, bnz, _ = self.bound
         center = ox, oy, oz - (cz - bnz)
         for method in self.tfUpdateMethods:
-            method(center, tf.GetOrientation(), tf.GetScale())
+            method(center, tf.GetOrientation(), getScaleFromVtkTransform(tf))
 
     def ColorizeCriticalOverhangs(self):
         with open(PathBuilder.colorizer_result(), "rb") as f:
@@ -523,6 +523,80 @@ class StlActorMixin:
         rotation_matrix.Scale(scale)
 
         self.SetUserTransform(rotation_matrix)
+
+
+def getScaleFromVtkTransform(transform):
+    transformation_matrix = getMatrix4x4FromVtkTransform(transform)
+    submatrix = transformation_matrix[:3, :3]
+
+    rotation_quaternion = getQuaternionFromMatrix(submatrix)
+    inverse_rotation_quaternion = np.array(
+        [
+            rotation_quaternion[0],
+            -rotation_quaternion[1],
+            -rotation_quaternion[2],
+            -rotation_quaternion[3],
+        ]
+    )
+
+    rotation_matrix_quat = getRotationMatrixFromQuaternion(inverse_rotation_quaternion)
+    transformation_matrix = np.dot(rotation_matrix_quat, transformation_matrix)
+
+    scaleX = transformation_matrix[0][0]
+    scaleY = transformation_matrix[1][1]
+    scaleZ = transformation_matrix[2][2]
+
+    return [scaleX, scaleY, scaleZ]
+
+
+def getQuaternionFromMatrix(matrix):
+    w = np.sqrt(1 + matrix[0, 0] + matrix[1, 1] + matrix[2, 2]) / 2
+    x = (matrix[2, 1] - matrix[1, 2]) / (4 * w)
+    y = (matrix[0, 2] - matrix[2, 0]) / (4 * w)
+    z = (matrix[1, 0] - matrix[0, 1]) / (4 * w)
+
+    quaternion = np.array([w, x, y, z])
+
+    return quaternion
+
+
+def getMatrix4x4FromVtkTransform(transform):
+    matrix4x4 = vtk.vtkMatrix4x4()
+    transform.GetMatrix(matrix4x4)
+
+    matrix = np.array(
+        [[matrix4x4.GetElement(i, j) for j in range(4)] for i in range(4)]
+    )
+
+    return matrix
+
+
+def getRotationMatrixFromQuaternion(quaternion):
+    rotation_matrix = np.array(
+        [
+            [
+                1 - 2 * (quaternion[2] ** 2 + quaternion[3] ** 2),
+                2 * (quaternion[1] * quaternion[2] - quaternion[0] * quaternion[3]),
+                2 * (quaternion[0] * quaternion[2] + quaternion[1] * quaternion[3]),
+                0,
+            ],
+            [
+                2 * (quaternion[1] * quaternion[2] + quaternion[0] * quaternion[3]),
+                1 - 2 * (quaternion[1] ** 2 + quaternion[3] ** 2),
+                2 * (quaternion[2] * quaternion[3] - quaternion[0] * quaternion[1]),
+                0,
+            ],
+            [
+                2 * (quaternion[1] * quaternion[3] - quaternion[0] * quaternion[2]),
+                2 * (quaternion[0] * quaternion[1] + quaternion[2] * quaternion[3]),
+                1 - 2 * (quaternion[1] ** 2 + quaternion[2] ** 2),
+                0,
+            ],
+            [0, 0, 0, 1],
+        ]
+    )
+
+    return rotation_matrix
 
 
 class StlActor(StlActorMixin, ActorFromPolyData):
@@ -815,7 +889,7 @@ class StlScale(StlMover):
 
     def setMethod(self, val, axis):
         x, y, z = axis
-        x1, y1, z1 = self.tf.GetScale()
+        x1, y1, z1 = getScaleFromVtkTransform(self.tf)
         val = val if val > 0 else 1
         val = val / 100
 
@@ -831,9 +905,9 @@ class StlScale(StlMover):
 
     def actMethod(self, val, axis):
         x, y, z = axis
-        rx, ry, rz = self.tf.GetScale()
-        val = val + rx * 100 if x else val
-        val = val + ry * 100 if y else val
-        val = val + rz * 100 if z else val
+        sx, sy, sz = getScaleFromVtkTransform(self.tf)
+        val = val + sx * 100 if x else val
+        val = val + sy * 100 if y else val
+        val = val + sz * 100 if z else val
 
         self.setMethod(val, axis)
