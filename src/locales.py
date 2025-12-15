@@ -163,6 +163,7 @@ class Locale:
     AutoFanSpeed = "Auto fan speed:"
 
     FilterTolerance = "Filter tolerance, mm:"
+    SmoothCoefficient = "Smooth coefficient:"
 
     GroupNames = {
         "model": "Model Settings",
@@ -341,6 +342,7 @@ dicts = {
             "supports": "Настройки поддержек",
         },
         FilterTolerance="Допуск при конической печати, мм:",
+        SmoothCoefficient="Коэффициент сглаживания:",
         SmoothConeUpwardTooltip="Выбор между конусом направленным вверх или вниз",
     ),
 }
