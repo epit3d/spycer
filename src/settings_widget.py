@@ -539,7 +539,8 @@ class SettingsWidget(QToolBox):
                         break
 
                 # remove key from elements
-                del_sett(self.__elements[key]["setting"])
+                if "setting" in self.__elements[key]:
+                    del_sett(self.__elements[key]["setting"])
                 del self.__elements[key]
 
             delete_btn.clicked.connect(lambda _, row_idx=row_idx: remove_row(row_idx))
@@ -1928,6 +1929,7 @@ class SettingsWidget(QToolBox):
             self.__elements[name] = {
                 "label": smooth_coefficient_label,
                 "spinbox": smooth_coefficient_value,
+                "setting": "slicing.smooth_coefficient",
             }
 
         # add row index for element

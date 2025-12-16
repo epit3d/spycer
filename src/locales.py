@@ -164,6 +164,7 @@ class Locale:
 
     FilterTolerance = "Filter tolerance, mm:"
     SmoothCoefficient = "Smooth coefficient:"
+    SmoothConeUpwardTooltip = "Choose between upward or downward cone"
 
     GroupNames = {
         "model": "Model Settings",
