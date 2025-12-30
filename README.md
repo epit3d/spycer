@@ -1,5 +1,7 @@
 # Spycer - GUI for 5 axes 3D printer
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/epit3d/spycer)
+
 ## Table of Contents
 
 - [About](#about)
