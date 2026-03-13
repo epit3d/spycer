@@ -1,0 +1,19 @@
+services:
+  spycer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    platform: ${DOCKER_PLATFORM:-linux/amd64}
+    ports:
+      - "6080:6080"
+      - "5900:5900"
+    volumes:
+      - .:/app
+    environment:
+      DISPLAY: ":1"
+      XVFB_WHD: "1600x900x24"
+      LIBGL_ALWAYS_SOFTWARE: "1"
+      QT_X11_NO_MITSHM: "1"
+    shm_size: "1gb"
+    tty: true
+    stdin_open: true
