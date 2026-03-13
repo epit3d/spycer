@@ -54,11 +54,36 @@ We do not have capabilities to support integration with current Spycer version, 
 
 ## Installation
 
-1. Install [Python 3.10](https://www.python.org/downloads/release/python-3100/)
-1. Create virtual environment `python -m venv venv`
-1. Activate virtual environment `venv\Scripts\activate.bat` (Windows) or `source venv/bin/activate` (Linux)
-1. Install dependencies `pip install -r requirements.txt`
-1. Run Spycer `python main.py`
+Preview mode does not require the optional git submodules under `src/server_api` and `src/hardware`.
+
+### Run with Docker
+
+This is the most reliable way to run Spycer locally on macOS or Linux because the host does not need Python 3.10, PyQt5, or VTK installed.
+
+1. Make sure Docker Desktop is running.
+1. Build and start the app: `docker compose up --build`
+1. Open [http://localhost:6080/vnc.html](http://localhost:6080/vnc.html) in your browser.
+1. Stop the app with `Ctrl+C` in the terminal, then run `docker compose down`.
+
+Notes:
+
+- On Apple Silicon, the compose file defaults to `linux/amd64` for better wheel compatibility with `vtk` and `PyQt5`. If you want to try native ARM images, run `DOCKER_PLATFORM=linux/arm64 docker compose up --build`.
+- Port `6080` serves the browser-based desktop via noVNC.
+- Port `5900` exposes raw VNC if you prefer a VNC client.
+
+### Run natively
+
+1. Install [Python 3.10](https://www.python.org/downloads/release/python-3100/).
+1. Create a virtual environment: `python3.10 -m venv venv`
+1. Activate it:
+   - Windows: `venv\Scripts\activate.bat`
+   - Linux/macOS: `source venv/bin/activate`
+1. Install dependencies:
+   - Linux: `pip install -r linux-req.txt`
+   - Windows: `pip install -r win-req.txt`
+1. Run Spycer: `python main.py`
+
+If you only have Python 3.9 installed, the app will not start because the codebase uses Python 3.10 syntax.
 
 ## Contributing
 
