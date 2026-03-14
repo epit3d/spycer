@@ -54,11 +54,29 @@ We do not have capabilities to support integration with current Spycer version, 
 
 ## Installation
 
-1. Install [Python 3.10](https://www.python.org/downloads/release/python-3100/)
-1. Create virtual environment `python -m venv venv`
-1. Activate virtual environment `venv\Scripts\activate.bat` (Windows) or `source venv/bin/activate` (Linux)
-1. Install dependencies `pip install -r requirements.txt`
-1. Run Spycer `python main.py`
+### Prerequisites
+
+Python 3.10 is required. We recommend using [uv](https://docs.astral.sh/uv/) for Python version management:
+
+```bash
+# Install uv (if not installed)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install Python 3.10 via uv
+uv python install 3.10
+```
+
+### Setup
+
+1. Create virtual environment: `uv venv --python 3.10`
+2. Activate virtual environment:
+   - Windows: `venv\Scripts\activate.bat`
+   - Linux/macOS: `source .venv/bin/activate`
+3. Install dependencies:
+   - Windows: `uv pip install -r win-req.txt`
+   - Linux: `uv pip install -r linux-req.txt`
+   - macOS: `uv pip install -r macos-req.txt`
+4. Run Spycer: `python main.py`
 
 ## Contributing
 
