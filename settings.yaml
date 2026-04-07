@@ -168,6 +168,7 @@ supports:
   bottoms_depth: 0
   lids_depth: 0
   create_walls: true
+  min_island_area: 0.0
 uninterrupted_print:
   enabled: false
   cut_distance: 0.0
