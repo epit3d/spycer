@@ -157,6 +157,7 @@ class Locale:
     CannotDropHere = "Figure cannot be dropped here"
 
     ShouldCreateWalls = "Create wall in support"
+    SupportMinIslandArea = "Support min island area, mm²:"
 
     AutoFanEnabled = "Enable auto fan speed adjustment"
     AutoFanArea = "Auto fan max area, mm²:"
@@ -334,6 +335,7 @@ dicts = {
         WarningPathNotClosed="При разрезании модели были обнаружены незамкнутые участки! Проверьте корректность расположения фигур",
         CannotDropHere="Фигура не может быть перенесена сюда",
         ShouldCreateWalls="Создавать стенки в поддержках",
+        SupportMinIslandArea="Минимальная площадь острова поддержек, мм²:",
         AutoFanEnabled="Включить автоматическое управление обдувом",
         AutoFanArea="Максимальная площадь для автоматического обдува, мм²:",
         AutoFanSpeed="Скорость автоматического обдува:",

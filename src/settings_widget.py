@@ -120,6 +120,7 @@ class SettingsWidget(QToolBox):
         "support_number_of_bottom_layers",
         "support_number_of_lid_layers",
         "support_create_walls",
+        "support_min_island_area",
         "critical_angle",
         "filter_tolerance",
         "smooth_coefficient",
@@ -177,6 +178,7 @@ class SettingsWidget(QToolBox):
             "support_number_of_bottom_layers",
             "support_number_of_lid_layers",
             "support_create_walls",
+            "support_min_island_area",
         ],
     }
 
@@ -1803,6 +1805,36 @@ class SettingsWidget(QToolBox):
             self.__elements[name] = {
                 "label": create_walls_label,
                 "checkbox": create_walls_box,
+            }
+        elif name == "support_min_island_area":
+            self.ensure_sett("supports.min_island_area")
+
+            support_min_island_area_label = QLabel(self.locale.SupportMinIslandArea)
+            support_min_island_area_value = QDoubleSpinBox()
+            support_min_island_area_value.setMinimum(0.0)
+            support_min_island_area_value.setMaximum(9999.0)
+            support_min_island_area_value.validator = FloatValidator()
+            try:
+                support_min_island_area_value.setValue(
+                    self.sett().supports.min_island_area
+                )
+            except:
+                support_min_island_area_value.setValue(0.0)
+            panel.addWidget(support_min_island_area_label, panel_next_row(), 1)
+            panel.addWidget(
+                support_min_island_area_value, panel_cur_row(), 2, 1, self.col2_cells
+            )
+
+            def on_change():
+                self.sett().supports.min_island_area = (
+                    support_min_island_area_value.value()
+                )
+
+            support_min_island_area_value.valueChanged.connect(on_change)
+
+            self.__elements[name] = {
+                "label": support_min_island_area_label,
+                "spinbox": support_min_island_area_value,
             }
         elif name == "auto_fan_enabled":
             self.ensure_sett("slicing.auto_fan.enabled")
