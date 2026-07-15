@@ -1218,9 +1218,7 @@ class SettingsWidget(QToolBox):
             travel_speed_value.setMaximum(9999)
             travel_speed_value.setValue(int(self.sett().slicing.travel_speed))
             panel.addWidget(travel_speed_label, panel_next_row(), 1)
-            panel.addWidget(
-                travel_speed_value, panel_cur_row(), 2, 1, self.col2_cells
-            )
+            panel.addWidget(travel_speed_value, panel_cur_row(), 2, 1, self.col2_cells)
 
             def on_change():
                 self.sett().slicing.travel_speed = travel_speed_value.value()
