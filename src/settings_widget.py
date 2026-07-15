@@ -154,7 +154,12 @@ class SettingsWidget(QToolBox):
             "print_speed",
             "print_speed_layer1",
             "print_speed_wall",
+            "print_speed_external_wall",
+            "print_speed_solid",
+            "print_speed_top",
+            "travel_speed",
             "retraction_on",
+            "only_retract_when_crossing_perimeters",
             "retraction_distance",
             "retraction_speed",
             "retraction_compensation",
@@ -1131,6 +1136,102 @@ class SettingsWidget(QToolBox):
                 "spinbox": print_speed_wall_value,
             }
 
+        elif name == "print_speed_external_wall":
+            self.ensure_sett("slicing.print_speed_external_wall")
+
+            print_speed_external_wall_label = QLabel(self.locale.PrintSpeedExternalWall)
+            print_speed_external_wall_value = QSpinBox()
+            print_speed_external_wall_value.setMinimum(0)
+            print_speed_external_wall_value.setMaximum(9999)
+            print_speed_external_wall_value.setValue(
+                int(self.sett().slicing.print_speed_external_wall)
+            )
+            panel.addWidget(print_speed_external_wall_label, panel_next_row(), 1)
+            panel.addWidget(
+                print_speed_external_wall_value, panel_cur_row(), 2, 1, self.col2_cells
+            )
+
+            def on_change():
+                self.sett().slicing.print_speed_external_wall = (
+                    print_speed_external_wall_value.value()
+                )
+
+            print_speed_external_wall_value.valueChanged.connect(on_change)
+
+            self.__elements[name] = {
+                "label": print_speed_external_wall_label,
+                "spinbox": print_speed_external_wall_value,
+            }
+
+        elif name == "print_speed_solid":
+            self.ensure_sett("slicing.print_speed_solid")
+
+            print_speed_solid_label = QLabel(self.locale.PrintSpeedSolid)
+            print_speed_solid_value = QSpinBox()
+            print_speed_solid_value.setMinimum(0)
+            print_speed_solid_value.setMaximum(9999)
+            print_speed_solid_value.setValue(int(self.sett().slicing.print_speed_solid))
+            panel.addWidget(print_speed_solid_label, panel_next_row(), 1)
+            panel.addWidget(
+                print_speed_solid_value, panel_cur_row(), 2, 1, self.col2_cells
+            )
+
+            def on_change():
+                self.sett().slicing.print_speed_solid = print_speed_solid_value.value()
+
+            print_speed_solid_value.valueChanged.connect(on_change)
+
+            self.__elements[name] = {
+                "label": print_speed_solid_label,
+                "spinbox": print_speed_solid_value,
+            }
+
+        elif name == "print_speed_top":
+            self.ensure_sett("slicing.print_speed_top")
+
+            print_speed_top_label = QLabel(self.locale.PrintSpeedTop)
+            print_speed_top_value = QSpinBox()
+            print_speed_top_value.setMinimum(0)
+            print_speed_top_value.setMaximum(9999)
+            print_speed_top_value.setValue(int(self.sett().slicing.print_speed_top))
+            panel.addWidget(print_speed_top_label, panel_next_row(), 1)
+            panel.addWidget(
+                print_speed_top_value, panel_cur_row(), 2, 1, self.col2_cells
+            )
+
+            def on_change():
+                self.sett().slicing.print_speed_top = print_speed_top_value.value()
+
+            print_speed_top_value.valueChanged.connect(on_change)
+
+            self.__elements[name] = {
+                "label": print_speed_top_label,
+                "spinbox": print_speed_top_value,
+            }
+
+        elif name == "travel_speed":
+            self.ensure_sett("slicing.travel_speed")
+
+            travel_speed_label = QLabel(self.locale.TravelSpeed)
+            travel_speed_value = QSpinBox()
+            travel_speed_value.setMinimum(0)
+            travel_speed_value.setMaximum(9999)
+            travel_speed_value.setValue(int(self.sett().slicing.travel_speed))
+            panel.addWidget(travel_speed_label, panel_next_row(), 1)
+            panel.addWidget(
+                travel_speed_value, panel_cur_row(), 2, 1, self.col2_cells
+            )
+
+            def on_change():
+                self.sett().slicing.travel_speed = travel_speed_value.value()
+
+            travel_speed_value.valueChanged.connect(on_change)
+
+            self.__elements[name] = {
+                "label": travel_speed_label,
+                "spinbox": travel_speed_value,
+            }
+
         elif name == "filling_type":
             self.ensure_sett("slicing.filling_type")
 
@@ -1250,6 +1351,32 @@ class SettingsWidget(QToolBox):
             self.__elements[name] = {
                 "label": rls_on_label,
                 "checkbox": rls_on_box,
+            }
+
+        elif name == "only_retract_when_crossing_perimeters":
+            self.ensure_sett("slicing.only_retract_when_crossing_perimeters")
+
+            only_retract_crossing_label = QLabel(
+                self.locale.OnlyRetractCrossingPerimeters
+            )
+            only_retract_crossing_box = QCheckBox()
+            if self.sett().slicing.only_retract_when_crossing_perimeters:
+                only_retract_crossing_box.setCheckState(QtCore.Qt.Checked)
+            panel.addWidget(only_retract_crossing_label, panel_next_row(), 1)
+            panel.addWidget(
+                only_retract_crossing_box, panel_cur_row(), 2, 1, self.col2_cells
+            )
+
+            def on_change():
+                self.sett().slicing.only_retract_when_crossing_perimeters = (
+                    only_retract_crossing_box.isChecked()
+                )
+
+            only_retract_crossing_box.stateChanged.connect(on_change)
+
+            self.__elements[name] = {
+                "label": only_retract_crossing_label,
+                "checkbox": only_retract_crossing_box,
             }
 
         elif name == "retraction_distance":
