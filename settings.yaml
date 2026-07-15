@@ -117,10 +117,15 @@ slicing:
   print_speed: 60
   print_speed_layer1: 30
   print_speed_wall: 60
+  print_speed_external_wall: 0
+  print_speed_solid: 0
+  print_speed_top: 0
+  travel_speed: 130
   print_time: 0
   retract_compensation_amount: 1.9
   retraction_distance: 2.0
   retraction_on: true
+  only_retract_when_crossing_perimeters: false
   retraction_speed: 30
   rotationx: 0.0
   rotationy: -0.0
