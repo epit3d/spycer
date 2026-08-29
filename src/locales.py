@@ -6,6 +6,10 @@ class Locale:
     PrintSpeed = "Print speed, mm/s:"
     PrintSpeedLayer1 = "Print speed, Layer1, mm/s:"
     PrintSpeedWall = "Print speed, walls, mm/s:"
+    PrintSpeedExternalWall = "External wall print speed, mm/s:"
+    PrintSpeedSolid = "Solid layers print speed, mm/s:"
+    PrintSpeedTop = "Top layers print speed, mm/s:"
+    TravelSpeed = "Travel speed, mm/s:"
     ExtruderTemp = "Extruder temperature, °C:"
     BedTemp = "Bed temperature, °C:"
     FillDensity = "Fill density, %:"
@@ -33,6 +37,7 @@ class Locale:
     Tilted = "Tilted"
     Hide = "Hide"
     Retraction = "Retraction"
+    OnlyRetractCrossingPerimeters = "Retract only when crossing perimeters"
     RetractionDistance = "Retraction distance"
     RetractionSpeed = "Retraction speed"
     SupportsOn = "Add supports"
@@ -157,12 +162,15 @@ class Locale:
     CannotDropHere = "Figure cannot be dropped here"
 
     ShouldCreateWalls = "Create wall in support"
+    SupportMinIslandArea = "Support min island area, mm²:"
 
     AutoFanEnabled = "Enable auto fan speed adjustment"
     AutoFanArea = "Auto fan max area, mm²:"
     AutoFanSpeed = "Auto fan speed:"
 
     FilterTolerance = "Filter tolerance, mm:"
+    SmoothCoefficient = "Smooth coefficient:"
+    SmoothConeUpwardTooltip = "Choose between upward or downward cone"
 
     GroupNames = {
         "model": "Model Settings",
@@ -181,6 +189,10 @@ dicts = {
         PrintSpeed="Скорость печати, мм/с:",
         PrintSpeedLayer1="Скорость печати первого слоя, мм/с:",
         PrintSpeedWall="Скорость печати стенок, мм/с:",
+        PrintSpeedExternalWall="Скорость печати внешних стенок, мм/с:",
+        PrintSpeedSolid="Скорость печати сплошных слоёв, мм/с:",
+        PrintSpeedTop="Скорость печати верхних слоёв, мм/с:",
+        TravelSpeed="Скорость перемещений, мм/с:",
         ExtruderTemp="Температура сопла, °C:",
         BedTemp="Температура стола, °C:",
         FillDensity="Плотность заполнения, %:",
@@ -213,6 +225,7 @@ dicts = {
         SaveGCode="Сохранить GCode",
         FanOffLayer1="Выключить обдув на первом слое",
         Retraction="Ретракция",
+        OnlyRetractCrossingPerimeters="Ретракт только при пересечении периметров",
         RetractionDistance="Величина ретракта, мм:",
         RetractionSpeed="Скорость ретракта, мм/с:",
         Tilted="Наклонена",
@@ -332,6 +345,7 @@ dicts = {
         WarningPathNotClosed="При разрезании модели были обнаружены незамкнутые участки! Проверьте корректность расположения фигур",
         CannotDropHere="Фигура не может быть перенесена сюда",
         ShouldCreateWalls="Создавать стенки в поддержках",
+        SupportMinIslandArea="Минимальная площадь острова поддержек, мм²:",
         AutoFanEnabled="Включить автоматическое управление обдувом",
         AutoFanArea="Максимальная площадь для автоматического обдува, мм²:",
         AutoFanSpeed="Скорость автоматического обдува:",
@@ -341,6 +355,8 @@ dicts = {
             "supports": "Настройки поддержек",
         },
         FilterTolerance="Допуск при конической печати, мм:",
+        SmoothCoefficient="Коэффициент сглаживания:",
+        SmoothConeUpwardTooltip="Выбор между конусом направленным вверх или вниз",
     ),
 }
 

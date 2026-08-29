@@ -120,8 +120,10 @@ class SettingsWidget(QToolBox):
         "support_number_of_bottom_layers",
         "support_number_of_lid_layers",
         "support_create_walls",
+        "support_min_island_area",
         "critical_angle",
         "filter_tolerance",
+        "smooth_coefficient",
     ]
 
     GROUPING = {
@@ -140,6 +142,7 @@ class SettingsWidget(QToolBox):
             "minimum_fill_area",
             "critical_angle",
             "filter_tolerance",
+            "smooth_coefficient",
         ],
         "material": [
             "uninterrupted_print",
@@ -151,7 +154,12 @@ class SettingsWidget(QToolBox):
             "print_speed",
             "print_speed_layer1",
             "print_speed_wall",
+            "print_speed_external_wall",
+            "print_speed_solid",
+            "print_speed_top",
+            "travel_speed",
             "retraction_on",
+            "only_retract_when_crossing_perimeters",
             "retraction_distance",
             "retraction_speed",
             "retraction_compensation",
@@ -175,6 +183,7 @@ class SettingsWidget(QToolBox):
             "support_number_of_bottom_layers",
             "support_number_of_lid_layers",
             "support_create_walls",
+            "support_min_island_area",
         ],
     }
 
@@ -184,6 +193,7 @@ class SettingsWidget(QToolBox):
         "filling_type",
         "fill_density",
         "fan_speed",
+        "smooth_coefficient",
     ]
 
     def __init__(
@@ -282,6 +292,7 @@ class SettingsWidget(QToolBox):
             "fill_density": self.locale.FillDensity,
             "minimum_fill_area": self.locale.MinimumFillArea,
             "overlap_infill": self.locale.OverlappingInfillPercentage,
+            "smooth_coefficient": self.locale.SmoothCoefficient,
             "retraction_on": self.locale.Retraction,
             "retraction_distance": self.locale.RetractionDistance,
             "retraction_speed": self.locale.RetractionSpeed,
@@ -535,7 +546,8 @@ class SettingsWidget(QToolBox):
                         break
 
                 # remove key from elements
-                del_sett(self.__elements[key]["setting"])
+                if "setting" in self.__elements[key]:
+                    del_sett(self.__elements[key]["setting"])
                 del self.__elements[key]
 
             delete_btn.clicked.connect(lambda _, row_idx=row_idx: remove_row(row_idx))
@@ -628,6 +640,8 @@ class SettingsWidget(QToolBox):
             self.with_sett("fill_density")
         if has_setting("slicing.fan_speed"):
             self.with_sett("fan_speed")
+        if has_setting("slicing.smooth_coefficient"):
+            self.with_sett("smooth_coefficient")
         # TODO: this list should be increased with the growth of extra parameters
 
         return self
@@ -1122,6 +1136,100 @@ class SettingsWidget(QToolBox):
                 "spinbox": print_speed_wall_value,
             }
 
+        elif name == "print_speed_external_wall":
+            self.ensure_sett("slicing.print_speed_external_wall")
+
+            print_speed_external_wall_label = QLabel(self.locale.PrintSpeedExternalWall)
+            print_speed_external_wall_value = QSpinBox()
+            print_speed_external_wall_value.setMinimum(0)
+            print_speed_external_wall_value.setMaximum(9999)
+            print_speed_external_wall_value.setValue(
+                int(self.sett().slicing.print_speed_external_wall)
+            )
+            panel.addWidget(print_speed_external_wall_label, panel_next_row(), 1)
+            panel.addWidget(
+                print_speed_external_wall_value, panel_cur_row(), 2, 1, self.col2_cells
+            )
+
+            def on_change():
+                self.sett().slicing.print_speed_external_wall = (
+                    print_speed_external_wall_value.value()
+                )
+
+            print_speed_external_wall_value.valueChanged.connect(on_change)
+
+            self.__elements[name] = {
+                "label": print_speed_external_wall_label,
+                "spinbox": print_speed_external_wall_value,
+            }
+
+        elif name == "print_speed_solid":
+            self.ensure_sett("slicing.print_speed_solid")
+
+            print_speed_solid_label = QLabel(self.locale.PrintSpeedSolid)
+            print_speed_solid_value = QSpinBox()
+            print_speed_solid_value.setMinimum(0)
+            print_speed_solid_value.setMaximum(9999)
+            print_speed_solid_value.setValue(int(self.sett().slicing.print_speed_solid))
+            panel.addWidget(print_speed_solid_label, panel_next_row(), 1)
+            panel.addWidget(
+                print_speed_solid_value, panel_cur_row(), 2, 1, self.col2_cells
+            )
+
+            def on_change():
+                self.sett().slicing.print_speed_solid = print_speed_solid_value.value()
+
+            print_speed_solid_value.valueChanged.connect(on_change)
+
+            self.__elements[name] = {
+                "label": print_speed_solid_label,
+                "spinbox": print_speed_solid_value,
+            }
+
+        elif name == "print_speed_top":
+            self.ensure_sett("slicing.print_speed_top")
+
+            print_speed_top_label = QLabel(self.locale.PrintSpeedTop)
+            print_speed_top_value = QSpinBox()
+            print_speed_top_value.setMinimum(0)
+            print_speed_top_value.setMaximum(9999)
+            print_speed_top_value.setValue(int(self.sett().slicing.print_speed_top))
+            panel.addWidget(print_speed_top_label, panel_next_row(), 1)
+            panel.addWidget(
+                print_speed_top_value, panel_cur_row(), 2, 1, self.col2_cells
+            )
+
+            def on_change():
+                self.sett().slicing.print_speed_top = print_speed_top_value.value()
+
+            print_speed_top_value.valueChanged.connect(on_change)
+
+            self.__elements[name] = {
+                "label": print_speed_top_label,
+                "spinbox": print_speed_top_value,
+            }
+
+        elif name == "travel_speed":
+            self.ensure_sett("slicing.travel_speed")
+
+            travel_speed_label = QLabel(self.locale.TravelSpeed)
+            travel_speed_value = QSpinBox()
+            travel_speed_value.setMinimum(0)
+            travel_speed_value.setMaximum(9999)
+            travel_speed_value.setValue(int(self.sett().slicing.travel_speed))
+            panel.addWidget(travel_speed_label, panel_next_row(), 1)
+            panel.addWidget(travel_speed_value, panel_cur_row(), 2, 1, self.col2_cells)
+
+            def on_change():
+                self.sett().slicing.travel_speed = travel_speed_value.value()
+
+            travel_speed_value.valueChanged.connect(on_change)
+
+            self.__elements[name] = {
+                "label": travel_speed_label,
+                "spinbox": travel_speed_value,
+            }
+
         elif name == "filling_type":
             self.ensure_sett("slicing.filling_type")
 
@@ -1241,6 +1349,32 @@ class SettingsWidget(QToolBox):
             self.__elements[name] = {
                 "label": rls_on_label,
                 "checkbox": rls_on_box,
+            }
+
+        elif name == "only_retract_when_crossing_perimeters":
+            self.ensure_sett("slicing.only_retract_when_crossing_perimeters")
+
+            only_retract_crossing_label = QLabel(
+                self.locale.OnlyRetractCrossingPerimeters
+            )
+            only_retract_crossing_box = QCheckBox()
+            if self.sett().slicing.only_retract_when_crossing_perimeters:
+                only_retract_crossing_box.setCheckState(QtCore.Qt.Checked)
+            panel.addWidget(only_retract_crossing_label, panel_next_row(), 1)
+            panel.addWidget(
+                only_retract_crossing_box, panel_cur_row(), 2, 1, self.col2_cells
+            )
+
+            def on_change():
+                self.sett().slicing.only_retract_when_crossing_perimeters = (
+                    only_retract_crossing_box.isChecked()
+                )
+
+            only_retract_crossing_box.stateChanged.connect(on_change)
+
+            self.__elements[name] = {
+                "label": only_retract_crossing_label,
+                "checkbox": only_retract_crossing_box,
             }
 
         elif name == "retraction_distance":
@@ -1797,6 +1931,36 @@ class SettingsWidget(QToolBox):
                 "label": create_walls_label,
                 "checkbox": create_walls_box,
             }
+        elif name == "support_min_island_area":
+            self.ensure_sett("supports.min_island_area")
+
+            support_min_island_area_label = QLabel(self.locale.SupportMinIslandArea)
+            support_min_island_area_value = QDoubleSpinBox()
+            support_min_island_area_value.setMinimum(0.0)
+            support_min_island_area_value.setMaximum(9999.0)
+            support_min_island_area_value.validator = FloatValidator()
+            try:
+                support_min_island_area_value.setValue(
+                    self.sett().supports.min_island_area
+                )
+            except:
+                support_min_island_area_value.setValue(0.0)
+            panel.addWidget(support_min_island_area_label, panel_next_row(), 1)
+            panel.addWidget(
+                support_min_island_area_value, panel_cur_row(), 2, 1, self.col2_cells
+            )
+
+            def on_change():
+                self.sett().supports.min_island_area = (
+                    support_min_island_area_value.value()
+                )
+
+            support_min_island_area_value.valueChanged.connect(on_change)
+
+            self.__elements[name] = {
+                "label": support_min_island_area_label,
+                "spinbox": support_min_island_area_value,
+            }
         elif name == "auto_fan_enabled":
             self.ensure_sett("slicing.auto_fan.enabled")
 
@@ -1895,6 +2059,34 @@ class SettingsWidget(QToolBox):
             self.__elements[name] = {
                 "label": filter_tolerance_label,
                 "spinbox": filter_tolerance_value,
+            }
+        elif name == "smooth_coefficient":
+            self.ensure_sett("slicing.smooth_coefficient")
+
+            smooth_coefficient_label = QLabel(self.locale.SmoothCoefficient)
+            smooth_coefficient_value = QSpinBox()
+            smooth_coefficient_value.setMinimum(2)
+            smooth_coefficient_value.setMaximum(8)
+            smooth_coefficient_value.setValue(
+                int(self.sett().slicing.smooth_coefficient)
+            )
+
+            panel.addWidget(smooth_coefficient_label, panel_next_row(), 1)
+            panel.addWidget(
+                smooth_coefficient_value, panel_cur_row(), 2, 1, self.col2_cells
+            )
+
+            def on_change():
+                self.sett().slicing.smooth_coefficient = (
+                    smooth_coefficient_value.value()
+                )
+
+            smooth_coefficient_value.valueChanged.connect(on_change)
+
+            self.__elements[name] = {
+                "label": smooth_coefficient_label,
+                "spinbox": smooth_coefficient_value,
+                "setting": "slicing.smooth_coefficient",
             }
 
         # add row index for element
